@@ -1,6 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, type User } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -9,6 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { auth, db } from "@/lib/firebase.client";
+import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
+
+import { GoogleButton } from "./social-auth/google-button";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -26,14 +35,74 @@ export function LoginForm() {
     },
   });
 
+  const { setUser, setProfile, setLoading } = useAuthStore();
+  const router = useRouter();
+
+  const handleAuthUser = async (user: User) => {
+    setUser(user);
+
+    // Fetch User Profile & Role from Firestore
+    const userDocRef = doc(db, "users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let profile: UserProfile;
+
+    if (userDocSnap.exists()) {
+      const userData = userDocSnap.data();
+      profile = {
+        uid: user.uid,
+        email: user.email,
+        role: userData.role as UserRole, // 'admin', 'employee', or 'client'
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phone: userData.phone || "",
+        photoURL: userData.photoURL || user.photoURL || "",
+      };
+    } else {
+      // Auto-create user profile as a client
+      profile = {
+        uid: user.uid,
+        email: user.email,
+        role: "client", // Default role
+        firstName: user.displayName?.split(" ")[0] || "",
+        lastName: user.displayName?.split(" ").slice(1).join(" ") || "",
+        phone: user.phoneNumber || "",
+        photoURL: user.photoURL || "",
+        createdAt: new Date().toISOString(),
+      };
+      await setDoc(userDocRef, profile);
+    }
+
+    setProfile(profile);
+    toast.success("Login successful!");
+    router.push("/dashboard/default");
+  };
+
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+    try {
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      await handleAuthUser(userCredential.user);
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      toast.error(error.message || "Invalid email or password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleAuthUser(userCredential.user);
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      toast.error(error.message || "Could not authenticate with Google.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,6 +163,14 @@ export function LoginForm() {
           Login
         </Button>
       </form>
+
+      <div className="relative my-6 text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+        <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-1">
+        <GoogleButton type="button" onClick={onGoogleLogin} />
+      </div>
     </Form>
   );
 }

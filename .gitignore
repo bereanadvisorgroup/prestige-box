@@ -2,3 +2,4 @@ node_modules
 firebase.config.json
 .firebase
 .next
+.env

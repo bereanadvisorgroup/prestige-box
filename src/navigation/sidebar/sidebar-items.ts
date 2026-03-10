@@ -41,50 +41,53 @@ export interface NavGroup {
   id: number;
   label?: string;
   items: NavMainItem[];
+  allowedRoles?: string[]; // E.g., ['admin', 'employee', 'client']
 }
 
 export const sidebarItems: NavGroup[] = [
   {
     id: 1,
-    label: "Dashboards",
+    label: "Client Portal",
+    allowedRoles: ["client"],
     items: [
       {
-        title: "Default",
+        title: "My Dashboard",
+        url: "/dashboard/default",
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "CRM Tools",
+    allowedRoles: ["admin", "employee"],
+    items: [
+      {
+        title: "Overview",
         url: "/dashboard/default",
         icon: LayoutDashboard,
       },
       {
-        title: "CRM",
+        title: "Clients",
         url: "/dashboard/crm",
-        icon: ChartBar,
+        icon: Users,
       },
       {
         title: "Finance",
         url: "/dashboard/finance",
         icon: Banknote,
       },
+    ],
+  },
+  {
+    id: 3,
+    label: "Admin Settings",
+    allowedRoles: ["admin"],
+    items: [
       {
-        title: "Analytics",
+        title: "Manage Users",
         url: "/dashboard/coming-soon",
-        icon: Gauge,
-        comingSoon: true,
-      },
-      {
-        title: "E-commerce",
-        url: "/dashboard/coming-soon",
-        icon: ShoppingBag,
-        comingSoon: true,
-      },
-      {
-        title: "Academy",
-        url: "/dashboard/coming-soon",
-        icon: GraduationCap,
-        comingSoon: true,
-      },
-      {
-        title: "Logistics",
-        url: "/dashboard/coming-soon",
-        icon: Forklift,
+        icon: Lock,
         comingSoon: true,
       },
     ],
