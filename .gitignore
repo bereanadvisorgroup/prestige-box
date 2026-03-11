@@ -3,3 +3,4 @@ firebase.config.json
 .firebase
 .next
 .env
+service-account.json

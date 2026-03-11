@@ -21,7 +21,7 @@ import { useAuthStore } from "@/stores/auth.store";
 
 export function AccountSwitcher() {
   const router = useRouter();
-  const { profile, logout } = useAuthStore();
+  const { user, profile, logout } = useAuthStore();
 
   const handleLogout = async () => {
     try {
@@ -35,11 +35,17 @@ export function AccountSwitcher() {
 
   if (!profile) return null;
 
+  const photoURL = user?.photoURL || profile.photoURL;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="size-9 rounded-lg cursor-pointer">
-          <AvatarImage src={profile.photoURL || undefined} alt={`${profile.firstName} ${profile.lastName}`} />
+          <AvatarImage
+            src={photoURL || undefined}
+            alt={`${profile.firstName} ${profile.lastName}`}
+            referrerPolicy="no-referrer"
+          />
           <AvatarFallback className="rounded-lg">
             {getInitials(`${profile.firstName} ${profile.lastName}`)}
           </AvatarFallback>
@@ -48,7 +54,11 @@ export function AccountSwitcher() {
       <DropdownMenuContent className="min-w-56 space-y-1 rounded-lg" side="bottom" align="end" sideOffset={4}>
         <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 focus:bg-accent/50 outline-none">
           <Avatar className="size-9 rounded-lg">
-            <AvatarImage src={profile.photoURL || undefined} alt={`${profile.firstName} ${profile.lastName}`} />
+            <AvatarImage
+              src={photoURL || undefined}
+              alt={`${profile.firstName} ${profile.lastName}`}
+              referrerPolicy="no-referrer"
+            />
             <AvatarFallback className="rounded-lg">
               {getInitials(`${profile.firstName} ${profile.lastName}`)}
             </AvatarFallback>

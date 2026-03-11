@@ -68,7 +68,7 @@ export const sidebarItems: NavGroup[] = [
         icon: LayoutDashboard,
       },
       {
-        title: "Clients",
+        title: "Client Pipeline",
         url: "/dashboard/crm",
         icon: Users,
       },
@@ -86,9 +86,8 @@ export const sidebarItems: NavGroup[] = [
     items: [
       {
         title: "Manage Users",
-        url: "/dashboard/coming-soon",
+        url: "/dashboard/admin/users",
         icon: Lock,
-        comingSoon: true,
       },
     ],
   },
