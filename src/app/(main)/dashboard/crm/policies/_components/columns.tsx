@@ -1,9 +1,12 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
-import { MoreHorizontal, FileText, Edit, Trash2, Shield, User, Calendar, DollarSign } from "lucide-react";
 import Link from "next/link";
 
+import type { Row } from "@tanstack/react-table";
+import { Calendar, DollarSign, Edit, FileText, MoreHorizontal, Shield, Trash2, User } from "lucide-react";
+
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,10 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ClientPolicy } from "@/types/crm";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import type { ClientPolicy } from "@/types/crm";
 
 export const columns = (onDelete: (policy: ClientPolicy) => void) => [
   {
@@ -30,7 +31,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
           Client Profile
         </span>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "carrierName",
@@ -40,17 +41,19 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
         <Shield className="h-3 w-3 text-primary" />
         <span className="text-sm font-medium">{row.original.carrierName}</span>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "policyName",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Policy Details" />,
     cell: ({ row }: { row: Row<ClientPolicy> }) => (
       <div className="flex flex-col">
-        <span className="text-sm font-bold">{row.original.policyName}</span>
+        <Link href={`/dashboard/crm/policies/${row.original.id}`} className="hover:underline">
+          <span className="text-sm font-bold text-foreground">{row.original.policyName}</span>
+        </Link>
         <span className="text-[10px] font-mono text-muted-foreground">{row.original.policyNumber}</span>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "premiumAmount",
@@ -62,7 +65,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
           {row.original.paymentSchedule}
         </Badge>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "renewalDate",
@@ -71,7 +74,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
       const renewal = new Date(row.original.renewalDate);
       const today = new Date();
       const diffMonths = (renewal.getFullYear() - today.getFullYear()) * 12 + (renewal.getMonth() - today.getMonth());
-      
+
       const isSoon = diffMonths <= 2;
       const isPast = renewal < today;
 
@@ -82,13 +85,17 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
             {renewal.toLocaleDateString()}
           </div>
           {isPast ? (
-            <Badge variant="destructive" className="w-fit text-[8px] py-0 h-3 shadow-none">EXPIRED</Badge>
+            <Badge variant="destructive" className="w-fit text-[8px] py-0 h-3 shadow-none">
+              EXPIRED
+            </Badge>
           ) : isSoon ? (
-            <Badge variant="secondary" className="w-fit text-[8px] py-0 h-3 bg-amber-100 text-amber-700 shadow-none">RENEWAL SOON</Badge>
+            <Badge variant="secondary" className="w-fit text-[8px] py-0 h-3 bg-amber-100 text-amber-700 shadow-none">
+              RENEWAL SOON
+            </Badge>
           ) : null}
         </div>
       );
-    }
+    },
   },
   {
     id: "actions",
@@ -111,10 +118,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(policy)}
-            >
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(policy)}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete Policy
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -50,11 +50,17 @@ export const InsuranceCompanySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+export const PaymentAccountSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Account name is required"),
+});
+
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
+  paymentAccounts: z.array(PaymentAccountSchema).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -65,6 +71,7 @@ export const ClientPolicySchema = z.object({
   id: z.string().optional(),
   clientId: z.string(),
   insuranceCompanyId: z.string(),
+  paymentAccountId: z.string().optional(),
   policyName: z.string().min(1, "Policy name is required"),
   policyNumber: z.string().min(1, "Policy number is required"),
   premiumAmount: z.number().min(0, "Premium must be positive"),
@@ -82,6 +89,7 @@ export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
 export type InsuranceCompany = z.infer<typeof InsuranceCompanySchema>;
+export type PaymentAccount = z.infer<typeof PaymentAccountSchema>;
 export type Client = z.infer<typeof ClientSchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;

@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, MapPin, AlertCircle } from "lucide-react";
+
+import { AlertCircle, MapPin, Plus } from "lucide-react";
 
 import { getAddresses } from "@/actions/addresses";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { AddressesTable } from "./_components/addresses-table";
 
 export default async function AddressesPage() {
@@ -34,9 +36,7 @@ export default async function AddressesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Addresses</h1>
-          <p className="text-muted-foreground mt-2">
-            View, add, and manage location records in your CRM.
-          </p>
+          <p className="text-muted-foreground mt-2">View, add, and manage location records in your CRM.</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/crm/addresses/new">

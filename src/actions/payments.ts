@@ -1,14 +1,16 @@
 "use server";
 
 import { adminDb } from "@/lib/firebase.server";
-import { ClientPolicy, PaymentSchedule } from "@/types/crm";
+import type { ClientPolicy, PaymentSchedule } from "@/types/crm";
 
 export interface ScheduledPayment {
   policyId: string;
+  clientId: string;
   clientName: string;
   policyName: string;
   policyNumber: string;
   carrierName: string;
+  paymentAccountName: string;
   premiumTotal: number;
   paymentAmount: number;
   paymentDate: string;
@@ -20,17 +22,17 @@ export async function getPaymentsForMonth(month: number, year: number) {
     if (!adminDb) throw new Error("Firebase admin not configured");
 
     const snapshot = await adminDb.collection("client-policies").get();
-    const policies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (ClientPolicy & { id: string })[];
+    const policies = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as (ClientPolicy & { id: string })[];
 
     const payments: ScheduledPayment[] = [];
 
     // Fetch dependencies
-    const clientIds = Array.from(new Set(policies.map(p => p.clientId)));
-    const companyIds = Array.from(new Set(policies.map(p => p.insuranceCompanyId)));
+    const clientIds = Array.from(new Set(policies.map((p) => p.clientId)));
+    const companyIds = Array.from(new Set(policies.map((p) => p.insuranceCompanyId)));
 
     const [clientDocs, companyDocs] = await Promise.all([
-      Promise.all(clientIds.map(id => adminDb!.collection("clients").doc(id).get())),
-      Promise.all(companyIds.map(id => adminDb!.collection("insurance-companies").doc(id).get()))
+      Promise.all(clientIds.map((id) => adminDb!.collection("clients").doc(id).get())),
+      Promise.all(companyIds.map((id) => adminDb!.collection("insurance-companies").doc(id).get())),
     ]);
 
     const clientsMap: any = {};
@@ -82,26 +84,33 @@ export async function getPaymentsForMonth(month: number, year: number) {
 
       // Check if this policy has a payment in the requested month/year
       // We look for any payment date: effectiveDate + N * interval months
-      let currentPaymentDate = new Date(effectiveDate);
-      
+      const currentPaymentDate = new Date(effectiveDate);
+
       // Safety break to avoid infinite loops
       let count = 0;
-      while (currentPaymentDate <= endDate && count < 600) { // 50 years max
+      while (currentPaymentDate <= endDate && count < 600) {
+        // 50 years max
         if (
           currentPaymentDate.getMonth() === month &&
           currentPaymentDate.getFullYear() === year &&
           currentPaymentDate >= effectiveDate
         ) {
+          const paymentAccountName = policy.paymentAccountId
+            ? client?.paymentAccounts?.find((a: any) => a.id === policy.paymentAccountId)?.name || "Unknown Account"
+            : "No Account Selected";
+
           payments.push({
             policyId: policy.id,
+            clientId: policy.clientId,
             clientName: client?.person ? `${client.person.firstName} ${client.person.lastName}` : "Unknown Client",
             policyName: policy.policyName,
             policyNumber: policy.policyNumber,
             carrierName: company?.name || "Unknown Carrier",
+            paymentAccountName,
             premiumTotal: policy.premiumAmount,
             paymentAmount: Math.round(paymentAmount * 100) / 100,
-            paymentDate: currentPaymentDate.toISOString().split('T')[0],
-            paymentSchedule: schedule
+            paymentDate: currentPaymentDate.toISOString().split("T")[0],
+            paymentSchedule: schedule,
           });
           break; // Found the payment for this month
         }

@@ -1,10 +1,12 @@
-import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { ChevronLeft } from "lucide-react";
 
 import { getUser } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/stores/auth.store";
+
 import { EditUserForm } from "../../_components/edit-user-form";
 
 interface EditUserPageProps {

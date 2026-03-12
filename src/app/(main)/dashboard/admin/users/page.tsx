@@ -1,15 +1,17 @@
 import Link from "next/link";
+
 import { AlertCircle, Plus } from "lucide-react";
 
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/stores/auth.store";
+
 import { UsersTable } from "./_components/users-table";
 
 export default async function ManageUsersPage() {
   const result = await getUsers();
-  
+
   if (!result.success) {
     return (
       <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

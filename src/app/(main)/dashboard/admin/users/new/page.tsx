@@ -1,7 +1,9 @@
-import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
+import { ChevronLeft } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+
 import { AddUserForm } from "../_components/add-user-form";
 
 export default function NewUserPage() {
@@ -16,9 +18,7 @@ export default function NewUserPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Add New User</h1>
-          <p className="text-muted-foreground mt-2">
-            Create a new user account and assign them a role.
-          </p>
+          <p className="text-muted-foreground mt-2">Create a new user account and assign them a role.</p>
         </div>
       </div>
 

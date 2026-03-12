@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+
+import Link from "next/link";
+
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
-import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/stores/auth.store";
+
 import { DeleteUserAlert } from "./delete-user-alert";
 
 export const columns: ColumnDef<UserProfile>[] = [
@@ -94,7 +97,7 @@ export const columns: ColumnDef<UserProfile>[] = [
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <DeleteUserAlert
             open={showDeleteAlert}
             onOpenChange={setShowDeleteAlert}

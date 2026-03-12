@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Household } from "@/types/crm";
+
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import type { Household } from "@/types/crm";
+
 import { columns } from "./columns";
 import { DeleteHouseholdAlert } from "./delete-household-alert";
 

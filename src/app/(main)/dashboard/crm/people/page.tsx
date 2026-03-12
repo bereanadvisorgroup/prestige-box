@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, UserIcon, AlertCircle } from "lucide-react";
+
+import { AlertCircle, Plus, UserIcon } from "lucide-react";
 
 import { getPeople } from "@/actions/people";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { PeopleTable } from "./_components/people-table";
 
 export default async function PeoplePage() {
@@ -34,9 +36,7 @@ export default async function PeoplePage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">People</h1>
-          <p className="text-muted-foreground mt-2">
-            View, add, and manage individuals in your CRM.
-          </p>
+          <p className="text-muted-foreground mt-2">View, add, and manage individuals in your CRM.</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/crm/people/new">

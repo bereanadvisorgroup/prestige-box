@@ -1,29 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MapPin, Plus, Search, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { MapPin, Plus, Trash2, Search } from "lucide-react";
 
-import { Person, PersonSchema, Address } from "@/types/crm";
-import { createPerson, updatePerson } from "@/actions/people";
 import { getAddresses } from "@/actions/addresses";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { AddressDialog } from "../../addresses/_components/address-dialog";
+import { createPerson, updatePerson } from "@/actions/people";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Combobox,
   ComboboxContent,
@@ -32,6 +22,11 @@ import {
   ComboboxList,
   ComboboxTrigger,
 } from "@/components/ui/combobox";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { type Address, type Person, PersonSchema } from "@/types/crm";
+
+import { AddressDialog } from "../../addresses/_components/address-dialog";
 
 interface PersonFormProps {
   person?: Person;
@@ -60,10 +55,10 @@ export function PersonForm({ person }: PersonFormProps) {
       const result = await getAddresses();
       if (result.success && result.addresses) {
         setAvailableAddresses(result.addresses);
-        
+
         // If editing, find the full address objects for the linked IDs
         if (person?.addressIds?.length) {
-          const linked = result.addresses.filter(addr => person.addressIds.includes(addr.id!));
+          const linked = result.addresses.filter((addr) => person.addressIds.includes(addr.id!));
           setLinkedAddresses(linked);
         }
       }
@@ -72,7 +67,7 @@ export function PersonForm({ person }: PersonFormProps) {
   }, [person]);
 
   const handleLinkAddress = (addressId: string) => {
-    const address = availableAddresses.find(a => a.id === addressId);
+    const address = availableAddresses.find((a) => a.id === addressId);
     if (address && !form.getValues("addressIds").includes(addressId)) {
       const currentIds = form.getValues("addressIds");
       form.setValue("addressIds", [...currentIds, addressId]);
@@ -82,8 +77,11 @@ export function PersonForm({ person }: PersonFormProps) {
 
   const handleUnlinkAddress = (addressId: string) => {
     const currentIds = form.getValues("addressIds");
-    form.setValue("addressIds", currentIds.filter(id => id !== addressId));
-    setLinkedAddresses(linkedAddresses.filter(a => a.id !== addressId));
+    form.setValue(
+      "addressIds",
+      currentIds.filter((id) => id !== addressId),
+    );
+    setLinkedAddresses(linkedAddresses.filter((a) => a.id !== addressId));
   };
 
   const handleNewAddressCreated = (address: Address) => {
@@ -95,7 +93,7 @@ export function PersonForm({ person }: PersonFormProps) {
     try {
       setIsLoading(true);
       const isEditing = !!person?.id;
-      
+
       let result;
       if (isEditing) {
         result = await updatePerson(person.id!, values);
@@ -213,8 +211,13 @@ export function PersonForm({ person }: PersonFormProps) {
                       <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div className="text-sm">
-                          <p className="font-medium">{addr.street1}{addr.street2 ? `, ${addr.street2}` : ""}</p>
-                          <p className="text-muted-foreground">{addr.city}, {addr.state} {addr.zipCode}</p>
+                          <p className="font-medium">
+                            {addr.street1}
+                            {addr.street2 ? `, ${addr.street2}` : ""}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {addr.city}, {addr.state} {addr.zipCode}
+                          </p>
                         </div>
                       </div>
                       <Button
@@ -234,38 +237,35 @@ export function PersonForm({ person }: PersonFormProps) {
               <div className="space-y-2">
                 <FormLabel>Link Existing Address</FormLabel>
                 <div className="flex gap-2">
-                  <Combobox onValueChange={(val: any) => { if (typeof val === 'string') handleLinkAddress(val); }}>
+                  <Combobox
+                    onValueChange={(val: any) => {
+                      if (typeof val === "string") handleLinkAddress(val);
+                    }}
+                  >
                     <ComboboxInput placeholder="Search addresses..." />
                     <ComboboxContent>
                       <ComboboxList>
                         {availableAddresses
-                          .filter(addr => !form.getValues("addressIds").includes(addr.id!))
+                          .filter((addr) => !form.getValues("addressIds").includes(addr.id!))
                           .map((addr) => (
-                          <ComboboxItem key={addr.id} value={addr.id!}>
-                            {addr.street1}, {addr.city}
-                          </ComboboxItem>
-                        ))}
+                            <ComboboxItem key={addr.id} value={addr.id!}>
+                              {addr.street1}, {addr.city}
+                            </ComboboxItem>
+                          ))}
                       </ComboboxList>
                     </ComboboxContent>
                   </Combobox>
                 </div>
-                <FormDescription>
-                  Search for an existing address or click 'New Address' to create one.
-                </FormDescription>
+                <FormDescription>Search for an existing address or click 'New Address' to create one.</FormDescription>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? (person ? "Updating..." : "Creating...") : (person ? "Update Person" : "Create Person")}
+                {isLoading ? (person ? "Updating..." : "Creating...") : person ? "Update Person" : "Create Person"}
               </Button>
             </div>
           </form>

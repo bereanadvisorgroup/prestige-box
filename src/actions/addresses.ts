@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { Address, AddressSchema } from "@/types/crm";
+import { type Address, AddressSchema } from "@/types/crm";
 
 const COLLECTION = "addresses";
 
@@ -81,11 +82,8 @@ export async function deleteAddress(id: string) {
     if (!adminDb) throw new Error("Firebase admin not configured");
 
     // Check if any people are linked to this address
-    const peopleSnapshot = await adminDb.collection("people")
-      .where("addressIds", "array-contains", id)
-      .limit(1)
-      .get();
-    
+    const peopleSnapshot = await adminDb.collection("people").where("addressIds", "array-contains", id).limit(1).get();
+
     if (!peopleSnapshot.empty) {
       throw new Error("Cannot delete address that is linked to people");
     }
@@ -104,13 +102,11 @@ export async function getAddressPeople(id: string) {
   try {
     if (!adminDb) throw new Error("Firebase admin not configured");
 
-    const snapshot = await adminDb.collection("people")
-      .where("addressIds", "array-contains", id)
-      .get();
-    
-    const people = snapshot.docs.map(doc => ({
+    const snapshot = await adminDb.collection("people").where("addressIds", "array-contains", id).get();
+
+    const people = snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     }));
 
     return { success: true, people };

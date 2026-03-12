@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { toast } from "sonner";
+
 import { deleteAddress } from "@/actions/addresses";
 import {
   AlertDialog,
@@ -13,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Address } from "@/types/crm";
+import type { Address } from "@/types/crm";
 
 interface DeleteAddressAlertProps {
   address: Address;
@@ -47,7 +49,11 @@ export function DeleteAddressAlert({ address, open, onOpenChange }: DeleteAddres
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the address <strong>{address.street1}, {address.city}</strong> from the CRM records. You can only delete an address if no people are currently linked to it.
+            This action cannot be undone. This will permanently delete the address{" "}
+            <strong>
+              {address.street1}, {address.city}
+            </strong>{" "}
+            from the CRM records. You can only delete an address if no people are currently linked to it.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

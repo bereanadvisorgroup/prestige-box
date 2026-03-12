@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+
 import { getPerson } from "@/actions/people";
+
 import { PersonForm } from "../../_components/person-form";
 
 interface EditPersonPageProps {

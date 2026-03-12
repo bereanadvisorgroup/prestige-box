@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { toast } from "sonner";
+
 import { deleteClientPolicy } from "@/actions/policies";
 import {
   AlertDialog,
@@ -13,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ClientPolicy } from "@/types/crm";
+import type { ClientPolicy } from "@/types/crm";
 
 interface DeletePolicyAlertProps {
   policy: ClientPolicy;
@@ -47,7 +49,8 @@ export function DeletePolicyAlert({ policy, open, onOpenChange }: DeletePolicyAl
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the policy record for <strong>{policy.policyName}</strong> ({policy.policyNumber}).
+            This action cannot be undone. This will permanently delete the policy record for{" "}
+            <strong>{policy.policyName}</strong> ({policy.policyNumber}).
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

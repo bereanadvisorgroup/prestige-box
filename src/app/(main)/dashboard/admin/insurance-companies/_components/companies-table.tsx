@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { InsuranceCompany } from "@/types/crm";
+
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import type { InsuranceCompany } from "@/types/crm";
+
 import { columns } from "./columns";
 import { DeleteCompanyAlert } from "./delete-company-alert";
 

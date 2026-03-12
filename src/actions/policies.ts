@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { ClientPolicy, ClientPolicySchema } from "@/types/crm";
+import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
 const COLLECTION = "client-policies";
 
@@ -39,7 +40,7 @@ export async function getClientPolicies() {
           clientName,
           carrierName: companyDoc.exists ? companyDoc.data()!.name : "Unknown Carrier",
         };
-      })
+      }),
     );
 
     return { success: true, policies: enrichedPolicies };

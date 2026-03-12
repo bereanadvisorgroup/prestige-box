@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { toast } from "sonner";
+
 import { deleteInsuranceCompany } from "@/actions/insurance-companies";
 import {
   AlertDialog,
@@ -13,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { InsuranceCompany } from "@/types/crm";
+import type { InsuranceCompany } from "@/types/crm";
 
 interface DeleteCompanyAlertProps {
   company: InsuranceCompany;
@@ -47,7 +49,8 @@ export function DeleteCompanyAlert({ company, open, onOpenChange }: DeleteCompan
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete <strong>{company.name}</strong> from the insurance company list. This might affect client policies linked to this company.
+            This action cannot be undone. This will permanently delete <strong>{company.name}</strong> from the
+            insurance company list. This might affect client policies linked to this company.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
