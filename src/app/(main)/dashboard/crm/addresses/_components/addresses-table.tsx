@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Address } from "@/types/crm";
+
+import { DeleteAddressAlert } from "@/app/(main)/dashboard/crm/addresses/_components/delete-address-alert";
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import type { Address } from "@/types/crm";
+
 import { columns } from "./columns";
-import { DeleteAddressAlert } from "@/app/(main)/dashboard/crm/addresses/_components/delete-address-alert";
 
 interface AddressesTableProps {
   data: Address[];

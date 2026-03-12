@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+
 import { getHousehold } from "@/actions/households";
 import { HouseholdForm } from "@/app/(main)/dashboard/crm/households/_components/household-form";
 

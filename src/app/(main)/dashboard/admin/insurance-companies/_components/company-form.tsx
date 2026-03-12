@@ -1,26 +1,21 @@
 "use client";
 
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Globe, ListPlus, Plus, Shield, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Shield, Plus, Trash2, Globe, ListPlus } from "lucide-react";
 
-import { InsuranceCompany, InsuranceCompanySchema } from "@/types/crm";
 import { createInsuranceCompany, updateInsuranceCompany } from "@/actions/insurance-companies";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { type InsuranceCompany, InsuranceCompanySchema } from "@/types/crm";
 
 interface CompanyFormProps {
   company?: InsuranceCompany;
@@ -44,7 +39,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     try {
       setIsLoading(true);
       const isEditing = !!company?.id;
-      
+
       let result;
       if (isEditing) {
         result = await updateInsuranceCompany(company.id!, values);
@@ -80,7 +75,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
   const handleRemovePolicy = (name: string) => {
     const current = form.getValues("policyNames");
-    form.setValue("policyNames", current.filter(n => n !== name));
+    form.setValue(
+      "policyNames",
+      current.filter((n) => n !== name),
+    );
   };
 
   return (
@@ -133,14 +131,14 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   Supported Policy Names
                 </h3>
               </div>
-              
+
               <div className="flex gap-2">
-                <Input 
-                  placeholder="e.g. Homeowners Gold" 
+                <Input
+                  placeholder="e.g. Homeowners Gold"
                   value={newPolicyName}
                   onChange={(e) => setNewPolicyName(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleAddPolicy();
                     }
@@ -156,14 +154,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   <span className="text-xs text-muted-foreground p-1 italic">No policies added yet.</span>
                 )}
                 {form.watch("policyNames").map((policy, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
-                    className="gap-1 px-3 py-1 group"
-                  >
+                  <Badge key={index} variant="secondary" className="gap-1 px-3 py-1 group">
                     {policy}
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => handleRemovePolicy(policy)}
                       className="ml-1 rounded-full hover:bg-destructive-foreground/20 transition-colors"
                     >
@@ -175,16 +169,11 @@ export function CompanyForm({ company }: CompanyFormProps) {
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading} className="font-bold">
-                {isLoading ? "Saving..." : (company ? "Update Company" : "Create Company")}
+                {isLoading ? "Saving..." : company ? "Update Company" : "Create Company"}
               </Button>
             </div>
           </form>

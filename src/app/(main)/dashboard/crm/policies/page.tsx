@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, FileText, AlertCircle } from "lucide-react";
+
+import { AlertCircle, FileText, Plus } from "lucide-react";
 
 import { getClientPolicies } from "@/actions/policies";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { PoliciesTable } from "./_components/policies-table";
 
 export default async function PoliciesPage() {
@@ -34,9 +36,7 @@ export default async function PoliciesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Client Policies</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage active insurance coverage for all clients.
-          </p>
+          <p className="text-muted-foreground mt-2">View and manage active insurance coverage for all clients.</p>
         </div>
         <Button asChild className="font-semibold shadow-sm">
           <Link href="/dashboard/crm/policies/new">

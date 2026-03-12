@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { Person, PersonSchema } from "@/types/crm";
+import { type Person, PersonSchema } from "@/types/crm";
 
 const COLLECTION = "people";
 

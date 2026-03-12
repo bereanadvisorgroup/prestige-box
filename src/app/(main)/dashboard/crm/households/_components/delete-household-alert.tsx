@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { toast } from "sonner";
+
 import { deleteHousehold } from "@/actions/households";
 import {
   AlertDialog,
@@ -13,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Household } from "@/types/crm";
+import type { Household } from "@/types/crm";
 
 interface DeleteHouseholdAlertProps {
   household: Household;
@@ -47,7 +49,8 @@ export function DeleteHouseholdAlert({ household, open, onOpenChange }: DeleteHo
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the household <strong>{household.name}</strong> from the CRM records. This will NOT delete the people or the address associated with this household.
+            This action cannot be undone. This will permanently delete the household <strong>{household.name}</strong>{" "}
+            from the CRM records. This will NOT delete the people or the address associated with this household.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

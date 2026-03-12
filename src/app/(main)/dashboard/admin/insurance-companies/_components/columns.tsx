@@ -1,9 +1,12 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
-import { MoreHorizontal, Shield, Edit, Trash2, Globe, List } from "lucide-react";
 import Link from "next/link";
 
+import type { Row } from "@tanstack/react-table";
+import { Edit, Globe, List, MoreHorizontal, Shield, Trash2 } from "lucide-react";
+
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InsuranceCompany } from "@/types/crm";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Badge } from "@/components/ui/badge";
+import type { InsuranceCompany } from "@/types/crm";
 
 export const columns = (onDelete: (company: InsuranceCompany) => void) => [
   {
@@ -29,14 +30,14 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
       const url = row.original.websiteUrl;
       if (!url) return "-";
       return (
-        <a 
-          href={url.startsWith('http') ? url : `https://${url}`} 
-          target="_blank" 
+        <a
+          href={url.startsWith("http") ? url : `https://${url}`}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-primary hover:underline font-semibold"
         >
           <Globe className="h-3 w-3" />
-          {url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+          {url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
         </a>
       );
     },
@@ -83,10 +84,7 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(company)}
-            >
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(company)}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

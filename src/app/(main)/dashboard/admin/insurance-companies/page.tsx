@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, Shield, AlertCircle } from "lucide-react";
+
+import { AlertCircle, Plus, Shield } from "lucide-react";
 
 import { getInsuranceCompanies } from "@/actions/insurance-companies";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { CompaniesTable } from "./_components/companies-table";
 
 export default async function InsuranceCompaniesPage() {
@@ -34,9 +36,7 @@ export default async function InsuranceCompaniesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Insurance Companies</h1>
-          <p className="text-muted-foreground mt-2">
-            Configure carriers and the products they offer.
-          </p>
+          <p className="text-muted-foreground mt-2">Configure carriers and the products they offer.</p>
         </div>
         <Button asChild className="font-semibold">
           <Link href="/dashboard/admin/insurance-companies/new">

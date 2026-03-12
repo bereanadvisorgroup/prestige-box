@@ -1,36 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CreditCard, Heart, Plus, Search, Trash2, Trophy, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { User, Plus, Trash2, Heart, Trophy, Search } from "lucide-react";
 
-import { Client, ClientSchema, Person } from "@/types/crm";
 import { createClient, updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
-import { sportsTeams } from "@/data/sports-teams";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { getClientPoliciesByClient } from "@/actions/policies";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { sportsTeams } from "@/data/sports-teams";
+import { type Client, ClientSchema, type PaymentAccount, type Person } from "@/types/crm";
 
 interface ClientFormProps {
   client?: Client;
@@ -41,6 +30,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
+  const [paymentAccountInput, setPaymentAccountInput] = useState("");
 
   const form = useForm<Client>({
     resolver: zodResolver(ClientSchema),
@@ -48,6 +38,7 @@ export function ClientForm({ client }: ClientFormProps) {
       personId: "",
       hobbies: [],
       favoriteSportsTeams: [],
+      paymentAccounts: [],
     },
   });
 
@@ -71,23 +62,60 @@ export function ClientForm({ client }: ClientFormProps) {
 
   const handleRemoveHobby = (hobby: string) => {
     const current = form.getValues("hobbies");
-    form.setValue("hobbies", current.filter(h => h !== hobby));
+    form.setValue(
+      "hobbies",
+      current.filter((h) => h !== hobby),
+    );
   };
 
   const handleToggleSportsTeam = (teamId: string) => {
     const current = form.getValues("favoriteSportsTeams");
     if (current.includes(teamId)) {
-      form.setValue("favoriteSportsTeams", current.filter(id => id !== teamId));
+      form.setValue(
+        "favoriteSportsTeams",
+        current.filter((id) => id !== teamId),
+      );
     } else {
       form.setValue("favoriteSportsTeams", [...current, teamId]);
     }
+  };
+
+  const handleAddPaymentAccount = () => {
+    if (!paymentAccountInput.trim()) return;
+    const current = form.getValues("paymentAccounts") || [];
+    const newAccount: PaymentAccount = {
+      id: crypto.randomUUID(),
+      name: paymentAccountInput.trim(),
+    };
+    form.setValue("paymentAccounts", [...current, newAccount]);
+    setPaymentAccountInput("");
+  };
+
+  const handleRemovePaymentAccount = async (accountId: string) => {
+    if (client?.id) {
+      // Check if this account is used by any policy
+      const result = await getClientPoliciesByClient(client.id);
+      if (result.success && result.policies) {
+        const isInUse = result.policies.some((p) => p.paymentAccountId === accountId);
+        if (isInUse) {
+          toast.error("Cannot delete payment account because it is currently associated with a policy.");
+          return;
+        }
+      }
+    }
+
+    const current = form.getValues("paymentAccounts") || [];
+    form.setValue(
+      "paymentAccounts",
+      current.filter((a) => a.id !== accountId),
+    );
   };
 
   async function onSubmit(values: Client) {
     try {
       setIsLoading(true);
       const isEditing = !!client?.id;
-      
+
       let result;
       if (isEditing) {
         result = await updateClient(client.id!, values);
@@ -110,7 +138,7 @@ export function ClientForm({ client }: ClientFormProps) {
     }
   }
 
-  const selectedPerson = availablePeople.find(p => p.id === form.watch("personId"));
+  const selectedPerson = availablePeople.find((p) => p.id === form.watch("personId"));
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-sm">
@@ -120,63 +148,80 @@ export function ClientForm({ client }: ClientFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium border-b pb-2">Person Association</h3>
-              <FormField
-                control={form.control}
-                name="personId"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Select Person</FormLabel>
-                    <Combobox 
-                      value={field.value} 
-                      onValueChange={(val: any) => {
-                        if (typeof val === 'string') field.onChange(val);
-                      }}
-                      disabled={!!client}
-                    >
-                      <ComboboxInput placeholder="Search people..." />
-                      <ComboboxContent>
-                        <ComboboxList>
-                          {availablePeople.map((p) => (
-                            <ComboboxItem key={p.id} value={p.id!}>
-                              {p.firstName} {p.lastName} ({p.email})
-                            </ComboboxItem>
-                          ))}
-                        </ComboboxList>
-                      </ComboboxContent>
-                    </Combobox>
-                    <FormDescription>
-                      {client ? "The person associated with this client profile cannot be changed." : "Select the person you want to create a CRM client record for."}
-                    </FormDescription>
-                    {selectedPerson && (
-                      <div className="mt-2 p-3 bg-muted/30 rounded-md border flex items-center gap-3 text-sm">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{selectedPerson.firstName} {selectedPerson.lastName}</p>
-                          <p className="text-muted-foreground">{selectedPerson.email}</p>
-                        </div>
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {!client && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium border-b pb-2">Person Association</h3>
+                <FormField
+                  control={form.control}
+                  name="personId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Select Person</FormLabel>
+                      <Combobox
+                        value={field.value}
+                        onValueChange={(val: any) => {
+                          if (typeof val === "string") field.onChange(val);
+                        }}
+                        disabled={!!client}
+                      >
+                        <ComboboxInput
+                          placeholder="Search people..."
+                          value={selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : ""}
+                        />
+                        <ComboboxContent>
+                          <ComboboxList>
+                            {availablePeople.map((p) => (
+                              <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
+                                {p.firstName} {p.lastName} ({p.email})
+                              </ComboboxItem>
+                            ))}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                      <FormDescription>Select the person you want to create a CRM client record for.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {selectedPerson && (
+              <div
+                className={`${client ? "" : "mt-4"} p-4 bg-muted/30 rounded-lg border shadow-sm flex items-start gap-4 text-sm`}
+              >
+                <div className="bg-primary/10 p-2.5 rounded-full">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="grid gap-1">
+                  <p className="font-bold text-base leading-none">
+                    {selectedPerson.firstName} {selectedPerson.lastName}
+                  </p>
+                  <div className="flex flex-col text-muted-foreground gap-0.5 mt-1">
+                    <p className="flex items-center gap-2">
+                      <span className="font-medium text-foreground/70">Email:</span> {selectedPerson.email}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="font-medium text-foreground/70">Phone:</span> {selectedPerson.mobilePhone}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4 pt-2">
               <h3 className="text-sm font-medium border-b pb-2 flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
                 Interests & Hobbies
               </h3>
-              
+
               <div className="flex gap-2">
-                <Input 
-                  placeholder="e.g. Golfing" 
+                <Input
+                  placeholder="e.g. Golfing"
                   value={hobbyInput}
                   onChange={(e) => setHobbyInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleAddHobby();
                     }
@@ -194,7 +239,11 @@ export function ClientForm({ client }: ClientFormProps) {
                 {form.watch("hobbies").map((hobby, index) => (
                   <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
                     {hobby}
-                    <button type="button" onClick={() => handleRemoveHobby(hobby)} className="ml-1 hover:text-destructive">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveHobby(hobby)}
+                      className="ml-1 hover:text-destructive"
+                    >
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </Badge>
@@ -207,25 +256,25 @@ export function ClientForm({ client }: ClientFormProps) {
                 <Trophy className="h-4 w-4 text-primary" />
                 Favorite Sports Teams
               </h3>
-              
+
               <div className="space-y-2">
                 <FormLabel>Search and Link Teams</FormLabel>
-                <Combobox 
+                <Combobox
                   onValueChange={(val: any) => {
-                    if (typeof val === 'string') handleToggleSportsTeam(val);
+                    if (typeof val === "string") handleToggleSportsTeam(val);
                   }}
                 >
                   <ComboboxInput placeholder="Search NFL, MLB, NBA, NHL..." />
                   <ComboboxContent>
                     <ComboboxList>
                       {sportsTeams
-                        .filter(team => !form.getValues("favoriteSportsTeams").includes(team.name))
+                        .filter((team) => !form.getValues("favoriteSportsTeams").includes(team.name))
                         .map((team) => (
-                        <ComboboxItem key={team.id} value={team.name}>
-                          <span className="text-xs font-bold mr-2 text-muted-foreground">[{team.league}]</span>
-                          {team.name}
-                        </ComboboxItem>
-                      ))}
+                          <ComboboxItem key={team.id} value={team.name}>
+                            <span className="text-xs font-bold mr-2 text-muted-foreground">[{team.league}]</span>
+                            {team.name}
+                          </ComboboxItem>
+                        ))}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>
@@ -236,27 +285,79 @@ export function ClientForm({ client }: ClientFormProps) {
                   <p className="text-xs text-muted-foreground p-1 italic">No sports teams linked yet.</p>
                 )}
                 {form.watch("favoriteSportsTeams").map((teamName, index) => (
-                  <Badge key={index} variant="default" className="gap-1 px-3 py-1 shadow-sm font-bold bg-primary text-primary-foreground">
+                  <Badge
+                    key={index}
+                    variant="default"
+                    className="gap-1 px-3 py-1 shadow-sm font-bold bg-primary text-primary-foreground"
+                  >
                     {teamName}
-                    <button type="button" onClick={() => handleToggleSportsTeam(teamName)} className="ml-1 hover:text-destructive-foreground">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSportsTeam(teamName)}
+                      className="ml-1 hover:text-destructive-foreground"
+                    >
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </Badge>
                 ))}
               </div>
             </div>
+            <div className="space-y-4 pt-2">
+              <h3 className="text-sm font-medium border-b pb-2 flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Payment Accounts
+              </h3>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. Personal Checking"
+                  value={paymentAccountInput}
+                  onChange={(e) => setPaymentAccountInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddPaymentAccount();
+                    }
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={handleAddPaymentAccount}>
+                  Add
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 mt-4">
+                {(form.watch("paymentAccounts") || []).length === 0 && (
+                  <p className="text-xs text-muted-foreground p-2 italic bg-muted/20 rounded-md border">
+                    No payment accounts added yet.
+                  </p>
+                )}
+                {(form.watch("paymentAccounts") || []).map((account) => (
+                  <div
+                    key={account.id}
+                    className="flex items-center justify-between p-3 bg-muted/20 rounded-md border group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{account.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePaymentAccount(account.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading} className="font-bold">
-                {isLoading ? "Saving..." : (client ? "Update Client Profile" : "Create Client Profile")}
+                {isLoading ? "Saving..." : client ? "Update Client Profile" : "Create Client Profile"}
               </Button>
             </div>
           </form>

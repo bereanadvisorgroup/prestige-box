@@ -1,23 +1,19 @@
 "use client";
 
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Address, AddressSchema } from "@/types/crm";
+
 import { createAddress, updateAddress } from "@/actions/addresses";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { type Address, AddressSchema } from "@/types/crm";
 
 interface AddressFormProps {
   address?: Address;
@@ -43,7 +39,7 @@ export function AddressForm({ address }: AddressFormProps) {
     try {
       setIsLoading(true);
       const isEditing = !!address?.id;
-      
+
       let result;
       if (isEditing) {
         result = await updateAddress(address.id!, values);
@@ -158,16 +154,11 @@ export function AddressForm({ address }: AddressFormProps) {
             />
 
             <div className="flex justify-end gap-3 pt-6">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? (address ? "Updating..." : "Creating...") : (address ? "Update Address" : "Create Address")}
+                {isLoading ? (address ? "Updating..." : "Creating...") : address ? "Update Address" : "Create Address"}
               </Button>
             </div>
           </form>

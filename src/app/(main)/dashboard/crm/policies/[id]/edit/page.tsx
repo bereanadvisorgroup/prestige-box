@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+
 import { getClientPolicy } from "@/actions/policies";
 import { PolicyForm } from "@/app/(main)/dashboard/crm/policies/_components/policy-form";
 

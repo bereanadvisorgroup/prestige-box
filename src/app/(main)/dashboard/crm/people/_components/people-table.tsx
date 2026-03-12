@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Person } from "@/types/crm";
+
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import type { Person } from "@/types/crm";
+
 import { columns } from "./columns";
 import { DeletePersonAlert } from "./delete-person-alert";
 

@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, Users, AlertCircle } from "lucide-react";
+
+import { AlertCircle, Plus, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { ClientsTable } from "./_components/clients-table";
 
 export default async function ClientsPage() {

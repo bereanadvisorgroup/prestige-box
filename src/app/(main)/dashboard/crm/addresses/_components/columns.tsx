@@ -1,9 +1,11 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
-import { MoreHorizontal, MapPin, Edit, Trash2, Eye } from "lucide-react";
 import Link from "next/link";
 
+import type { Row } from "@tanstack/react-table";
+import { Edit, Eye, MapPin, MoreHorizontal, Trash2 } from "lucide-react";
+
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,8 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Address } from "@/types/crm";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import type { Address } from "@/types/crm";
 
 export const columns = (onDelete: (address: Address) => void) => [
   {
@@ -59,10 +60,7 @@ export const columns = (onDelete: (address: Address) => void) => [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(address)}
-            >
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(address)}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

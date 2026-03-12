@@ -1,11 +1,14 @@
-import { getPaymentsForMonth } from "@/actions/payments";
-import { PaymentsTable } from "./_components/payments-table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, DollarSign, ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
+
+import { AlertCircle, ArrowLeft, ArrowRight, DollarSign } from "lucide-react";
+
+import { getPaymentsForMonth } from "@/actions/payments";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
+import { PaymentsTable } from "./_components/payments-table";
 
 interface PaymentsPageProps {
   searchParams: {
@@ -24,8 +27,18 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const result = await getPaymentsForMonth(monthParam, yearParam);
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const prevMonth = monthParam === 0 ? 11 : monthParam - 1;
@@ -39,9 +52,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {result.error || "Failed to fetch payments data."}
-          </AlertDescription>
+          <AlertDescription>{result.error || "Failed to fetch payments data."}</AlertDescription>
         </Alert>
       </div>
     );
@@ -55,9 +66,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Payments Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Monthly premium tracking and collection forecast.
-          </p>
+          <p className="text-muted-foreground mt-2">Monthly premium tracking and collection forecast.</p>
         </div>
 
         <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border shadow-sm">
@@ -108,11 +117,12 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              ${payments.length > 0 ? (totalDue / payments.length).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
+              $
+              {payments.length > 0
+                ? (totalDue / payments.length).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                : 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">
-              Per scheduled transaction
-            </p>
+            <p className="text-xs text-muted-foreground mt-1 font-medium">Per scheduled transaction</p>
           </CardContent>
         </Card>
       </div>

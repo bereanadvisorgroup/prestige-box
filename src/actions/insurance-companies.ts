@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { InsuranceCompany, InsuranceCompanySchema } from "@/types/crm";
+import { type InsuranceCompany, InsuranceCompanySchema } from "@/types/crm";
 
 const COLLECTION = "insurance-companies";
 

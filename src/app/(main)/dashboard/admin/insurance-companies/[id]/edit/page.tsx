@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+
 import { getInsuranceCompany } from "@/actions/insurance-companies";
 import { CompanyForm } from "@/app/(main)/dashboard/admin/insurance-companies/_components/company-form";
 

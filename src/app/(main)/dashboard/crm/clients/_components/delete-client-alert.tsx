@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { toast } from "sonner";
+
 import { deleteClient } from "@/actions/clients";
 import {
   AlertDialog,
@@ -13,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Client } from "@/types/crm";
+import type { Client } from "@/types/crm";
 
 interface DeleteClientAlertProps {
   client: Client;
@@ -47,7 +49,8 @@ export function DeleteClientAlert({ client, open, onOpenChange }: DeleteClientAl
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the client record. This will NOT delete the person profile itself.
+            This action cannot be undone. This will permanently delete the client record. This will NOT delete the
+            person profile itself.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

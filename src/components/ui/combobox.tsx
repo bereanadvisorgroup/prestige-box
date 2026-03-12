@@ -58,15 +58,18 @@ function ComboboxInput({
   disabled = false,
   showTrigger = true,
   showClear = false,
+  value,
   ...props
 }: ComboboxPrimitive.Input.Props & {
   showTrigger?: boolean
   showClear?: boolean
+  value?: string
 }) {
   return (
     <InputGroup className={cn("w-auto", className)}>
       <ComboboxPrimitive.Input
         render={<InputGroupInput disabled={disabled} />}
+        value={value}
         {...props}
       />
       <InputGroupAddon align="inline-end">
@@ -142,8 +145,9 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
 function ComboboxItem({
   className,
   children,
+  label,
   ...props
-}: ComboboxPrimitive.Item.Props) {
+}: ComboboxPrimitive.Item.Props & { label?: string }) {
   return (
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
@@ -151,7 +155,8 @@ function ComboboxItem({
         "data-highlighted:bg-accent data-highlighted:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
-      {...props}
+      {...(props as any)}
+      label={label as any}
     >
       {children}
       <ComboboxPrimitive.ItemIndicator

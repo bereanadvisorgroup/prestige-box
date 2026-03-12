@@ -55,20 +55,20 @@ export async function getUsers() {
 
     // 1. Fetch users from Firebase Auth
     const authList = await adminAuth.listUsers();
-    
+
     // 2. Fetch all user profiles from Firestore
     let firestoreUsers = new Map<string, any>();
     try {
       const snapshot = await adminDb.collection("users").get();
-      firestoreUsers = new Map(snapshot.docs.map(doc => [doc.id, doc.data()]));
+      firestoreUsers = new Map(snapshot.docs.map((doc) => [doc.id, doc.data()]));
     } catch (fsError: any) {
       console.error("[getUsers] Optional Firestore profile fetch failed:", fsError.message);
     }
 
     // 3. Merge profiles
-    const users = authList.users.map(authUser => {
+    const users = authList.users.map((authUser) => {
       const dbUser = firestoreUsers.get(authUser.uid) || {};
-      
+
       return {
         uid: authUser.uid,
         email: authUser.email || dbUser.email || "",
@@ -92,13 +92,16 @@ export async function updateUser(uid: string, data: { firstName: string; lastNam
     if (!adminDb) throw new Error("Server not properly configured. Firebase admin is missing.");
 
     // Update Document in Firestore
-    await adminDb.collection("users").doc(uid).set({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      uid, // Ensure UID is in the doc
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+    await adminDb.collection("users").doc(uid).set(
+      {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        uid, // Ensure UID is in the doc
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
 
     revalidatePath("/dashboard/admin/users");
     return { success: true };

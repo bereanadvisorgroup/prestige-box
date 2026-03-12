@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { Client, ClientSchema } from "@/types/crm";
+import { type Client, ClientSchema } from "@/types/crm";
 
 const COLLECTION = "clients";
 
@@ -17,21 +18,19 @@ export async function getClients() {
     })) as Client[];
 
     // Fetch person details for each client
-    const personIds = Array.from(new Set(clients.map(c => c.personId)));
+    const personIds = Array.from(new Set(clients.map((c) => c.personId)));
     if (personIds.length === 0) return { success: true, clients: [] };
 
-    const personDocs = await Promise.all(
-      personIds.map(id => adminDb!.collection("people").doc(id).get())
-    );
-    
+    const personDocs = await Promise.all(personIds.map((id) => adminDb!.collection("people").doc(id).get()));
+
     const peopleMap = personDocs.reduce((acc, doc) => {
       if (doc.exists) acc[doc.id] = doc.data();
       return acc;
     }, {} as any);
 
-    const clientWithPeople = clients.map(client => ({
+    const clientWithPeople = clients.map((client) => ({
       ...client,
-      person: peopleMap[client.personId] || null
+      person: peopleMap[client.personId] || null,
     }));
 
     return { success: true, clients: clientWithPeople };

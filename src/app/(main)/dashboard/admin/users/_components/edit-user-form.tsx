@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,22 +11,9 @@ import * as z from "zod";
 
 import { updateUser } from "@/actions/users";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UserProfile, UserRole } from "@/stores/auth.store";
 
 const formSchema = z.object({
@@ -115,9 +104,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         <div className="space-y-2">
           <FormLabel>Email</FormLabel>
           <Input value={user.email || ""} disabled className="bg-muted" />
-          <p className="text-[0.8rem] text-muted-foreground">
-            Email cannot be changed after creation.
-          </p>
+          <p className="text-[0.8rem] text-muted-foreground">Email cannot be changed after creation.</p>
         </div>
 
         <FormField

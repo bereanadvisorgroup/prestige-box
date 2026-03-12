@@ -1,29 +1,18 @@
 "use client";
 
 import { useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Address, AddressSchema } from "@/types/crm";
+
 import { createAddress } from "@/actions/addresses";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { type Address, AddressSchema } from "@/types/crm";
 
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;
@@ -165,12 +154,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
             />
 
             <div className="flex justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setOpen(false)}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>

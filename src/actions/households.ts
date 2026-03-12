@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+
 import { adminDb } from "@/lib/firebase.server";
-import { Household, HouseholdSchema } from "@/types/crm";
+import { type Household, HouseholdSchema } from "@/types/crm";
 
 const COLLECTION = "households";
 
@@ -36,11 +37,11 @@ export async function getHousehold(id: string) {
     const addressDoc = await adminDb.collection("addresses").doc(household.addressId).get();
     const address = addressDoc.exists ? { id: addressDoc.id, ...addressDoc.data() } : null;
 
-    const memberPromises = household.memberIds.map(m => adminDb!.collection("people").doc(m.personId).get());
+    const memberPromises = household.memberIds.map((m) => adminDb!.collection("people").doc(m.personId).get());
     const memberDocs = await Promise.all(memberPromises);
     const members = memberDocs.map((doc, index) => ({
       person: doc.exists ? { id: doc.id, ...doc.data() } : null,
-      role: household.memberIds[index].role
+      role: household.memberIds[index].role,
     }));
 
     return { success: true, household, address, members };

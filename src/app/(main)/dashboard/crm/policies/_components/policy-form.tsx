@@ -1,42 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Calendar, CreditCard, DollarSign, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { FileText, Plus, Shield, User, Calendar, DollarSign, Search } from "lucide-react";
 
-import { ClientPolicy, ClientPolicySchema, Client, InsuranceCompany } from "@/types/crm";
-import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
 import { getClients } from "@/actions/clients";
 import { getInsuranceCompanies } from "@/actions/insurance-companies";
+import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+  type Client,
+  type ClientPolicy,
+  ClientPolicySchema,
+  type InsuranceCompany,
+  type PaymentAccount,
+} from "@/types/crm";
 
 interface PolicyFormProps {
   policy?: ClientPolicy;
@@ -45,7 +33,7 @@ interface PolicyFormProps {
 export function PolicyForm({ policy }: PolicyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<any[]>([]);
+  const [availableClients, setAvailableClients] = useState<(Client & { person?: any })[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<InsuranceCompany[]>([]);
 
   const form = useForm<ClientPolicy>({
@@ -56,19 +44,17 @@ export function PolicyForm({ policy }: PolicyFormProps) {
       policyName: "",
       policyNumber: "",
       premiumAmount: 0,
-      effectiveDate: new Date().toISOString().split('T')[0],
-      renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      effectiveDate: new Date().toISOString().split("T")[0],
+      renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
       paymentSchedule: "monthly",
+      paymentAccountId: "",
     },
   });
 
   useEffect(() => {
     async function fetchData() {
-      const [clientResult, companyResult] = await Promise.all([
-        getClients(),
-        getInsuranceCompanies(),
-      ]);
-      
+      const [clientResult, companyResult] = await Promise.all([getClients(), getInsuranceCompanies()]);
+
       if (clientResult.success && clientResult.clients) {
         setAvailableClients(clientResult.clients);
       }
@@ -83,7 +69,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
     try {
       setIsLoading(true);
       const isEditing = !!policy?.id;
-      
+
       let result;
       if (isEditing) {
         result = await updateClientPolicy(policy.id!, values);
@@ -106,8 +92,8 @@ export function PolicyForm({ policy }: PolicyFormProps) {
     }
   }
 
-  const selectedCompany = availableCompanies.find(c => c.id === form.watch("insuranceCompanyId"));
-  const selectedClient = availableClients.find(c => c.id === form.watch("clientId"));
+  const selectedCompany = availableCompanies.find((c) => c.id === form.watch("insuranceCompanyId"));
+  const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-md">
@@ -128,29 +114,36 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Client</FormLabel>
-                    <Combobox 
-                      value={field.value} 
+                    <Combobox
+                      value={field.value}
                       onValueChange={(val: any) => {
-                        if (typeof val === 'string') field.onChange(val);
+                        if (typeof val === "string") {
+                          field.onChange(val);
+                          form.setValue("paymentAccountId", ""); // Reset payment account when client changes
+                        }
                       }}
                       disabled={!!policy}
                     >
-                      <ComboboxInput placeholder="Search clients..." />
+                      <ComboboxInput
+                        placeholder="Search clients..."
+                        value={
+                          selectedClient ? `${selectedClient.person?.firstName} ${selectedClient.person?.lastName}` : ""
+                        }
+                      />
                       <ComboboxContent>
                         <ComboboxList>
                           {availableClients.map((c) => (
-                            <ComboboxItem key={c.id} value={c.id!}>
+                            <ComboboxItem
+                              key={c.id}
+                              value={c.id!}
+                              label={`${c.person?.firstName} ${c.person?.lastName}`}
+                            >
                               {c.person?.firstName} {c.person?.lastName} ({c.person?.email})
                             </ComboboxItem>
                           ))}
                         </ComboboxList>
                       </ComboboxContent>
                     </Combobox>
-                    {selectedClient && (
-                      <div className="mt-1 text-[10px] text-primary font-bold px-1 uppercase tracking-tight">
-                        Selected: {selectedClient.person?.firstName} {selectedClient.person?.lastName}
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -163,31 +156,26 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Insurance Carrier</FormLabel>
-                    <Combobox 
-                      value={field.value} 
+                    <Combobox
+                      value={field.value}
                       onValueChange={(val: any) => {
-                        if (typeof val === 'string') {
+                        if (typeof val === "string") {
                           field.onChange(val);
                           form.setValue("policyName", ""); // Reset policy name when carrier changes
                         }
                       }}
                     >
-                      <ComboboxInput placeholder="Search carriers..." />
+                      <ComboboxInput placeholder="Search carriers..." value={selectedCompany?.name || ""} />
                       <ComboboxContent>
                         <ComboboxList>
                           {availableCompanies.map((c) => (
-                            <ComboboxItem key={c.id} value={c.id!}>
+                            <ComboboxItem key={c.id} value={c.id!} label={c.name}>
                               {c.name}
                             </ComboboxItem>
                           ))}
                         </ComboboxList>
                       </ComboboxContent>
                     </Combobox>
-                    {selectedCompany && (
-                      <div className="mt-1 text-[10px] text-primary font-bold px-1 uppercase tracking-tight">
-                        Selected: {selectedCompany.name}
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -210,7 +198,9 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                       </FormControl>
                       <SelectContent>
                         {selectedCompany?.policyNames.map((name, i) => (
-                          <SelectItem key={i} value={name}>{name}</SelectItem>
+                          <SelectItem key={i} value={name}>
+                            {name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -246,10 +236,10 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormControl>
                       <div className="relative">
                         <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          className="pl-9" 
-                          type="number" 
-                          placeholder="1200" 
+                        <Input
+                          className="pl-9"
+                          type="number"
+                          placeholder="1200"
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
@@ -278,6 +268,43 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                         <SelectItem value="quarterly">Quarterly</SelectItem>
                         <SelectItem value="semi-annually">Semi-Annually</SelectItem>
                         <SelectItem value="annually">Annually</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Payment Account */}
+              <FormField
+                control={form.control}
+                name="paymentAccountId"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      Payment Account
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClient}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedClient ? "Select an account" : "Select client first"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {selectedClient?.paymentAccounts && selectedClient.paymentAccounts.length > 0 ? (
+                          selectedClient.paymentAccounts.map((account: PaymentAccount) => (
+                            <SelectItem key={account.id} value={account.id}>
+                              {account.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="_no_accounts" disabled>
+                            No accounts found
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -323,16 +350,11 @@ export function PolicyForm({ policy }: PolicyFormProps) {
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => router.back()}
-                disabled={isLoading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading} className="font-bold">
-                {isLoading ? "Saving..." : (policy ? "Update Policy" : "Save Policy")}
+                {isLoading ? "Saving..." : policy ? "Update Policy" : "Save Policy"}
               </Button>
             </div>
           </form>

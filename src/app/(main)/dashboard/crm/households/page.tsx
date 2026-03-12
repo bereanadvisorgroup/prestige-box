@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Plus, Users, AlertCircle } from "lucide-react";
+
+import { AlertCircle, Plus, Users } from "lucide-react";
 
 import { getHouseholds } from "@/actions/households";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
 import { HouseholdsTable } from "./_components/households-table";
 
 export default async function HouseholdsPage() {
@@ -34,9 +36,7 @@ export default async function HouseholdsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Households</h1>
-          <p className="text-muted-foreground mt-2">
-            View, add, and manage household records and their members.
-          </p>
+          <p className="text-muted-foreground mt-2">View, add, and manage household records and their members.</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/crm/households/new">

@@ -1,9 +1,12 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
-import { MoreHorizontal, User, Edit, Trash2, Eye, Heart, Trophy } from "lucide-react";
 import Link from "next/link";
 
+import type { Row } from "@tanstack/react-table";
+import { Edit, Eye, Heart, MoreHorizontal, Trash2, Trophy, User } from "lucide-react";
+
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Client } from "@/types/crm";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Badge } from "@/components/ui/badge";
+import type { Client } from "@/types/crm";
 
 export const columns = (onDelete: (client: Client) => void) => [
   {
@@ -27,9 +28,29 @@ export const columns = (onDelete: (client: Client) => void) => [
       return (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium text-black">{person.firstName} {person.lastName}</span>
+          <Link href={`/dashboard/crm/clients/${row.original.id}`} className="font-medium text-black hover:underline">
+            {person.firstName} {person.lastName}
+          </Link>
         </div>
       );
+    },
+  },
+  {
+    id: "email",
+    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Email" />,
+    cell: ({ row }: { row: Row<any> }) => {
+      const person = row.original.person;
+      if (!person?.email) return "-";
+      return <span className="text-sm">{person.email}</span>;
+    },
+  },
+  {
+    id: "phone",
+    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
+    cell: ({ row }: { row: Row<any> }) => {
+      const person = row.original.person;
+      if (!person?.mobilePhone) return "-";
+      return <span className="text-sm whitespace-nowrap">{person.mobilePhone}</span>;
     },
   },
   {
@@ -40,7 +61,11 @@ export const columns = (onDelete: (client: Client) => void) => [
       return (
         <div className="flex flex-wrap gap-1 max-w-[200px]">
           {hobbies.slice(0, 2).map((hobby, i) => (
-            <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0 h-4 bg-muted/50 border-muted-foreground/20">
+            <Badge
+              key={i}
+              variant="secondary"
+              className="text-[10px] px-1 py-0 h-4 bg-muted/50 border-muted-foreground/20"
+            >
               {hobby}
             </Badge>
           ))}
@@ -100,10 +125,7 @@ export const columns = (onDelete: (client: Client) => void) => [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => onDelete(client)}
-            >
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(client)}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
