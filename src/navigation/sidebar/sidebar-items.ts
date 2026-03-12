@@ -16,6 +16,12 @@ import {
   ShoppingBag,
   SquareArrowUpRight,
   Users,
+  MapPin,
+  Home,
+  Shield,
+  FileText,
+  DollarSign,
+  Briefcase,
 } from "lucide-react";
 
 export interface NavSubItem {
@@ -59,31 +65,73 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 2,
-    label: "CRM Tools",
+    label: "Dashboards",
     allowedRoles: ["admin", "employee"],
     items: [
       {
-        title: "Overview",
-        url: "/dashboard/default",
+        title: "CRM Pipeline",
+        url: "/dashboard/crm-pipeline",
         icon: LayoutDashboard,
-      },
-      {
-        title: "Client Pipeline",
-        url: "/dashboard/crm",
-        icon: Users,
       },
       {
         title: "Finance",
         url: "/dashboard/finance",
-        icon: Banknote,
+        icon: LayoutDashboard,
       },
     ],
   },
   {
     id: 3,
+    label: "CRM Tools",
+    allowedRoles: ["admin", "employee"],
+    items: [
+      {
+        title: "Overview",
+        url: "/dashboard/crm",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "People",
+        url: "/dashboard/crm/people",
+        icon: Users,
+      },
+      {
+        title: "Addresses",
+        url: "/dashboard/crm/addresses",
+        icon: MapPin,
+      },
+      {
+        title: "Households",
+        url: "/dashboard/crm/households",
+        icon: Home,
+      },
+      {
+        title: "Clients",
+        url: "/dashboard/crm/clients",
+        icon: Briefcase,
+      },
+      {
+        title: "Policies",
+        url: "/dashboard/crm/policies",
+        icon: FileText,
+      },
+      {
+        title: "Payments",
+        url: "/dashboard/crm/payments",
+        icon: DollarSign,
+      },
+    ],
+  },
+  {
+    id: 4,
     label: "Admin Settings",
     allowedRoles: ["admin"],
     items: [
+      {
+        title: "Insurance Companies",
+        url: "/dashboard/admin/insurance-companies",
+        icon: Shield,
+      },
       {
         title: "Manage Users",
         url: "/dashboard/admin/users",
