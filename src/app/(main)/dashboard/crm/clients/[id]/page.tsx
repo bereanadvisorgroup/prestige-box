@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ExternalLink, FileText, Mail, MapPin, Pencil, Phone, Trophy, User as UserIcon } from "lucide-react";
+import { Building2, ExternalLink, FileText, Globe, Mail, MapPin, Pencil, Phone, Trophy, User as UserIcon } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
+import { getCompaniesByClient } from "@/actions/companies";
 import { getClientPoliciesByClient } from "@/actions/policies";
 import { getSportsNews } from "@/actions/sports";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { ClientPolicy, Person } from "@/types/crm";
+import type { ClientPolicy, Company, Person } from "@/types/crm";
 
 interface ClientPageProps {
   params: {
@@ -31,6 +32,9 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const person = clientResult.person as Person | null;
   const policiesResult = await getClientPoliciesByClient(id);
   const policies = (policiesResult.success ? policiesResult.policies : []) as (ClientPolicy & { id: string })[];
+
+  const companiesResult = await getCompaniesByClient(id);
+  const companies = (companiesResult.success ? companiesResult.companies : []) as (Company & { id: string })[];
 
   // Fetch news for each sports team
   const teamsNews = await Promise.all(
@@ -177,8 +181,65 @@ export default async function ClientPage({ params }: ClientPageProps) {
           </div>
         </div>
 
-        {/* Policies Section */}
+        {/* Companies & Policies Section */}
         <div className="lg:col-span-2 space-y-6">
+          <Card className="border-none shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
+              <div>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" /> Associated Companies
+                </CardTitle>
+                <CardDescription>View companies this client is associated with.</CardDescription>
+              </div>
+              <Link href={`/dashboard/crm/companies/new`}>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  + Add Company
+                </Badge>
+              </Link>
+            </CardHeader>
+            <CardContent className="p-0">
+              {companies.length > 0 ? (
+                <div className="divide-y">
+                  {companies.map((company) => (
+                    <Link
+                      key={company.id}
+                      href={`/dashboard/crm/companies/${company.id}`}
+                      className="p-4 flex items-center justify-between hover:bg-muted/5 transition-colors group block"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-semibold group-hover:text-primary transition-colors">{company.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          {company.website && (
+                            <span className="flex items-center gap-1">
+                              <Globe className="h-3 w-3" /> {company.website.replace(/^https?:\/\//, '')}
+                            </span>
+                          )}
+                          {company.website && company.phone && <span>•</span>}
+                          {company.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" /> {company.phone}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                         <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Building2 className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm">No companies associated with this client.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
               <div>
