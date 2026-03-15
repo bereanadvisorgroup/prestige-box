@@ -55,6 +55,45 @@ export const PaymentAccountSchema = z.object({
   name: z.string().min(1, "Account name is required"),
 });
 
+export const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", 
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+] as const;
+
+export const SitusTypeSchema = z.enum(["Physical", "Economic", "Administrative", "Trust"]);
+export const NexusTypeSchema = z.enum(["Sales Tax", "Income Tax", "Payroll"]);
+
+export const SitusSchema = z.object({
+  id: z.string().optional(),
+  jurisdiction: z.enum(US_STATES),
+  type: SitusTypeSchema,
+  effectiveDate: z.string(), // ISO String
+});
+
+export const NexusSchema = z.object({
+  id: z.string().optional(),
+  jurisdiction: z.enum(US_STATES),
+  type: NexusTypeSchema,
+});
+
+export const CompanySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Company name is required"),
+  dba: z.string().optional(),
+  ein: z.string().regex(/^\d{2}-\d{7}$/, "EIN must be in XX-XXXXXXX format").optional().or(z.literal("")),
+  addressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  clientIds: z.array(z.string()).default([]), // A company can be associated with multiple clients, and a client with multiple companies
+  situsRecords: z.array(SitusSchema).default([]),
+  nexusRecords: z.array(NexusSchema).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
@@ -90,7 +129,12 @@ export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
 export type InsuranceCompany = z.infer<typeof InsuranceCompanySchema>;
 export type PaymentAccount = z.infer<typeof PaymentAccountSchema>;
+export type SitusType = z.infer<typeof SitusTypeSchema>;
+export type NexusType = z.infer<typeof NexusTypeSchema>;
+export type Situs = z.infer<typeof SitusSchema>;
+export type Nexus = z.infer<typeof NexusSchema>;
 export type Client = z.infer<typeof ClientSchema>;
+export type Company = z.infer<typeof CompanySchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;
 

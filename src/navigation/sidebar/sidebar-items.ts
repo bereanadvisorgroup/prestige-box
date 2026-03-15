@@ -1,6 +1,7 @@
 import {
   Banknote,
   Briefcase,
+  Building2,
   Calendar,
   ChartBar,
   DollarSign,
@@ -109,6 +110,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Clients",
         url: "/dashboard/crm/clients",
         icon: Briefcase,
+      },
+      {
+        title: "Companies",
+        url: "/dashboard/crm/companies",
+        icon: Building2,
       },
       {
         title: "Policies",
