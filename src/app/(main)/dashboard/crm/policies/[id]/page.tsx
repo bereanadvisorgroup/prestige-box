@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminDb } from "@/lib/firebase.server";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { PaymentSchedule } from "@/types/crm";
 
 // Helper function to calculate payment schedule dates and amounts
@@ -178,7 +179,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                       href={`tel:${personData.mobilePhone}`}
                       className="text-foreground hover:text-primary transition-colors"
                     >
-                      {personData.mobilePhone}
+                      {formatPhoneNumber(personData.mobilePhone)}
                     </a>
                   </div>
                 </div>

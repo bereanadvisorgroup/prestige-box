@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { Company } from "@/types/crm";
 
 export const columns = (onDelete: (company: Company) => void) => [
@@ -61,7 +62,7 @@ export const columns = (onDelete: (company: Company) => void) => [
       return (
         <div className="flex items-center gap-2 text-sm">
           <Phone className="h-3 w-3 text-muted-foreground" />
-          <span className="whitespace-nowrap">{phone}</span>
+          <span className="whitespace-nowrap">{formatPhoneNumber(phone)}</span>
         </div>
       );
     },

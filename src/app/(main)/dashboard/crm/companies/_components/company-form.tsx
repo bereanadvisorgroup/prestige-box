@@ -15,10 +15,12 @@ import { createCompany, updateCompany } from "@/actions/companies";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { type Address, type Client, type Company, CompanySchema, US_STATES } from "@/types/crm";
 
 interface CompanyFormProps {
@@ -185,7 +187,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                       Phone Number
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="(555) 123-4567" {...field} value={field.value || ""} />
+                      <PhoneInput placeholder="555-123-4567" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -220,30 +222,17 @@ export function CompanyForm({ company }: CompanyFormProps) {
                     <MapPin className="h-4 w-4" />
                     Company Address
                   </FormLabel>
-                  <Combobox
-                    value={field.value || ""}
-                    onValueChange={(val: any) => {
-                      if (typeof val === "string") field.onChange(val);
-                    }}
-                  >
-                    <ComboboxInput
-                      placeholder="Search addresses..."
-                      value={
-                        form.watch("addressId")
-                          ? availableAddresses.find((a) => a.id === form.watch("addressId"))?.street1 || "Selected Address"
-                          : ""
-                      }
+                  <FormControl>
+                    <AddressSearchSelect
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                      addresses={availableAddresses}
+                      onAddressCreated={(newAddr) => {
+                        setAvailableAddresses((prev) => [...prev, newAddr]);
+                        field.onChange(newAddr.id);
+                      }}
                     />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {availableAddresses.map((a) => (
-                          <ComboboxItem key={a.id} value={a.id!} label={`${a.street1}, ${a.city}`}>
-                            {a.street1}, {a.city}, {a.state} {a.zipCode}
-                          </ComboboxItem>
-                        ))}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
+                  </FormControl>
                   <FormDescription>Select from shared addresses. Leave blank if unknown.</FormDescription>
                   <FormMessage />
                 </FormItem>

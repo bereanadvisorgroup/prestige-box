@@ -40,3 +40,16 @@ export function formatCurrency(
 
   return new Intl.NumberFormat(locale, formatOptions).format(amount);
 }
+export function formatPhoneNumber(phoneNumber: string | undefined | null) {
+  if (!phoneNumber) return "";
+  const cleaned = phoneNumber.replace(/\D/g, "");
+  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+  if (match) {
+    return `${match[1]}-${match[2]}-${match[3]}`;
+  }
+  // If it doesn't match 10 digits, return cleaned or original
+  if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  }
+  return phoneNumber;
+}

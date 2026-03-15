@@ -22,8 +22,10 @@ import {
   ComboboxList,
   ComboboxTrigger,
 } from "@/components/ui/combobox";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { type Address, type Person, PersonSchema } from "@/types/crm";
 
 import { AddressDialog } from "../../addresses/_components/address-dialog";
@@ -189,7 +191,7 @@ export function PersonForm({ person }: PersonFormProps) {
                     <FormItem>
                       <FormLabel>Mobile Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="(555) 000-0000" {...field} />
+                        <PhoneInput placeholder="555-000-0000" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -237,26 +239,16 @@ export function PersonForm({ person }: PersonFormProps) {
               <div className="space-y-2">
                 <FormLabel>Link Existing Address</FormLabel>
                 <div className="flex gap-2">
-                  <Combobox
-                    onValueChange={(val: any) => {
+                  <AddressSearchSelect
+                    value=""
+                    onValueChange={(val) => {
                       if (typeof val === "string") handleLinkAddress(val);
                     }}
-                  >
-                    <ComboboxInput placeholder="Search addresses..." />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {availableAddresses
-                          .filter((addr) => !form.getValues("addressIds").includes(addr.id!))
-                          .map((addr) => (
-                            <ComboboxItem key={addr.id} value={addr.id!}>
-                              {addr.street1}, {addr.city}
-                            </ComboboxItem>
-                          ))}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
+                    addresses={availableAddresses.filter((addr) => !form.getValues("addressIds").includes(addr.id!))}
+                    onAddressCreated={handleNewAddressCreated}
+                  />
                 </div>
-                <FormDescription>Search for an existing address or click 'New Address' to create one.</FormDescription>
+                <FormDescription>Search for an existing address or click 'Add New Address' in the dropdown.</FormDescription>
               </div>
             </div>
 

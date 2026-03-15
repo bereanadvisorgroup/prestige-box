@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { ClientPolicy, Company, Person } from "@/types/crm";
 
 interface ClientPageProps {
@@ -97,7 +98,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
-                  <p className="text-sm font-semibold">{person?.mobilePhone || "N/A"}</p>
+                  <p className="text-sm font-semibold">{formatPhoneNumber(person?.mobilePhone) || "N/A"}</p>
                 </div>
               </div>
             </CardContent>
@@ -220,7 +221,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                           {company.website && company.phone && <span>•</span>}
                           {company.phone && (
                             <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" /> {company.phone}
+                              <Phone className="h-3 w-3" /> {formatPhoneNumber(company.phone)}
                             </span>
                           )}
                         </p>

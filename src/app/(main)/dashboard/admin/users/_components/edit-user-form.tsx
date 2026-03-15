@@ -121,7 +121,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="advisor">Advisor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
