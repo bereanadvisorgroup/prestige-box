@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { Client } from "@/types/crm";
 
 export const columns = (onDelete: (client: Client) => void) => [
@@ -50,7 +51,7 @@ export const columns = (onDelete: (client: Client) => void) => [
     cell: ({ row }: { row: Row<any> }) => {
       const person = row.original.person;
       if (!person?.mobilePhone) return "-";
-      return <span className="text-sm whitespace-nowrap">{person.mobilePhone}</span>;
+      return <span className="text-sm whitespace-nowrap">{formatPhoneNumber(person.mobilePhone)}</span>;
     },
   },
   {

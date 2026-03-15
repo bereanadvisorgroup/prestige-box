@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 export const columns = (onDelete: (person: Person) => void) => [
@@ -33,6 +34,10 @@ export const columns = (onDelete: (person: Person) => void) => [
   {
     accessorKey: "mobilePhone",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
+    cell: ({ row }: { row: Row<Person> }) => {
+      const phone = row.original.mobilePhone;
+      return <span>{formatPhoneNumber(phone)}</span>;
+    },
   },
   {
     id: "actions",

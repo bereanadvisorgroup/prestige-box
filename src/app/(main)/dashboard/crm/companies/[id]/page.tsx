@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatPhoneNumber } from "@/lib/utils";
 import type { Company } from "@/types/crm";
 
 interface CompanyPageProps {
@@ -118,7 +119,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
-                  <p className="text-sm font-semibold mt-1">{company.phone || "N/A"}</p>
+                  <p className="text-sm font-semibold mt-1">{formatPhoneNumber(company.phone) || "N/A"}</p>
                 </div>
               </div>
 
@@ -203,7 +204,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                             {person?.mobilePhone && (
                               <>
                                 <span>•</span>
-                                <span>{person.mobilePhone}</span>
+                                <span>{formatPhoneNumber(person.mobilePhone)}</span>
                               </>
                             )}
                           </p>

@@ -2,7 +2,7 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-export type UserRole = "admin" | "employee" | "client";
+export type UserRole = "admin" | "advisor" | "client";
 
 export interface UserProfile {
   uid: string;

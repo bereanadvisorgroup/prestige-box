@@ -1,0 +1,177 @@
+"use client";
+
+import * as React from "react";
+import { useState, useEffect } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, User } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import { createPerson } from "@/actions/people";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { type Person, PersonSchema } from "@/types/crm";
+
+interface PersonDialogProps {
+  onPersonCreated: (person: Person) => void;
+  trigger?: React.ReactNode;
+}
+
+export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<Person>({
+    resolver: zodResolver(PersonSchema),
+    defaultValues: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      mobilePhone: "",
+      email: "",
+      addressIds: [],
+    },
+  });
+
+  // Reset form when dialog opens to ensure a fresh state
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        mobilePhone: "",
+        email: "",
+        addressIds: [],
+      });
+    }
+  }, [open, form.reset]);
+
+  async function onSubmit(values: Person) {
+    try {
+      setIsLoading(true);
+      const result = await createPerson(values);
+
+      if (result.success) {
+        toast.success("Person record created");
+        onPersonCreated({ ...values, id: result.id });
+        setOpen(false);
+        form.reset();
+      } else {
+        toast.error(result.error || "Failed to create person record");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm" type="button">
+            <Plus className="mr-2 h-4 w-4" /> New Person
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            Quick Add Person
+          </DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="middleName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Middle Name (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Quincy" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="john.doe@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="mobilePhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mobile Phone</FormLabel>
+                    <FormControl>
+                      <PhoneInput placeholder="555-123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+              <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Person"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

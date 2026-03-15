@@ -15,7 +15,8 @@ import { getPeople } from "@/actions/people";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -127,23 +128,15 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Household Address</FormLabel>
-                    <Combobox
+                    <AddressSearchSelect
                       value={field.value}
-                      onValueChange={(val: any) => {
-                        if (typeof val === "string") field.onChange(val);
+                      onValueChange={field.onChange}
+                      addresses={availableAddresses}
+                      onAddressCreated={(newAddr) => {
+                        setAvailableAddresses((prev) => [...prev, newAddr]);
+                        field.onChange(newAddr.id);
                       }}
-                    >
-                      <ComboboxInput placeholder="Select address..." />
-                      <ComboboxContent>
-                        <ComboboxList>
-                          {availableAddresses.map((addr) => (
-                            <ComboboxItem key={addr.id} value={addr.id!} label={`${addr.street1}, ${addr.city}`}>
-                              {addr.street1}, {addr.city}
-                            </ComboboxItem>
-                          ))}
-                        </ComboboxList>
-                      </ComboboxContent>
-                    </Combobox>
+                    />
                     {selectedAddress && (
                       <div className="mt-2 p-3 bg-muted/30 rounded-md border flex items-start gap-2 text-sm">
                         <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -234,24 +227,18 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
 
                 <div className="space-y-2 pt-2">
                   <FormLabel>Add Person to Household</FormLabel>
-                  <Combobox
-                    onValueChange={(val: any) => {
-                      if (typeof val === "string") handleAddMember(val);
+                  <PersonSearchSelect
+                    people={availablePeople.filter(
+                      (p) => !form.getValues("memberIds").some((m) => m.personId === p.id)
+                    )}
+                    onValueChange={(val) => handleAddMember(val)}
+                    onPersonCreated={(newPerson) => {
+                      setAvailablePeople((prev) => [...prev, newPerson]);
+                      handleAddMember(newPerson.id!);
                     }}
-                  >
-                    <ComboboxInput placeholder="Search people by name..." />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {availablePeople
-                          .filter((p) => !form.getValues("memberIds").some((m) => m.personId === p.id))
-                          .map((p) => (
-                            <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
-                              {p.firstName} {p.lastName} ({p.email})
-                            </ComboboxItem>
-                          ))}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
+                    placeholder="Search people by name..."
+                    value="" // We don't want to show a selected value here as it's an "adder"
+                  />
                   <FormDescription>Select people to add them to this household group.</FormDescription>
                 </div>
               </div>

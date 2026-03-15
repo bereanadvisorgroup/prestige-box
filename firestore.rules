@@ -20,12 +20,12 @@ service cloud.firestore {
       return hasRole('admin');
     }
     
-    function isEmployee() {
-      return hasRole('employee');
+    function isAdvisor() {
+      return hasRole('advisor');
     }
     
     function isStaff() {
-      return isAdmin() || isEmployee();
+      return isAdmin() || isAdvisor();
     }
 
     // User profiles

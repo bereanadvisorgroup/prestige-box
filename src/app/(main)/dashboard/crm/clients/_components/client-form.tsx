@@ -16,9 +16,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
+import { formatPhoneNumber } from "@/lib/utils";
 import { type Client, ClientSchema, type PaymentAccount, type Person } from "@/types/crm";
 
 interface ClientFormProps {
@@ -157,27 +159,16 @@ export function ClientForm({ client }: ClientFormProps) {
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Select Person</FormLabel>
-                      <Combobox
+                      <PersonSearchSelect
                         value={field.value}
-                        onValueChange={(val: any) => {
-                          if (typeof val === "string") field.onChange(val);
+                        onValueChange={(val) => field.onChange(val)}
+                        people={availablePeople}
+                        onPersonCreated={(newPerson) => {
+                          setAvailablePeople((prev) => [...prev, newPerson]);
+                          field.onChange(newPerson.id);
                         }}
                         disabled={!!client}
-                      >
-                        <ComboboxInput
-                          placeholder="Search people..."
-                          value={selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : ""}
-                        />
-                        <ComboboxContent>
-                          <ComboboxList>
-                            {availablePeople.map((p) => (
-                              <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
-                                {p.firstName} {p.lastName} ({p.email})
-                              </ComboboxItem>
-                            ))}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
+                      />
                       <FormDescription>Select the person you want to create a CRM client record for.</FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -202,7 +193,7 @@ export function ClientForm({ client }: ClientFormProps) {
                       <span className="font-medium text-foreground/70">Email:</span> {selectedPerson.email}
                     </p>
                     <p className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/70">Phone:</span> {selectedPerson.mobilePhone}
+                      <span className="font-medium text-foreground/70">Phone:</span> {formatPhoneNumber(selectedPerson.mobilePhone)}
                     </p>
                   </div>
                 </div>

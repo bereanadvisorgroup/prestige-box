@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type Address, AddressSchema } from "@/types/crm";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 
 interface AddressFormProps {
   address?: Address;
@@ -77,7 +78,19 @@ export function AddressForm({ address }: AddressFormProps) {
                 <FormItem>
                   <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St" {...field} />
+                    <AddressAutocomplete
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onAddressSelect={(address) => {
+                        form.setValue("street1", address.street1, { shouldValidate: true });
+                        form.setValue("city", address.city, { shouldValidate: true });
+                        form.setValue("state", address.state, { shouldValidate: true });
+                        form.setValue("zipCode", address.zipCode, { shouldValidate: true });
+                        form.setValue("country", address.country, { shouldValidate: true });
+                      }}
+                      placeholder="Start typing to lookup address..."
+                      autoFocus
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

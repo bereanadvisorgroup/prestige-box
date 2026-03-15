@@ -52,7 +52,7 @@ export function LoginForm() {
       profile = {
         uid: user.uid,
         email: user.email,
-        role: userData.role as UserRole, // 'admin', 'employee', or 'client'
+        role: userData.role as UserRole, // 'admin', 'advisor', or 'client' (renamed from employee)
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone || "",

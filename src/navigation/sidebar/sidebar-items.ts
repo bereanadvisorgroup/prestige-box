@@ -48,7 +48,7 @@ export interface NavGroup {
   id: number;
   label?: string;
   items: NavMainItem[];
-  allowedRoles?: string[]; // E.g., ['admin', 'employee', 'client']
+  allowedRoles?: string[]; // E.g., ['admin', 'advisor', 'client']
 }
 
 export const sidebarItems: NavGroup[] = [
@@ -67,7 +67,7 @@ export const sidebarItems: NavGroup[] = [
   {
     id: 2,
     label: "Dashboards",
-    allowedRoles: ["admin", "employee"],
+    allowedRoles: ["admin", "advisor"],
     items: [
       {
         title: "CRM Pipeline",
@@ -84,7 +84,7 @@ export const sidebarItems: NavGroup[] = [
   {
     id: 3,
     label: "CRM Tools",
-    allowedRoles: ["admin", "employee"],
+    allowedRoles: ["admin", "advisor"],
     items: [
       {
         title: "Overview",
@@ -125,6 +125,16 @@ export const sidebarItems: NavGroup[] = [
         title: "Payments",
         url: "/dashboard/crm/payments",
         icon: DollarSign,
+      },
+      {
+        title: "Lawyers",
+        url: "/dashboard/crm/lawyers",
+        icon: GraduationCap,
+      },
+      {
+        title: "Accountants",
+        url: "/dashboard/crm/accountants",
+        icon: ReceiptText,
       },
     ],
   },

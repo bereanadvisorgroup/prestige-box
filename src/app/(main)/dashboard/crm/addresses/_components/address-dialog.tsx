@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
+import { useState, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type Address, AddressSchema } from "@/types/crm";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;
@@ -34,6 +36,20 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
       country: "USA",
     },
   });
+
+  // Reset form when dialog opens to ensure a fresh state
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        street1: "",
+        street2: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "USA",
+      });
+    }
+  }, [open, form.reset]);
 
   async function onSubmit(values: Address) {
     try {
@@ -77,7 +93,19 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
                 <FormItem>
                   <FormLabel>Street Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St" {...field} />
+                    <AddressAutocomplete
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onAddressSelect={(address) => {
+                        form.setValue("street1", address.street1, { shouldValidate: true });
+                        form.setValue("city", address.city, { shouldValidate: true });
+                        form.setValue("state", address.state, { shouldValidate: true });
+                        form.setValue("zipCode", address.zipCode, { shouldValidate: true });
+                        form.setValue("country", address.country, { shouldValidate: true });
+                      }}
+                      placeholder="Start typing to lookup address..."
+                      autoFocus
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
