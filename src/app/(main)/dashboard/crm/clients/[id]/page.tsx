@@ -89,7 +89,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
-                  <p className="text-sm font-semibold">{person?.email || "N/A"}</p>
+                  <p className="text-sm font-semibold">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
-                  <p className="text-sm font-semibold">{formatPhoneNumber(person?.mobilePhone) || "N/A"}</p>
+                  <p className="text-sm font-semibold">{formatPhoneNumber(person?.phones?.find(p => p.isPrimary)?.number || person?.phones?.[0]?.number) || "N/A"}</p>
                 </div>
               </div>
             </CardContent>

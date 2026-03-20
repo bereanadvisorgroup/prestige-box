@@ -62,14 +62,14 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
               <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">Email</p>
-                <p className="text-sm text-muted-foreground">{person?.email || "N/A"}</p>
+                <p className="text-sm text-muted-foreground">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">Phone</p>
-                <p className="text-sm text-muted-foreground">{formatPhoneNumber(person?.mobilePhone) || "N/A"}</p>
+                <p className="text-sm text-muted-foreground">{formatPhoneNumber(person?.phones?.find(p => p.isPrimary)?.number || person?.phones?.[0]?.number) || "N/A"}</p>
               </div>
             </div>
             <Separator />

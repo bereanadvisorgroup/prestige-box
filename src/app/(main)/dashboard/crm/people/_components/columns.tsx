@@ -28,15 +28,19 @@ export const columns = (onDelete: (person: Person) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Last Name" />,
   },
   {
-    accessorKey: "email",
+    id: "email",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Email" />,
+    cell: ({ row }: { row: Row<Person> }) => {
+      const email = row.original.emails?.find(e => e.isPrimary)?.address || row.original.emails?.[0]?.address || "N/A";
+      return <span>{email}</span>;
+    },
   },
   {
-    accessorKey: "mobilePhone",
+    id: "mobilePhone",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
     cell: ({ row }: { row: Row<Person> }) => {
-      const phone = row.original.mobilePhone;
-      return <span>{formatPhoneNumber(phone)}</span>;
+      const phone = row.original.phones?.find(p => p.isPrimary)?.number || row.original.phones?.[0]?.number;
+      return <span>{formatPhoneNumber(phone) || "N/A"}</span>;
     },
   },
   {

@@ -89,7 +89,8 @@ export async function deleteAddress(id: string) {
     }
 
     await adminDb.collection(COLLECTION).doc(id).delete();
-    revalidatePath("/dashboard/crm/addresses");
+    revalidatePath("/dashboard/crm/addresses", "page");
+    revalidatePath("/dashboard/crm/addresses", "layout");
 
     return { success: true };
   } catch (error: any) {

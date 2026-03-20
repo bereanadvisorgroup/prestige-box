@@ -5,30 +5,22 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Plus, Search, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Check, Eye, EyeOff, MapPin, Plus, Trash2 } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { getAddresses } from "@/actions/addresses";
+import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxTrigger,
-} from "@/components/ui/combobox";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { SsnInput } from "@/components/ui/ssn-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { type Address, type Person, PersonSchema } from "@/types/crm";
-
-import { AddressDialog } from "../../addresses/_components/address-dialog";
 
 interface PersonFormProps {
   person?: Person;
@@ -38,18 +30,75 @@ export function PersonForm({ person }: PersonFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
-  const [linkedAddresses, setLinkedAddresses] = useState<Address[]>([]);
+  const [showSSN, setShowSSN] = useState(false);
+  const [addressSearchQuery, setAddressSearchQuery] = useState("");
+
+  const defaultEmails = person?.emails?.length
+    ? person.emails
+    : [{ id: crypto.randomUUID(), address: "", type: "Personal" as const, isPrimary: true }];
+
+  const defaultPhones = person?.phones?.length
+    ? person.phones
+    : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
+
+  const defaultAddresses = person?.addresses?.length
+    ? person.addresses
+    : person?.addressIds?.length
+    ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
+    : [];
 
   const form = useForm<Person>({
     resolver: zodResolver(PersonSchema),
+    mode: "onChange",
     defaultValues: person || {
+      prefix: "",
       firstName: "",
       middleName: "",
       lastName: "",
-      email: "",
-      mobilePhone: "",
-      addressIds: [],
+      suffix: "",
+      emails: defaultEmails,
+      phones: defaultPhones,
+      addresses: defaultAddresses,
+      addressIds: defaultAddresses.map((a) => a.id),
+      driversLicense: {
+        number: "",
+        issueState: "",
+        issueDate: "",
+        expirationDate: "",
+      },
+      pii: {
+        ssn: "",
+        biologicalGender: undefined,
+        birthDate: "",
+      },
     },
+  });
+
+  const {
+    fields: emailFields,
+    append: appendEmail,
+    remove: removeEmail,
+  } = useFieldArray({
+    control: form.control,
+    name: "emails",
+  });
+
+  const {
+    fields: phoneFields,
+    append: appendPhone,
+    remove: removePhone,
+  } = useFieldArray({
+    control: form.control,
+    name: "phones",
+  });
+
+  const {
+    fields: addressFields,
+    append: appendAddress,
+    remove: removeAddress,
+  } = useFieldArray({
+    control: form.control,
+    name: "addresses",
   });
 
   useEffect(() => {
@@ -57,50 +106,68 @@ export function PersonForm({ person }: PersonFormProps) {
       const result = await getAddresses();
       if (result.success && result.addresses) {
         setAvailableAddresses(result.addresses);
-
-        // If editing, find the full address objects for the linked IDs
-        if (person?.addressIds?.length) {
-          const linked = result.addresses.filter((addr) => person.addressIds.includes(addr.id!));
-          setLinkedAddresses(linked);
-        }
       }
     }
     fetchAddresses();
-  }, [person]);
+  }, []);
 
-  const handleLinkAddress = (addressId: string) => {
-    const address = availableAddresses.find((a) => a.id === addressId);
-    if (address && !form.getValues("addressIds").includes(addressId)) {
-      const currentIds = form.getValues("addressIds");
-      form.setValue("addressIds", [...currentIds, addressId]);
-      setLinkedAddresses([...linkedAddresses, address]);
-    }
-  };
-
-  const handleUnlinkAddress = (addressId: string) => {
-    const currentIds = form.getValues("addressIds");
-    form.setValue(
-      "addressIds",
-      currentIds.filter((id) => id !== addressId),
+  const handleAddressSelect = async (addressData: Omit<Address, "id" | "createdAt">) => {
+    let addressId: string | undefined;
+    const existing = availableAddresses.find(
+      (a) =>
+        a.street1.toLowerCase() === addressData.street1.toLowerCase() &&
+        a.city.toLowerCase() === addressData.city.toLowerCase() &&
+        a.state.toLowerCase() === addressData.state.toLowerCase() &&
+        a.zipCode.toLowerCase() === addressData.zipCode.toLowerCase()
     );
-    setLinkedAddresses(linkedAddresses.filter((a) => a.id !== addressId));
-  };
 
-  const handleNewAddressCreated = (address: Address) => {
-    setAvailableAddresses([...availableAddresses, address]);
-    handleLinkAddress(address.id!);
+    if (existing && existing.id) {
+      addressId = existing.id;
+    } else {
+      const result = await createAddress(addressData);
+      if (result.success && result.id) {
+        addressId = result.id;
+        const newAddress = { ...addressData, id: result.id };
+        setAvailableAddresses((prev) => [...prev, newAddress]);
+      } else {
+        toast.error("Failed to create new address");
+        return;
+      }
+    }
+
+    if (!form.getValues("addresses").some((a) => a.id === addressId)) {
+      const isFirst = form.getValues("addresses").length === 0;
+      appendAddress({
+        id: addressId,
+        type: "Home",
+        isPrimary: isFirst,
+      });
+    }
+    setAddressSearchQuery("");
   };
 
   async function onSubmit(values: Person) {
     try {
       setIsLoading(true);
+
+      // Clean up empty optional compound objects if not fully filled out
+      const submission = { ...values };
+      if (!submission.driversLicense?.number && !submission.driversLicense?.issueState) {
+        delete submission.driversLicense;
+      }
+      if (!submission.pii?.ssn && !submission.pii?.biologicalGender && !submission.pii?.birthDate) {
+        delete submission.pii;
+      }
+      // Ensure addressIds syncs with addresses array
+      submission.addressIds = submission.addresses?.map((a) => a.id) || [];
+
       const isEditing = !!person?.id;
 
       let result;
       if (isEditing) {
-        result = await updatePerson(person.id!, values);
+        result = await updatePerson(person.id!, submission);
       } else {
-        result = await createPerson(values);
+        result = await createPerson(submission);
       }
 
       if (result.success) {
@@ -119,7 +186,7 @@ export function PersonForm({ person }: PersonFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-sm">
+    <Card className="w-full max-w-4xl mx-auto shadow-sm">
       <CardHeader>
         <CardTitle>{person ? "Edit Person" : "Add New Person"}</CardTitle>
       </CardHeader>
@@ -128,12 +195,32 @@ export function PersonForm({ person }: PersonFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
               <h3 className="text-sm font-medium border-b pb-2">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <FormField
+                  control={form.control}
+                  name="prefix"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Prefix</FormLabel>
+                      <FormControl>
+                        <Input list="prefixes" placeholder="Mr." {...field} />
+                      </FormControl>
+                      <datalist id="prefixes">
+                        <option value="Mr." />
+                        <option value="Mrs." />
+                        <option value="Ms." />
+                        <option value="Dr." />
+                        <option value="Prof." />
+                      </datalist>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-1">
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} />
@@ -146,7 +233,7 @@ export function PersonForm({ person }: PersonFormProps) {
                   control={form.control}
                   name="middleName"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-1">
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Quincy" {...field} />
@@ -159,7 +246,7 @@ export function PersonForm({ person }: PersonFormProps) {
                   control={form.control}
                   name="lastName"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-1">
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Doe" {...field} />
@@ -168,17 +255,231 @@ export function PersonForm({ person }: PersonFormProps) {
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="suffix"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Suffix</FormLabel>
                       <FormControl>
-                        <Input placeholder="john.doe@example.com" type="email" {...field} />
+                        <Input list="suffixes" placeholder="Jr." {...field} />
+                      </FormControl>
+                      <datalist id="suffixes">
+                        <option value="Jr." />
+                        <option value="Sr." />
+                        <option value="II" />
+                        <option value="III" />
+                        <option value="PhD" />
+                      </datalist>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Emails Section */}
+              <div className="pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <FormLabel className="text-base">Email Addresses</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendEmail({ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: false })
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Email
+                  </Button>
+                </div>
+                {emailFields.map((field, index) => (
+                  <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                    <FormField
+                      control={form.control}
+                      name={`emails.${index}.address`}
+                      render={({ field: inputField, fieldState }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input 
+                                placeholder="email@example.com" 
+                                type="email" 
+                                {...inputField} 
+                                className={fieldState.isDirty && !fieldState.invalid && inputField.value ? "pr-10" : ""}
+                              />
+                              {fieldState.isDirty && !fieldState.invalid && inputField.value && (
+                                <Check className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 h-4 w-4" />
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`emails.${index}.type`}
+                      render={({ field: selectField }) => (
+                        <FormItem className="w-full sm:w-32">
+                          <FormLabel className="text-xs">Type</FormLabel>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Personal">Personal</SelectItem>
+                              <SelectItem value="Work">Work</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`emails.${index}.isPrimary`}
+                      render={({ field: checkField }) => (
+                        <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
+                          <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                          <FormControl>
+                            <input
+                              type="radio"
+                              name="primaryEmail"
+                              checked={checkField.value}
+                              onChange={() => {
+                                // Set all to false, then this to true
+                                const currentEmails = form.getValues("emails");
+                                currentEmails.forEach((_, i) => form.setValue(`emails.${i}.isPrimary`, false));
+                                form.setValue(`emails.${index}.isPrimary`, true);
+                              }}
+                              className="h-4 w-4"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeEmail(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                      disabled={emailFields.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Phones Section */}
+              <div className="pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <FormLabel className="text-base">Phone Numbers</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendPhone({ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: false })
+                    }
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Phone
+                  </Button>
+                </div>
+                {phoneFields.map((field, index) => (
+                  <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                    <FormField
+                      control={form.control}
+                      name={`phones.${index}.number`}
+                      render={({ field: inputField }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">Number</FormLabel>
+                          <FormControl>
+                            <PhoneInput placeholder="555-000-0000" {...inputField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`phones.${index}.type`}
+                      render={({ field: selectField }) => (
+                        <FormItem className="w-full sm:w-32">
+                          <FormLabel className="text-xs">Type</FormLabel>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Work">Work</SelectItem>
+                              <SelectItem value="Home">Home</SelectItem>
+                              <SelectItem value="Mobile">Mobile</SelectItem>
+                              <SelectItem value="Vacation">Vacation</SelectItem>
+                              <SelectItem value="Fax">Fax</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`phones.${index}.isPrimary`}
+                      render={({ field: checkField }) => (
+                        <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
+                          <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                          <FormControl>
+                            <input
+                              type="radio"
+                              name="primaryPhone"
+                              checked={checkField.value}
+                              onChange={() => {
+                                const currentPhones = form.getValues("phones");
+                                currentPhones.forEach((_, i) => form.setValue(`phones.${i}.isPrimary`, false));
+                                form.setValue(`phones.${index}.isPrimary`, true);
+                              }}
+                              className="h-4 w-4"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePhone(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                      disabled={phoneFields.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Drivers License Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium border-b pb-2">Driver&apos;s License</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <FormField
+                  control={form.control}
+                  name="driversLicense.number"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>DL Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="D12345678" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -186,12 +487,38 @@ export function PersonForm({ person }: PersonFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="mobilePhone"
+                  name="driversLicense.issueState"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile Phone</FormLabel>
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Issue State</FormLabel>
                       <FormControl>
-                        <PhoneInput placeholder="555-000-0000" {...field} />
+                        <Input placeholder="CA" maxLength={2} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driversLicense.issueDate"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Issue Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driversLicense.expirationDate"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Expiration Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -200,56 +527,174 @@ export function PersonForm({ person }: PersonFormProps) {
               </div>
             </div>
 
-            <div className="space-y-4 pt-2">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="text-sm font-medium">Addresses</h3>
-                <AddressDialog onAddressCreated={handleNewAddressCreated} />
+            {/* PII Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium border-b pb-2">Personal Identifiable Information (PII)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="pii.ssn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SSN</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <SsnInput
+                            type={showSSN ? "text" : "password"}
+                            placeholder="XXX-XX-XXXX"
+                            {...field}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowSSN(!showSSN)}
+                        >
+                          {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          <span className="sr-only">{showSSN ? "Hide SSN" : "Show SSN"}</span>
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pii.biologicalGender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Biological Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pii.birthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Birth Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium border-b pb-2">Addresses</h3>
+              
+              <div className="space-y-2 mb-4">
+                <FormLabel>Search & Add Address</FormLabel>
+                <AddressAutocomplete 
+                  value={addressSearchQuery}
+                  onValueChange={setAddressSearchQuery}
+                  onAddressSelect={handleAddressSelect} 
+                  placeholder="Start typing an address using Google Places..."
+                />
               </div>
 
-              {linkedAddresses.length > 0 && (
-                <div className="space-y-2">
-                  {linkedAddresses.map((addr) => (
-                    <div key={addr.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                        <div className="text-sm">
-                          <p className="font-medium">
-                            {addr.street1}
-                            {addr.street2 ? `, ${addr.street2}` : ""}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {addr.city}, {addr.state} {addr.zipCode}
-                          </p>
+              {addressFields.length > 0 && (
+                <div className="space-y-3">
+                  {addressFields.map((field, index) => {
+                    const addressId = form.watch("addresses")[index]?.id;
+                    const addrDetails = availableAddresses.find(a => a.id === addressId);
+                    return (
+                      <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                        <div className="flex-1">
+                          <FormLabel className="text-xs text-muted-foreground block mb-2">Address details</FormLabel>
+                          {addrDetails ? (
+                            <div className="flex items-start gap-2 h-10 py-2">
+                              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                              <div className="text-sm">
+                                <span className="font-medium mr-1">
+                                  {addrDetails.street1}{addrDetails.street2 ? `, ${addrDetails.street2}` : ""}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {addrDetails.city}, {addrDetails.state} {addrDetails.zipCode}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-10 py-2 text-sm text-muted-foreground flex items-center">Loading details...</div>
+                          )}
                         </div>
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.type`}
+                          render={({ field: selectField }) => (
+                            <FormItem className="w-full sm:w-32">
+                              <FormLabel className="text-xs">Type</FormLabel>
+                              <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Home">Home</SelectItem>
+                                  <SelectItem value="Business">Business</SelectItem>
+                                  <SelectItem value="Vacation">Vacation</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.isPrimary`}
+                          render={({ field: checkField }) => (
+                            <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
+                              <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                              <FormControl>
+                                <input
+                                  type="radio"
+                                  name="primaryAddress"
+                                  checked={checkField.value}
+                                  onChange={() => {
+                                    const currentAddresses = form.getValues("addresses");
+                                    currentAddresses.forEach((_, i) => form.setValue(`addresses.${i}.isPrimary`, false));
+                                    form.setValue(`addresses.${index}.isPrimary`, true);
+                                  }}
+                                  className="h-4 w-4"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeAddress(index)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        onClick={() => handleUnlinkAddress(addr.id!)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
-
-              <div className="space-y-2">
-                <FormLabel>Link Existing Address</FormLabel>
-                <div className="flex gap-2">
-                  <AddressSearchSelect
-                    value=""
-                    onValueChange={(val) => {
-                      if (typeof val === "string") handleLinkAddress(val);
-                    }}
-                    addresses={availableAddresses.filter((addr) => !form.getValues("addressIds").includes(addr.id!))}
-                    onAddressCreated={handleNewAddressCreated}
-                  />
-                </div>
-                <FormDescription>Search for an existing address or click 'Add New Address' in the dropdown.</FormDescription>
-              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">

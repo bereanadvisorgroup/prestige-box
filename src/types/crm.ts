@@ -13,13 +13,56 @@ export const AddressSchema = z.object({
   createdAt: z.string().optional(),
 });
 
+export const EmailTypeSchema = z.enum(["Personal", "Work", "Other"]);
+export const EmailAddressSchema = z.object({
+  id: z.string(),
+  address: z.string().email("Invalid email address"),
+  type: EmailTypeSchema,
+  isPrimary: z.boolean().default(false),
+});
+
+export const PhoneTypeSchema = z.enum(["Work", "Home", "Mobile", "Vacation", "Fax", "Other"]);
+export const PhoneNumberSchema = z.object({
+  id: z.string(),
+  number: z.string().min(1, "Phone number is required"),
+  type: PhoneTypeSchema,
+  isPrimary: z.boolean().default(false),
+});
+
+export const DriversLicenseSchema = z.object({
+  number: z.string().optional(),
+  issueState: z.string().optional(),
+  issueDate: z.string().optional(),
+  expirationDate: z.string().optional(),
+});
+
+export const BiologicalGenderSchema = z.enum(["Male", "Female"]);
+
+export const PiiSchema = z.object({
+  ssn: z.string().optional(),
+  biologicalGender: BiologicalGenderSchema.optional(),
+  birthDate: z.string().optional(),
+});
+
+export const AddressTypeSchema = z.enum(["Home", "Business", "Vacation", "Other"]);
+export const PersonAddressSchema = z.object({
+  id: z.string(),
+  type: AddressTypeSchema,
+  isPrimary: z.boolean().default(false),
+});
+
 export const PersonSchema = z.object({
   id: z.string().optional(),
+  prefix: z.string().optional(),
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
-  mobilePhone: z.string().min(1, "Mobile phone is required"),
-  email: z.string().email("Invalid email address"),
+  suffix: z.string().optional(),
+  emails: z.array(EmailAddressSchema).default([]),
+  phones: z.array(PhoneNumberSchema).default([]),
+  driversLicense: DriversLicenseSchema.optional(),
+  pii: PiiSchema.optional(),
+  addresses: z.array(PersonAddressSchema).default([]),
   addressIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -144,6 +187,7 @@ export const AccountantSchema = z.object({
 // --- Inferred Types ---
 
 export type Address = z.infer<typeof AddressSchema>;
+export type PersonAddress = z.infer<typeof PersonAddressSchema>;
 export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;

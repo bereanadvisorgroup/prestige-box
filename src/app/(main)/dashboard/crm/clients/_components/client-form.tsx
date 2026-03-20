@@ -190,10 +190,10 @@ export function ClientForm({ client }: ClientFormProps) {
                   </p>
                   <div className="flex flex-col text-muted-foreground gap-0.5 mt-1">
                     <p className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/70">Email:</span> {selectedPerson.email}
+                      <span className="font-medium text-foreground/70">Email:</span> {selectedPerson.emails?.find(e => e.isPrimary)?.address || selectedPerson.emails?.[0]?.address || "N/A"}
                     </p>
                     <p className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/70">Phone:</span> {formatPhoneNumber(selectedPerson.mobilePhone)}
+                      <span className="font-medium text-foreground/70">Phone:</span> {formatPhoneNumber(selectedPerson.phones?.find(p => p.isPrimary)?.number || selectedPerson.phones?.[0]?.number) || "N/A"}
                     </p>
                   </div>
                 </div>
