@@ -137,12 +137,61 @@ export const CompanySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild"]);
+export const FamilyMemberSchema = z.object({
+  id: z.string().optional(),
+  personId: z.string(),
+  relationship: FamilyRelationType,
+});
+
+export const EmploymentSchema = z.object({
+  id: z.string().optional(),
+  occupation: z.string().min(1, "Occupation is required"),
+  employerName: z.string().min(1, "Employer name is required"),
+  employerAddressId: z.string().optional(),
+  employerPhone: z.string().optional(),
+  startDate: z.string().optional(), // YYYY-MM-DD
+  endDate: z.string().optional(), // YYYY-MM-DD
+});
+
+export const DocumentSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  url: z.string(),
+  type: z.string(), // PC / Life / Estate / etc specific types
+  uploadedAt: z.string().optional(),
+});
+
+export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card"]);
+export const LoanSchema = z.object({
+  id: z.string().optional(),
+  loanType: LoanTypeSelection,
+  creditorName: z.string().min(1, "Creditor name is required"),
+  currentBalance: z.number().default(0),
+  statementPath: z.string().optional(),
+});
+
+export const MortgageSchema = z.object({
+  id: z.string().optional(),
+  addressId: z.string(),
+  purchasePrice: z.number().optional(),
+  currentMarketValue: z.number().optional(),
+  statementPath: z.string().optional(),
+});
+
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
+  familyMembers: z.array(FamilyMemberSchema).default([]),
+  employments: z.array(EmploymentSchema).default([]),
+  pcDocuments: z.array(DocumentSchema).default([]),
+  lifeDocuments: z.array(DocumentSchema).default([]),
+  estateDocuments: z.array(DocumentSchema).default([]),
+  liabilities: z.array(LoanSchema).default([]),
+  mortgages: z.array(MortgageSchema).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -203,6 +252,11 @@ export type Lawyer = z.infer<typeof LawyerSchema>;
 export type Accountant = z.infer<typeof AccountantSchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;
+export type FamilyMember = z.infer<typeof FamilyMemberSchema>;
+export type Employment = z.infer<typeof EmploymentSchema>;
+export type LoanInfo = z.infer<typeof LoanSchema>;
+export type MortgageInfo = z.infer<typeof MortgageSchema>;
+export type ClientDocument = z.infer<typeof DocumentSchema>;
 
 // --- Dashboard Types ---
 

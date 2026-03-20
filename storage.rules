@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /clients/{clientId}/{allPaths=**} {
+      // Allow read/write access to client documents if the user is authenticated
+      // You may want to restrict this further to only 'staff' roles similar to Firestore rules
+      allow read, write: if request.auth != null;
+    }
+  }
+}

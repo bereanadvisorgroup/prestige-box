@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { getClient } from "@/actions/clients";
-import { ClientForm } from "@/app/(main)/dashboard/crm/clients/_components/client-form";
+import { ClientProfileTabs } from "../_components/client-profile-tabs";
+import type { Person } from "@/types/crm";
 
 interface EditClientPageProps {
   params: {
@@ -18,8 +19,13 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
-      <ClientForm client={result.client} />
+    <div className="w-full max-w-7xl mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-2 mb-4">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Edit Client Profile</h1>
+        <p className="text-muted-foreground">Modify client preferences, personal details, family, and documentation.</p>
+      </div>
+      
+      <ClientProfileTabs client={result.client} person={result.person as Person | null} />
     </div>
   );
 }

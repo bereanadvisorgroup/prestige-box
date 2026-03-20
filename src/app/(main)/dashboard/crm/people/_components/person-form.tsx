@@ -24,9 +24,10 @@ import { type Address, type Person, PersonSchema } from "@/types/crm";
 
 interface PersonFormProps {
   person?: Person;
+  onSuccess?: (personId: string) => void;
 }
 
-export function PersonForm({ person }: PersonFormProps) {
+export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
@@ -172,7 +173,11 @@ export function PersonForm({ person }: PersonFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Person updated successfully" : "Person created successfully");
-        router.push("/dashboard/crm/people");
+        if (onSuccess) {
+          onSuccess(isEditing ? person.id! : (result as any).id);
+        } else {
+          router.push("/dashboard/crm/people");
+        }
         router.refresh();
       } else {
         toast.error(result.error || `Failed to ${isEditing ? "update" : "create"} person`);
