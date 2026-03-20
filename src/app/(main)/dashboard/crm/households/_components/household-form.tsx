@@ -179,7 +179,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                           <p className="text-sm font-medium">
                             {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
                           </p>
-                          <p className="text-xs text-muted-foreground">{person?.email}</p>
+                          <p className="text-xs text-muted-foreground">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address}</p>
                         </div>
                       </div>
 

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { deleteAddress } from "@/actions/addresses";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -15,15 +14,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import type { Address } from "@/types/crm";
 
 interface DeleteAddressAlertProps {
   address: Address;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (id: string) => void;
 }
 
-export function DeleteAddressAlert({ address, open, onOpenChange }: DeleteAddressAlertProps) {
+export function DeleteAddressAlert({ address, open, onOpenChange, onDeleted }: DeleteAddressAlertProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
@@ -31,8 +32,12 @@ export function DeleteAddressAlert({ address, open, onOpenChange }: DeleteAddres
       setIsDeleting(true);
       const result = await deleteAddress(address.id!);
       if (result.success) {
-        toast.success(`Address deleted successfully`);
-        onOpenChange(false);
+        toast.success("Address deleted successfully");
+        if (onDeleted) {
+          onDeleted(address.id!);
+        } else {
+          onOpenChange(false);
+        }
       } else {
         toast.error(result.error || "Failed to delete address. Ensure no people are linked to it.");
       }
@@ -44,7 +49,9 @@ export function DeleteAddressAlert({ address, open, onOpenChange }: DeleteAddres
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={(newOpen) => {
+      if (!isDeleting) onOpenChange(newOpen);
+    }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -58,16 +65,13 @@ export function DeleteAddressAlert({ address, open, onOpenChange }: DeleteAddres
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
+          <Button
             disabled={isDeleting}
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete();
-            }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={handleDelete}
+            variant="destructive"
           >
             {isDeleting ? "Deleting..." : "Delete Address"}
-          </AlertDialogAction>
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

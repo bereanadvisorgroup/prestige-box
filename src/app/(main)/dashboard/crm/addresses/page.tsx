@@ -1,8 +1,10 @@
 import Link from "next/link";
+export const dynamic = "force-dynamic";
 
 import { AlertCircle, MapPin, Plus } from "lucide-react";
 
 import { getAddresses } from "@/actions/addresses";
+import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +12,7 @@ import { AddressesTable } from "./_components/addresses-table";
 
 export default async function AddressesPage() {
   const result = await getAddresses();
+  const peopleResult = await getPeople();
 
   if (!result.success) {
     return (
@@ -30,6 +33,28 @@ export default async function AddressesPage() {
   }
 
   const addresses = result.addresses || [];
+  const people = peopleResult.success && peopleResult.people ? peopleResult.people : [];
+
+  const enrichedAddresses = addresses.map((addr) => {
+    const linkedPeople = people.flatMap((p) => {
+      const addrLink = p.addresses?.find((a) => a.id === addr.id);
+      if (addrLink) {
+        return [{
+          id: p.id!,
+          name: `${p.firstName} ${p.lastName}`,
+          type: addrLink.type
+        }];
+      } else if (p.addressIds?.includes(addr.id!)) {
+        return [{
+          id: p.id!,
+          name: `${p.firstName} ${p.lastName}`,
+          type: "Home"
+        }];
+      }
+      return [];
+    });
+    return { ...addr, linkedPeople };
+  });
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
@@ -47,7 +72,7 @@ export default async function AddressesPage() {
       </div>
 
       <div className="space-y-4">
-        <AddressesTable data={addresses} />
+        <AddressesTable data={enrichedAddresses} />
       </div>
     </div>
   );

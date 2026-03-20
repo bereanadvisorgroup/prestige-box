@@ -17,6 +17,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Address } from "@/types/crm";
 
+export type EnrichedAddress = Address & {
+  linkedPeople?: { id: string; name: string; type: string }[];
+};
+
 export const columns = (onDelete: (address: Address) => void) => [
   {
     accessorKey: "street1",
@@ -35,8 +39,25 @@ export const columns = (onDelete: (address: Address) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Zip Code" />,
   },
   {
+    accessorKey: "linkedPeople",
+    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Associated People" />,
+    cell: ({ row }: { row: Row<EnrichedAddress> }) => {
+      const people = row.original.linkedPeople || [];
+      if (people.length === 0) return <span className="text-muted-foreground">-</span>;
+      return (
+        <div className="flex flex-col gap-1">
+          {people.map((p) => (
+            <span key={`${p.id}-${p.type}`} className="text-sm">
+              {p.name} - {p.type}
+            </span>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
     id: "actions",
-    cell: ({ row }: { row: Row<Address> }) => {
+    cell: ({ row }: { row: Row<EnrichedAddress> }) => {
       const address = row.original;
 
       return (

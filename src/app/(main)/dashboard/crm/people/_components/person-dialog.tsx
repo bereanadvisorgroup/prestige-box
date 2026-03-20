@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, User } from "lucide-react";
+import { Check, Plus, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -27,12 +27,13 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
 
   const form = useForm<Person>({
     resolver: zodResolver(PersonSchema),
+    mode: "onChange",
     defaultValues: {
       firstName: "",
       middleName: "",
       lastName: "",
-      mobilePhone: "",
-      email: "",
+      phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
+      emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
       addressIds: [],
     },
   });
@@ -44,8 +45,8 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
         firstName: "",
         middleName: "",
         lastName: "",
-        mobilePhone: "",
-        email: "",
+        phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
+        emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
         addressIds: [],
       });
     }
@@ -135,12 +136,22 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="email"
-                render={({ field }) => (
+                name="emails.0.address"
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="john.doe@example.com" {...field} />
+                      <div className="relative">
+                        <Input 
+                          type="email" 
+                          placeholder="john.doe@example.com" 
+                          {...field} 
+                          className={fieldState.isDirty && !fieldState.invalid && field.value ? "pr-10" : ""}
+                        />
+                        {fieldState.isDirty && !fieldState.invalid && field.value && (
+                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 h-4 w-4" />
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,7 +159,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
               />
               <FormField
                 control={form.control}
-                name="mobilePhone"
+                name="phones.0.number"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mobile Phone</FormLabel>

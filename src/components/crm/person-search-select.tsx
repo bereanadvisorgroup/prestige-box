@@ -69,7 +69,7 @@ export function PersonSearchSelect({
                   <span className="font-medium">
                     {p.firstName} {p.lastName}
                   </span>
-                  <span className="text-xs text-muted-foreground">{p.email}</span>
+                  <span className="text-xs text-muted-foreground">{p.emails?.find(e => e.isPrimary)?.address || p.emails?.[0]?.address || "No Email"}</span>
                 </div>
               </div>
             </ComboboxItem>
