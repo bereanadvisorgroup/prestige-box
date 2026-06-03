@@ -1,22 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GraduationCap, MapPin, Users, Plus, Trash2 } from "lucide-react";
+import { GraduationCap, MapPin, Plus, Trash2, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
-import { getPeople } from "@/actions/people";
 import { createLawyer, updateLawyer } from "@/actions/lawyers";
+import { getPeople } from "@/actions/people";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type Address, type Client, type Lawyer, LawyerSchema, type Person } from "@/types/crm";
@@ -195,7 +197,11 @@ export function LawyerForm({ lawyer }: LawyerFormProps) {
                           const person = (client as any).person;
                           if (!person) return null;
                           return (
-                            <ComboboxItem key={client.id} value={client.id!} label={`${person.firstName} ${person.lastName}`}>
+                            <ComboboxItem
+                              key={client.id}
+                              value={client.id!}
+                              label={`${person.firstName} ${person.lastName}`}
+                            >
                               {person.firstName} {person.lastName}
                             </ComboboxItem>
                           );

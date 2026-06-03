@@ -3,13 +3,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Client, Person } from "@/types/crm";
 
-import { PersonalTab } from "./tabs/personal-tab";
-import { FamilyTab } from "./tabs/family-tab";
-import { EmploymentTab } from "./tabs/employment-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
-import { MortgageTab } from "./tabs/mortgage-tab";
-import { LiabilitiesTab } from "./tabs/liabilities-tab";
+import { EmploymentTab } from "./tabs/employment-tab";
+import { FamilyTab } from "./tabs/family-tab";
 import { GeneralTab } from "./tabs/general-tab";
+import { LiabilitiesTab } from "./tabs/liabilities-tab";
+import { MortgageTab } from "./tabs/mortgage-tab";
+import { PersonalTab } from "./tabs/personal-tab";
 
 interface ClientProfileTabsProps {
   client: Client;

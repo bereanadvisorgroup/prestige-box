@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { useState, useEffect } from "react";
+import type * as React from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -9,12 +9,12 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createAddress } from "@/actions/addresses";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type Address, AddressSchema } from "@/types/crm";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;

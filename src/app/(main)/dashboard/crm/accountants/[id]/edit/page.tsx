@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+
 import { getAccountant } from "@/actions/accountants";
+
 import { AccountantForm } from "../../_components/accountant-form";
 
 interface EditAccountantPageProps {

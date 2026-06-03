@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
 import type { Row } from "@tanstack/react-table";
-import { GraduationCap, Edit, Eye, MoreHorizontal, Trash2, MapPin } from "lucide-react";
+import { Edit, Eye, GraduationCap, MapPin, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Lawyer, Person, Address } from "@/types/crm";
+import type { Address, Lawyer, Person } from "@/types/crm";
 
 export const columns = (onDelete: (lawyer: Lawyer) => void) => [
   {
@@ -61,7 +62,11 @@ export const columns = (onDelete: (lawyer: Lawyer) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Clients" />,
     cell: ({ row }: { row: Row<Lawyer> }) => {
       const count = row.original.clientIds?.length || 0;
-      return <span className="text-sm">{count} {count === 1 ? 'Client' : 'Clients'}</span>;
+      return (
+        <span className="text-sm">
+          {count} {count === 1 ? "Client" : "Clients"}
+        </span>
+      );
     },
   },
   {

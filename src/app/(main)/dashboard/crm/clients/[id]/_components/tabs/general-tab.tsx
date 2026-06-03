@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { CreditCard, Heart, Loader2, Plus, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
+
 import { updateClient } from "@/actions/clients";
 import { getClientPoliciesByClient } from "@/actions/policies";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sportsTeams } from "@/data/sports-teams";
-import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { type Client, type PaymentAccount } from "@/types/crm";
+import type { Client, PaymentAccount } from "@/types/crm";
 
 export function GeneralTab({ client }: { client: Client }) {
   const router = useRouter();
@@ -120,9 +123,7 @@ export function GeneralTab({ client }: { client: Client }) {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
-            {hobbies.length === 0 && (
-              <p className="text-xs text-muted-foreground p-1 italic">No hobbies listed yet.</p>
-            )}
+            {hobbies.length === 0 && <p className="text-xs text-muted-foreground p-1 italic">No hobbies listed yet.</p>}
             {hobbies.map((hobby, index) => (
               <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
                 {hobby}
@@ -148,7 +149,11 @@ export function GeneralTab({ client }: { client: Client }) {
           <CardDescription>Link individual sports teams for relevant news updates.</CardDescription>
         </CardHeader>
         <CardContent className="pt-6 space-y-4">
-          <Combobox onValueChange={(val: any) => { if (typeof val === "string") handleToggleSportsTeam(val); }}>
+          <Combobox
+            onValueChange={(val: any) => {
+              if (typeof val === "string") handleToggleSportsTeam(val);
+            }}
+          >
             <ComboboxInput placeholder="Search NFL, MLB, NBA, NHL..." />
             <ComboboxContent>
               <ComboboxList>
@@ -168,7 +173,11 @@ export function GeneralTab({ client }: { client: Client }) {
               <p className="text-xs text-muted-foreground p-1 italic">No sports teams linked yet.</p>
             )}
             {favoriteTeams.map((teamName, index) => (
-              <Badge key={index} variant="default" className="gap-1 px-3 py-1 font-bold bg-primary text-primary-foreground">
+              <Badge
+                key={index}
+                variant="default"
+                className="gap-1 px-3 py-1 font-bold bg-primary text-primary-foreground"
+              >
                 {teamName}
                 <button
                   type="button"
@@ -215,7 +224,10 @@ export function GeneralTab({ client }: { client: Client }) {
               </p>
             )}
             {paymentAccounts.map((account) => (
-              <div key={account.id} className="flex items-center justify-between p-3 bg-background rounded-md border group">
+              <div
+                key={account.id}
+                className="flex items-center justify-between p-3 bg-background rounded-md border group"
+              >
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">{account.name}</span>

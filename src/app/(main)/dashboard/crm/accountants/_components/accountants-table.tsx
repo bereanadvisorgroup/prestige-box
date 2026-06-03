@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+
+import { toast } from "sonner";
+
+import { deleteAccountant } from "@/actions/accountants";
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
-import { deleteAccountant } from "@/actions/accountants";
-import { type Accountant } from "@/types/crm";
-import { toast } from "sonner";
+import type { Accountant } from "@/types/crm";
 
 import { columns } from "./columns";
 import { DeleteAccountantAlert } from "./delete-accountant-alert";
@@ -20,7 +22,7 @@ export function AccountantsTable({ data }: AccountantsTableProps) {
 
   const handleDelete = async () => {
     if (!accountantToDelete?.id) return;
-    
+
     setIsDeleting(true);
     try {
       const result = await deleteAccountant(accountantToDelete.id);
@@ -46,13 +48,17 @@ export function AccountantsTable({ data }: AccountantsTableProps) {
   return (
     <>
       <DataTable table={table} columns={columns(setAccountantToDelete)} />
-      
+
       <DeleteAccountantAlert
         isOpen={!!accountantToDelete}
         onClose={() => setAccountantToDelete(null)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        accountantName={accountantToDelete ? (accountantToDelete as any).person?.firstName + " " + (accountantToDelete as any).person?.lastName : ""}
+        accountantName={
+          accountantToDelete
+            ? (accountantToDelete as any).person?.firstName + " " + (accountantToDelete as any).person?.lastName
+            : ""
+        }
       />
     </>
   );

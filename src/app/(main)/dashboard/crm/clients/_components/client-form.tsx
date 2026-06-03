@@ -12,11 +12,11 @@ import { toast } from "sonner";
 import { createClient, updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
 import { getClientPoliciesByClient } from "@/actions/policies";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
@@ -190,10 +190,16 @@ export function ClientForm({ client }: ClientFormProps) {
                   </p>
                   <div className="flex flex-col text-muted-foreground gap-0.5 mt-1">
                     <p className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/70">Email:</span> {selectedPerson.emails?.find(e => e.isPrimary)?.address || selectedPerson.emails?.[0]?.address || "N/A"}
+                      <span className="font-medium text-foreground/70">Email:</span>{" "}
+                      {selectedPerson.emails?.find((e) => e.isPrimary)?.address ||
+                        selectedPerson.emails?.[0]?.address ||
+                        "N/A"}
                     </p>
                     <p className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/70">Phone:</span> {formatPhoneNumber(selectedPerson.phones?.find(p => p.isPrimary)?.number || selectedPerson.phones?.[0]?.number) || "N/A"}
+                      <span className="font-medium text-foreground/70">Phone:</span>{" "}
+                      {formatPhoneNumber(
+                        selectedPerson.phones?.find((p) => p.isPrimary)?.number || selectedPerson.phones?.[0]?.number,
+                      ) || "N/A"}
                     </p>
                   </div>
                 </div>

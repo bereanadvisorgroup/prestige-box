@@ -33,8 +33,8 @@ export function DeleteAccountantAlert({
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete the accountant record for{" "}
-            <span className="font-semibold text-foreground">{accountantName}</span> and
-            remove all associations. This action cannot be undone.
+            <span className="font-semibold text-foreground">{accountantName}</span> and remove all associations. This
+            action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

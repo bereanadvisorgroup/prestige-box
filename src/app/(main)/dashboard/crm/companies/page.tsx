@@ -36,9 +36,7 @@ export default async function CompaniesPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage companies associated with client records.
-          </p>
+          <p className="text-muted-foreground mt-2">View and manage companies associated with client records.</p>
         </div>
         <Button asChild className="font-semibold shadow-sm">
           <Link href="/dashboard/crm/companies/new">

@@ -19,13 +19,7 @@ interface DeleteLawyerAlertProps {
   lawyerName: string;
 }
 
-export function DeleteLawyerAlert({
-  isOpen,
-  onClose,
-  onConfirm,
-  isLoading,
-  lawyerName,
-}: DeleteLawyerAlertProps) {
+export function DeleteLawyerAlert({ isOpen, onClose, onConfirm, isLoading, lawyerName }: DeleteLawyerAlertProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
@@ -33,8 +27,8 @@ export function DeleteLawyerAlert({
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete the lawyer record for{" "}
-            <span className="font-semibold text-foreground">{lawyerName}</span> and
-            remove all associations. This action cannot be undone.
+            <span className="font-semibold text-foreground">{lawyerName}</span> and remove all associations. This action
+            cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

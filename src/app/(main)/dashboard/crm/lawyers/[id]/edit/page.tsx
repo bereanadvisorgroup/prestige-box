@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+
 import { getLawyer } from "@/actions/lawyers";
+
 import { LawyerForm } from "../../_components/lawyer-form";
 
 interface EditLawyerPageProps {

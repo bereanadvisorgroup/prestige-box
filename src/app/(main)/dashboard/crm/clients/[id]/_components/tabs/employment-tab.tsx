@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, Trash2, Briefcase } from "lucide-react";
+
+import { Briefcase, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { updateClient } from "@/actions/clients";
+
 import { createAddress } from "@/actions/addresses";
-import { type Client, type Employment, type Address } from "@/types/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { updateClient } from "@/actions/clients";
 import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import type { Address, Client, Employment } from "@/types/crm";
 
 export function EmploymentTab({ client }: { client: Client }) {
   const [employments, setEmployments] = useState<Employment[]>(client.employments || []);

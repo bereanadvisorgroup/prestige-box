@@ -1,7 +1,7 @@
 "use client";
 
 import { PersonForm } from "@/app/(main)/dashboard/crm/people/_components/person-form";
-import { type Person } from "@/types/crm";
+import type { Person } from "@/types/crm";
 
 export function PersonalTab({ person }: { person: Person }) {
   return (

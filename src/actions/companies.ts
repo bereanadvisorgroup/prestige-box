@@ -28,11 +28,8 @@ export async function getCompaniesByClient(clientId: string) {
   try {
     if (!adminDb) throw new Error("Firebase admin not configured");
 
-    const snapshot = await adminDb
-      .collection(COLLECTION)
-      .where("clientIds", "array-contains", clientId)
-      .get();
-      
+    const snapshot = await adminDb.collection(COLLECTION).where("clientIds", "array-contains", clientId).get();
+
     const companies = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -75,7 +72,7 @@ export async function createCompany(data: Partial<Company>) {
     const docRef = await adminDb.collection(COLLECTION).add(validated);
     revalidatePath("/dashboard/crm/companies");
     if (data.clientIds?.length) {
-      data.clientIds.forEach(id => revalidatePath(`/dashboard/crm/clients/${id}`));
+      data.clientIds.forEach((id) => revalidatePath(`/dashboard/crm/clients/${id}`));
     }
 
     return { success: true, id: docRef.id };
@@ -97,10 +94,10 @@ export async function updateCompany(id: string, data: Partial<Company>) {
     await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
     revalidatePath("/dashboard/crm/companies");
     revalidatePath(`/dashboard/crm/companies/${id}`);
-    
+
     // Attempting to revalidate any clients that might be affected
     if (data.clientIds?.length) {
-      data.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      data.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };
@@ -119,9 +116,9 @@ export async function deleteCompany(id: string) {
 
     await adminDb.collection(COLLECTION).doc(id).delete();
     revalidatePath("/dashboard/crm/companies");
-    
+
     if (company?.clientIds?.length) {
-      company.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      company.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };

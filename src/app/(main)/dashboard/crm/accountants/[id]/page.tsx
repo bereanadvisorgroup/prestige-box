@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Briefcase, Building2, Edit, ReceiptText, Mail, MapPin, Phone, Users } from "lucide-react";
+
+import { Briefcase, Building2, Edit, Mail, MapPin, Phone, ReceiptText, Users } from "lucide-react";
 
 import { getAccountant } from "@/actions/accountants";
 import { Badge } from "@/components/ui/badge";
@@ -62,14 +63,19 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
               <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">Email</p>
-                <p className="text-sm text-muted-foreground">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
                 <p className="text-sm font-medium leading-none">Phone</p>
-                <p className="text-sm text-muted-foreground">{formatPhoneNumber(person?.phones?.find(p => p.isPrimary)?.number || person?.phones?.[0]?.number) || "N/A"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatPhoneNumber(person?.phones?.find((p) => p.isPrimary)?.number || person?.phones?.[0]?.number) ||
+                    "N/A"}
+                </p>
               </div>
             </div>
             <Separator />
@@ -81,7 +87,9 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
                   <div className="text-sm text-muted-foreground">
                     <p>{address.street1}</p>
                     {address.street2 && <p>{address.street2}</p>}
-                    <p>{address.city}, {address.state} {address.zipCode}</p>
+                    <p>
+                      {address.city}, {address.state} {address.zipCode}
+                    </p>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No address provided</p>
@@ -102,8 +110,8 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
             {accountant.clientIds && accountant.clientIds.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {accountant.clientIds.map((clientId) => (
-                  <Link 
-                    key={clientId} 
+                  <Link
+                    key={clientId}
                     href={`/dashboard/crm/clients/${clientId}`}
                     className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                   >

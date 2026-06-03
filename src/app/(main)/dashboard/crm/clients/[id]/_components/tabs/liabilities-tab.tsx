@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, Trash2, CreditCard, UploadCloud, FileText } from "lucide-react";
+
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { CreditCard, FileText, Loader2, Plus, Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
-import { storage } from "@/lib/firebase.client";
+
 import { updateClient } from "@/actions/clients";
-import { type Client, type LoanInfo } from "@/types/crm";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { storage } from "@/lib/firebase.client";
+import type { Client, LoanInfo } from "@/types/crm";
 
 export function LiabilitiesTab({ client }: { client: Client }) {
   const [liabilities, setLiabilities] = useState<LoanInfo[]>(client.liabilities || []);
@@ -30,7 +32,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
     }
     try {
       setIsLoading(true);
-      let statementPath = undefined;
+      let statementPath;
 
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();

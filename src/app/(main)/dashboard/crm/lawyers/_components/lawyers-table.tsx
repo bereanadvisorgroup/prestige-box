@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+
+import { toast } from "sonner";
+
+import { deleteLawyer } from "@/actions/lawyers";
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
-import { deleteLawyer } from "@/actions/lawyers";
-import { type Lawyer } from "@/types/crm";
-import { toast } from "sonner";
+import type { Lawyer } from "@/types/crm";
 
 import { columns } from "./columns";
 import { DeleteLawyerAlert } from "./delete-lawyer-alert";
@@ -20,7 +22,7 @@ export function LawyersTable({ data }: LawyersTableProps) {
 
   const handleDelete = async () => {
     if (!lawyerToDelete?.id) return;
-    
+
     setIsDeleting(true);
     try {
       const result = await deleteLawyer(lawyerToDelete.id);
@@ -46,13 +48,17 @@ export function LawyersTable({ data }: LawyersTableProps) {
   return (
     <>
       <DataTable table={table} columns={columns(setLawyerToDelete)} />
-      
+
       <DeleteLawyerAlert
         isOpen={!!lawyerToDelete}
         onClose={() => setLawyerToDelete(null)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        lawyerName={lawyerToDelete ? (lawyerToDelete as any).person?.firstName + " " + (lawyerToDelete as any).person?.lastName : ""}
+        lawyerName={
+          lawyerToDelete
+            ? (lawyerToDelete as any).person?.firstName + " " + (lawyerToDelete as any).person?.lastName
+            : ""
+        }
       />
     </>
   );

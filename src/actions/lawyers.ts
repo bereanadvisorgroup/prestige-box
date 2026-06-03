@@ -87,9 +87,9 @@ export async function createLawyer(data: Partial<Lawyer>) {
 
     const docRef = await adminDb.collection(COLLECTION).add(validated);
     revalidatePath("/dashboard/crm/lawyers");
-    
+
     if (data.clientIds?.length) {
-      data.clientIds.forEach(id => revalidatePath(`/dashboard/crm/clients/${id}`));
+      data.clientIds.forEach((id) => revalidatePath(`/dashboard/crm/clients/${id}`));
     }
 
     return { success: true, id: docRef.id };
@@ -111,9 +111,9 @@ export async function updateLawyer(id: string, data: Partial<Lawyer>) {
     await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
     revalidatePath("/dashboard/crm/lawyers");
     revalidatePath(`/dashboard/crm/lawyers/${id}`);
-    
+
     if (data.clientIds?.length) {
-      data.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      data.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };
@@ -132,9 +132,9 @@ export async function deleteLawyer(id: string) {
 
     await adminDb.collection(COLLECTION).doc(id).delete();
     revalidatePath("/dashboard/crm/lawyers");
-    
+
     if (lawyer?.clientIds?.length) {
-      lawyer.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      lawyer.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };

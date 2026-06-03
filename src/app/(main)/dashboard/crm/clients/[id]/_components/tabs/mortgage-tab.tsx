@@ -1,18 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, Home, UploadCloud, MapPin, Calculator, FileText } from "lucide-react";
+
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { Calculator, FileText, Home, Loader2, MapPin, Plus, Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
-import { storage } from "@/lib/firebase.client";
-import { updateClient } from "@/actions/clients";
+
 import { getAddresses } from "@/actions/addresses";
-import { type Client, type MortgageInfo, type Person, type Address } from "@/types/crm";
+import { updateClient } from "@/actions/clients";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { storage } from "@/lib/firebase.client";
+import type { Address, Client, MortgageInfo, Person } from "@/types/crm";
 
 export function MortgageTab({ client, person }: { client: Client; person: Person }) {
   const [mortgages, setMortgages] = useState<MortgageInfo[]>(client.mortgages || []);
@@ -49,7 +51,7 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
     }
     try {
       setIsLoading(true);
-      let statementPath = undefined;
+      let statementPath;
 
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();

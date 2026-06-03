@@ -39,17 +39,22 @@ export default async function AddressesPage() {
     const linkedPeople = people.flatMap((p) => {
       const addrLink = p.addresses?.find((a) => a.id === addr.id);
       if (addrLink) {
-        return [{
-          id: p.id!,
-          name: `${p.firstName} ${p.lastName}`,
-          type: addrLink.type
-        }];
-      } else if (p.addressIds?.includes(addr.id!)) {
-        return [{
-          id: p.id!,
-          name: `${p.firstName} ${p.lastName}`,
-          type: "Home"
-        }];
+        return [
+          {
+            id: p.id!,
+            name: `${p.firstName} ${p.lastName}`,
+            type: addrLink.type,
+          },
+        ];
+      }
+      if (p.addressIds?.includes(addr.id!)) {
+        return [
+          {
+            id: p.id!,
+            name: `${p.firstName} ${p.lastName}`,
+            type: "Home",
+          },
+        ];
       }
       return [];
     });
