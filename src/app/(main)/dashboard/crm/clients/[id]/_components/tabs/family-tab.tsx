@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { Loader2, Plus, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
+
 import { updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
-import { type Client, type FamilyMember, type Person } from "@/types/crm";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import type { Client, FamilyMember, Person } from "@/types/crm";
 
 export function FamilyTab({ client }: { client: Client }) {
   const [members, setMembers] = useState<FamilyMember[]>(client.familyMembers || []);

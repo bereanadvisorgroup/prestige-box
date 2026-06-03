@@ -41,13 +41,13 @@ export const columns = (onDelete: (company: Company) => void) => [
       const website = row.original.website;
       if (!website) return "-";
       return (
-        <a 
-          href={website.startsWith('http') ? website : `https://${website}`} 
-          target="_blank" 
+        <a
+          href={website.startsWith("http") ? website : `https://${website}`}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
         >
-          {website.replace(/^https?:\/\//, '')}
+          {website.replace(/^https?:\/\//, "")}
           <ExternalLink className="h-3 w-3" />
         </a>
       );
@@ -72,7 +72,11 @@ export const columns = (onDelete: (company: Company) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Associated Clients" />,
     cell: ({ row }: { row: Row<Company> }) => {
       const count = row.original.clientIds?.length || 0;
-      return <span className="text-sm">{count} {count === 1 ? 'Client' : 'Clients'}</span>;
+      return (
+        <span className="text-sm">
+          {count} {count === 1 ? "Client" : "Clients"}
+        </span>
+      );
     },
   },
   {

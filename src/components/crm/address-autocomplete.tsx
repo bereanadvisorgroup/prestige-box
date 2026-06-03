@@ -1,14 +1,12 @@
 "use client";
 
-import { useJsApiLoader, type Libraries } from "@react-google-maps/api";
-import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { type Libraries, useJsApiLoader } from "@react-google-maps/api";
+import { Search } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 
 const libraries: Libraries = ["places"];
@@ -104,11 +102,7 @@ export function AddressAutocomplete({
   }, [isLoaded, onValueChange]);
 
   if (loadError) {
-    return (
-      <div className="text-xs text-destructive">
-        Error loading Google Maps API. Check your API key.
-      </div>
-    );
+    return <div className="text-xs text-destructive">Error loading Google Maps API. Check your API key.</div>;
   }
 
   return (
@@ -122,11 +116,7 @@ export function AddressAutocomplete({
           disabled={!isLoaded}
         />
         <InputGroupAddon align="inline-end">
-          {isLoaded ? (
-            <Search className="h-4 w-4 text-muted-foreground mr-2" />
-          ) : (
-            <Spinner className="h-4 w-4 mr-2" />
-          )}
+          {isLoaded ? <Search className="h-4 w-4 text-muted-foreground mr-2" /> : <Spinner className="h-4 w-4 mr-2" />}
         </InputGroupAddon>
       </InputGroup>
     </div>

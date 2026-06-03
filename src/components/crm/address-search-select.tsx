@@ -4,13 +4,7 @@ import { Plus } from "lucide-react";
 
 import { AddressDialog } from "@/app/(main)/dashboard/crm/addresses/_components/address-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import type { Address } from "@/types/crm";
 
 interface AddressSearchSelectProps {

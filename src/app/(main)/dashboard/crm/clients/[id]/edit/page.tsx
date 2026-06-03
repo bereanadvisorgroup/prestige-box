@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 
 import { getClient } from "@/actions/clients";
-import { ClientProfileTabs } from "../_components/client-profile-tabs";
 import type { Person } from "@/types/crm";
+
+import { ClientProfileTabs } from "../_components/client-profile-tabs";
 
 interface EditClientPageProps {
   params: {
@@ -24,7 +25,7 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Edit Client Profile</h1>
         <p className="text-muted-foreground">Modify client preferences, personal details, family, and documentation.</p>
       </div>
-      
+
       <ClientProfileTabs client={result.client} person={result.person as Person | null} />
     </div>
   );

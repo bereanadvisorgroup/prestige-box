@@ -11,15 +11,15 @@ import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { SsnInput } from "@/components/ui/ssn-input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SsnInput } from "@/components/ui/ssn-input";
 import { type Address, type Person, PersonSchema } from "@/types/crm";
 
 interface PersonFormProps {
@@ -45,8 +45,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const defaultAddresses = person?.addresses?.length
     ? person.addresses
     : person?.addressIds?.length
-    ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
-    : [];
+      ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
+      : [];
 
   const form = useForm<Person>({
     resolver: zodResolver(PersonSchema),
@@ -119,7 +119,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
         a.street1.toLowerCase() === addressData.street1.toLowerCase() &&
         a.city.toLowerCase() === addressData.city.toLowerCase() &&
         a.state.toLowerCase() === addressData.state.toLowerCase() &&
-        a.zipCode.toLowerCase() === addressData.zipCode.toLowerCase()
+        a.zipCode.toLowerCase() === addressData.zipCode.toLowerCase(),
     );
 
     if (existing && existing.id) {
@@ -298,7 +298,10 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   </Button>
                 </div>
                 {emailFields.map((field, index) => (
-                  <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                  <div
+                    key={field.id}
+                    className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                  >
                     <FormField
                       control={form.control}
                       name={`emails.${index}.address`}
@@ -307,10 +310,10 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           <FormLabel className="text-xs">Address</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                placeholder="email@example.com" 
-                                type="email" 
-                                {...inputField} 
+                              <Input
+                                placeholder="email@example.com"
+                                type="email"
+                                {...inputField}
                                 className={fieldState.isDirty && !fieldState.invalid && inputField.value ? "pr-10" : ""}
                               />
                               {fieldState.isDirty && !fieldState.invalid && inputField.value && (
@@ -397,7 +400,10 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   </Button>
                 </div>
                 {phoneFields.map((field, index) => (
-                  <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                  <div
+                    key={field.id}
+                    className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                  >
                     <FormField
                       control={form.control}
                       name={`phones.${index}.number`}
@@ -544,11 +550,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       <FormLabel>SSN</FormLabel>
                       <div className="relative">
                         <FormControl>
-                          <SsnInput
-                            type={showSSN ? "text" : "password"}
-                            placeholder="XXX-XX-XXXX"
-                            {...field}
-                          />
+                          <SsnInput type={showSSN ? "text" : "password"} placeholder="XXX-XX-XXXX" {...field} />
                         </FormControl>
                         <Button
                           type="button"
@@ -604,13 +606,13 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
 
             <div className="space-y-4 pt-4 border-t">
               <h3 className="text-sm font-medium border-b pb-2">Addresses</h3>
-              
+
               <div className="space-y-2 mb-4">
                 <FormLabel>Search & Add Address</FormLabel>
-                <AddressAutocomplete 
+                <AddressAutocomplete
                   value={addressSearchQuery}
                   onValueChange={setAddressSearchQuery}
-                  onAddressSelect={handleAddressSelect} 
+                  onAddressSelect={handleAddressSelect}
                   placeholder="Start typing an address using Google Places..."
                 />
               </div>
@@ -619,9 +621,12 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 <div className="space-y-3">
                   {addressFields.map((field, index) => {
                     const addressId = form.watch("addresses")[index]?.id;
-                    const addrDetails = availableAddresses.find(a => a.id === addressId);
+                    const addrDetails = availableAddresses.find((a) => a.id === addressId);
                     return (
-                      <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border">
+                      <div
+                        key={field.id}
+                        className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                      >
                         <div className="flex-1">
                           <FormLabel className="text-xs text-muted-foreground block mb-2">Address details</FormLabel>
                           {addrDetails ? (
@@ -629,7 +634,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                               <div className="text-sm">
                                 <span className="font-medium mr-1">
-                                  {addrDetails.street1}{addrDetails.street2 ? `, ${addrDetails.street2}` : ""}
+                                  {addrDetails.street1}
+                                  {addrDetails.street2 ? `, ${addrDetails.street2}` : ""}
                                 </span>
                                 <span className="text-muted-foreground">
                                   {addrDetails.city}, {addrDetails.state} {addrDetails.zipCode}
@@ -637,7 +643,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               </div>
                             </div>
                           ) : (
-                            <div className="h-10 py-2 text-sm text-muted-foreground flex items-center">Loading details...</div>
+                            <div className="h-10 py-2 text-sm text-muted-foreground flex items-center">
+                              Loading details...
+                            </div>
                           )}
                         </div>
 
@@ -677,7 +685,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                   checked={checkField.value}
                                   onChange={() => {
                                     const currentAddresses = form.getValues("addresses");
-                                    currentAddresses.forEach((_, i) => form.setValue(`addresses.${i}.isPrimary`, false));
+                                    currentAddresses.forEach((_, i) =>
+                                      form.setValue(`addresses.${i}.isPrimary`, false),
+                                    );
                                     form.setValue(`addresses.${index}.isPrimary`, true);
                                   }}
                                   className="h-4 w-4"

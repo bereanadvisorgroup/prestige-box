@@ -31,7 +31,8 @@ export const columns = (onDelete: (person: Person) => void) => [
     id: "email",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Email" />,
     cell: ({ row }: { row: Row<Person> }) => {
-      const email = row.original.emails?.find(e => e.isPrimary)?.address || row.original.emails?.[0]?.address || "N/A";
+      const email =
+        row.original.emails?.find((e) => e.isPrimary)?.address || row.original.emails?.[0]?.address || "N/A";
       return <span>{email}</span>;
     },
   },
@@ -39,7 +40,7 @@ export const columns = (onDelete: (person: Person) => void) => [
     id: "mobilePhone",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
     cell: ({ row }: { row: Row<Person> }) => {
-      const phone = row.original.phones?.find(p => p.isPrimary)?.number || row.original.phones?.[0]?.number;
+      const phone = row.original.phones?.find((p) => p.isPrimary)?.number || row.original.phones?.[0]?.number;
       return <span>{formatPhoneNumber(phone) || "N/A"}</span>;
     },
   },

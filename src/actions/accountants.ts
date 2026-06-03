@@ -87,9 +87,9 @@ export async function createAccountant(data: Partial<Accountant>) {
 
     const docRef = await adminDb.collection(COLLECTION).add(validated);
     revalidatePath("/dashboard/crm/accountants");
-    
+
     if (data.clientIds?.length) {
-      data.clientIds.forEach(id => revalidatePath(`/dashboard/crm/clients/${id}`));
+      data.clientIds.forEach((id) => revalidatePath(`/dashboard/crm/clients/${id}`));
     }
 
     return { success: true, id: docRef.id };
@@ -111,9 +111,9 @@ export async function updateAccountant(id: string, data: Partial<Accountant>) {
     await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
     revalidatePath("/dashboard/crm/accountants");
     revalidatePath(`/dashboard/crm/accountants/${id}`);
-    
+
     if (data.clientIds?.length) {
-      data.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      data.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };
@@ -132,9 +132,9 @@ export async function deleteAccountant(id: string) {
 
     await adminDb.collection(COLLECTION).doc(id).delete();
     revalidatePath("/dashboard/crm/accountants");
-    
+
     if (accountant?.clientIds?.length) {
-      accountant.clientIds.forEach(clientId => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      accountant.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
     }
 
     return { success: true };

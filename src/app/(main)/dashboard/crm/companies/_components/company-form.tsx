@@ -12,15 +12,15 @@ import { toast } from "sonner";
 import { getAddresses } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
 import { createCompany, updateCompany } from "@/actions/companies";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type Address, type Client, type Company, CompanySchema, US_STATES } from "@/types/crm";
 
 interface CompanyFormProps {
@@ -249,7 +249,13 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendSitus({ jurisdiction: "DE", type: "Economic", effectiveDate: new Date().toISOString().split('T')[0] })}
+                  onClick={() =>
+                    appendSitus({
+                      jurisdiction: "DE",
+                      type: "Economic",
+                      effectiveDate: new Date().toISOString().split("T")[0],
+                    })
+                  }
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Situs
@@ -257,7 +263,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
               </div>
               <div className="space-y-4">
                 {situsFields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10">
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10"
+                  >
                     <FormField
                       control={form.control}
                       name={`situsRecords.${index}.jurisdiction`}
@@ -272,7 +281,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                             </FormControl>
                             <SelectContent>
                               {US_STATES.map((state) => (
-                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                                <SelectItem key={state} value={state}>
+                                  {state}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -294,7 +305,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                             </FormControl>
                             <SelectContent>
                               {["Physical", "Economic", "Administrative", "Trust"].map((type) => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -327,7 +340,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   </div>
                 ))}
                 {situsFields.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">No situs records added.</p>
+                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">
+                    No situs records added.
+                  </p>
                 )}
               </div>
             </div>
@@ -350,7 +365,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
               </div>
               <div className="space-y-4">
                 {nexusFields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10">
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10"
+                  >
                     <FormField
                       control={form.control}
                       name={`nexusRecords.${index}.jurisdiction`}
@@ -365,7 +383,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                             </FormControl>
                             <SelectContent>
                               {US_STATES.map((state) => (
-                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                                <SelectItem key={state} value={state}>
+                                  {state}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -387,7 +407,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                             </FormControl>
                             <SelectContent>
                               {["Sales Tax", "Income Tax", "Payroll"].map((type) => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -407,7 +429,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   </div>
                 ))}
                 {nexusFields.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">No nexus records added.</p>
+                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">
+                    No nexus records added.
+                  </p>
                 )}
               </div>
             </div>
@@ -433,7 +457,11 @@ export function CompanyForm({ company }: CompanyFormProps) {
                           const person = (client as any).person;
                           if (!person) return null;
                           return (
-                            <ComboboxItem key={client.id} value={client.id!} label={`${person.firstName} ${person.lastName}`}>
+                            <ComboboxItem
+                              key={client.id}
+                              value={client.id!}
+                              label={`${person.firstName} ${person.lastName}`}
+                            >
                               {person.firstName} {person.lastName}
                             </ComboboxItem>
                           );

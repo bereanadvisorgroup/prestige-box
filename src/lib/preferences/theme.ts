@@ -15,8 +15,8 @@ export const THEME_PRESET_OPTIONS = [
     label: "Default",
     value: "default",
     primary: {
-      light: "oklch(0.488 0.243 264.376)",
-      dark: "oklch(0.488 0.243 264.376)",
+      light: "#0e3e58",
+      dark: "#0e3e58",
     },
   },
   {
@@ -25,6 +25,14 @@ export const THEME_PRESET_OPTIONS = [
     primary: {
       light: "oklch(0.6489 0.237 26.9728)",
       dark: "oklch(0.7044 0.1872 23.1858)",
+    },
+  },
+  {
+    label: "Prestige Box",
+    value: "prestige-box",
+    primary: {
+      light: "#e6c188",
+      dark: "#e6c188",
     },
   },
   {

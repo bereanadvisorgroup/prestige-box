@@ -49,9 +49,12 @@ export function DeleteAddressAlert({ address, open, onOpenChange, onDeleted }: D
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={(newOpen) => {
-      if (!isDeleting) onOpenChange(newOpen);
-    }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!isDeleting) onOpenChange(newOpen);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -65,11 +68,7 @@ export function DeleteAddressAlert({ address, open, onOpenChange, onDeleted }: D
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <Button
-            disabled={isDeleting}
-            onClick={handleDelete}
-            variant="destructive"
-          >
+          <Button disabled={isDeleting} onClick={handleDelete} variant="destructive">
             {isDeleting ? "Deleting..." : "Delete Address"}
           </Button>
         </AlertDialogFooter>

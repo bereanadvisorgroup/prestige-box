@@ -32,9 +32,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   const address = addressResult?.success ? addressResult.address : null;
 
   const allClientsResult = await getClients();
-  const associatedClients = (allClientsResult.success && allClientsResult.clients ? allClientsResult.clients : []).filter((c) =>
-    (company.clientIds || []).includes(c.id!),
-  );
+  const associatedClients = (
+    allClientsResult.success && allClientsResult.clients ? allClientsResult.clients : []
+  ).filter((c) => (company.clientIds || []).includes(c.id!));
 
   return (
     <div className="w-full max-w-7xl mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in duration-500">
@@ -75,7 +75,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Doing Business As</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Doing Business As
+                    </p>
                     <p className="text-sm font-semibold mt-1">{company.dba}</p>
                   </div>
                 </div>
@@ -86,7 +88,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                     <Fingerprint className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Federal Tax ID (EIN)</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Federal Tax ID (EIN)
+                    </p>
                     <p className="text-sm font-semibold mt-1 font-mono">{company.ein}</p>
                   </div>
                 </div>
@@ -159,7 +163,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                     <div key={idx} className="p-4 hover:bg-muted/5 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-semibold text-sm">{situs.jurisdiction}</p>
-                        <Badge variant="outline" className="text-xs font-normal">{situs.type}</Badge>
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {situs.type}
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">Effective: {situs.effectiveDate}</p>
                     </div>
@@ -234,7 +240,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                   {(company.nexusRecords || []).map((nexus, idx) => (
                     <div key={idx} className="p-4 hover:bg-muted/5 transition-colors flex items-center justify-between">
                       <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
-                      <Badge variant="outline" className="text-xs font-normal">{nexus.type}</Badge>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {nexus.type}
+                      </Badge>
                     </div>
                   ))}
                 </div>

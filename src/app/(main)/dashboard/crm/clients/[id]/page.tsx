@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Building2, ExternalLink, FileText, Globe, Mail, MapPin, Pencil, Phone, Trophy, User as UserIcon } from "lucide-react";
+import {
+  Building2,
+  ExternalLink,
+  FileText,
+  Globe,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Trophy,
+  User as UserIcon,
+} from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getCompaniesByClient } from "@/actions/companies";
@@ -15,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { ClientPolicy, Company, Person } from "@/types/crm";
+
 import { ClientProfileTabs } from "./_components/client-profile-tabs";
 
 interface ClientPageProps {
@@ -82,7 +94,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="details">Full Profile & Details</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="m-0 border-0 outline-none">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contact Info & Details */}
@@ -98,7 +110,9 @@ export default async function ClientPage({ params }: ClientPageProps) {
                     </div>
                     <div>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</p>
-                      <p className="text-sm font-semibold">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}</p>
+                      <p className="text-sm font-semibold">
+                        {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -107,7 +121,11 @@ export default async function ClientPage({ params }: ClientPageProps) {
                     </div>
                     <div>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
-                      <p className="text-sm font-semibold">{formatPhoneNumber(person?.phones?.find(p => p.isPrimary)?.number || person?.phones?.[0]?.number) || "N/A"}</p>
+                      <p className="text-sm font-semibold">
+                        {formatPhoneNumber(
+                          person?.phones?.find((p) => p.isPrimary)?.number || person?.phones?.[0]?.number,
+                        ) || "N/A"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -224,7 +242,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                             <p className="text-xs text-muted-foreground flex items-center gap-2">
                               {company.website && (
                                 <span className="flex items-center gap-1">
-                                  <Globe className="h-3 w-3" /> {company.website.replace(/^https?:\/\//, '')}
+                                  <Globe className="h-3 w-3" /> {company.website.replace(/^https?:\/\//, "")}
                                 </span>
                               )}
                               {company.website && company.phone && <span>•</span>}
@@ -236,7 +254,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
                             </p>
                           </div>
                           <div>
-                             <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                         </Link>
                       ))}
@@ -299,7 +317,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
             </div>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="details" className="m-0 border-0 outline-none">
           <ClientProfileTabs client={client} person={person} />
         </TabsContent>

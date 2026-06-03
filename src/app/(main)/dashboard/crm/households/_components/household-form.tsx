@@ -12,11 +12,11 @@ import { toast } from "sonner";
 import { getAddresses } from "@/actions/addresses";
 import { createHousehold, updateHousehold } from "@/actions/households";
 import { getPeople } from "@/actions/people";
+import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
-import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -179,7 +179,9 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                           <p className="text-sm font-medium">
                             {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
                           </p>
-                          <p className="text-xs text-muted-foreground">{person?.emails?.find(e => e.isPrimary)?.address || person?.emails?.[0]?.address}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address}
+                          </p>
                         </div>
                       </div>
 
@@ -229,7 +231,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                   <FormLabel>Add Person to Household</FormLabel>
                   <PersonSearchSelect
                     people={availablePeople.filter(
-                      (p) => !form.getValues("memberIds").some((m) => m.personId === p.id)
+                      (p) => !form.getValues("memberIds").some((m) => m.personId === p.id),
                     )}
                     onValueChange={(val) => handleAddMember(val)}
                     onPersonCreated={(newPerson) => {

@@ -4,13 +4,7 @@ import { Plus, User } from "lucide-react";
 
 import { PersonDialog } from "@/app/(main)/dashboard/crm/people/_components/person-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import type { Person } from "@/types/crm";
 
 interface PersonSearchSelectProps {
@@ -69,7 +63,9 @@ export function PersonSearchSelect({
                   <span className="font-medium">
                     {p.firstName} {p.lastName}
                   </span>
-                  <span className="text-xs text-muted-foreground">{p.emails?.find(e => e.isPrimary)?.address || p.emails?.[0]?.address || "No Email"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "No Email"}
+                  </span>
                 </div>
               </div>
             </ComboboxItem>

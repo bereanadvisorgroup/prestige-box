@@ -9,12 +9,12 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createAddress, updateAddress } from "@/actions/addresses";
+import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { type Address, AddressSchema } from "@/types/crm";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 
 interface AddressFormProps {
   address?: Address;

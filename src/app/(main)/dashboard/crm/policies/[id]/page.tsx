@@ -167,19 +167,21 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
                     <a
-                      href={`mailto:${personData.emails?.find(e => e.isPrimary)?.address || personData.emails?.[0]?.address}`}
+                      href={`mailto:${personData.emails?.find((e) => e.isPrimary)?.address || personData.emails?.[0]?.address}`}
                       className="text-foreground hover:text-primary transition-colors"
                     >
-                      {personData.emails?.find(e => e.isPrimary)?.address || personData.emails?.[0]?.address || "N/A"}
+                      {personData.emails?.find((e) => e.isPrimary)?.address || personData.emails?.[0]?.address || "N/A"}
                     </a>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Phone</p>
                     <a
-                      href={`tel:${personData.phones?.find(p => p.isPrimary)?.number || personData.phones?.[0]?.number}`}
+                      href={`tel:${personData.phones?.find((p) => p.isPrimary)?.number || personData.phones?.[0]?.number}`}
                       className="text-foreground hover:text-primary transition-colors"
                     >
-                      {formatPhoneNumber(personData.phones?.find(p => p.isPrimary)?.number || personData.phones?.[0]?.number) || "N/A"}
+                      {formatPhoneNumber(
+                        personData.phones?.find((p) => p.isPrimary)?.number || personData.phones?.[0]?.number,
+                      ) || "N/A"}
                     </a>
                   </div>
                 </div>

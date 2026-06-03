@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { AlertCircle, GraduationCap, Plus } from "lucide-react";
 
 import { getLawyers } from "@/actions/lawyers";

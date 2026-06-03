@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { useState, useEffect } from "react";
+import type * as React from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Plus, User } from "lucide-react";
@@ -142,10 +142,10 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                     <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input 
-                          type="email" 
-                          placeholder="john.doe@example.com" 
-                          {...field} 
+                        <Input
+                          type="email"
+                          placeholder="john.doe@example.com"
+                          {...field}
                           className={fieldState.isDirty && !fieldState.invalid && field.value ? "pr-10" : ""}
                         />
                         {fieldState.isDirty && !fieldState.invalid && field.value && (

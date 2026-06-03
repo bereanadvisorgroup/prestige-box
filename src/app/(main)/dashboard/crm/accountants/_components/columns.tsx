@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
 import type { Row } from "@tanstack/react-table";
-import { ReceiptText, Edit, Eye, MoreHorizontal, Trash2, MapPin } from "lucide-react";
+import { Edit, Eye, MapPin, MoreHorizontal, ReceiptText, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Accountant, Person, Address } from "@/types/crm";
+import type { Accountant, Address, Person } from "@/types/crm";
 
 export const columns = (onDelete: (accountant: Accountant) => void) => [
   {
@@ -26,7 +27,10 @@ export const columns = (onDelete: (accountant: Accountant) => void) => [
       return (
         <div className="flex items-center gap-2">
           <ReceiptText className="h-4 w-4 text-muted-foreground" />
-          <Link href={`/dashboard/crm/accountants/${accountant.id}`} className="font-medium text-primary hover:underline">
+          <Link
+            href={`/dashboard/crm/accountants/${accountant.id}`}
+            className="font-medium text-primary hover:underline"
+          >
             {name}
           </Link>
         </div>
@@ -61,7 +65,11 @@ export const columns = (onDelete: (accountant: Accountant) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Clients" />,
     cell: ({ row }: { row: Row<Accountant> }) => {
       const count = row.original.clientIds?.length || 0;
-      return <span className="text-sm">{count} {count === 1 ? 'Client' : 'Clients'}</span>;
+      return (
+        <span className="text-sm">
+          {count} {count === 1 ? "Client" : "Clients"}
+        </span>
+      );
     },
   },
   {

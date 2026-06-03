@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AlertCircle, ReceiptText, Plus } from "lucide-react";
+
+import { AlertCircle, Plus, ReceiptText } from "lucide-react";
 
 import { getAccountants } from "@/actions/accountants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

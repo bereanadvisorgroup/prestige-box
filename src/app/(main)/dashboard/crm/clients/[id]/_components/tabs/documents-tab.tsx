@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, Trash2, File, UploadCloud } from "lucide-react";
+
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { File, Loader2, Plus, Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
-import { storage } from "@/lib/firebase.client";
+
 import { updateClient } from "@/actions/clients";
-import { type Client, type ClientDocument } from "@/types/crm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { storage } from "@/lib/firebase.client";
+import type { Client, ClientDocument } from "@/types/crm";
 
 export function DocumentsTab({
   client,
