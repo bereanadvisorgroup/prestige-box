@@ -29,7 +29,11 @@ export default async function LawyersPage() {
     );
   }
 
-  const lawyers = result.lawyers || [];
+  const rawLawyers = result.lawyers || [];
+  const lawyers = rawLawyers.map((lawyer) => ({
+    ...lawyer,
+    isLinked: lawyer.clientIds && lawyer.clientIds.length > 0,
+  }));
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

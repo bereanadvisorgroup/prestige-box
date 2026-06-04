@@ -1,15 +1,16 @@
 import Link from "next/link";
 
-import { AlertCircle, Plus, Shield } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
 import { getInsuranceCompanies } from "@/actions/insurance-companies";
+import { getClientPolicies } from "@/actions/policies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { CompaniesTable } from "./_components/companies-table";
 
 export default async function InsuranceCompaniesPage() {
-  const result = await getInsuranceCompanies();
+  const [result, policiesRes] = await Promise.all([getInsuranceCompanies(), getClientPolicies()]);
 
   if (!result.success) {
     return (
@@ -29,7 +30,13 @@ export default async function InsuranceCompaniesPage() {
     );
   }
 
-  const companies = result.companies || [];
+  const rawCompanies = result.companies || [];
+  const policies = policiesRes.success && policiesRes.policies ? policiesRes.policies : [];
+
+  const companies = rawCompanies.map((company) => ({
+    ...company,
+    isLinked: policies.some((p) => p.insuranceCompanyId === company.id),
+  }));
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

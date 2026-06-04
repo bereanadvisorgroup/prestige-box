@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Briefcase, Building2, Edit, Mail, MapPin, Phone, ReceiptText, Users } from "lucide-react";
+import { ArrowUpRight, Briefcase, Building2, Edit, Mail, MapPin, Phone, ReceiptText, Users } from "lucide-react";
 
 import { getAccountant } from "@/actions/accountants";
+import { getClients } from "@/actions/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,8 @@ interface AccountantDetailsPageProps {
 }
 
 export default async function AccountantDetailsPage({ params }: AccountantDetailsPageProps) {
-  const result = await getAccountant(params.id);
+  const { id } = await params;
+  const result = await getAccountant(id);
 
   if (!result.success || !result.accountant) {
     notFound();
@@ -27,6 +29,13 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
   const { accountant, person: personRaw, address: addressRaw } = result;
   const person = personRaw as Person | null;
   const address = addressRaw as Address | null;
+
+  // Fetch associated clients details
+  const clientsResult = await getClients();
+  const allClients = clientsResult.success && clientsResult.clients ? clientsResult.clients : [];
+  const associatedClients = allClients.filter((c) =>
+    (accountant.clientIds || []).includes(c.id!),
+  );
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
@@ -107,18 +116,42 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {accountant.clientIds && accountant.clientIds.length > 0 ? (
+            {associatedClients.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {accountant.clientIds.map((clientId) => (
-                  <Link
-                    key={clientId}
-                    href={`/dashboard/crm/clients/${clientId}`}
-                    className="flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <Briefcase className="h-4 w-4 text-primary mr-3" />
-                    <span className="text-sm font-medium">Client Details</span>
-                  </Link>
-                ))}
+                {associatedClients.map((client) => {
+                  const clientPerson = client.person as Person | null;
+                  const clientName = clientPerson
+                    ? `${clientPerson.firstName} ${clientPerson.lastName}`
+                    : "Unknown Client";
+                  const clientEmail =
+                    clientPerson?.emails?.find((e) => e.isPrimary)?.address ||
+                    clientPerson?.emails?.[0]?.address ||
+                    "";
+                  const clientPhone =
+                    clientPerson?.phones?.find((p) => p.isPrimary)?.number ||
+                    clientPerson?.phones?.[0]?.number ||
+                    "";
+
+                  return (
+                    <Link
+                      key={client.id}
+                      href={`/dashboard/crm/clients/${client.id}`}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <div className="space-y-1">
+                        <div className="font-semibold text-sm group-hover:text-primary transition-colors flex items-center gap-1.5">
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          {clientName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {clientEmail && <span className="mr-3">{clientEmail}</span>}
+                          {clientPhone && <span>{formatPhoneNumber(clientPhone)}</span>}
+                        </div>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-10 bg-muted/20 rounded-lg border border-dashed text-muted-foreground">

@@ -6,18 +6,10 @@ import Link from "next/link";
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
+import { ArrowUpRight, Pencil, Trash2, User } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/stores/auth.store";
 
 import { DeleteUserAlert } from "./delete-user-alert";
@@ -30,10 +22,19 @@ export const columns: ColumnDef<UserProfile>[] = [
       const user = row.original;
       return (
         <div className="flex flex-col">
-          <span className="font-medium">
-            {user.firstName} {user.lastName}
-          </span>
-          <span className="text-xs text-muted-foreground">{user.uid}</span>
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <Link
+              href={`/dashboard/admin/users/${user.uid}`}
+              className="font-medium text-primary hover:underline flex items-center gap-1"
+            >
+              <span>
+                {user.firstName} {user.lastName}
+              </span>
+              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+            </Link>
+          </div>
+          <span className="text-xs text-muted-foreground pl-6">{user.uid}</span>
         </div>
       );
     },
@@ -71,32 +72,20 @@ export const columns: ColumnDef<UserProfile>[] = [
       const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
       return (
-        <>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/admin/users/${user.uid}/edit`}>
-                  <SquarePen className="mr-2 h-4 w-4" />
-                  Edit User
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowDeleteAlert(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete User
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-2 justify-end">
+          <Link href={`/dashboard/admin/users/${user.uid}/edit`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+              <Pencil className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive/80"
+            onClick={() => setShowDeleteAlert(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
 
           <DeleteUserAlert
             open={showDeleteAlert}
@@ -104,7 +93,7 @@ export const columns: ColumnDef<UserProfile>[] = [
             uid={user.uid}
             userName={`${user.firstName} ${user.lastName}`}
           />
-        </>
+        </div>
       );
     },
   },

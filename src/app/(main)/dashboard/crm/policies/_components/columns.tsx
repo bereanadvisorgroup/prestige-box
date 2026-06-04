@@ -3,19 +3,11 @@
 import Link from "next/link";
 
 import type { Row } from "@tanstack/react-table";
-import { Calendar, DollarSign, Edit, FileText, MoreHorizontal, Shield, Trash2, User } from "lucide-react";
+import { ArrowUpRight, Calendar, DollarSign, FileText, Pencil, Shield, Trash2, User } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/utils";
 import type { ClientPolicy } from "@/types/crm";
 
@@ -25,10 +17,18 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Client" />,
     cell: ({ row }: { row: Row<any> }) => (
       <div className="flex flex-col">
-        <span className="font-semibold text-primary">{row.original.clientName}</span>
+        <div className="flex items-center gap-1">
+          <Link
+            href={`/dashboard/crm/policies/${row.original.id}`}
+            className="font-semibold text-primary hover:underline flex items-center gap-1"
+          >
+            <span>{row.original.clientName}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+          </Link>
+        </div>
         <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-tighter">
           <User className="h-2.5 w-2.5" />
-          Client Profile
+          Policy Client
         </span>
       </div>
     ),
@@ -103,26 +103,21 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
       const policy = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+        <div className="flex items-center gap-2 justify-end">
+          <Link href={`/dashboard/crm/policies/${policy.id}/edit`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+              <Pencil className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/crm/policies/${policy.id}/edit`}>
-                <Edit className="mr-2 h-4 w-4" /> Edit Policy
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(policy)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete Policy
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive/80"
+            onClick={() => onDelete(policy)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
   },
