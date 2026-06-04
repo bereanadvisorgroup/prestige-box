@@ -3,21 +3,17 @@
 import Link from "next/link";
 
 import type { Row } from "@tanstack/react-table";
-import { Edit, Eye, Heart, MoreHorizontal, Trash2, Trophy, User } from "lucide-react";
+import { ArrowUpRight, Heart, Pencil, Trash2, Trophy, User } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { Client } from "@/types/crm";
+
+export type EnrichedClient = Client & {
+  isLinked?: boolean;
+};
 
 export const columns = (onDelete: (client: Client) => void) => [
   {
@@ -29,8 +25,14 @@ export const columns = (onDelete: (client: Client) => void) => [
       return (
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
-          <Link href={`/dashboard/crm/clients/${row.original.id}`} className="font-medium text-black hover:underline">
-            {person.firstName} {person.lastName}
+          <Link
+            href={`/dashboard/crm/clients/${row.original.id}`}
+            className="font-medium text-primary hover:underline flex items-center gap-1"
+          >
+            <span>
+              {person.firstName} {person.lastName}
+            </span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
           </Link>
         </div>
       );
@@ -102,35 +104,37 @@ export const columns = (onDelete: (client: Client) => void) => [
   },
   {
     id: "actions",
-    cell: ({ row }: { row: Row<Client> }) => {
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
       const client = row.original;
+      const isDeletable = !client.isLinked;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+        <div className="flex items-center gap-2 justify-end">
+          <Link href={`/dashboard/crm/clients/${client.id}/edit`}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+              <Pencil className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/crm/clients/${client.id}`}>
-                <Eye className="mr-2 h-4 w-4" /> View Details
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/crm/clients/${client.id}/edit`}>
-                <Edit className="mr-2 h-4 w-4" /> Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(client)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+          {isDeletable ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive/80"
+              onClick={() => onDelete(client)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+              disabled
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       );
     },
   },

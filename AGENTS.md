@@ -28,6 +28,10 @@ This file (`AGENTS.md`) provides technical context, coding standards, and archit
 - **ShadCN Principles:** Use existing ShadCN components wherever possible rather than building custom UI elements from scratch. When creating new UI functionality, ensure it fits visually with the rest of the ShadCN-based library.
 - **Data Fetching:** For simple data access, utilize Next.js Server Components. For complex client-side interactions, pagination, or caching, use TanStack React Query.
 - **Forms:** Always use React Hook Form paired with Zod resolvers to ensure type-safe and performant complex inputs.
+- **Data Tables Design Standard:** All data tables in the application must strictly adhere to the following UI standards:
+  - **First Column Navigation:** The text in the first column of each table must link to the detailed landing page of that entity, followed immediately by an `ArrowUpRight` navigation icon.
+  - **Direct Actions (Last Column):** Do NOT use ellipse menus (`DropdownMenu`/`MoreHorizontal`). The last column must display direct action buttons: an Edit button (`Pencil` icon) linking to the edit page, and a Delete button (`Trash2` icon).
+  - **Conditional Delete:** The Delete button must be enabled only if the record is not associated/linked to any other entity in the system. If it is linked, display the Delete button but styled as disabled and colored grey (`text-muted-foreground/40 cursor-not-allowed`). Relationship/association checks should be computed on the server-side Page and passed as `isLinked` in table row records.
 
 ## Backend Architecture (Firebase)
 

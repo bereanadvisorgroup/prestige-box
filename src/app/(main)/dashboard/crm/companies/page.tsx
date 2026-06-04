@@ -29,7 +29,11 @@ export default async function CompaniesPage() {
     );
   }
 
-  const companies = result.companies || [];
+  const rawCompanies = result.companies || [];
+  const companies = rawCompanies.map((company) => ({
+    ...company,
+    isLinked: company.clientIds && company.clientIds.length > 0,
+  }));
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

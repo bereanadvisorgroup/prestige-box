@@ -1,7 +1,11 @@
 import Link from "next/link";
 
-import { AlertCircle, Plus, UserIcon } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
+import { getAccountants } from "@/actions/accountants";
+import { getClients } from "@/actions/clients";
+import { getHouseholds } from "@/actions/households";
+import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -9,9 +13,15 @@ import { Button } from "@/components/ui/button";
 import { PeopleTable } from "./_components/people-table";
 
 export default async function PeoplePage() {
-  const result = await getPeople();
+  const [peopleRes, clientsRes, lawyersRes, accountantsRes, householdsRes] = await Promise.all([
+    getPeople(),
+    getClients(),
+    getLawyers(),
+    getAccountants(),
+    getHouseholds(),
+  ]);
 
-  if (!result.success) {
+  if (!peopleRes.success) {
     return (
       <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
         <div>
@@ -22,14 +32,32 @@ export default async function PeoplePage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {result.error || "Failed to fetch people from the server. Check server logs for details."}
+            {peopleRes.error || "Failed to fetch people from the server. Check server logs for details."}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const people = result.people || [];
+  const rawPeople = peopleRes.people || [];
+  const clients = clientsRes.success && clientsRes.clients ? clientsRes.clients : [];
+  const lawyers = lawyersRes.success && lawyersRes.lawyers ? lawyersRes.lawyers : [];
+  const accountants = accountantsRes.success && accountantsRes.accountants ? accountantsRes.accountants : [];
+  const households = householdsRes.success && householdsRes.households ? householdsRes.households : [];
+
+  const people = rawPeople.map((person) => {
+    const isLinked =
+      clients.some((c) => c.personId === person.id) ||
+      lawyers.some((l) => l.personId === person.id) ||
+      accountants.some((a) => a.personId === person.id) ||
+      households.some((h) => h.memberIds?.some((m) => m.personId === person.id)) ||
+      clients.some((c) => c.familyMembers?.some((m) => m.personId === person.id));
+
+    return {
+      ...person,
+      isLinked,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

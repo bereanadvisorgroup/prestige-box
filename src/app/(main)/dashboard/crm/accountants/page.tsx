@@ -29,7 +29,11 @@ export default async function AccountantsPage() {
     );
   }
 
-  const accountants = result.accountants || [];
+  const rawAccountants = result.accountants || [];
+  const accountants = rawAccountants.map((accountant) => ({
+    ...accountant,
+    isLinked: accountant.clientIds && accountant.clientIds.length > 0,
+  }));
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">

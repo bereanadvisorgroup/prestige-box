@@ -1,9 +1,14 @@
 import Link from "next/link";
 export const dynamic = "force-dynamic";
 
-import { AlertCircle, MapPin, Plus } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
+import { getAccountants } from "@/actions/accountants";
 import { getAddresses } from "@/actions/addresses";
+import { getClients } from "@/actions/clients";
+import { getCompanies } from "@/actions/companies";
+import { getHouseholds } from "@/actions/households";
+import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,8 +16,16 @@ import { Button } from "@/components/ui/button";
 import { AddressesTable } from "./_components/addresses-table";
 
 export default async function AddressesPage() {
-  const result = await getAddresses();
-  const peopleResult = await getPeople();
+  const [result, peopleResult, householdsResult, companiesResult, lawyersResult, accountantsResult, clientsResult] =
+    await Promise.all([
+      getAddresses(),
+      getPeople(),
+      getHouseholds(),
+      getCompanies(),
+      getLawyers(),
+      getAccountants(),
+      getClients(),
+    ]);
 
   if (!result.success) {
     return (
@@ -34,6 +47,11 @@ export default async function AddressesPage() {
 
   const addresses = result.addresses || [];
   const people = peopleResult.success && peopleResult.people ? peopleResult.people : [];
+  const households = householdsResult.success && householdsResult.households ? householdsResult.households : [];
+  const companies = companiesResult.success && companiesResult.companies ? companiesResult.companies : [];
+  const lawyers = lawyersResult.success && lawyersResult.lawyers ? lawyersResult.lawyers : [];
+  const accountants = accountantsResult.success && accountantsResult.accountants ? accountantsResult.accountants : [];
+  const clients = clientsResult.success && clientsResult.clients ? clientsResult.clients : [];
 
   const enrichedAddresses = addresses.map((addr) => {
     const linkedPeople = people.flatMap((p) => {
@@ -58,7 +76,17 @@ export default async function AddressesPage() {
       }
       return [];
     });
-    return { ...addr, linkedPeople };
+
+    const isLinked =
+      linkedPeople.length > 0 ||
+      households.some((h) => h.addressId === addr.id) ||
+      companies.some((c) => c.addressId === addr.id) ||
+      lawyers.some((l) => l.firmAddressId === addr.id) ||
+      accountants.some((a) => a.firmAddressId === addr.id) ||
+      clients.some((c) => c.mortgages?.some((m) => m.addressId === addr.id)) ||
+      clients.some((c) => c.employments?.some((e) => e.employerAddressId === addr.id));
+
+    return { ...addr, linkedPeople, isLinked };
   });
 
   return (
