@@ -70,12 +70,17 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "CRM Pipeline",
+        title: "Payments",
+        url: "/dashboard/crm/payments",
+        icon: DollarSign,
+      },
+      {
+        title: "DEMO CRM Pipeline",
         url: "/dashboard/crm-pipeline",
         icon: LayoutDashboard,
       },
       {
-        title: "Finance",
+        title: "DEMO Finance",
         url: "/dashboard/finance",
         icon: LayoutDashboard,
       },
@@ -83,7 +88,7 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 3,
-    label: "CRM Tools",
+    label: "General Info",
     allowedRoles: ["admin", "advisor"],
     items: [
       {
@@ -121,11 +126,13 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/crm/policies",
         icon: FileText,
       },
-      {
-        title: "Payments",
-        url: "/dashboard/crm/payments",
-        icon: DollarSign,
-      },
+    ],
+  },
+  {
+    id: 4,
+    label: "Professional Services",
+    allowedRoles: ["admin", "advisor"],
+    items: [
       {
         title: "Lawyers",
         url: "/dashboard/crm/lawyers",
@@ -136,18 +143,18 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/crm/accountants",
         icon: ReceiptText,
       },
-    ],
-  },
-  {
-    id: 4,
-    label: "Admin Settings",
-    allowedRoles: ["admin"],
-    items: [
       {
-        title: "Insurance Companies",
+        title: "Insurance",
         url: "/dashboard/admin/insurance-companies",
         icon: Shield,
       },
+    ],
+  },
+  {
+    id: 5,
+    label: "Admin Settings",
+    allowedRoles: ["admin"],
+    items: [
       {
         title: "Manage Users",
         url: "/dashboard/admin/users",

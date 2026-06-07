@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Check if trying to access a protected route (dashboard)
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
     // Note: In a real app with Firebase, we would verify the session cookie here.

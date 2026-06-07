@@ -11,18 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaymentsTable } from "./_components/payments-table";
 
 interface PaymentsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     month?: string;
     year?: string;
-  };
+  }>;
 }
 
 export default async function PaymentsPage({ searchParams }: PaymentsPageProps) {
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
-  const monthParam = searchParams.month ? parseInt(searchParams.month) : currentMonth;
-  const yearParam = searchParams.year ? parseInt(searchParams.year) : currentYear;
+  const resolvedSearchParams = await searchParams;
+  const monthParam = resolvedSearchParams.month ? parseInt(resolvedSearchParams.month) : currentMonth;
+  const yearParam = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear;
 
   const result = await getPaymentsForMonth(monthParam, yearParam);
 
