@@ -2,104 +2,128 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Household, HouseholdSchema } from "@/types/crm";
 
-const COLLECTION = "households";
+const TABLE = "households";
 
 export async function getHouseholds() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: households, error } = await supabaseServer.from(TABLE).select("*").order("name", { ascending: true });
 
-    const snapshot = await adminDb.collection(COLLECTION).orderBy("name", "asc").get();
-    const households = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Household[];
+    if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, households };
-  } catch (error: any) {
+    return { success: true, households: households as Household[] };
+  } catch (error) {
     console.error(`[getHouseholds] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getHousehold(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: household, error: hError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Household not found" };
+    if (hError) throw new Error((hError as { message: string }).message);
+    if (!household) return { success: false, error: "Household not found" };
 
-    const household = { id: doc.id, ...doc.data() } as Household;
+    // Fetch details for address
+    let address = null;
+    if (household.addressId) {
+      const { data: addrData, error: addrError } = await supabaseServer
+        .from("addresses")
+        .select("*")
+        .eq("id", household.addressId)
+        .single();
+      if (!addrError) {
+        address = addrData;
+      }
+    }
 
-    // Fetch details for address and members
-    const addressDoc = await adminDb.collection("addresses").doc(household.addressId).get();
-    const address = addressDoc.exists ? { id: addressDoc.id, ...addressDoc.data() } : null;
+    // Fetch details for members
+    let members: { person: Person | null; role: string }[] = [];
+    if (household.memberIds && household.memberIds.length > 0) {
+      const personIds = household.memberIds.map((m: { personId: string }) => m.personId);
+      const { data: peopleData, error: peopleError } = await supabaseServer
+        .from("people")
+        .select("*")
+        .in("id", personIds);
 
-    const memberPromises = household.memberIds.map((m) => adminDb!.collection("people").doc(m.personId).get());
-    const memberDocs = await Promise.all(memberPromises);
-    const members = memberDocs.map((doc, index) => ({
-      person: doc.exists ? { id: doc.id, ...doc.data() } : null,
-      role: household.memberIds[index].role,
-    }));
+      if (!peopleError && peopleData) {
+        const peopleMap = peopleData.reduce(
+          (acc, person) => {
+            acc[person.id] = person;
+            return acc;
+          },
+          {} as Record<string, (typeof peopleData)[number]>,
+        );
 
-    return { success: true, household, address, members };
-  } catch (error: any) {
+        members = household.memberIds.map((m: { personId: string; role: string }) => ({
+          person: peopleMap[m.personId] || null,
+          role: m.role,
+        }));
+      }
+    }
+
+    return { success: true, household: household as Household, address, members };
+  } catch (error) {
     console.error(`[getHousehold] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createHousehold(data: Partial<Household>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = HouseholdSchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/households");
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createHousehold] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateHousehold(id: string, data: Partial<Household>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/households");
     revalidatePath(`/dashboard/crm/households/${id}`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateHousehold] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteHousehold(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/households");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteHousehold] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

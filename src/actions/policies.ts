@@ -2,135 +2,164 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
-const COLLECTION = "client-policies";
+const TABLE = "client_policies";
 
 export async function getClientPolicies() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: policies, error: policiesError } = await supabaseServer
+      .from(TABLE)
+      .select("*")
+      .order("createdAt", { ascending: false });
 
-    const snapshot = await adminDb.collection(COLLECTION).orderBy("createdAt", "desc").get();
-    const policies = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as (ClientPolicy & { id: string })[];
+    if (policiesError) throw new Error((policiesError as { message: string }).message);
+    if (!policies || policies.length === 0) return { success: true, policies: [] };
 
     // Enrich with client and company data
-    const enrichedPolicies = await Promise.all(
-      policies.map(async (policy) => {
-        const [clientDoc, companyDoc] = await Promise.all([
-          adminDb!.collection("clients").doc(policy.clientId).get(),
-          adminDb!.collection("insurance-companies").doc(policy.insuranceCompanyId).get(),
-        ]);
+    const clientIds = Array.from(new Set(policies.map((p) => p.clientId)));
+    const companyIds = Array.from(new Set(policies.map((p) => p.insuranceCompanyId)));
 
-        let clientName = "Unknown Client";
-        if (clientDoc.exists) {
-          const clientData = clientDoc.data();
-          const personDoc = await adminDb!.collection("people").doc(clientData!.personId).get();
-          if (personDoc.exists) {
-            const personData = personDoc.data();
-            clientName = `${personData!.firstName} ${personData!.lastName}`;
-          }
-        }
+    const [clientsResult, companiesResult] = await Promise.all([
+      clientIds.length > 0
+        ? supabaseServer.from("clients").select("id, personId").in("id", clientIds)
+        : Promise.resolve({ data: [] }),
+      companyIds.length > 0
+        ? supabaseServer.from("insurance_companies").select("id, name").in("id", companyIds)
+        : Promise.resolve({ data: [] }),
+    ]);
 
-        return {
-          ...policy,
-          clientName,
-          carrierName: companyDoc.exists ? companyDoc.data()!.name : "Unknown Carrier",
-        };
-      }),
+    if (clientsResult.error) throw new Error((clientsResult.error as { message: string }).message);
+    if (companiesResult.error) throw new Error((companiesResult.error as { message: string }).message);
+
+    const clients = clientsResult.data || [];
+    const companies = companiesResult.data || [];
+    const companiesMap = companies.reduce(
+      (acc, c) => {
+        acc[c.id] = c.name;
+        return acc;
+      },
+      {} as Record<string, string>,
     );
 
+    const personIds = Array.from(new Set(clients.map((c) => c.personId)));
+    let peopleMap: Record<string, string> = {};
+    if (personIds.length > 0) {
+      const { data: people, error: peopleError } = await supabaseServer
+        .from("people")
+        .select("id, firstName, lastName")
+        .in("id", personIds);
+      if (peopleError) throw new Error((peopleError as { message: string }).message);
+      peopleMap = (people || []).reduce(
+        (acc, p) => {
+          acc[p.id] = `${p.firstName} ${p.lastName}`;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+    }
+
+    const clientsMap = clients.reduce(
+      (acc, c) => {
+        acc[c.id] = peopleMap[c.personId] || "Unknown Client";
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    const enrichedPolicies = policies.map((policy) => ({
+      ...policy,
+      clientName: clientsMap[policy.clientId] || "Unknown Client",
+      carrierName: companiesMap[policy.insuranceCompanyId] || "Unknown Carrier",
+    }));
+
     return { success: true, policies: enrichedPolicies };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[getClientPolicies] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getClientPolicy(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: policy, error } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Policy not found" };
+    if (error) throw new Error((error as { message: string }).message);
+    if (!policy) return { success: false, error: "Policy not found" };
 
-    const policy = { id: doc.id, ...doc.data() } as ClientPolicy;
-    return { success: true, policy };
-  } catch (error: any) {
+    return { success: true, policy: policy as ClientPolicy };
+  } catch (error) {
     console.error(`[getClientPolicy] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createClientPolicy(data: Partial<ClientPolicy>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = ClientPolicySchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/policies");
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createClientPolicy] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateClientPolicy(id: string, data: Partial<ClientPolicy>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/policies");
     revalidatePath(`/dashboard/crm/policies/${id}`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateClientPolicy] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteClientPolicy(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/policies");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteClientPolicy] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getClientPoliciesByClient(clientId: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: policies, error } = await supabaseServer.from(TABLE).select("*").eq("clientId", clientId);
 
-    const snapshot = await adminDb.collection(COLLECTION).where("clientId", "==", clientId).get();
-    const policies = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as (ClientPolicy & { id: string })[];
+    if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, policies };
-  } catch (error: any) {
+    return { success: true, policies: policies as (ClientPolicy & { id: string })[] };
+  } catch (error) {
     console.error(`[getClientPoliciesByClient] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

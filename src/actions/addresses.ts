@@ -2,117 +2,118 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Address, AddressSchema } from "@/types/crm";
 
-const COLLECTION = "addresses";
+const TABLE = "addresses";
 
 export async function getAddresses() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: addresses, error } = await supabaseServer
+      .from(TABLE)
+      .select("*")
+      .order("street1", { ascending: true });
 
-    const snapshot = await adminDb.collection(COLLECTION).orderBy("street1", "asc").get();
-    const addresses = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Address[];
+    if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, addresses };
-  } catch (error: any) {
+    return { success: true, addresses: addresses as Address[] };
+  } catch (error) {
     console.error(`[getAddresses] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getAddress(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: address, error } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Address not found" };
+    if (error) throw new Error((error as { message: string }).message);
+    if (!address) return { success: false, error: "Address not found" };
 
-    const address = { id: doc.id, ...doc.data() } as Address;
-    return { success: true, address };
-  } catch (error: any) {
+    return { success: true, address: address as Address };
+  } catch (error) {
     console.error(`[getAddress] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createAddress(data: Partial<Address>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = AddressSchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/addresses");
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createAddress] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateAddress(id: string, data: Partial<Address>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/addresses");
     revalidatePath(`/dashboard/crm/addresses/${id}`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateAddress] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteAddress(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     // Check if any people are linked to this address
-    const peopleSnapshot = await adminDb.collection("people").where("addressIds", "array-contains", id).limit(1).get();
+    const { data: people, error: checkError } = await supabaseServer
+      .from("people")
+      .select("id")
+      .contains("addressIds", [id])
+      .limit(1);
 
-    if (!peopleSnapshot.empty) {
+    if (checkError) throw new Error((checkError as { message: string }).message);
+    if (people && people.length > 0) {
       throw new Error("Cannot delete address that is linked to people");
     }
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/addresses", "page");
     revalidatePath("/dashboard/crm/addresses", "layout");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteAddress] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getAddressPeople(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: people, error } = await supabaseServer.from("people").select("*").contains("addressIds", [id]);
 
-    const snapshot = await adminDb.collection("people").where("addressIds", "array-contains", id).get();
-
-    const people = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    if (error) throw new Error((error as { message: string }).message);
 
     return { success: true, people };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[getAddressPeople] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

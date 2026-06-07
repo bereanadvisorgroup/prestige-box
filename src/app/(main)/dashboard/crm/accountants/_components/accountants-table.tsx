@@ -32,7 +32,7 @@ export function AccountantsTable({ data }: AccountantsTableProps) {
       } else {
         toast.error(result.error || "Failed to delete accountant");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);
@@ -56,7 +56,7 @@ export function AccountantsTable({ data }: AccountantsTableProps) {
         isLoading={isDeleting}
         accountantName={
           accountantToDelete
-            ? (accountantToDelete as any).person?.firstName + " " + (accountantToDelete as any).person?.lastName
+            ? `${(accountantToDelete as any).person?.firstName} ${(accountantToDelete as any).person?.lastName}`
             : ""
         }
       />

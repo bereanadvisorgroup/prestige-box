@@ -64,7 +64,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
       } else {
         toast.error(result.error || "Failed to create address");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -125,7 +125,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="city"

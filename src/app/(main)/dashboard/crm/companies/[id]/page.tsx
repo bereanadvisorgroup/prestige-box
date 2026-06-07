@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPhoneNumber } from "@/lib/utils";
-import type { Company } from "@/types/crm";
 
 interface CompanyPageProps {
   params: {
@@ -37,17 +36,17 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   ).filter((c) => (company.clientIds || []).includes(c.id!));
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+    <div className="fade-in mx-auto w-full max-w-7xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
+      <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 border-2 border-primary/10 rounded-md">
-            <AvatarFallback className="text-2xl bg-primary/5 text-primary rounded-md">
+          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
+            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
               <Building2 className="h-8 w-8" />
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
-            <p className="text-muted-foreground flex items-center gap-2 mt-1">
+            <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
+            <p className="mt-1 flex items-center gap-2 text-muted-foreground">
               <Building2 className="h-4 w-4" /> Company ID: {company.id}
             </p>
           </div>
@@ -62,88 +61,88 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-6">
-          <Card className="overflow-hidden border-none shadow-md bg-gradient-to-b from-card to-muted/20">
+          <Card className="overflow-hidden border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
             <CardHeader className="bg-muted/30 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">Contact & Details</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">Contact & Details</CardTitle>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {company.dba && (
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-full bg-primary/10 text-primary">
+                  <div className="rounded-full bg-primary/10 p-2 text-primary">
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
                       Doing Business As
                     </p>
-                    <p className="text-sm font-semibold mt-1">{company.dba}</p>
+                    <p className="mt-1 font-semibold text-sm">{company.dba}</p>
                   </div>
                 </div>
               )}
               {company.ein && (
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-full bg-primary/10 text-primary">
+                  <div className="rounded-full bg-primary/10 p-2 text-primary">
                     <Fingerprint className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
                       Federal Tax ID (EIN)
                     </p>
-                    <p className="text-sm font-semibold mt-1 font-mono">{company.ein}</p>
+                    <p className="mt-1 font-mono font-semibold text-sm">{company.ein}</p>
                   </div>
                 </div>
               )}
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                <div className="rounded-full bg-primary/10 p-2 text-primary">
                   <GlobeIcon className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Website</p>
+                  <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Website</p>
                   {company.website ? (
                     <a
                       href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1 mt-1"
+                      className="mt-1 flex items-center gap-1 font-semibold text-blue-600 text-sm hover:underline"
                     >
                       {company.website.replace(/^https?:\/\//, "")}
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : (
-                    <p className="text-sm font-semibold mt-1">N/A</p>
+                    <p className="mt-1 font-semibold text-sm">N/A</p>
                   )}
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                <div className="rounded-full bg-primary/10 p-2 text-primary">
                   <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Phone</p>
-                  <p className="text-sm font-semibold mt-1">{formatPhoneNumber(company.phone) || "N/A"}</p>
+                  <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Phone</p>
+                  <p className="mt-1 font-semibold text-sm">{formatPhoneNumber(company.phone) || "N/A"}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-primary/10 text-primary">
+                <div className="rounded-full bg-primary/10 p-2 text-primary">
                   <MapPin className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Address</p>
+                  <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Address</p>
                   {address ? (
-                    <div className="text-sm font-semibold mt-1">
+                    <div className="mt-1 font-semibold text-sm">
                       <p>{address.street1}</p>
                       {address.street2 && <p>{address.street2}</p>}
                       <p>
                         {address.city}, {address.state} {address.zipCode}
                       </p>
-                      <p className="text-muted-foreground text-xs mt-0.5">{address.country}</p>
+                      <p className="mt-0.5 text-muted-foreground text-xs">{address.country}</p>
                     </div>
                   ) : (
-                    <p className="text-sm font-semibold mt-1">N/A</p>
+                    <p className="mt-1 font-semibold text-sm">N/A</p>
                   )}
                 </div>
               </div>
@@ -152,28 +151,28 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 
           <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <MapPin className="h-5 w-5 text-primary" /> Situs Records
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {(company.situsRecords || []).length > 0 ? (
-                <div className="divide-y max-h-[300px] overflow-y-auto">
+                <div className="max-h-[300px] divide-y overflow-y-auto">
                   {(company.situsRecords || []).map((situs, idx) => (
-                    <div key={idx} className="p-4 hover:bg-muted/5 transition-colors">
-                      <div className="flex items-center justify-between mb-1">
+                    <div key={idx} className="p-4 transition-colors hover:bg-muted/5">
+                      <div className="mb-1 flex items-center justify-between">
                         <p className="font-semibold text-sm">{situs.jurisdiction}</p>
-                        <Badge variant="outline" className="text-xs font-normal">
+                        <Badge variant="outline" className="font-normal text-xs">
                           {situs.type}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">Effective: {situs.effectiveDate}</p>
+                      <p className="text-muted-foreground text-xs">Effective: {situs.effectiveDate}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center">
-                  <MapPin className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                  <MapPin className="mx-auto mb-2 h-8 w-8 opacity-20" />
                   <p className="text-sm">No situs records available.</p>
                 </div>
               )}
@@ -182,10 +181,10 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-none shadow-md h-full">
+          <Card className="h-full border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
               <div>
-                <CardTitle className="text-xl flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-xl">
                   <Users className="h-5 w-5 text-primary" /> Associated Clients
                 </CardTitle>
               </div>
@@ -199,13 +198,13 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                       <Link
                         key={client.id}
                         href={`/dashboard/crm/clients/${client.id}`}
-                        className="p-4 flex items-center justify-between hover:bg-muted/5 transition-colors group block"
+                        className="group block flex items-center justify-between p-4 transition-colors hover:bg-muted/5"
                       >
                         <div className="space-y-1">
-                          <p className="font-semibold group-hover:text-primary transition-colors">
+                          <p className="font-semibold transition-colors group-hover:text-primary">
                             {person?.firstName} {person?.lastName}
                           </p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <p className="flex items-center gap-2 text-muted-foreground text-xs">
                             {person?.email && <span>{person.email}</span>}
                             {person?.mobilePhone && (
                               <>
@@ -220,8 +219,8 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                   })}
                 </div>
               ) : (
-                <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center h-full">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <div className="flex h-full flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                  <Users className="mx-auto mb-4 h-12 w-12 opacity-20" />
                   <p>No clients currently associated with this company.</p>
                 </div>
               )}
@@ -230,25 +229,25 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 
           <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Briefcase className="h-5 w-5 text-primary" /> Nexus Records
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {(company.nexusRecords || []).length > 0 ? (
-                <div className="divide-y max-h-[300px] overflow-y-auto">
+                <div className="max-h-[300px] divide-y overflow-y-auto">
                   {(company.nexusRecords || []).map((nexus, idx) => (
-                    <div key={idx} className="p-4 hover:bg-muted/5 transition-colors flex items-center justify-between">
+                    <div key={idx} className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5">
                       <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
-                      <Badge variant="outline" className="text-xs font-normal">
+                      <Badge variant="outline" className="font-normal text-xs">
                         {nexus.type}
                       </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center">
-                  <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                  <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-20" />
                   <p className="text-sm">No nexus records available.</p>
                 </div>
               )}

@@ -26,7 +26,7 @@ export const columns = (onDelete: (person: Person) => void) => [
           <User className="h-4 w-4 text-muted-foreground" />
           <Link
             href={`/dashboard/crm/people/${person.id}`}
-            className="font-medium text-primary hover:underline flex items-center gap-1"
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
           >
             <span>{name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
@@ -59,7 +59,7 @@ export const columns = (onDelete: (person: Person) => void) => [
       const isDeletable = !person.isLinked;
 
       return (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/crm/people/${person.id}/edit`}>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
               <Pencil className="h-4 w-4" />
@@ -78,7 +78,7 @@ export const columns = (onDelete: (person: Person) => void) => [
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+              className="h-8 w-8 cursor-not-allowed text-muted-foreground/40"
               disabled
             >
               <Trash2 className="h-4 w-4" />

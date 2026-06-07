@@ -2,39 +2,52 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Accountant, AccountantSchema } from "@/types/crm";
 
-const COLLECTION = "accountants";
+const TABLE = "accountants";
 
 export async function getAccountants() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: accountants, error: accountantsError } = await supabaseServer.from(TABLE).select("*");
 
-    const snapshot = await adminDb.collection(COLLECTION).get();
-    const accountants = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Accountant[];
+    if (accountantsError) throw new Error((accountantsError as { message: string }).message);
+    if (!accountants || accountants.length === 0) return { success: true, accountants: [] };
 
     // Fetch person and address details
     const personIds = Array.from(new Set(accountants.map((a) => a.personId)));
     const addressIds = Array.from(new Set(accountants.map((a) => a.firmAddressId).filter(Boolean))) as string[];
 
-    const [personDocs, addressDocs] = await Promise.all([
-      personIds.length > 0 ? Promise.all(personIds.map((id) => adminDb!.collection("people").doc(id).get())) : [],
-      addressIds.length > 0 ? Promise.all(addressIds.map((id) => adminDb!.collection("addresses").doc(id).get())) : [],
+    const [peopleResult, addressesResult] = await Promise.all([
+      personIds.length > 0
+        ? supabaseServer.from("people").select("*").in("id", personIds)
+        : Promise.resolve({ data: [] }),
+      addressIds.length > 0
+        ? supabaseServer.from("addresses").select("*").in("id", addressIds)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const peopleMap = personDocs.reduce((acc, doc) => {
-      if (doc.exists) acc[doc.id] = { id: doc.id, ...doc.data() };
-      return acc;
-    }, {} as any);
+    if (peopleResult.error) throw new Error((peopleResult.error as { message: string }).message);
+    if (addressesResult.error) throw new Error((addressesResult.error as { message: string }).message);
 
-    const addressMap = addressDocs.reduce((acc, doc) => {
-      if (doc.exists) acc[doc.id] = { id: doc.id, ...doc.data() };
-      return acc;
-    }, {} as any);
+    const people = peopleResult.data || [];
+    const addresses = addressesResult.data || [];
+
+    const peopleMap = people.reduce(
+      (acc, person) => {
+        acc[person.id] = person;
+        return acc;
+      },
+      {} as Record<string, (typeof people)[number]>,
+    );
+
+    const addressMap = addresses.reduce(
+      (acc, addr) => {
+        acc[addr.id] = addr;
+        return acc;
+      },
+      {} as Record<string, (typeof addresses)[number]>,
+    );
 
     const accountantsWithDetails = accountants.map((accountant) => ({
       ...accountant,
@@ -43,103 +56,128 @@ export async function getAccountants() {
     }));
 
     return { success: true, accountants: accountantsWithDetails };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[getAccountants] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getAccountant(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: accountant, error: accountantError } = await supabaseServer
+      .from(TABLE)
+      .select("*")
+      .eq("id", id)
+      .single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Accountant not found" };
-
-    const accountant = { id: doc.id, ...doc.data() } as Accountant;
+    if (accountantError) throw new Error((accountantError as { message: string }).message);
+    if (!accountant) return { success: false, error: "Accountant not found" };
 
     // Fetch person details
-    const personDoc = await adminDb.collection("people").doc(accountant.personId).get();
-    const person = personDoc.exists ? { id: personDoc.id, ...personDoc.data() } : null;
+    const { data: person, error: personError } = await supabaseServer
+      .from("people")
+      .select("*")
+      .eq("id", accountant.personId)
+      .single();
+
+    if (personError && personError.code !== "PGRST116") {
+      throw new Error((personError as { message: string }).message);
+    }
 
     // Fetch address details
     let address = null;
     if (accountant.firmAddressId) {
-      const addressDoc = await adminDb.collection("addresses").doc(accountant.firmAddressId).get();
-      address = addressDoc.exists ? { id: addressDoc.id, ...addressDoc.data() } : null;
+      const { data: addrData, error: addrError } = await supabaseServer
+        .from("addresses")
+        .select("*")
+        .eq("id", accountant.firmAddressId)
+        .single();
+      if (!addrError) {
+        address = addrData;
+      }
     }
 
-    return { success: true, accountant, person, address };
-  } catch (error: any) {
+    return { success: true, accountant: accountant as Accountant, person: person || null, address };
+  } catch (error) {
     console.error(`[getAccountant] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createAccountant(data: Partial<Accountant>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = AccountantSchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/accountants");
 
     if (data.clientIds?.length) {
-      data.clientIds.forEach((id) => revalidatePath(`/dashboard/crm/clients/${id}`));
+      data.clientIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/clients/${id}`);
+      });
     }
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createAccountant] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateAccountant(id: string, data: Partial<Accountant>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/accountants");
     revalidatePath(`/dashboard/crm/accountants/${id}`);
 
     if (data.clientIds?.length) {
-      data.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      data.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateAccountant] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteAccountant(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: accountant, error: getError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    const accountant = doc.data() as Accountant | undefined;
+    if (getError) throw new Error((getError as { message: string }).message);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
+
+    if (deleteError) throw new Error((deleteError as { message: string }).message);
+
     revalidatePath("/dashboard/crm/accountants");
 
     if (accountant?.clientIds?.length) {
-      accountant.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      accountant.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteAccountant] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

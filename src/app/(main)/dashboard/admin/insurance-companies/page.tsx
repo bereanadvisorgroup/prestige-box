@@ -14,10 +14,10 @@ export default async function InsuranceCompaniesPage() {
 
   if (!result.success) {
     return (
-      <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Insurance Companies</h1>
-          <p className="text-muted-foreground mt-2">Manage insurance carriers and their supported policy types.</p>
+          <h1 className="font-bold text-3xl tracking-tight">Insurance Companies</h1>
+          <p className="mt-2 text-muted-foreground">Manage insurance carriers and their supported policy types.</p>
         </div>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -39,11 +39,11 @@ export default async function InsuranceCompaniesPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Insurance Companies</h1>
-          <p className="text-muted-foreground mt-2">Configure carriers and the products they offer.</p>
+          <h1 className="font-bold text-3xl text-primary tracking-tight">Insurance Companies</h1>
+          <p className="mt-2 text-muted-foreground">Configure carriers and the products they offer.</p>
         </div>
         <Button asChild className="font-semibold">
           <Link href="/dashboard/admin/insurance-companies/new">

@@ -2,93 +2,91 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
-const COLLECTION = "people";
+const TABLE = "people";
 
 export async function getPeople() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: people, error } = await supabaseServer.from(TABLE).select("*").order("lastName", { ascending: true });
 
-    const snapshot = await adminDb.collection(COLLECTION).orderBy("lastName", "asc").get();
-    const people = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Person[];
+    if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, people };
-  } catch (error: any) {
+    return { success: true, people: people as Person[] };
+  } catch (error) {
     console.error(`[getPeople] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getPerson(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: person, error } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Person not found" };
+    if (error) throw new Error((error as { message: string }).message);
+    if (!person) return { success: false, error: "Person not found" };
 
-    const person = { id: doc.id, ...doc.data() } as Person;
-    return { success: true, person };
-  } catch (error: any) {
+    return { success: true, person: person as Person };
+  } catch (error) {
     console.error(`[getPerson] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createPerson(data: Partial<Person>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = PersonSchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/people");
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createPerson] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updatePerson(id: string, data: Partial<Person>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/people");
     revalidatePath(`/dashboard/crm/people/${id}`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updatePerson] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deletePerson(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/people");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deletePerson] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

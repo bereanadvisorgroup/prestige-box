@@ -36,13 +36,13 @@ export function AddressSearchSelect({
         value={selectedAddress ? `${selectedAddress.street1}, ${selectedAddress.city}` : ""}
       />
       <ComboboxContent>
-        <div className="p-1 border-b">
+        <div className="border-b p-1">
           <AddressDialog
             onAddressCreated={onAddressCreated}
             trigger={
               <Button
                 variant="ghost"
-                className="w-full justify-start h-9 px-2 text-sm font-medium text-primary hover:text-primary hover:bg-primary/5"
+                className="h-9 w-full justify-start px-2 font-medium text-primary text-sm hover:bg-primary/5 hover:text-primary"
                 type="button"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -56,7 +56,7 @@ export function AddressSearchSelect({
             <ComboboxItem key={a.id} value={a.id!} label={`${a.street1}, ${a.city}`}>
               <div className="flex flex-col">
                 <span className="font-medium">{a.street1}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {a.city}, {a.state} {a.zipCode}
                 </span>
               </div>

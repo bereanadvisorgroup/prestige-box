@@ -1,4 +1,4 @@
-import type { User as FirebaseUser } from "firebase/auth";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -16,10 +16,10 @@ export interface UserProfile {
 }
 
 interface AuthState {
-  user: FirebaseUser | null;
+  user: SupabaseUser | null;
   profile: UserProfile | null;
   isLoading: boolean;
-  setUser: (user: FirebaseUser | null) => void;
+  setUser: (user: SupabaseUser | null) => void;
   setProfile: (profile: UserProfile | null) => void;
   setLoading: (isLoading: boolean) => void;
   logout: () => void;

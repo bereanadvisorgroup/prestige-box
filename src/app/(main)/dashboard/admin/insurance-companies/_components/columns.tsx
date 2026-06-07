@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, Globe, List, Pencil, Shield, Trash2 } from "lucide-react";
+import { ArrowUpRight, Globe, Pencil, Shield, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
           <Shield className="h-4 w-4 text-muted-foreground" />
           <Link
             href={`/dashboard/admin/insurance-companies/${company.id}`}
-            className="font-medium text-primary hover:underline flex items-center gap-1"
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
           >
             <span>{company.name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
@@ -45,7 +45,7 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
           href={url.startsWith("http") ? url : `https://${url}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-primary hover:underline font-semibold"
+          className="flex items-center gap-1 font-semibold text-primary hover:underline"
         >
           <Globe className="h-3 w-3" />
           {url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -59,14 +59,14 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
     cell: ({ row }: { row: Row<InsuranceCompany> }) => {
       const policies = row.original.policyNames;
       return (
-        <div className="flex flex-wrap gap-1 max-w-[300px]">
+        <div className="flex max-w-[300px] flex-wrap gap-1">
           {policies.slice(0, 3).map((policy, i) => (
-            <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0 h-4">
+            <Badge key={i} variant="secondary" className="h-4 px-1 py-0 text-[10px]">
               {policy}
             </Badge>
           ))}
           {policies.length > 3 && (
-            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+            <Badge variant="outline" className="h-4 px-1 py-0 text-[10px]">
               +{policies.length - 3} more
             </Badge>
           )}
@@ -81,7 +81,7 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
       const isDeletable = !company.isLinked;
 
       return (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/admin/insurance-companies/${company.id}/edit`}>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
               <Pencil className="h-4 w-4" />
@@ -100,7 +100,7 @@ export const columns = (onDelete: (company: InsuranceCompany) => void) => [
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+              className="h-8 w-8 cursor-not-allowed text-muted-foreground/40"
               disabled
             >
               <Trash2 className="h-4 w-4" />

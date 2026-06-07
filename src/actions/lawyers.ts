@@ -2,39 +2,52 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Lawyer, LawyerSchema } from "@/types/crm";
 
-const COLLECTION = "lawyers";
+const TABLE = "lawyers";
 
 export async function getLawyers() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: lawyers, error: lawyersError } = await supabaseServer.from(TABLE).select("*");
 
-    const snapshot = await adminDb.collection(COLLECTION).get();
-    const lawyers = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Lawyer[];
+    if (lawyersError) throw new Error((lawyersError as { message: string }).message);
+    if (!lawyers || lawyers.length === 0) return { success: true, lawyers: [] };
 
     // Fetch person and address details
     const personIds = Array.from(new Set(lawyers.map((l) => l.personId)));
     const addressIds = Array.from(new Set(lawyers.map((l) => l.firmAddressId).filter(Boolean))) as string[];
 
-    const [personDocs, addressDocs] = await Promise.all([
-      personIds.length > 0 ? Promise.all(personIds.map((id) => adminDb!.collection("people").doc(id).get())) : [],
-      addressIds.length > 0 ? Promise.all(addressIds.map((id) => adminDb!.collection("addresses").doc(id).get())) : [],
+    const [peopleResult, addressesResult] = await Promise.all([
+      personIds.length > 0
+        ? supabaseServer.from("people").select("*").in("id", personIds)
+        : Promise.resolve({ data: [] }),
+      addressIds.length > 0
+        ? supabaseServer.from("addresses").select("*").in("id", addressIds)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const peopleMap = personDocs.reduce((acc, doc) => {
-      if (doc.exists) acc[doc.id] = { id: doc.id, ...doc.data() };
-      return acc;
-    }, {} as any);
+    if (peopleResult.error) throw new Error((peopleResult.error as { message: string }).message);
+    if (addressesResult.error) throw new Error((addressesResult.error as { message: string }).message);
 
-    const addressMap = addressDocs.reduce((acc, doc) => {
-      if (doc.exists) acc[doc.id] = { id: doc.id, ...doc.data() };
-      return acc;
-    }, {} as any);
+    const people = peopleResult.data || [];
+    const addresses = addressesResult.data || [];
+
+    const peopleMap = people.reduce(
+      (acc, person) => {
+        acc[person.id] = person;
+        return acc;
+      },
+      {} as Record<string, (typeof people)[number]>,
+    );
+
+    const addressMap = addresses.reduce(
+      (acc, addr) => {
+        acc[addr.id] = addr;
+        return acc;
+      },
+      {} as Record<string, (typeof addresses)[number]>,
+    );
 
     const lawyersWithDetails = lawyers.map((lawyer) => ({
       ...lawyer,
@@ -43,103 +56,124 @@ export async function getLawyers() {
     }));
 
     return { success: true, lawyers: lawyersWithDetails };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[getLawyers] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getLawyer(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: lawyer, error: lawyerError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Lawyer not found" };
-
-    const lawyer = { id: doc.id, ...doc.data() } as Lawyer;
+    if (lawyerError) throw new Error((lawyerError as { message: string }).message);
+    if (!lawyer) return { success: false, error: "Lawyer not found" };
 
     // Fetch person details
-    const personDoc = await adminDb.collection("people").doc(lawyer.personId).get();
-    const person = personDoc.exists ? { id: personDoc.id, ...personDoc.data() } : null;
+    const { data: person, error: personError } = await supabaseServer
+      .from("people")
+      .select("*")
+      .eq("id", lawyer.personId)
+      .single();
+
+    if (personError && personError.code !== "PGRST116") {
+      throw new Error((personError as { message: string }).message);
+    }
 
     // Fetch address details
     let address = null;
     if (lawyer.firmAddressId) {
-      const addressDoc = await adminDb.collection("addresses").doc(lawyer.firmAddressId).get();
-      address = addressDoc.exists ? { id: addressDoc.id, ...addressDoc.data() } : null;
+      const { data: addrData, error: addrError } = await supabaseServer
+        .from("addresses")
+        .select("*")
+        .eq("id", lawyer.firmAddressId)
+        .single();
+      if (!addrError) {
+        address = addrData;
+      }
     }
 
-    return { success: true, lawyer, person, address };
-  } catch (error: any) {
+    return { success: true, lawyer: lawyer as Lawyer, person: person || null, address };
+  } catch (error) {
     console.error(`[getLawyer] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createLawyer(data: Partial<Lawyer>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = LawyerSchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/lawyers");
 
     if (data.clientIds?.length) {
-      data.clientIds.forEach((id) => revalidatePath(`/dashboard/crm/clients/${id}`));
+      data.clientIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/clients/${id}`);
+      });
     }
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createLawyer] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateLawyer(id: string, data: Partial<Lawyer>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/crm/lawyers");
     revalidatePath(`/dashboard/crm/lawyers/${id}`);
 
     if (data.clientIds?.length) {
-      data.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      data.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateLawyer] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteLawyer(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: lawyer, error: getError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    const lawyer = doc.data() as Lawyer | undefined;
+    if (getError) throw new Error((getError as { message: string }).message);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
+
+    if (deleteError) throw new Error((deleteError as { message: string }).message);
+
     revalidatePath("/dashboard/crm/lawyers");
 
     if (lawyer?.clientIds?.length) {
-      lawyer.clientIds.forEach((clientId) => revalidatePath(`/dashboard/crm/clients/${clientId}`));
+      lawyer.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
     }
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteLawyer] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

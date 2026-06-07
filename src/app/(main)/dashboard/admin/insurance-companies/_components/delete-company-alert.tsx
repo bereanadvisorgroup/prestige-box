@@ -36,7 +36,7 @@ export function DeleteCompanyAlert({ company, open, onOpenChange }: DeleteCompan
       } else {
         toast.error(result.error || "Failed to delete insurance company");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);
@@ -61,7 +61,7 @@ export function DeleteCompanyAlert({ company, open, onOpenChange }: DeleteCompan
               e.preventDefault();
               handleDelete();
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold"
+            className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Deleting..." : "Delete Company"}
           </AlertDialogAction>

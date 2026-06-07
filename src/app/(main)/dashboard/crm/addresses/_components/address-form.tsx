@@ -64,7 +64,7 @@ export function AddressForm({ address }: AddressFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle>{address ? "Edit Address" : "Add New Address"}</CardTitle>
       </CardHeader>
@@ -110,7 +110,7 @@ export function AddressForm({ address }: AddressFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="city"

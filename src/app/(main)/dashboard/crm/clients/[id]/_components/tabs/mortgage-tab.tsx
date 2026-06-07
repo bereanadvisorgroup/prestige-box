@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { Calculator, FileText, Home, Loader2, MapPin, Plus, Trash2, UploadCloud } from "lucide-react";
+import { Calculator, FileText, Home, Loader2, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
@@ -13,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { storage } from "@/lib/firebase.client";
+import { supabase } from "@/lib/supabase.client";
 import type { Address, Client, MortgageInfo, Person } from "@/types/crm";
 
 export function MortgageTab({ client, person }: { client: Client; person: Person }) {
@@ -56,9 +55,13 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();
         const randomStr = Math.random().toString(36).substring(7);
-        const storageRef = ref(storage, `clients/${client.id}/mortgages/${randomStr}_${Date.now()}.${fileExt}`);
-        const snapshot = await uploadBytes(storageRef, statementFile);
-        statementPath = await getDownloadURL(snapshot.ref);
+        const filePath = `clients/${client.id}/mortgages/${randomStr}_${Date.now()}.${fileExt}`;
+        const { data, error } = await supabase.storage.from("documents").upload(filePath, statementFile);
+        if (error) throw error;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("documents").getPublicUrl(filePath);
+        statementPath = publicUrl;
       }
 
       const newMortgage: MortgageInfo = {
@@ -111,14 +114,14 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
   };
 
   return (
-    <Card className="border-none shadow-md animate-in fade-in duration-500 bg-gradient-to-b from-card to-muted/20">
+    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="bg-muted/10 pb-4">
         <CardTitle>Mortgages & Properties</CardTitle>
         <CardDescription>Link properties and upload mortgage statements for this client.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="bg-background p-4 rounded-lg border shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <CardContent className="space-y-6 pt-6">
+        <div className="space-y-4 rounded-lg border bg-background p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div className="space-y-2">
               <Label>Home Address</Label>
               <Select value={selectedAddressId} onValueChange={setSelectedAddressId}>
@@ -150,7 +153,7 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <Label className="mb-0">Est. Market Value ($)</Label>
                 <Button
                   variant="ghost"
@@ -176,7 +179,7 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
               <input
                 id="mortgage-file-upload"
                 type="file"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 onChange={(e) => setStatementFile(e.target.files?.[0] || null)}
               />
             </div>
@@ -184,13 +187,13 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleAdd} disabled={isLoading || !selectedAddressId}>
-              {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Add Property details
             </Button>
           </div>
         </div>
 
-        <div className="space-y-5 mt-6">
+        <div className="mt-6 space-y-5">
           {mortgages.length > 0 ? (
             mortgages.map((mort) => {
               const addrStr = getFullAddress(mort.addressId);
@@ -198,9 +201,9 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
               return (
                 <div
                   key={mort.id}
-                  className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between p-0 border rounded-xl bg-background shadow-sm hover:shadow-md transition-all overflow-hidden gap-0"
+                  className="flex flex-col items-stretch justify-between gap-0 overflow-hidden rounded-xl border bg-background p-0 shadow-sm transition-all hover:shadow-md xl:flex-row xl:items-center"
                 >
-                  <div className="w-full xl:w-48 h-48 xl:h-auto shrink-0 bg-muted/30 border-b xl:border-b-0 xl:border-r border-border/50 relative">
+                  <div className="relative h-48 w-full shrink-0 border-border/50 border-b bg-muted/30 xl:h-auto xl:w-48 xl:border-r xl:border-b-0">
                     <iframe
                       width="100%"
                       height="100%"
@@ -211,15 +214,15 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
                       src={`https://www.google.com/maps?q=${encodeURIComponent(addrStr)}&output=embed`}
                     />
                   </div>
-                  <div className="flex-1 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                    <div className="space-y-3 flex-1 w-full">
-                      <p className="font-semibold text-foreground text-lg flex items-start sm:items-center gap-3">
-                        <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5 sm:mt-0" />
+                  <div className="flex flex-1 flex-col items-start justify-between gap-6 p-6 sm:flex-row sm:items-center">
+                    <div className="w-full flex-1 space-y-3">
+                      <p className="flex items-start gap-3 font-semibold text-foreground text-lg sm:items-center">
+                        <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary sm:mt-0" />
                         <span className="line-clamp-2">{addrStr}</span>
                       </p>
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 w-full text-sm border p-4 rounded-lg bg-muted/5">
+                      <div className="mt-4 grid w-full grid-cols-2 gap-4 rounded-lg border bg-muted/5 p-4 text-sm lg:grid-cols-4">
                         <div className="space-y-1">
-                          <p className="text-muted-foreground text-xs uppercase font-medium tracking-wide">
+                          <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
                             Purchase Price
                           </p>
                           <p className="font-semibold">
@@ -229,7 +232,7 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
                           </p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-muted-foreground text-xs uppercase font-medium tracking-wide flex items-center gap-1">
+                          <p className="flex items-center gap-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
                             Market Value <Calculator className="h-3 w-3 text-green-600" />
                           </p>
                           <p className="font-semibold text-green-700 dark:text-green-500">
@@ -241,11 +244,11 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
                       </div>
                     </div>
 
-                    <div className="flex xl:flex-col sm:flex-row flex-col items-center gap-3 shrink-0 self-end sm:self-center w-full sm:w-auto mt-4 sm:mt-0">
+                    <div className="mt-4 flex w-full shrink-0 flex-col items-center gap-3 self-end sm:mt-0 sm:w-auto sm:flex-row sm:self-center xl:flex-col">
                       {mort.statementPath && (
                         <Button
                           variant="outline"
-                          className="w-full xl:w-auto gap-2 border-primary/20 hover:bg-primary/5"
+                          className="w-full gap-2 border-primary/20 hover:bg-primary/5 xl:w-auto"
                           asChild
                         >
                           <a href={mort.statementPath} target="_blank" rel="noopener noreferrer">
@@ -256,10 +259,10 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:bg-destructive/10 w-full sm:w-10 h-10"
+                        className="h-10 w-full text-destructive hover:bg-destructive/10 sm:w-10"
                         onClick={() => handleRemove(mort.id!)}
                       >
-                        <Trash2 className="h-5 w-5 sm:h-4 sm:w-4 mx-auto" />
+                        <Trash2 className="mx-auto h-5 w-5 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -267,9 +270,9 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
               );
             })
           ) : (
-            <div className="p-12 text-center text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
-              <Home className="h-10 w-10 mx-auto mb-4 opacity-20" />
-              <p className="text-base text-balance max-w-sm mx-auto">
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-12 text-center text-muted-foreground">
+              <Home className="mx-auto mb-4 h-10 w-10 opacity-20" />
+              <p className="mx-auto max-w-sm text-balance text-base">
                 No properties or mortgages linked. Select a home address and add property details to get started.
               </p>
             </div>

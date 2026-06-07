@@ -20,7 +20,7 @@ export const columns = (onDelete: (household: Household) => void) => [
           <Home className="h-4 w-4 text-muted-foreground" />
           <Link
             href={`/dashboard/crm/households/${household.id}`}
-            className="font-medium text-primary hover:underline flex items-center gap-1"
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
           >
             <span>{household.name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
@@ -56,7 +56,7 @@ export const columns = (onDelete: (household: Household) => void) => [
       const household = row.original;
 
       return (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/crm/households/${household.id}/edit`}>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
               <Pencil className="h-4 w-4" />

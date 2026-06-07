@@ -70,7 +70,7 @@ export async function getSportsNews(teamName: string) {
           : [
               {
                 title: `Latest updates for ${teamName}`,
-                url: "https://news.google.com/search?q=" + encodeURIComponent(teamName),
+                url: `https://news.google.com/search?q=${encodeURIComponent(teamName)}`,
                 source: "Google News",
                 thumbnail: teamLogo,
               },
@@ -78,6 +78,6 @@ export async function getSportsNews(teamName: string) {
     };
   } catch (error: unknown) {
     console.error(`[getSportsNews] Error:`, error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return { success: false, error: error instanceof Error ? (error as { message: string }).message : "Unknown error" };
   }
 }

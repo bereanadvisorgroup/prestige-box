@@ -14,7 +14,7 @@ export function LandingHero() {
 
       <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-6 text-center lg:px-8">
         {/* Logo */}
-        <div className="mb-12 animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out">
+        <div className="fade-in slide-in-from-bottom-6 mb-12 animate-in duration-1000 ease-out">
           <img
             src="https://assets.agentfire3.com/uploads/sites/2548/2026/01/Prestige-Advisors-logo-white-210xAUTO.fit.png"
             alt="Prestige Advisors Logo"
@@ -25,14 +25,14 @@ export function LandingHero() {
         {/* Hero Content */}
         <h1 className="mb-6 max-w-4xl text-balance font-bold text-4xl leading-tight tracking-tight sm:text-6xl md:text-7xl">
           <span
-            className="animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out fill-mode-both"
+            className="fade-in slide-in-from-bottom-8 animate-in fill-mode-both duration-1000 ease-out"
             style={{ animationDelay: "100ms" }}
           >
             Strategic Wealth & CRM
           </span>
           <br />
           <span
-            className="animate-in fade-in slide-in-from-bottom-8 bg-gradient-to-r from-secondary via-secondary/80 to-secondary/50 bg-clip-text text-transparent duration-1000 ease-out fill-mode-both"
+            className="fade-in slide-in-from-bottom-8 animate-in bg-gradient-to-r from-secondary via-secondary/80 to-secondary/50 bg-clip-text fill-mode-both text-transparent duration-1000 ease-out"
             style={{ animationDelay: "200ms" }}
           >
             For Business Owners
@@ -41,7 +41,7 @@ export function LandingHero() {
 
         <p className="mb-10 max-w-2xl text-balance text-lg text-slate-400 sm:text-xl md:text-2xl">
           <span
-            className="animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out fill-mode-both"
+            className="fade-in slide-in-from-bottom-8 animate-in fill-mode-both duration-1000 ease-out"
             style={{ animationDelay: "300ms" }}
           >
             Experience that brings clarity. Access your financial planning insights and connect with our advisory team
@@ -51,13 +51,13 @@ export function LandingHero() {
 
         {/* Call to Action */}
         <div
-          className="flex flex-col gap-4 sm:flex-row animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out fill-mode-both"
+          className="fade-in slide-in-from-bottom-8 flex animate-in flex-col gap-4 fill-mode-both duration-1000 ease-out sm:flex-row"
           style={{ animationDelay: "400ms" }}
         >
           <Button
             asChild
             size="lg"
-            className="h-14 gap-2 rounded-full px-8 text-lg font-medium shadow-xl shadow-primary/20 transition-all hover:scale-105 hover:bg-primary/90"
+            className="h-14 gap-2 rounded-full px-8 font-medium text-lg shadow-primary/20 shadow-xl transition-all hover:scale-105 hover:bg-primary/90"
           >
             <Link href="/auth/v1/login">
               Login to Portal
@@ -68,7 +68,7 @@ export function LandingHero() {
             asChild
             size="lg"
             variant="outline"
-            className="h-14 rounded-full border-slate-800 bg-slate-900/50 px-8 text-lg font-medium text-slate-300 backdrop-blur-sm transition-all hover:bg-slate-800 hover:text-white"
+            className="h-14 rounded-full border-slate-800 bg-slate-900/50 px-8 font-medium text-lg text-slate-300 backdrop-blur-sm transition-all hover:bg-slate-800 hover:text-white"
           >
             <Link href="https://prestigeadvisors360.com/" target="_blank" rel="noopener noreferrer">
               Visit Main Website
@@ -79,7 +79,7 @@ export function LandingHero() {
 
       {/* Footer Text */}
       <div
-        className="absolute bottom-8 text-center text-sm text-slate-500 animate-in fade-in duration-1000 fill-mode-both"
+        className="fade-in absolute bottom-8 animate-in fill-mode-both text-center text-slate-500 text-sm duration-1000"
         style={{ animationDelay: "800ms" }}
       >
         © {new Date().getFullYear()} Prestige Advisors. All rights reserved.

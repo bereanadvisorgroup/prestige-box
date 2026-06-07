@@ -36,7 +36,7 @@ export function DeletePolicyAlert({ policy, open, onOpenChange }: DeletePolicyAl
       } else {
         toast.error(result.error || "Failed to delete policy record");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);
@@ -61,7 +61,7 @@ export function DeletePolicyAlert({ policy, open, onOpenChange }: DeletePolicyAl
               e.preventDefault();
               handleDelete();
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold"
+            className="bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Deleting..." : "Delete Policy Record"}
           </AlertDialogAction>

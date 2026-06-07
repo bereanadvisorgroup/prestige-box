@@ -94,14 +94,14 @@ export function EmploymentTab({ client }: { client: Client }) {
   };
 
   return (
-    <Card className="border-none shadow-md animate-in fade-in duration-500 bg-gradient-to-b from-card to-muted/20">
+    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="bg-muted/10 pb-4">
         <CardTitle>Employment History</CardTitle>
         <CardDescription>Add employment records for this client.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="bg-background p-4 rounded-lg border shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <CardContent className="space-y-6 pt-6">
+        <div className="space-y-4 rounded-lg border bg-background p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Occupation</Label>
               <Input
@@ -134,7 +134,7 @@ export function EmploymentTab({ client }: { client: Client }) {
                 onAddressSelect={handleAddressSelect}
                 placeholder="Search for employer address..."
               />
-              {employerAddressId && <p className="text-xs text-green-600 font-medium">✓ Address linked</p>}
+              {employerAddressId && <p className="font-medium text-green-600 text-xs">✓ Address linked</p>}
             </div>
             <div className="space-y-2">
               <Label>Start Date</Label>
@@ -148,13 +148,13 @@ export function EmploymentTab({ client }: { client: Client }) {
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleAdd} disabled={isLoading || !occupation || !employerName}>
-              {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Add Employment
             </Button>
           </div>
         </div>
 
-        <div className="space-y-3 mt-6">
+        <div className="mt-6 space-y-3">
           {employments.length > 0 ? (
             employments.map((emp) => {
               const calculateYears = (start?: string, end?: string) => {
@@ -169,42 +169,42 @@ export function EmploymentTab({ client }: { client: Client }) {
               return (
                 <div
                   key={emp.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-md bg-background shadow-sm hover:shadow-md transition-all gap-4"
+                  className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:items-center"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-primary/10 rounded border border-primary/20 text-primary shrink-0">
+                    <div className="shrink-0 rounded border border-primary/20 bg-primary/10 p-2 text-primary">
                       <Briefcase className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground flex items-center gap-2">{emp.occupation}</p>
-                      <p className="text-sm text-foreground/80">{emp.employerName}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1 border-t border-border/50 mt-2">
+                      <p className="flex items-center gap-2 font-semibold text-foreground">{emp.occupation}</p>
+                      <p className="text-foreground/80 text-sm">{emp.employerName}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-border/50 border-t pt-1 text-muted-foreground text-xs">
                         {emp.employerPhone && (
                           <span>
-                            <span className="font-medium mr-1 opacity-70">Phone:</span>
+                            <span className="mr-1 font-medium opacity-70">Phone:</span>
                             {emp.employerPhone}
                           </span>
                         )}
                         {emp.startDate && (
                           <span>
-                            <span className="font-medium mr-1 opacity-70">Started:</span>
+                            <span className="mr-1 font-medium opacity-70">Started:</span>
                             {emp.startDate}
                           </span>
                         )}
                         {emp.endDate && (
                           <span>
-                            <span className="font-medium mr-1 opacity-70">Ended:</span>
+                            <span className="mr-1 font-medium opacity-70">Ended:</span>
                             {emp.endDate}
                           </span>
                         )}
                         {!emp.endDate && emp.startDate && (
                           <span>
-                            <span className="font-medium mr-1 opacity-70">Status:</span>Current
+                            <span className="mr-1 font-medium opacity-70">Status:</span>Current
                           </span>
                         )}
                         {years && (
                           <span>
-                            <span className="font-medium mr-1 opacity-70">Tenure:</span>
+                            <span className="mr-1 font-medium opacity-70">Tenure:</span>
                             {years} years
                           </span>
                         )}
@@ -214,7 +214,7 @@ export function EmploymentTab({ client }: { client: Client }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:bg-destructive/10 shrink-0 self-end md:self-center"
+                    className="shrink-0 self-end text-destructive hover:bg-destructive/10 md:self-center"
                     onClick={() => handleRemove(emp.id!)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -223,8 +223,8 @@ export function EmploymentTab({ client }: { client: Client }) {
               );
             })
           ) : (
-            <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
-              <Briefcase className="h-8 w-8 mx-auto mb-3 opacity-20" />
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
+              <Briefcase className="mx-auto mb-3 h-8 w-8 opacity-20" />
               <p className="text-sm">No employment records found.</p>
             </div>
           )}

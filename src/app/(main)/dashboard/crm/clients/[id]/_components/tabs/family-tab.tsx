@@ -52,7 +52,7 @@ export function FamilyTab({ client }: { client: Client }) {
       } else {
         throw new Error();
       }
-    } catch (e) {
+    } catch (_e) {
       toast.error("Failed to add family member");
     } finally {
       setIsLoading(false);
@@ -73,17 +73,17 @@ export function FamilyTab({ client }: { client: Client }) {
   };
 
   return (
-    <Card className="border-none shadow-md animate-in fade-in duration-500 bg-gradient-to-b from-card to-muted/20">
+    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="bg-muted/10 pb-4">
         <CardTitle>Family Configuration</CardTitle>
         <CardDescription>
           Link family members from the people collection and specify their relationship.
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 items-end bg-background p-4 rounded-lg border shadow-sm">
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-sm font-medium">Select Person</label>
+      <CardContent className="space-y-6 pt-6">
+        <div className="flex flex-col items-end gap-4 rounded-lg border bg-background p-4 shadow-sm md:flex-row">
+          <div className="w-full flex-1 space-y-2">
+            <label className="font-medium text-sm">Select Person</label>
             <Select value={selectedPersonId} onValueChange={setSelectedPersonId}>
               <SelectTrigger>
                 <SelectValue placeholder="Search or select person" />
@@ -97,8 +97,8 @@ export function FamilyTab({ client }: { client: Client }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-sm font-medium">Relationship</label>
+          <div className="w-full flex-1 space-y-2">
+            <label className="font-medium text-sm">Relationship</label>
             <Select value={selectedRelationship} onValueChange={setSelectedRelationship}>
               <SelectTrigger>
                 <SelectValue placeholder="Select relationship" />
@@ -113,47 +113,47 @@ export function FamilyTab({ client }: { client: Client }) {
           <Button
             onClick={handleAdd}
             disabled={isLoading || !selectedPersonId || !selectedRelationship}
-            className="shrink-0 w-full md:w-auto mt-4 md:mt-0"
+            className="mt-4 w-full shrink-0 md:mt-0 md:w-auto"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
             Add Member
           </Button>
         </div>
 
-        <div className="space-y-3 mt-6">
+        <div className="mt-6 space-y-3">
           {members.length > 0 ? (
             members.map((member) => {
               const person = people.find((p) => p.id === member.personId);
               return (
                 <div
                   key={member.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md bg-background shadow-sm hover:shadow-md transition-all gap-4"
+                  className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-primary/10 rounded-full text-primary shrink-0">
+                    <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary">
                       <User className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground text-sm flex items-center gap-2">
+                      <p className="flex items-center gap-2 font-semibold text-foreground text-sm">
                         {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
                         <Badge
                           variant="outline"
-                          className="text-[10px] uppercase font-semibold tracking-wider bg-muted/50"
+                          className="bg-muted/50 font-semibold text-[10px] uppercase tracking-wider"
                         >
                           {member.relationship}
                         </Badge>
                       </p>
                       {person && (
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-xs">
                           {person.pii?.biologicalGender && (
                             <span>
-                              <span className="font-medium mr-1 opacity-70">Gender:</span>
+                              <span className="mr-1 font-medium opacity-70">Gender:</span>
                               {person.pii.biologicalGender}
                             </span>
                           )}
                           {person.pii?.birthDate && (
                             <span>
-                              <span className="font-medium mr-1 opacity-70">DOB:</span>
+                              <span className="mr-1 font-medium opacity-70">DOB:</span>
                               {person.pii.birthDate}
                             </span>
                           )}
@@ -164,7 +164,7 @@ export function FamilyTab({ client }: { client: Client }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:bg-destructive/10 self-end sm:self-auto shrink-0"
+                    className="shrink-0 self-end text-destructive hover:bg-destructive/10 sm:self-auto"
                     onClick={() => handleRemove(member.id!)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -173,8 +173,8 @@ export function FamilyTab({ client }: { client: Client }) {
               );
             })
           ) : (
-            <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
-              <User className="h-8 w-8 mx-auto mb-3 opacity-20" />
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
+              <User className="mx-auto mb-3 h-8 w-8 opacity-20" />
               <p className="text-sm">No family members linked yet.</p>
             </div>
           )}

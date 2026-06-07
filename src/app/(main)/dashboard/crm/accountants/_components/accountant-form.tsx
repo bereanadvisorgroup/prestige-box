@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Plus, ReceiptText, Trash2, Users } from "lucide-react";
+import { MapPin, ReceiptText, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -104,7 +104,7 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-sm">
+    <Card className="mx-auto w-full max-w-3xl shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ReceiptText className="h-5 w-5" />
@@ -176,8 +176,8 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
               )}
             />
 
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-medium flex items-center gap-2">
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="flex items-center gap-2 font-medium text-sm">
                 <Users className="h-4 w-4 text-primary" />
                 Associated Clients
               </h3>
@@ -211,9 +211,9 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
                 </Combobox>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
                 {(form.watch("clientIds") || []).length === 0 && (
-                  <p className="text-xs text-muted-foreground p-1 italic">No clients linked yet.</p>
+                  <p className="p-1 text-muted-foreground text-xs italic">No clients linked yet.</p>
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
@@ -222,13 +222,13 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
                     <Badge
                       key={clientId}
                       variant="secondary"
-                      className="gap-1 px-3 py-1 font-medium bg-secondary text-secondary-foreground shadow-sm"
+                      className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
                     >
                       {person ? `${person.firstName} ${person.lastName}` : "Unknown Client"}
                       <button
                         type="button"
                         onClick={() => handleToggleClient(clientId)}
-                        className="ml-1 hover:text-destructive transition-colors"
+                        className="ml-1 transition-colors hover:text-destructive"
                       >
                         ×
                       </button>
@@ -238,7 +238,7 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

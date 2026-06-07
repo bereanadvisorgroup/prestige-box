@@ -14,10 +14,9 @@ import { createPerson, updatePerson } from "@/actions/people";
 import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SsnInput } from "@/components/ui/ssn-input";
 import { type Address, type Person, PersonSchema } from "@/types/crm";
@@ -122,7 +121,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
         a.zipCode.toLowerCase() === addressData.zipCode.toLowerCase(),
     );
 
-    if (existing && existing.id) {
+    if (existing?.id) {
       addressId = existing.id;
     } else {
       const result = await createAddress(addressData);
@@ -191,7 +190,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-sm">
+    <Card className="mx-auto w-full max-w-4xl shadow-sm">
       <CardHeader>
         <CardTitle>{person ? "Edit Person" : "Add New Person"}</CardTitle>
       </CardHeader>
@@ -199,8 +198,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              <h3 className="text-sm font-medium border-b pb-2">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Personal Information</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <FormField
                   control={form.control}
                   name="prefix"
@@ -283,8 +282,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               </div>
 
               {/* Emails Section */}
-              <div className="pt-4 space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="space-y-3 pt-4">
+                <div className="flex items-center justify-between">
                   <FormLabel className="text-base">Email Addresses</FormLabel>
                   <Button
                     type="button"
@@ -294,13 +293,13 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       appendEmail({ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: false })
                     }
                   >
-                    <Plus className="h-4 w-4 mr-1" /> Add Email
+                    <Plus className="mr-1 h-4 w-4" /> Add Email
                   </Button>
                 </div>
                 {emailFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                    className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
                   >
                     <FormField
                       control={form.control}
@@ -317,7 +316,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                 className={fieldState.isDirty && !fieldState.invalid && inputField.value ? "pr-10" : ""}
                               />
                               {fieldState.isDirty && !fieldState.invalid && inputField.value && (
-                                <Check className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 h-4 w-4" />
+                                <Check className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-green-500" />
                               )}
                             </div>
                           </FormControl>
@@ -351,8 +350,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       control={form.control}
                       name={`emails.${index}.isPrimary`}
                       render={({ field: checkField }) => (
-                        <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
-                          <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                        <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                          <FormLabel className="mb-2 text-xs">Primary</FormLabel>
                           <FormControl>
                             <input
                               type="radio"
@@ -385,8 +384,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               </div>
 
               {/* Phones Section */}
-              <div className="pt-4 space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="space-y-3 pt-4">
+                <div className="flex items-center justify-between">
                   <FormLabel className="text-base">Phone Numbers</FormLabel>
                   <Button
                     type="button"
@@ -396,13 +395,13 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       appendPhone({ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: false })
                     }
                   >
-                    <Plus className="h-4 w-4 mr-1" /> Add Phone
+                    <Plus className="mr-1 h-4 w-4" /> Add Phone
                   </Button>
                 </div>
                 {phoneFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                    className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
                   >
                     <FormField
                       control={form.control}
@@ -446,8 +445,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       control={form.control}
                       name={`phones.${index}.isPrimary`}
                       render={({ field: checkField }) => (
-                        <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
-                          <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                        <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                          <FormLabel className="mb-2 text-xs">Primary</FormLabel>
                           <FormControl>
                             <input
                               type="radio"
@@ -480,9 +479,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
             </div>
 
             {/* Drivers License Section */}
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-medium border-b pb-2">Driver&apos;s License</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Driver&apos;s License</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <FormField
                   control={form.control}
                   name="driversLicense.number"
@@ -539,9 +538,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
             </div>
 
             {/* PII Section */}
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-medium border-b pb-2">Personal Identifiable Information (PII)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Personal Identifiable Information (PII)</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="pii.ssn"
@@ -556,7 +555,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
+                          className="absolute top-0 right-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
                           onClick={() => setShowSSN(!showSSN)}
                         >
                           {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -604,10 +603,10 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-medium border-b pb-2">Addresses</h3>
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Addresses</h3>
 
-              <div className="space-y-2 mb-4">
+              <div className="mb-4 space-y-2">
                 <FormLabel>Search & Add Address</FormLabel>
                 <AddressAutocomplete
                   value={addressSearchQuery}
@@ -625,15 +624,15 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     return (
                       <div
                         key={field.id}
-                        className="flex flex-col sm:flex-row gap-3 items-end bg-muted/20 p-3 rounded-md border"
+                        className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
                       >
                         <div className="flex-1">
-                          <FormLabel className="text-xs text-muted-foreground block mb-2">Address details</FormLabel>
+                          <FormLabel className="mb-2 block text-muted-foreground text-xs">Address details</FormLabel>
                           {addrDetails ? (
-                            <div className="flex items-start gap-2 h-10 py-2">
-                              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                            <div className="flex h-10 items-start gap-2 py-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                               <div className="text-sm">
-                                <span className="font-medium mr-1">
+                                <span className="mr-1 font-medium">
                                   {addrDetails.street1}
                                   {addrDetails.street2 ? `, ${addrDetails.street2}` : ""}
                                 </span>
@@ -643,7 +642,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               </div>
                             </div>
                           ) : (
-                            <div className="h-10 py-2 text-sm text-muted-foreground flex items-center">
+                            <div className="flex h-10 items-center py-2 text-muted-foreground text-sm">
                               Loading details...
                             </div>
                           )}
@@ -676,8 +675,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           control={form.control}
                           name={`addresses.${index}.isPrimary`}
                           render={({ field: checkField }) => (
-                            <FormItem className="flex flex-col items-center justify-end pb-2 px-2">
-                              <FormLabel className="text-xs mb-2">Primary</FormLabel>
+                            <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                              <FormLabel className="mb-2 text-xs">Primary</FormLabel>
                               <FormControl>
                                 <input
                                   type="radio"
@@ -712,7 +711,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               )}
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t">
+            <div className="flex justify-end gap-3 border-t pt-6">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

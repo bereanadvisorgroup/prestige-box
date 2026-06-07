@@ -39,13 +39,13 @@ export function PersonSearchSelect({
         value={selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : ""}
       />
       <ComboboxContent>
-        <div className="p-1 border-b">
+        <div className="border-b p-1">
           <PersonDialog
             onPersonCreated={onPersonCreated}
             trigger={
               <Button
                 variant="ghost"
-                className="w-full justify-start h-9 px-2 text-sm font-medium text-primary hover:text-primary hover:bg-primary/5"
+                className="h-9 w-full justify-start px-2 font-medium text-primary text-sm hover:bg-primary/5 hover:text-primary"
                 type="button"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -63,7 +63,7 @@ export function PersonSearchSelect({
                   <span className="font-medium">
                     {p.firstName} {p.lastName}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "No Email"}
                   </span>
                 </div>

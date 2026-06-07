@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { useRouter } from "next/navigation";
 
 import { BadgeCheck, Bell, CreditCard, LogOut } from "lucide-react";
@@ -15,8 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/firebase.client";
-import { cn, getInitials } from "@/lib/utils";
+import { supabase } from "@/lib/supabase.client";
+import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 
 export function AccountSwitcher() {
@@ -25,7 +23,7 @@ export function AccountSwitcher() {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await supabase.auth.signOut();
       logout();
       router.push("/auth/v1/login");
     } catch (error) {
@@ -40,7 +38,7 @@ export function AccountSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-9 rounded-lg cursor-pointer">
+        <Avatar className="size-9 cursor-pointer rounded-lg">
           <AvatarImage
             src={photoURL || undefined}
             alt={`${profile.firstName} ${profile.lastName}`}
@@ -52,7 +50,7 @@ export function AccountSwitcher() {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-56 space-y-1 rounded-lg" side="bottom" align="end" sideOffset={4}>
-        <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 focus:bg-accent/50 outline-none">
+        <div className="flex w-full items-center justify-between gap-2 px-1 py-1.5 outline-none focus:bg-accent/50">
           <Avatar className="size-9 rounded-lg">
             <AvatarImage
               src={photoURL || undefined}
@@ -65,7 +63,7 @@ export function AccountSwitcher() {
           </Avatar>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">{`${profile.firstName} ${profile.lastName}`}</span>
-            <span className="truncate text-xs capitalize text-muted-foreground">{profile.role}</span>
+            <span className="truncate text-muted-foreground text-xs capitalize">{profile.role}</span>
           </div>
         </div>
         <DropdownMenuSeparator />
@@ -86,7 +84,7 @@ export function AccountSwitcher() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
-          className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+          className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950"
         >
           <LogOut className="mr-2 size-4" />
           Log out

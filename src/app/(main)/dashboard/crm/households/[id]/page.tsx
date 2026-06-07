@@ -33,18 +33,18 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
   }));
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in duration-500">
+    <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 border-2 border-primary/10 rounded-md">
-            <AvatarFallback className="text-2xl bg-primary/5 text-primary rounded-md">
+          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
+            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
               <Home className="h-8 w-8" />
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{household.name}</h1>
-            <p className="text-muted-foreground flex items-center gap-2 mt-1">
+            <h1 className="font-bold text-3xl tracking-tight">{household.name}</h1>
+            <p className="mt-1 flex items-center gap-2 text-muted-foreground">
               <Users className="h-4 w-4" /> {members.length} {members.length === 1 ? "Member" : "Members"}
             </p>
           </div>
@@ -57,12 +57,12 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         {/* Address Detail Card */}
-        <div className="md:col-span-1 space-y-6">
-          <Card className="border-none shadow-md bg-gradient-to-b from-card to-muted/20 h-full">
+        <div className="space-y-6 md:col-span-1">
+          <Card className="h-full border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
             <CardHeader className="bg-muted/30 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <MapPin className="h-5 w-5 text-primary" /> Primary Address
               </CardTitle>
             </CardHeader>
@@ -70,27 +70,27 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
               {address ? (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                       Street Address
                     </p>
-                    <p className="mt-1 text-sm font-semibold">{address.street1}</p>
-                    {address.street2 && <p className="mt-0.5 text-sm font-semibold">{address.street2}</p>}
+                    <p className="mt-1 font-semibold text-sm">{address.street1}</p>
+                    {address.street2 && <p className="mt-0.5 font-semibold text-sm">{address.street2}</p>}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <p className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                       City, State Zip
                     </p>
-                    <p className="mt-1 text-sm font-semibold">
+                    <p className="mt-1 font-semibold text-sm">
                       {address.city}, {address.state} {address.zipCode}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Country</p>
-                    <p className="mt-1 text-sm font-semibold">{address.country}</p>
+                    <p className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">Country</p>
+                    <p className="mt-1 font-semibold text-sm">{address.country}</p>
                   </div>
                   <div className="border-t pt-4">
                     <Link href={`/dashboard/crm/addresses/${address.id}`}>
-                      <Button variant="outline" className="w-full flex items-center justify-center gap-2 text-xs">
+                      <Button variant="outline" className="flex w-full items-center justify-center gap-2 text-xs">
                         View Full Location Details
                         <ArrowUpRight className="h-4 w-4" />
                       </Button>
@@ -98,8 +98,8 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground text-sm">
-                  <MapPin className="h-8 w-8 mx-auto opacity-20 mb-2" />
+                <div className="py-6 text-center text-muted-foreground text-sm">
+                  <MapPin className="mx-auto mb-2 h-8 w-8 opacity-20" />
                   <p>No address linked to this household.</p>
                 </div>
               )}
@@ -108,10 +108,10 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
         </div>
 
         {/* Members List Card */}
-        <div className="md:col-span-2 space-y-6">
-          <Card className="border-none shadow-md h-full">
+        <div className="space-y-6 md:col-span-2">
+          <Card className="h-full border-none shadow-md">
             <CardHeader className="border-b bg-muted/10 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5 text-primary" /> Household Members
               </CardTitle>
             </CardHeader>
@@ -128,7 +128,7 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                     return (
                       <div
                         key={person.id}
-                        className="py-4 first:pt-0 last:pb-0 flex items-center justify-between group"
+                        className="group flex items-center justify-between py-4 first:pt-0 last:pb-0"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
@@ -137,12 +137,12 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                             </span>
                             <Badge
                               variant={role === "home_owner" ? "default" : "secondary"}
-                              className="text-[10px] py-0 capitalize"
+                              className="py-0 text-[10px] capitalize"
                             >
                               {role?.replace("_", " ")}
                             </Badge>
                           </div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-4">
+                          <div className="flex items-center gap-4 text-muted-foreground text-xs">
                             {email && (
                               <span className="flex items-center gap-1">
                                 <Mail className="h-3 w-3" /> {email}
@@ -169,8 +169,8 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                   })}
                 </div>
               ) : (
-                <div className="text-center p-8 text-muted-foreground">
-                  <User className="h-10 w-10 mx-auto opacity-20 mb-2" />
+                <div className="p-8 text-center text-muted-foreground">
+                  <User className="mx-auto mb-2 h-10 w-10 opacity-20" />
                   <p className="text-sm">No members in this household yet.</p>
                 </div>
               )}

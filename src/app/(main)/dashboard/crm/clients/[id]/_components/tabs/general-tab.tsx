@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { CreditCard, Heart, Loader2, Plus, Trash2, Trophy } from "lucide-react";
+import { CreditCard, Heart, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { sportsTeams } from "@/data/sports-teams";
 import type { Client, PaymentAccount } from "@/types/crm";
 
@@ -98,14 +97,14 @@ export function GeneralTab({ client }: { client: Client }) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-none shadow-md bg-gradient-to-b from-card to-muted/20">
+      <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
         <CardHeader className="bg-muted/10">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Heart className="h-5 w-5 text-primary" /> Interests & Hobbies
           </CardTitle>
           <CardDescription>Manage the client's interests and leisure activities.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex gap-2">
             <Input
               placeholder="e.g. Golfing"
@@ -122,8 +121,8 @@ export function GeneralTab({ client }: { client: Client }) {
               Add
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
-            {hobbies.length === 0 && <p className="text-xs text-muted-foreground p-1 italic">No hobbies listed yet.</p>}
+          <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+            {hobbies.length === 0 && <p className="p-1 text-muted-foreground text-xs italic">No hobbies listed yet.</p>}
             {hobbies.map((hobby, index) => (
               <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
                 {hobby}
@@ -141,14 +140,14 @@ export function GeneralTab({ client }: { client: Client }) {
         </CardContent>
       </Card>
 
-      <Card className="border-none shadow-md bg-gradient-to-b from-card to-muted/20">
+      <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
         <CardHeader className="bg-muted/10">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Trophy className="h-5 w-5 text-primary" /> Favorite Sports Teams
           </CardTitle>
           <CardDescription>Link individual sports teams for relevant news updates.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <Combobox
             onValueChange={(val: any) => {
               if (typeof val === "string") handleToggleSportsTeam(val);
@@ -161,22 +160,22 @@ export function GeneralTab({ client }: { client: Client }) {
                   .filter((team) => !favoriteTeams.includes(team.name))
                   .map((team) => (
                     <ComboboxItem key={team.id} value={team.name}>
-                      <span className="text-xs font-bold mr-2 text-muted-foreground">[{team.league}]</span>
+                      <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
                       {team.name}
                     </ComboboxItem>
                   ))}
               </ComboboxList>
             </ComboboxContent>
           </Combobox>
-          <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+          <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
             {favoriteTeams.length === 0 && (
-              <p className="text-xs text-muted-foreground p-1 italic">No sports teams linked yet.</p>
+              <p className="p-1 text-muted-foreground text-xs italic">No sports teams linked yet.</p>
             )}
             {favoriteTeams.map((teamName, index) => (
               <Badge
                 key={index}
                 variant="default"
-                className="gap-1 px-3 py-1 font-bold bg-primary text-primary-foreground"
+                className="gap-1 bg-primary px-3 py-1 font-bold text-primary-foreground"
               >
                 {teamName}
                 <button
@@ -193,14 +192,14 @@ export function GeneralTab({ client }: { client: Client }) {
         </CardContent>
       </Card>
 
-      <Card className="border-none shadow-md bg-gradient-to-b from-card to-muted/20">
+      <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
         <CardHeader className="bg-muted/10">
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <CreditCard className="h-5 w-5 text-primary" /> Payment Accounts
           </CardTitle>
           <CardDescription>Manage multiple bank or financial accounts for billing.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="flex gap-2">
             <Input
               placeholder="e.g. Personal Checking"
@@ -217,25 +216,25 @@ export function GeneralTab({ client }: { client: Client }) {
               Add
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-2 mt-4">
+          <div className="mt-4 grid grid-cols-1 gap-2">
             {paymentAccounts.length === 0 && (
-              <p className="text-xs text-muted-foreground p-2 italic bg-muted/20 rounded-md border text-center">
+              <p className="rounded-md border bg-muted/20 p-2 text-center text-muted-foreground text-xs italic">
                 No payment accounts added yet.
               </p>
             )}
             {paymentAccounts.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-3 bg-background rounded-md border group"
+                className="group flex items-center justify-between rounded-md border bg-background p-3"
               >
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{account.name}</span>
+                  <span className="font-medium text-sm">{account.name}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRemovePaymentAccount(account.id)}
-                  className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-muted-foreground opacity-0 transition-colors hover:text-destructive group-hover:opacity-100"
                   disabled={isLoading}
                 >
                   <Trash2 className="h-4 w-4" />

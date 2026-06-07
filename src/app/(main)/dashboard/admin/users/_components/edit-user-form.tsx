@@ -71,8 +71,8 @@ export function EditUserForm({ user }: EditUserFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
             name="firstName"
@@ -130,7 +130,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           )}
         />
 
-        <div className="flex flex-col md:flex-row gap-4 pt-4">
+        <div className="flex flex-col gap-4 pt-4 md:flex-row">
           <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>

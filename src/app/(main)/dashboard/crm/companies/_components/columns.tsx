@@ -25,7 +25,7 @@ export const columns = (onDelete: (company: Company) => void) => [
           <Building2 className="h-4 w-4 text-muted-foreground" />
           <Link
             href={`/dashboard/crm/companies/${company.id}`}
-            className="font-medium text-primary hover:underline flex items-center gap-1"
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
           >
             <span>{company.name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
@@ -45,7 +45,7 @@ export const columns = (onDelete: (company: Company) => void) => [
           href={website.startsWith("http") ? website : `https://${website}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+          className="flex items-center gap-1 text-blue-600 text-sm hover:text-blue-800 hover:underline"
         >
           {website.replace(/^https?:\/\//, "")}
           <ExternalLink className="h-3 w-3" />
@@ -86,7 +86,7 @@ export const columns = (onDelete: (company: Company) => void) => [
       const isDeletable = !company.isLinked;
 
       return (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/crm/companies/${company.id}/edit`}>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
               <Pencil className="h-4 w-4" />
@@ -105,7 +105,7 @@ export const columns = (onDelete: (company: Company) => void) => [
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+              className="h-8 w-8 cursor-not-allowed text-muted-foreground/40"
               disabled
             >
               <Trash2 className="h-4 w-4" />

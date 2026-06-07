@@ -20,9 +20,9 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2 mb-4">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Edit Client Profile</h1>
+    <div className="fade-in mx-auto w-full max-w-7xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
+      <div className="mb-4 flex flex-col gap-2">
+        <h1 className="font-bold text-3xl text-foreground tracking-tight">Edit Client Profile</h1>
         <p className="text-muted-foreground">Modify client preferences, personal details, family, and documentation.</p>
       </div>
 

@@ -1,7 +1,3 @@
-import Link from "next/link";
-
-import { Command } from "lucide-react";
-
 import { LoginForm } from "../../_components/login-form";
 
 export default function LoginV1() {
@@ -15,9 +11,9 @@ export default function LoginV1() {
               alt="Prestige Advisors Logo"
               className="mx-auto h-12 w-auto object-contain"
             />
-            <div className="space-y-2 mt-8">
+            <div className="mt-8 space-y-2">
               <h1 className="font-light text-4xl text-primary-foreground">Welcome Back</h1>
-              <p className="text-primary-foreground/80 text-lg">Sign in to your client portal</p>
+              <p className="text-lg text-primary-foreground/80">Sign in to your client portal</p>
             </div>
           </div>
         </div>

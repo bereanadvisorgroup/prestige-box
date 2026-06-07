@@ -1,7 +1,7 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase.server";
-import type { ClientPolicy, PaymentSchedule } from "@/types/crm";
+import { supabaseServer } from "@/lib/supabase.server";
+import type { PaymentSchedule } from "@/types/crm";
 
 export interface ScheduledPayment {
   policyId: string;
@@ -19,10 +19,10 @@ export interface ScheduledPayment {
 
 export async function getPaymentsForMonth(month: number, year: number) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: policies, error: policiesError } = await supabaseServer.from("client_policies").select("*");
 
-    const snapshot = await adminDb.collection("client-policies").get();
-    const policies = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as (ClientPolicy & { id: string })[];
+    if (policiesError) throw new Error((policiesError as { message: string }).message);
+    if (!policies || policies.length === 0) return { success: true, payments: [] };
 
     const payments: ScheduledPayment[] = [];
 
@@ -30,26 +30,51 @@ export async function getPaymentsForMonth(month: number, year: number) {
     const clientIds = Array.from(new Set(policies.map((p) => p.clientId)));
     const companyIds = Array.from(new Set(policies.map((p) => p.insuranceCompanyId)));
 
-    const [clientDocs, companyDocs] = await Promise.all([
-      Promise.all(clientIds.map((id) => adminDb!.collection("clients").doc(id).get())),
-      Promise.all(companyIds.map((id) => adminDb!.collection("insurance-companies").doc(id).get())),
+    const [clientsResult, companiesResult] = await Promise.all([
+      clientIds.length > 0
+        ? supabaseServer.from("clients").select("*").in("id", clientIds)
+        : Promise.resolve({ data: [] }),
+      companyIds.length > 0
+        ? supabaseServer.from("insurance_companies").select("*").in("id", companyIds)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const clientsMap: any = {};
-    for (const doc of clientDocs) {
-      if (doc.exists) {
-        const clientData = doc.data();
-        const personDoc = await adminDb!.collection("people").doc(clientData!.personId).get();
-        clientsMap[doc.id] = { ...clientData, person: personDoc.exists ? personDoc.data() : null };
-      }
+    if (clientsResult.error) throw new Error((clientsResult.error as { message: string }).message);
+    if (companiesResult.error) throw new Error((companiesResult.error as { message: string }).message);
+
+    const clients = clientsResult.data || [];
+    const companies = companiesResult.data || [];
+
+    const personIds = Array.from(new Set(clients.map((c) => c.personId)));
+    let peopleMap: Record<string, Record<string, unknown>> = {};
+    if (personIds.length > 0) {
+      const { data: people, error: peopleError } = await supabaseServer.from("people").select("*").in("id", personIds);
+      if (peopleError) throw new Error((peopleError as { message: string }).message);
+      peopleMap = (people || []).reduce(
+        (acc, p) => {
+          acc[p.id] = p;
+          return acc;
+        },
+        {} as Record<string, (typeof people)[number]>,
+      );
     }
 
-    const companiesMap = companyDocs.reduce((acc, doc) => {
-      if (doc.exists) acc[doc.id] = doc.data();
-      return acc;
-    }, {} as any);
+    const clientsMap: Record<string, (typeof clients)[number] & { person: Record<string, unknown> | null }> = {};
+    for (const client of clients) {
+      clientsMap[client.id] = {
+        ...client,
+        person: (peopleMap[client.personId] as Record<string, unknown>) || null,
+      };
+    }
 
-    const startDate = new Date(year, month, 1);
+    const companiesMap = companies.reduce(
+      (acc, doc) => {
+        acc[doc.id] = doc;
+        return acc;
+      },
+      {} as Record<string, (typeof companies)[number]>,
+    );
+
     const endDate = new Date(year, month + 1, 0);
 
     for (const policy of policies) {
@@ -59,7 +84,6 @@ export async function getPaymentsForMonth(month: number, year: number) {
       const company = companiesMap[policy.insuranceCompanyId];
 
       // Calculate payment months based on schedule
-      const paymentMonths: number[] = []; // 0-indexed months offset from effective month
       let interval = 1;
       let paymentAmount = policy.premiumAmount;
 
@@ -89,20 +113,25 @@ export async function getPaymentsForMonth(month: number, year: number) {
       // Safety break to avoid infinite loops
       let count = 0;
       while (currentPaymentDate <= endDate && count < 600) {
-        // 50 years max
         if (
           currentPaymentDate.getMonth() === month &&
           currentPaymentDate.getFullYear() === year &&
           currentPaymentDate >= effectiveDate
         ) {
+          const clientPayments = (client?.paymentAccounts || []) as { id: string; name: string }[];
           const paymentAccountName = policy.paymentAccountId
-            ? client?.paymentAccounts?.find((a: any) => a.id === policy.paymentAccountId)?.name || "Unknown Account"
+            ? clientPayments.find((a) => a.id === policy.paymentAccountId)?.name || "Unknown Account"
             : "No Account Selected";
+
+          const clientPerson = client?.person as { firstName?: string; lastName?: string } | null;
+          const clientName = clientPerson
+            ? `${clientPerson.firstName || ""} ${clientPerson.lastName || ""}`.trim()
+            : "Unknown Client";
 
           payments.push({
             policyId: policy.id,
             clientId: policy.clientId,
-            clientName: client?.person ? `${client.person.firstName} ${client.person.lastName}` : "Unknown Client",
+            clientName,
             policyName: policy.policyName,
             policyNumber: policy.policyNumber,
             carrierName: company?.name || "Unknown Carrier",
@@ -110,7 +139,7 @@ export async function getPaymentsForMonth(month: number, year: number) {
             premiumTotal: policy.premiumAmount,
             paymentAmount: Math.round(paymentAmount * 100) / 100,
             paymentDate: currentPaymentDate.toISOString().split("T")[0],
-            paymentSchedule: schedule,
+            paymentSchedule: schedule as PaymentSchedule,
           });
           break; // Found the payment for this month
         }
@@ -120,8 +149,8 @@ export async function getPaymentsForMonth(month: number, year: number) {
     }
 
     return { success: true, payments: payments.sort((a, b) => a.paymentDate.localeCompare(b.paymentDate)) };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[getPaymentsForMonth] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

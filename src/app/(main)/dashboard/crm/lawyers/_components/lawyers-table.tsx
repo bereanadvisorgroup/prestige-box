@@ -32,7 +32,7 @@ export function LawyersTable({ data }: LawyersTableProps) {
       } else {
         toast.error(result.error || "Failed to delete lawyer");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);
@@ -56,7 +56,7 @@ export function LawyersTable({ data }: LawyersTableProps) {
         isLoading={isDeleting}
         lawyerName={
           lawyerToDelete
-            ? (lawyerToDelete as any).person?.firstName + " " + (lawyerToDelete as any).person?.lastName
+            ? `${(lawyerToDelete as any).person?.firstName} ${(lawyerToDelete as any).person?.lastName}`
             : ""
         }
       />

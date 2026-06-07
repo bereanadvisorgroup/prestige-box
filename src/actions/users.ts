@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminAuth, adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 
 export async function createUser(data: {
   email: string;
@@ -12,155 +12,152 @@ export async function createUser(data: {
   role: string;
 }) {
   try {
-    if (!adminAuth || !adminDb) {
-      throw new Error("Server not properly configured. Firebase admin is missing.");
-    }
-
-    // 1. Create User in Firebase Auth
-    // Use the provided password, or a random fallback to satisfy Auth requirements
+    // 1. Create User in Supabase Auth via Admin API
     const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
-    const authRecord = await adminAuth.createUser({
+    const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
       email: data.email,
       password: data.password || randomPassword,
-      displayName: `${data.firstName} ${data.lastName}`.trim(),
+      email_confirm: true,
+      user_metadata: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+      },
     });
 
-    // 2. Create User Profile Document in Firestore
+    if (authError) throw new Error(authError.message);
+    if (!authRecord.user) throw new Error("Failed to create user auth record.");
+
+    // 2. Create User Profile Document in public.users table
     const userProfile = {
-      uid: authRecord.uid,
+      uid: authRecord.user.id,
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection("users").doc(authRecord.uid).set(userProfile);
+    const { error: dbError } = await supabaseServer.from("users").upsert(userProfile);
 
-    // Optional: Revalidate the users page cache
+    if (dbError) {
+      console.error("[createUser] Warning: Database profile insert failed, trigger may handle this:", dbError.message);
+    }
+
     revalidatePath("/dashboard/admin/users");
 
     return { success: true, user: userProfile };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to create user:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getUsers() {
   try {
-    if (!adminAuth || !adminDb) {
-      throw new Error("Server not properly configured. Firebase admin is missing.");
-    }
+    // Fetch all user profiles from public.users table
+    const { data: dbUsers, error } = await supabaseServer
+      .from("users")
+      .select("*")
+      .order("createdAt", { ascending: false });
 
-    // 1. Fetch users from Firebase Auth
-    const authList = await adminAuth.listUsers();
+    if (error) throw new Error(error.message);
 
-    // 2. Fetch all user profiles from Firestore
-    let firestoreUsers = new Map<string, any>();
-    try {
-      const snapshot = await adminDb.collection("users").get();
-      firestoreUsers = new Map(snapshot.docs.map((doc) => [doc.id, doc.data()]));
-    } catch (fsError: any) {
-      console.error("[getUsers] Optional Firestore profile fetch failed:", fsError.message);
-    }
-
-    // 3. Merge profiles
-    const users = authList.users.map((authUser) => {
-      const dbUser = firestoreUsers.get(authUser.uid) || {};
-
-      return {
-        uid: authUser.uid,
-        email: authUser.email || dbUser.email || "",
-        firstName: dbUser.firstName || authUser.displayName?.split(" ")[0] || "",
-        lastName: dbUser.lastName || authUser.displayName?.split(" ").slice(1).join(" ") || "",
-        role: dbUser.role || "client",
-        createdAt: dbUser.createdAt || authUser.metadata.creationTime || new Date().toISOString(),
-        photoURL: authUser.photoURL || dbUser.photoURL || "",
-      };
-    });
+    const users = (dbUsers || []).map((dbUser) => ({
+      uid: dbUser.uid,
+      email: dbUser.email || "",
+      firstName: dbUser.firstName || "",
+      lastName: dbUser.lastName || "",
+      role: dbUser.role || "client",
+      createdAt: dbUser.createdAt || new Date().toISOString(),
+      photoURL: dbUser.photoURL || "",
+    }));
 
     return { success: true, users };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to fetch users:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateUser(uid: string, data: { firstName: string; lastName: string; role: string }) {
   try {
-    if (!adminDb) throw new Error("Server not properly configured. Firebase admin is missing.");
-
-    // Update Document in Firestore
-    await adminDb.collection("users").doc(uid).set(
-      {
+    // Update Document in public.users table
+    const { error: dbError } = await supabaseServer
+      .from("users")
+      .update({
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        uid, // Ensure UID is in the doc
         updatedAt: new Date().toISOString(),
+      })
+      .eq("uid", uid);
+
+    if (dbError) throw new Error(dbError.message);
+
+    // Update user metadata in Supabase Auth
+    const { error: authError } = await supabaseServer.auth.admin.updateUserById(uid, {
+      user_metadata: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
       },
-      { merge: true },
-    );
+    });
+
+    if (authError) {
+      console.error("[updateUser] Warning: Auth metadata update failed:", authError.message);
+    }
 
     revalidatePath("/dashboard/admin/users");
     return { success: true };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to update user:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteUser(uid: string) {
   try {
-    if (!adminAuth || !adminDb) throw new Error("Server not properly configured. Firebase admin is missing.");
+    // 1. Delete from Supabase Auth
+    const { error: authError } = await supabaseServer.auth.admin.deleteUser(uid);
+    if (authError) throw new Error(authError.message);
 
-    // 1. Delete from Firebase Auth
-    await adminAuth.deleteUser(uid);
+    // 2. Delete Profile Document in public.users table
+    const { error: dbError } = await supabaseServer.from("users").delete().eq("uid", uid);
 
-    // 2. Delete Profile Document in Firestore
-    await adminDb.collection("users").doc(uid).delete();
+    if (dbError) {
+      console.error("[deleteUser] Warning: Database profile delete failed:", dbError.message);
+    }
 
     revalidatePath("/dashboard/admin/users");
     return { success: true };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to delete user:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getUser(uid: string) {
   try {
-    if (!adminAuth || !adminDb) {
-      throw new Error("Server not properly configured. Firebase admin is missing.");
-    }
+    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).single();
 
-    // 1. Fetch user from Firebase Auth
-    const authUser = await adminAuth.getUser(uid);
+    if (error) throw new Error(error.message);
+    if (!dbUser) return { success: false, error: "User not found" };
 
-    // 2. Fetch user profile from Firestore
-    let dbUser: any = {};
-    try {
-      const doc = await adminDb.collection("users").doc(uid).get();
-      dbUser = doc.exists ? doc.data() || {} : {};
-    } catch (fsError: any) {
-      console.error("[getUser] Optional Firestore profile fetch failed:", fsError.message);
-    }
-
-    // 3. Merge profile
     const user = {
-      uid: authUser.uid,
-      email: authUser.email || dbUser.email || "",
-      firstName: dbUser.firstName || authUser.displayName?.split(" ")[0] || "",
-      lastName: dbUser.lastName || authUser.displayName?.split(" ").slice(1).join(" ") || "",
+      uid: dbUser.uid,
+      email: dbUser.email || "",
+      firstName: dbUser.firstName || "",
+      lastName: dbUser.lastName || "",
       role: dbUser.role || "client",
-      createdAt: dbUser.createdAt || authUser.metadata.creationTime || new Date().toISOString(),
-      photoURL: authUser.photoURL || dbUser.photoURL || "",
+      createdAt: dbUser.createdAt || new Date().toISOString(),
+      photoURL: dbUser.photoURL || "",
     };
 
     return { success: true, user };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Failed to fetch user:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

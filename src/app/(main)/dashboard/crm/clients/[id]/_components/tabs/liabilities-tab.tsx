@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { CreditCard, FileText, Loader2, Plus, Trash2, UploadCloud } from "lucide-react";
+import { CreditCard, FileText, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
@@ -12,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { storage } from "@/lib/firebase.client";
+import { supabase } from "@/lib/supabase.client";
 import type { Client, LoanInfo } from "@/types/crm";
 
 export function LiabilitiesTab({ client }: { client: Client }) {
@@ -37,9 +36,13 @@ export function LiabilitiesTab({ client }: { client: Client }) {
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();
         const randomStr = Math.random().toString(36).substring(7);
-        const storageRef = ref(storage, `clients/${client.id}/liabilities/${randomStr}_${Date.now()}.${fileExt}`);
-        const snapshot = await uploadBytes(storageRef, statementFile);
-        statementPath = await getDownloadURL(snapshot.ref);
+        const filePath = `clients/${client.id}/liabilities/${randomStr}_${Date.now()}.${fileExt}`;
+        const { data, error } = await supabase.storage.from("documents").upload(filePath, statementFile);
+        if (error) throw error;
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("documents").getPublicUrl(filePath);
+        statementPath = publicUrl;
       }
 
       const newLoan: LoanInfo = {
@@ -86,14 +89,14 @@ export function LiabilitiesTab({ client }: { client: Client }) {
   };
 
   return (
-    <Card className="border-none shadow-md animate-in fade-in duration-500 bg-gradient-to-b from-card to-muted/20">
+    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="bg-muted/10 pb-4">
         <CardTitle>Liabilities & Loans</CardTitle>
         <CardDescription>Add and manage financial liabilities for this client.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        <div className="bg-background p-4 rounded-lg border shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <CardContent className="space-y-6 pt-6">
+        <div className="space-y-4 rounded-lg border bg-background p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div className="space-y-2">
               <Label>Loan Type</Label>
               <Select value={loanType} onValueChange={setLoanType}>
@@ -132,7 +135,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
               <input
                 id="liability-file-upload"
                 type="file"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 onChange={(e) => setStatementFile(e.target.files?.[0] || null)}
               />
             </div>
@@ -140,31 +143,31 @@ export function LiabilitiesTab({ client }: { client: Client }) {
 
           <div className="flex justify-end pt-2">
             <Button onClick={handleAdd} disabled={isLoading || !loanType || !creditorName || !currentBalance}>
-              {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
               Add Liability
             </Button>
           </div>
         </div>
 
-        <div className="space-y-3 mt-6">
+        <div className="mt-6 space-y-3">
           {liabilities.length > 0 ? (
             liabilities.map((loan) => (
               <div
                 key={loan.id}
-                className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-md bg-background shadow-sm hover:shadow-md transition-all gap-4"
+                className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:items-center"
               >
                 <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 rounded border border-primary/20 text-primary shrink-0">
+                  <div className="shrink-0 rounded border border-primary/20 bg-primary/10 p-2 text-primary">
                     <CreditCard className="h-6 w-6" />
                   </div>
                   <div className="space-y-1">
-                    <p className="font-semibold text-foreground flex items-center gap-2">
+                    <p className="flex items-center gap-2 font-semibold text-foreground">
                       {loan.creditorName}
-                      <span className="text-xs uppercase bg-muted px-2 py-0.5 rounded-full font-medium">
+                      <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-xs uppercase">
                         {loan.loanType}
                       </span>
                     </p>
-                    <p className="text-xl font-bold tracking-tight text-foreground/90">
+                    <p className="font-bold text-foreground/90 text-xl tracking-tight">
                       $
                       {loan.currentBalance.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -173,7 +176,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 shrink-0 self-end md:self-center">
+                <div className="flex shrink-0 items-center gap-4 self-end md:self-center">
                   {loan.statementPath && (
                     <Button variant="outline" size="sm" asChild className="gap-2">
                       <a href={loan.statementPath} target="_blank" rel="noopener noreferrer">
@@ -193,8 +196,8 @@ export function LiabilitiesTab({ client }: { client: Client }) {
               </div>
             ))
           ) : (
-            <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
-              <CreditCard className="h-8 w-8 mx-auto mb-3 opacity-20" />
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
+              <CreditCard className="mx-auto mb-3 h-8 w-8 opacity-20" />
               <p className="text-sm">No liabilities recorded yet.</p>
             </div>
           )}

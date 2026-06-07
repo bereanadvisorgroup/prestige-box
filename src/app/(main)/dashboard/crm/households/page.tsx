@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AlertCircle, Plus, Users } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
 import { getHouseholds } from "@/actions/households";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,10 +13,10 @@ export default async function HouseholdsPage() {
 
   if (!result.success) {
     return (
-      <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Households</h1>
-          <p className="text-muted-foreground mt-2">Manage household groups in the system.</p>
+          <h1 className="font-bold text-3xl tracking-tight">Households</h1>
+          <p className="mt-2 text-muted-foreground">Manage household groups in the system.</p>
         </div>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -32,11 +32,11 @@ export default async function HouseholdsPage() {
   const households = result.households || [];
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Households</h1>
-          <p className="text-muted-foreground mt-2">View, add, and manage household records and their members.</p>
+          <h1 className="font-bold text-3xl tracking-tight">Households</h1>
+          <p className="mt-2 text-muted-foreground">View, add, and manage household records and their members.</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/crm/households/new">

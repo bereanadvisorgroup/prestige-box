@@ -65,7 +65,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
       } else {
         toast.error(result.error || "Failed to create person record");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsLoading(false);
@@ -90,7 +90,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="firstName"
@@ -133,7 +133,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="emails.0.address"
@@ -149,7 +149,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                           className={fieldState.isDirty && !fieldState.invalid && field.value ? "pr-10" : ""}
                         />
                         {fieldState.isDirty && !fieldState.invalid && field.value && (
-                          <Check className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 h-4 w-4" />
+                          <Check className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-green-500" />
                         )}
                       </div>
                     </FormControl>
@@ -172,7 +172,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={isLoading}>
                 Cancel
               </Button>

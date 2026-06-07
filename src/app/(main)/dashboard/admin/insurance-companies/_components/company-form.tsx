@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Globe, ListPlus, Plus, Shield, Trash2 } from "lucide-react";
+import { Globe, ListPlus, Shield, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -82,9 +82,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-md">
+    <Card className="mx-auto w-full max-w-2xl shadow-md">
       <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Shield className="h-5 w-5 text-primary" />
           {company ? "Edit Insurance Company" : "Add Insurance Company"}
         </CardTitle>
@@ -92,7 +92,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -114,7 +114,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                     <FormLabel>Website URL</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Globe className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Globe className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                         <Input className="pl-9" placeholder="progressive.com" {...field} />
                       </div>
                     </FormControl>
@@ -125,8 +125,8 @@ export function CompanyForm({ company }: CompanyFormProps) {
             </div>
 
             <div className="space-y-4 pt-2">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="flex items-center gap-2 font-semibold text-sm">
                   <ListPlus className="h-4 w-4" />
                   Supported Policy Names
                 </h3>
@@ -149,17 +149,17 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
                 {form.watch("policyNames").length === 0 && (
-                  <span className="text-xs text-muted-foreground p-1 italic">No policies added yet.</span>
+                  <span className="p-1 text-muted-foreground text-xs italic">No policies added yet.</span>
                 )}
                 {form.watch("policyNames").map((policy, index) => (
-                  <Badge key={index} variant="secondary" className="gap-1 px-3 py-1 group">
+                  <Badge key={index} variant="secondary" className="group gap-1 px-3 py-1">
                     {policy}
                     <button
                       type="button"
                       onClick={() => handleRemovePolicy(policy)}
-                      className="ml-1 rounded-full hover:bg-destructive-foreground/20 transition-colors"
+                      className="ml-1 rounded-full transition-colors hover:bg-destructive-foreground/20"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -168,7 +168,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

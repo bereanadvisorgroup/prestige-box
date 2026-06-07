@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { File, Loader2, Plus, Trash2, UploadCloud } from "lucide-react";
+import { File, Loader2, Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { storage } from "@/lib/firebase.client";
+import { supabase } from "@/lib/supabase.client";
 import type { Client, ClientDocument } from "@/types/crm";
 
 export function DocumentsTab({
@@ -39,7 +38,7 @@ export function DocumentsTab({
       } else {
         toast.error("Failed to remove document");
       }
-    } catch (e) {
+    } catch (_e) {
       toast.error("An error occurred");
     }
   };
@@ -54,10 +53,15 @@ export function DocumentsTab({
       setIsUploading(true);
       const fileExt = file.name.split(".").pop();
       const randomStr = Math.random().toString(36).substring(7);
-      const storageRef = ref(storage, `clients/${client.id}/${category}/${randomStr}_${Date.now()}.${fileExt}`);
+      const filePath = `clients/${client.id}/${category}/${randomStr}_${Date.now()}.${fileExt}`;
 
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
+      const { data, error } = await supabase.storage.from("documents").upload(filePath, file);
+
+      if (error) throw error;
+
+      const {
+        data: { publicUrl: url },
+      } = supabase.storage.from("documents").getPublicUrl(filePath);
 
       const newDoc: ClientDocument = {
         id: crypto.randomUUID(),
@@ -89,15 +93,15 @@ export function DocumentsTab({
   };
 
   return (
-    <Card className="border-none shadow-md bg-gradient-to-b from-card to-muted/20 animate-in fade-in duration-500">
+    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="bg-muted/10 pb-4">
         <CardTitle>{title}</CardTitle>
         <CardDescription>Upload and manage documents for this category.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-end bg-background p-4 rounded-lg border shadow-sm">
-          <div className="w-full sm:w-1/3 space-y-2">
-            <label className="text-sm font-medium">Document Type</label>
+        <div className="flex flex-col items-end gap-4 rounded-lg border bg-background p-4 shadow-sm sm:flex-row">
+          <div className="w-full space-y-2 sm:w-1/3">
+            <label className="font-medium text-sm">Document Type</label>
             <Select value={addingDocType} onValueChange={setAddingDocType}>
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
@@ -111,39 +115,39 @@ export function DocumentsTab({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-sm font-medium">File</label>
+          <div className="w-full flex-1 space-y-2">
+            <label className="font-medium text-sm">File</label>
             <input
               id={`file-upload-${category}`}
               type="file"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </div>
           <Button
             onClick={handleUpload}
             disabled={isUploading || !file || !addingDocType}
-            className="shrink-0 w-full sm:w-auto mt-4 sm:mt-0"
+            className="mt-4 w-full shrink-0 sm:mt-0 sm:w-auto"
           >
-            {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UploadCloud className="h-4 w-4 mr-2" />}
+            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
             Upload
           </Button>
         </div>
 
-        <div className="space-y-3 mt-8">
+        <div className="mt-8 space-y-3">
           {documents.length > 0 ? (
             documents.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between p-3 border rounded-md bg-background hover:bg-muted/5 transition-colors shadow-sm"
+                className="flex items-center justify-between rounded-md border bg-background p-3 shadow-sm transition-colors hover:bg-muted/5"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded text-primary">
+                  <div className="rounded bg-primary/10 p-2 text-primary">
                     <File className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm text-foreground">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">{doc.type}</p>
+                    <p className="font-medium text-foreground text-sm">{doc.name}</p>
+                    <p className="text-muted-foreground text-xs">{doc.type}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -164,8 +168,8 @@ export function DocumentsTab({
               </div>
             ))
           ) : (
-            <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg bg-muted/10">
-              <File className="h-8 w-8 mx-auto mb-3 opacity-20" />
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
+              <File className="mx-auto mb-3 h-8 w-8 opacity-20" />
               <p className="text-sm">No documents uploaded yet.</p>
             </div>
           )}

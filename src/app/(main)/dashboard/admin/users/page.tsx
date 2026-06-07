@@ -14,10 +14,10 @@ export default async function ManageUsersPage() {
 
   if (!result.success) {
     return (
-      <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="text-muted-foreground mt-2">Error loading users.</p>
+          <h1 className="font-bold text-3xl tracking-tight">Manage Users</h1>
+          <p className="mt-2 text-muted-foreground">Error loading users.</p>
         </div>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -33,11 +33,11 @@ export default async function ManageUsersPage() {
   const users = result.users as UserProfile[];
 
   return (
-    <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="font-bold text-3xl tracking-tight">Manage Users</h1>
+          <p className="mt-2 text-muted-foreground">
             View, edit, and manage all users and their permissions within the system.
           </p>
         </div>
@@ -51,7 +51,7 @@ export default async function ManageUsersPage() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">User List</h2>
+          <h2 className="font-semibold text-xl">User List</h2>
         </div>
         <UsersTable data={users} />
       </div>

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { PaymentSchedule } from "@/types/crm";
 
@@ -78,7 +78,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
       notFound();
     }
     return (
-      <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error Loading Policy</AlertTitle>
@@ -97,11 +97,15 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
 
   // Fetch the carrier info
   let carrierName = "Unknown Carrier";
-  if (adminDb && policy.insuranceCompanyId) {
+  if (policy.insuranceCompanyId) {
     try {
-      const carrierDoc = await adminDb.collection("insurance-companies").doc(policy.insuranceCompanyId).get();
-      if (carrierDoc.exists) {
-        carrierName = carrierDoc.data()?.name || "Unknown Carrier";
+      const { data: carrierDoc, error } = await supabaseServer
+        .from("insurance_companies")
+        .select("name")
+        .eq("id", policy.insuranceCompanyId)
+        .single();
+      if (carrierDoc && !error) {
+        carrierName = carrierDoc.name || "Unknown Carrier";
       }
     } catch (e) {
       console.error(e);
@@ -125,7 +129,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
   );
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6 fade-in">
+    <div className="fade-in mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
           <Link href="/dashboard/crm/policies">
@@ -133,8 +137,8 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{policy.policyName}</h1>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2">
+          <h1 className="font-bold text-3xl text-foreground tracking-tight">{policy.policyName}</h1>
+          <p className="mt-1 flex items-center gap-2 text-muted-foreground">
             <Badge variant="outline" className="font-normal text-xs uppercase tracking-wider">
               {policy.paymentSchedule}
             </Badge>
@@ -143,11 +147,11 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left Column: Info Cards */}
-        <div className="lg:col-span-1 space-y-8">
+        <div className="space-y-8 lg:col-span-1">
           {/* Client Info Card */}
-          <Card className="shadow-sm border-border/50 hover:border-border/80 transition-colors">
+          <Card className="border-border/50 shadow-sm transition-colors hover:border-border/80">
             <CardHeader className="bg-muted/30 pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <User className="h-5 w-5 text-primary" />
@@ -159,25 +163,25 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
               {personData ? (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Name</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Name</p>
                     <p className="font-medium text-foreground">
                       {personData.firstName} {personData.lastName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Email</p>
                     <a
                       href={`mailto:${personData.emails?.find((e) => e.isPrimary)?.address || personData.emails?.[0]?.address}`}
-                      className="text-foreground hover:text-primary transition-colors"
+                      className="text-foreground transition-colors hover:text-primary"
                     >
                       {personData.emails?.find((e) => e.isPrimary)?.address || personData.emails?.[0]?.address || "N/A"}
                     </a>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Phone</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Phone</p>
                     <a
                       href={`tel:${personData.phones?.find((p) => p.isPrimary)?.number || personData.phones?.[0]?.number}`}
-                      className="text-foreground hover:text-primary transition-colors"
+                      className="text-foreground transition-colors hover:text-primary"
                     >
                       {formatPhoneNumber(
                         personData.phones?.find((p) => p.isPrimary)?.number || personData.phones?.[0]?.number,
@@ -192,7 +196,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
           </Card>
 
           {/* Policy Info Card */}
-          <Card className="shadow-sm border-border/50 hover:border-border/80 transition-colors">
+          <Card className="border-border/50 shadow-sm transition-colors hover:border-border/80">
             <CardHeader className="bg-muted/30 pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-primary" />
@@ -204,14 +208,14 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
               <div className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Carrier</p>
-                    <p className="font-medium text-foreground truncate" title={carrierName}>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Carrier</p>
+                    <p className="truncate font-medium text-foreground" title={carrierName}>
                       {carrierName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Plan</p>
-                    <p className="font-medium text-foreground truncate" title={policy.policyName}>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Plan</p>
+                    <p className="truncate font-medium text-foreground" title={policy.policyName}>
                       {policy.policyName}
                     </p>
                   </div>
@@ -219,11 +223,11 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Effective Date</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Effective Date</p>
                     <p className="font-medium text-foreground">{new Date(policy.effectiveDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Renewal Date</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Renewal Date</p>
                     <p className="font-medium text-foreground">{new Date(policy.renewalDate).toLocaleDateString()}</p>
                   </div>
                 </div>
@@ -232,14 +236,14 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Total Premium</p>
-                    <p className="font-bold text-lg text-foreground">
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Total Premium</p>
+                    <p className="font-bold text-foreground text-lg">
                       ${policy.premiumAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Payment Method</p>
-                    <p className="font-medium text-foreground truncate" title={paymentAccountName}>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">Payment Method</p>
+                    <p className="truncate font-medium text-foreground" title={paymentAccountName}>
                       {paymentAccountName}
                     </p>
                   </div>
@@ -250,10 +254,10 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
         </div>
 
         {/* Right Column: Payments Table */}
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="shadow-sm border-border/50 col-span-1 h-full flex flex-col">
-            <CardHeader className="bg-muted/30 pb-4 border-b">
-              <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-2">
+        <div className="space-y-8 lg:col-span-2">
+          <Card className="col-span-1 flex h-full flex-col border-border/50 shadow-sm">
+            <CardHeader className="border-b bg-muted/30 pb-4">
+              <div className="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Calendar className="h-5 w-5 text-primary" />
@@ -263,15 +267,15 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                     Scheduled premiums between effective and renewal dates ({policy.paymentSchedule}).
                   </CardDescription>
                 </div>
-                <Badge variant="secondary" className="font-medium text-sm px-3 py-1">
+                <Badge variant="secondary" className="px-3 py-1 font-medium text-sm">
                   {payments.length} Payments remaining
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-hidden">
+            <CardContent className="flex-1 overflow-hidden p-0">
               <div className="max-h-[600px] overflow-auto">
                 <Table>
-                  <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-md z-10">
+                  <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur-md">
                     <TableRow className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                       <TableHead className="w-[80px] text-center font-semibold">#</TableHead>
                       <TableHead className="font-semibold">Date Due</TableHead>
@@ -282,8 +286,8 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                   <TableBody>
                     {payments.length > 0 ? (
                       payments.map((payment, index) => (
-                        <TableRow key={index} className="hover:bg-muted/30 transition-colors group">
-                          <TableCell className="font-medium text-muted-foreground text-center">{index + 1}</TableCell>
+                        <TableRow key={index} className="group transition-colors hover:bg-muted/30">
+                          <TableCell className="text-center font-medium text-muted-foreground">{index + 1}</TableCell>
                           <TableCell className="font-medium">
                             {new Date(payment.date).toLocaleDateString(undefined, {
                               weekday: "short",
@@ -302,7 +306,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                           <TableCell className="text-right">
                             <Badge
                               variant="outline"
-                              className="text-muted-foreground group-hover:border-primary/50 transition-colors"
+                              className="text-muted-foreground transition-colors group-hover:border-primary/50"
                             >
                               {payment.status}
                             </Badge>

@@ -2,92 +2,90 @@
 
 import { revalidatePath } from "next/cache";
 
-import { adminDb } from "@/lib/firebase.server";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type InsuranceCompany, InsuranceCompanySchema } from "@/types/crm";
 
-const COLLECTION = "insurance-companies";
+const TABLE = "insurance_companies";
 
 export async function getInsuranceCompanies() {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: companies, error } = await supabaseServer.from(TABLE).select("*").order("name", { ascending: true });
 
-    const snapshot = await adminDb.collection(COLLECTION).orderBy("name", "asc").get();
-    const companies = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as InsuranceCompany[];
+    if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, companies };
-  } catch (error: any) {
+    return { success: true, companies: companies as InsuranceCompany[] };
+  } catch (error) {
     console.error(`[getInsuranceCompanies] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function getInsuranceCompany(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { data: company, error } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
 
-    const doc = await adminDb.collection(COLLECTION).doc(id).get();
-    if (!doc.exists) return { success: false, error: "Insurance Company not found" };
+    if (error) throw new Error((error as { message: string }).message);
+    if (!company) return { success: false, error: "Insurance Company not found" };
 
-    const company = { id: doc.id, ...doc.data() } as InsuranceCompany;
-    return { success: true, company };
-  } catch (error: any) {
+    return { success: true, company: company as InsuranceCompany };
+  } catch (error) {
     console.error(`[getInsuranceCompany] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function createInsuranceCompany(data: Partial<InsuranceCompany>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const validated = InsuranceCompanySchema.parse({
       ...data,
       createdAt: new Date().toISOString(),
     });
 
-    const docRef = await adminDb.collection(COLLECTION).add(validated);
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/admin/insurance-companies");
 
-    return { success: true, id: docRef.id };
-  } catch (error: any) {
+    return { success: true, id: inserted.id };
+  } catch (error) {
     console.error(`[createInsuranceCompany] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function updateInsuranceCompany(id: string, data: Partial<InsuranceCompany>) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
-
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    await adminDb.collection(COLLECTION).doc(id).set(updateData, { merge: true });
+    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/admin/insurance-companies");
     revalidatePath(`/dashboard/admin/insurance-companies/${id}`);
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[updateInsuranceCompany] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }
 
 export async function deleteInsuranceCompany(id: string) {
   try {
-    if (!adminDb) throw new Error("Firebase admin not configured");
+    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
-    await adminDb.collection(COLLECTION).doc(id).delete();
+    if (error) throw new Error((error as { message: string }).message);
+
     revalidatePath("/dashboard/admin/insurance-companies");
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error(`[deleteInsuranceCompany] Error:`, error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as { message: string }).message };
   }
 }

@@ -54,23 +54,23 @@ export default async function CRMOverviewPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto py-8 px-4 md:px-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 md:px-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">CRM Intelligence Overview</h1>
-        <p className="text-muted-foreground mt-2">Real-time insights across your client base and policy portfolio.</p>
+        <h1 className="font-bold text-3xl tracking-tight">CRM Intelligence Overview</h1>
+        <p className="mt-2 text-muted-foreground">Real-time insights across your client base and policy portfolio.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+            <CardTitle className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
               Total Profiles
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.people}</span>
-              <div className="bg-blue-50 p-2 rounded-lg">
+              <span className="font-bold text-3xl">{stats.people}</span>
+              <div className="rounded-lg bg-blue-50 p-2">
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
             </div>
@@ -79,14 +79,14 @@ export default async function CRMOverviewPage() {
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+            <CardTitle className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
               Households
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.households}</span>
-              <div className="bg-purple-50 p-2 rounded-lg">
+              <span className="font-bold text-3xl">{stats.households}</span>
+              <div className="rounded-lg bg-purple-50 p-2">
                 <Home className="h-5 w-5 text-purple-500" />
               </div>
             </div>
@@ -95,14 +95,14 @@ export default async function CRMOverviewPage() {
 
         <Card className="border-l-4 border-l-amber-500">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+            <CardTitle className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
               Client Records
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold">{stats.clients}</span>
-              <div className="bg-amber-50 p-2 rounded-lg">
+              <span className="font-bold text-3xl">{stats.clients}</span>
+              <div className="rounded-lg bg-amber-50 p-2">
                 <Briefcase className="h-5 w-5 text-amber-500" />
               </div>
             </div>
@@ -111,18 +111,18 @@ export default async function CRMOverviewPage() {
 
         <Card className="border-l-4 border-l-emerald-500 bg-emerald-50/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+            <CardTitle className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
               Monthly Projection
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold text-emerald-700">${stats.monthlyRevenue.toLocaleString()}</span>
-              <div className="bg-emerald-100 p-2 rounded-lg">
+              <span className="font-bold text-3xl text-emerald-700">${stats.monthlyRevenue.toLocaleString()}</span>
+              <div className="rounded-lg bg-emerald-100 p-2">
                 <TrendingUp className="h-5 w-5 text-emerald-600" />
               </div>
             </div>
-            <p className="text-[10px] font-medium text-emerald-600 mt-2 flex items-center gap-1">
+            <p className="mt-2 flex items-center gap-1 font-medium text-[10px] text-emerald-600">
               <Calendar className="h-3 w-3" />
               Forecast for {new Date().toLocaleString("default", { month: "long" })}
             </p>
@@ -130,27 +130,27 @@ export default async function CRMOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <h2 className="text-lg font-bold flex items-center gap-2">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="space-y-6 md:col-span-2">
+          <h2 className="flex items-center gap-2 font-bold text-lg">
             <ShieldCheck className="h-5 w-5 text-primary" />
             Quick Navigation
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {navCards.map((card) => {
               const Icon = card.icon;
               return (
                 <Link key={card.href} href={card.href}>
-                  <Card className="hover:border-primary/50 transition-all hover:shadow-md cursor-pointer group">
+                  <Card className="group cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className={`${card.color} p-3 rounded-xl shadow-sm text-white`}>
+                          <div className={`${card.color} rounded-xl p-3 text-white shadow-sm`}>
                             <Icon className="h-5 w-5" />
                           </div>
                           <span className="font-bold">{card.title}</span>
                         </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
                       </div>
                     </CardContent>
                   </Card>
@@ -163,13 +163,13 @@ export default async function CRMOverviewPage() {
         <div>
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="text-lg font-bold">Policy Distribution</CardTitle>
+              <CardTitle className="font-bold text-lg">Policy Distribution</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border border-dashed">
+              <div className="flex items-center justify-between rounded-xl border border-dashed bg-muted/20 p-4">
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-bold uppercase">Total Policies</span>
-                  <span className="text-2xl font-black">{stats.policies}</span>
+                  <span className="font-bold text-muted-foreground text-xs uppercase">Total Policies</span>
+                  <span className="font-black text-2xl">{stats.policies}</span>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                   <FileText className="h-6 w-6 text-primary" />
@@ -181,15 +181,15 @@ export default async function CRMOverviewPage() {
                   <span className="font-medium text-muted-foreground">Active Coverage</span>
                   <Badge
                     variant="outline"
-                    className="text-green-600 border-green-200 bg-green-50 font-bold uppercase text-[10px]"
+                    className="border-green-200 bg-green-50 font-bold text-[10px] text-green-600 uppercase"
                   >
                     HEALTHY
                   </Badge>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-500 h-full w-[85%]" />
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full w-[85%] bg-emerald-500" />
                 </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                <div className="flex justify-between font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
                   <span>85% Utilized</span>
                   <span>15% Gaps</span>
                 </div>

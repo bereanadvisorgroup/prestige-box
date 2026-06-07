@@ -15,7 +15,7 @@ import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -96,7 +96,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
   const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-md">
+    <Card className="mx-auto w-full max-w-3xl shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
@@ -106,7 +106,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Client Selection */}
               <FormField
                 control={form.control}
@@ -182,7 +182,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Policy Name (Filtered) */}
               <FormField
                 control={form.control}
@@ -225,7 +225,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Premium Amount */}
               <FormField
                 control={form.control}
@@ -235,7 +235,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormLabel>Premium Amount ($)</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           className="pl-9"
                           type="number"
@@ -276,7 +276,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
               {/* Payment Account */}
               <FormField
                 control={form.control}
@@ -313,7 +313,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
               {/* Dates */}
               <FormField
                 control={form.control}
@@ -323,7 +323,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormLabel>Effective Date</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Calendar className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                         <Input type="date" className="pl-9" {...field} />
                       </div>
                     </FormControl>
@@ -339,7 +339,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormLabel>Renewal Date</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        <Calendar className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                         <Input type="date" className="pl-9" {...field} />
                       </div>
                     </FormControl>
@@ -349,7 +349,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

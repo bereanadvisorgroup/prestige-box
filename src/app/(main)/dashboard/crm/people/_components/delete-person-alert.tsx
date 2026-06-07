@@ -36,7 +36,7 @@ export function DeletePersonAlert({ person, open, onOpenChange }: DeletePersonAl
       } else {
         toast.error(result.error || "Failed to delete person");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);

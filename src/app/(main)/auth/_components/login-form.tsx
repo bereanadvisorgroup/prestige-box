@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, type User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -13,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { auth, db } from "@/lib/firebase.client";
+import { supabase } from "@/lib/supabase.client";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
 
 import { GoogleButton } from "./social-auth/google-button";
@@ -38,39 +35,38 @@ export function LoginForm() {
   const { setUser, setProfile, setLoading } = useAuthStore();
   const router = useRouter();
 
-  const handleAuthUser = async (user: User) => {
+  const handleAuthUser = async (user: import("@supabase/supabase-js").User) => {
     setUser(user);
 
-    // Fetch User Profile & Role from Firestore
-    const userDocRef = doc(db, "users", user.uid);
-    const userDocSnap = await getDoc(userDocRef);
+    // Fetch User Profile & Role from Supabase
+    const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("uid", user.id).single();
 
     let profile: UserProfile;
 
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data();
+    if (userData && !fetchError) {
       profile = {
-        uid: user.uid,
-        email: user.email,
-        role: userData.role as UserRole, // 'admin', 'advisor', or 'client' (renamed from employee)
+        uid: user.id,
+        email: user.email ?? null,
+        role: userData.role as UserRole,
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone || "",
-        photoURL: userData.photoURL || user.photoURL || "",
+        photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
       };
     } else {
       // Auto-create user profile as a client
+      const fullName = user.user_metadata?.full_name || "";
       profile = {
-        uid: user.uid,
-        email: user.email,
-        role: "client", // Default role
-        firstName: user.displayName?.split(" ")[0] || "",
-        lastName: user.displayName?.split(" ").slice(1).join(" ") || "",
-        phone: user.phoneNumber || "",
-        photoURL: user.photoURL || "",
+        uid: user.id,
+        email: user.email ?? null,
+        role: "client",
+        firstName: user.user_metadata?.firstName || fullName.split(" ")[0] || "",
+        lastName: user.user_metadata?.lastName || fullName.split(" ").slice(1).join(" ") || "",
+        phone: user.phone || "",
+        photoURL: user.user_metadata?.avatar_url || "",
         createdAt: new Date().toISOString(),
       };
-      await setDoc(userDocRef, profile);
+      await supabase.from("users").insert(profile);
     }
 
     setProfile(profile);
@@ -81,11 +77,15 @@ export function LoginForm() {
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      await handleAuthUser(userCredential.user);
-    } catch (error: any) {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) throw error;
+      await handleAuthUser(authData.user);
+    } catch (error) {
       console.error("Login Error:", error);
-      toast.error(error.message || "Invalid email or password.");
+      toast.error((error as { message: string }).message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -94,12 +94,16 @@ export function LoginForm() {
   const onGoogleLogin = async () => {
     try {
       setLoading(true);
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      await handleAuthUser(userCredential.user);
-    } catch (error: any) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard/default`,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
       console.error("Google Login Error:", error);
-      toast.error(error.message || "Could not authenticate with Google.");
+      toast.error((error as { message: string }).message || "Could not authenticate with Google.");
     } finally {
       setLoading(false);
     }
@@ -164,7 +168,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="relative my-6 text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+      <div className="relative my-6 text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
         <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
       </div>
 

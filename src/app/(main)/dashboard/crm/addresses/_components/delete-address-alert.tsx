@@ -41,7 +41,7 @@ export function DeleteAddressAlert({ address, open, onOpenChange, onDeleted }: D
       } else {
         toast.error(result.error || "Failed to delete address. Ensure no people are linked to it.");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);

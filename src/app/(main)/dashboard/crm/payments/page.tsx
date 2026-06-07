@@ -22,8 +22,8 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const currentYear = new Date().getFullYear();
 
   const resolvedSearchParams = await searchParams;
-  const monthParam = resolvedSearchParams.month ? parseInt(resolvedSearchParams.month) : currentMonth;
-  const yearParam = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year) : currentYear;
+  const monthParam = resolvedSearchParams.month ? parseInt(resolvedSearchParams.month, 10) : currentMonth;
+  const yearParam = resolvedSearchParams.year ? parseInt(resolvedSearchParams.year, 10) : currentYear;
 
   const result = await getPaymentsForMonth(monthParam, yearParam);
 
@@ -49,7 +49,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
   if (!result.success) {
     return (
-      <div className="flex flex-col gap-10 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -63,20 +63,20 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
   const totalDue = payments.reduce((acc, p) => acc + p.paymentAmount, 0);
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-6xl mx-auto py-8 px-4 md:px-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payments Dashboard</h1>
-          <p className="text-muted-foreground mt-2">Monthly premium tracking and collection forecast.</p>
+          <h1 className="font-bold text-3xl tracking-tight">Payments Dashboard</h1>
+          <p className="mt-2 text-muted-foreground">Monthly premium tracking and collection forecast.</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border shadow-sm">
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1 shadow-sm">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8">
             <Link href={`/dashboard/crm/payments?month=${prevMonth}&year=${prevYear}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="px-4 font-bold text-sm min-w-[140px] text-center">
+          <div className="min-w-[140px] px-4 text-center font-bold text-sm">
             {monthNames[monthParam]} {yearParam}
           </div>
           <Button variant="ghost" size="icon" asChild className="h-8 w-8">
@@ -87,14 +87,14 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-primary/5 border-primary/20">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <Card className="border-primary/20 bg-primary/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Expected</CardTitle>
+            <CardTitle className="font-medium text-muted-foreground text-sm">Total Expected</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">${totalDue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-semibold">
+            <div className="font-bold text-3xl text-primary">${totalDue.toLocaleString()}</div>
+            <p className="mt-1 font-semibold text-muted-foreground text-xs">
               For {monthNames[monthParam]} {yearParam}
             </p>
           </CardContent>
@@ -102,11 +102,11 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Collections</CardTitle>
+            <CardTitle className="font-medium text-muted-foreground text-sm">Total Collections</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{payments.length}</div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium italic">
+            <div className="font-bold text-3xl">{payments.length}</div>
+            <p className="mt-1 font-medium text-muted-foreground text-xs italic">
               Individual policy payments scheduled
             </p>
           </CardContent>
@@ -114,23 +114,23 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Payment</CardTitle>
+            <CardTitle className="font-medium text-muted-foreground text-sm">Avg. Payment</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="font-bold text-3xl">
               $
               {payments.length > 0
                 ? (totalDue / payments.length).toLocaleString(undefined, { maximumFractionDigits: 0 })
                 : 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1 font-medium">Per scheduled transaction</p>
+            <p className="mt-1 font-medium text-muted-foreground text-xs">Per scheduled transaction</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <div className="p-4 border-b bg-muted/5 flex items-center justify-between">
-          <h2 className="font-semibold flex items-center gap-2">
+      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b bg-muted/5 p-4">
+          <h2 className="flex items-center gap-2 font-semibold">
             <DollarSign className="h-4 w-4 text-primary" />
             Payment Schedule
           </h2>

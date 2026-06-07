@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import type { ScheduledPayment } from "@/actions/payments";
 import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";

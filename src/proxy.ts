@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
     // we'll simulate the check using a dummy cookie for demonstration, or leave unprotected
     // and rely on client-side protect loops. Let's add the basic structure.
 
-    const isAuthenticated = request.cookies.has("auth-session"); // Sample check
+    const _isAuthenticated = request.cookies.has("auth-session"); // Sample check
 
     /*
         // Uncomment this when authentication cookie flow is ready
@@ -24,7 +24,7 @@ export function proxy(request: NextRequest) {
 
   // Prevent authenticated users from going back to login if already logged in
   if (request.nextUrl.pathname.startsWith("/auth/v1/login")) {
-    const isAuthenticated = request.cookies.has("auth-session");
+    const _isAuthenticated = request.cookies.has("auth-session");
 
     // if (isAuthenticated) {
     //  return NextResponse.redirect(new URL('/dashboard/default', request.url));

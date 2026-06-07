@@ -36,7 +36,7 @@ export function DeleteClientAlert({ client, open, onOpenChange }: DeleteClientAl
       } else {
         toast.error(result.error || "Failed to delete client record");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An unexpected error occurred");
     } finally {
       setIsDeleting(false);
@@ -61,7 +61,7 @@ export function DeleteClientAlert({ client, open, onOpenChange }: DeleteClientAl
               e.preventDefault();
               handleDelete();
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold"
+            className="bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Deleting..." : "Delete Client Record"}
           </AlertDialogAction>

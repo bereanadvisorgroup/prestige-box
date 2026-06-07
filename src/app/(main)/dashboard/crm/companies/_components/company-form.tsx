@@ -119,7 +119,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-sm">
+    <Card className="mx-auto w-full max-w-3xl shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Building2 className="h-5 w-5" />
@@ -129,7 +129,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
@@ -159,7 +159,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="website"
@@ -239,9 +239,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
               )}
             />
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 border-t pt-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium flex items-center gap-2">
+                <h3 className="flex items-center gap-2 font-medium text-sm">
                   <MapPin className="h-4 w-4 text-primary" />
                   Situs Records
                 </h3>
@@ -257,7 +257,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                     })
                   }
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Situs
                 </Button>
               </div>
@@ -265,7 +265,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 {situsFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10"
+                    className="relative grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-4 rounded-md border bg-muted/10 p-4"
                   >
                     <FormField
                       control={form.control}
@@ -332,7 +332,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-muted-foreground hover:text-destructive self-end mb-0.5"
+                      className="mb-0.5 self-end text-muted-foreground hover:text-destructive"
                       onClick={() => removeSitus(index)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -340,16 +340,16 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   </div>
                 ))}
                 {situsFields.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">
+                  <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
                     No situs records added.
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 border-t pt-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium flex items-center gap-2">
+                <h3 className="flex items-center gap-2 font-medium text-sm">
                   <Briefcase className="h-4 w-4 text-primary" />
                   Nexus Records
                 </h3>
@@ -359,7 +359,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   size="sm"
                   onClick={() => appendNexus({ jurisdiction: "DE", type: "Sales Tax" })}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Nexus
                 </Button>
               </div>
@@ -367,7 +367,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 {nexusFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end p-4 border rounded-md relative bg-muted/10"
+                    className="relative grid grid-cols-[1fr_1fr_auto] items-end gap-4 rounded-md border bg-muted/10 p-4"
                   >
                     <FormField
                       control={form.control}
@@ -421,7 +421,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-muted-foreground hover:text-destructive self-end mb-0.5"
+                      className="mb-0.5 self-end text-muted-foreground hover:text-destructive"
                       onClick={() => removeNexus(index)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -429,15 +429,15 @@ export function CompanyForm({ company }: CompanyFormProps) {
                   </div>
                 ))}
                 {nexusFields.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic h-10 flex items-center justify-center border rounded-md border-dashed">
+                  <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
                     No nexus records added.
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-medium flex items-center gap-2">
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="flex items-center gap-2 font-medium text-sm">
                 <Users className="h-4 w-4 text-primary" />
                 Associated Clients
               </h3>
@@ -471,9 +471,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 </Combobox>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
                 {(form.watch("clientIds") || []).length === 0 && (
-                  <p className="text-xs text-muted-foreground p-1 italic">No clients linked yet.</p>
+                  <p className="p-1 text-muted-foreground text-xs italic">No clients linked yet.</p>
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
@@ -482,13 +482,13 @@ export function CompanyForm({ company }: CompanyFormProps) {
                     <Badge
                       key={clientId}
                       variant="secondary"
-                      className="gap-1 px-3 py-1 font-medium bg-secondary text-secondary-foreground shadow-sm"
+                      className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
                     >
                       {person ? `${person.firstName} ${person.lastName}` : "Unknown Client"}
                       <button
                         type="button"
                         onClick={() => handleToggleClient(clientId)}
-                        className="ml-1 hover:text-destructive transition-colors"
+                        className="ml-1 transition-colors hover:text-destructive"
                       >
                         ×
                       </button>
@@ -498,7 +498,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

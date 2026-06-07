@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, Calendar, DollarSign, FileText, Pencil, Shield, Trash2, User } from "lucide-react";
+import { ArrowUpRight, Calendar, Pencil, Shield, Trash2, User } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +20,13 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
         <div className="flex items-center gap-1">
           <Link
             href={`/dashboard/crm/policies/${row.original.id}`}
-            className="font-semibold text-primary hover:underline flex items-center gap-1"
+            className="flex items-center gap-1 font-semibold text-primary hover:underline"
           >
             <span>{row.original.clientName}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
           </Link>
         </div>
-        <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-tighter">
+        <span className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-tighter">
           <User className="h-2.5 w-2.5" />
           Policy Client
         </span>
@@ -39,7 +39,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
     cell: ({ row }: { row: Row<any> }) => (
       <div className="flex items-center gap-2">
         <Shield className="h-3 w-3 text-primary" />
-        <span className="text-sm font-medium">{row.original.carrierName}</span>
+        <span className="font-medium text-sm">{row.original.carrierName}</span>
       </div>
     ),
   },
@@ -49,9 +49,9 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
     cell: ({ row }: { row: Row<ClientPolicy> }) => (
       <div className="flex flex-col">
         <Link href={`/dashboard/crm/policies/${row.original.id}`} className="hover:underline">
-          <span className="text-sm font-bold text-foreground">{row.original.policyName}</span>
+          <span className="font-bold text-foreground text-sm">{row.original.policyName}</span>
         </Link>
-        <span className="text-[10px] font-mono text-muted-foreground">{row.original.policyNumber}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">{row.original.policyNumber}</span>
       </div>
     ),
   },
@@ -61,7 +61,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
     cell: ({ row }: { row: Row<ClientPolicy> }) => (
       <div className="flex flex-col">
         <span className="font-bold text-green-700">{formatCurrency(row.original.premiumAmount)}</span>
-        <Badge variant="outline" className="w-fit text-[8px] py-0 h-3 uppercase scale-90 origin-left">
+        <Badge variant="outline" className="h-3 w-fit origin-left scale-90 py-0 text-[8px] uppercase">
           {row.original.paymentSchedule}
         </Badge>
       </div>
@@ -80,16 +80,16 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
 
       return (
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
             <Calendar className="h-3 w-3" />
             {renewal.toLocaleDateString()}
           </div>
           {isPast ? (
-            <Badge variant="destructive" className="w-fit text-[8px] py-0 h-3 shadow-none">
+            <Badge variant="destructive" className="h-3 w-fit py-0 text-[8px] shadow-none">
               EXPIRED
             </Badge>
           ) : isSoon ? (
-            <Badge variant="secondary" className="w-fit text-[8px] py-0 h-3 bg-amber-100 text-amber-700 shadow-none">
+            <Badge variant="secondary" className="h-3 w-fit bg-amber-100 py-0 text-[8px] text-amber-700 shadow-none">
               RENEWAL SOON
             </Badge>
           ) : null}
@@ -103,7 +103,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
       const policy = row.original;
 
       return (
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/crm/policies/${policy.id}/edit`}>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
               <Pencil className="h-4 w-4" />

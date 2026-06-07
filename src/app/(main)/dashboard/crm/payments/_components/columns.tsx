@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import type { Row } from "@tanstack/react-table";
-import { Calendar, CreditCard, DollarSign, FileText, Shield, User } from "lucide-react";
+import { Calendar, CreditCard, DollarSign, Shield, User } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ export const columns = [
     cell: ({ row }: { row: Row<any> }) => (
       <Link
         href={`/dashboard/crm/clients/${row.original.clientId}`}
-        className="flex items-center gap-2 hover:underline decoration-primary/50 underline-offset-4"
+        className="flex items-center gap-2 decoration-primary/50 underline-offset-4 hover:underline"
       >
         <User className="h-3 w-3 text-muted-foreground" />
         <span className="font-medium text-black">{row.original.clientName}</span>
@@ -48,10 +48,10 @@ export const columns = [
     cell: ({ row }: { row: Row<any> }) => (
       <Link
         href={`/dashboard/crm/policies/${row.original.policyId}`}
-        className="flex flex-col hover:underline decoration-primary/50 underline-offset-4"
+        className="flex flex-col decoration-primary/50 underline-offset-4 hover:underline"
       >
-        <span className="text-sm font-medium">{row.original.policyName}</span>
-        <span className="text-[10px] text-muted-foreground font-mono">{row.original.policyNumber}</span>
+        <span className="font-medium text-sm">{row.original.policyName}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">{row.original.policyNumber}</span>
       </Link>
     ),
   },
@@ -62,7 +62,7 @@ export const columns = [
       <div className="flex items-center font-bold text-green-700">
         <DollarSign className="h-3 w-3" />
         {row.original.paymentAmount.toLocaleString()}
-        <Badge variant="outline" className="ml-2 text-[8px] h-3 px-1 uppercase scale-90 origin-left">
+        <Badge variant="outline" className="ml-2 h-3 origin-left scale-90 px-1 text-[8px] uppercase">
           {row.original.paymentSchedule}
         </Badge>
       </div>

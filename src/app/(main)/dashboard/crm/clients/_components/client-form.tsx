@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, Heart, Plus, Search, Trash2, Trophy, User } from "lucide-react";
+import { CreditCard, Heart, Trash2, Trophy, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
 import { formatPhoneNumber } from "@/lib/utils";
@@ -143,7 +143,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const selectedPerson = availablePeople.find((p) => p.id === form.watch("personId"));
 
   return (
-    <Card className="w-full max-w-3xl mx-auto shadow-sm">
+    <Card className="mx-auto w-full max-w-3xl shadow-sm">
       <CardHeader>
         <CardTitle>{client ? "Edit Client Profile" : "Create Client Profile"}</CardTitle>
       </CardHeader>
@@ -152,7 +152,7 @@ export function ClientForm({ client }: ClientFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {!client && (
               <div className="space-y-4">
-                <h3 className="text-sm font-medium border-b pb-2">Person Association</h3>
+                <h3 className="border-b pb-2 font-medium text-sm">Person Association</h3>
                 <FormField
                   control={form.control}
                   name="personId"
@@ -179,16 +179,16 @@ export function ClientForm({ client }: ClientFormProps) {
 
             {selectedPerson && (
               <div
-                className={`${client ? "" : "mt-4"} p-4 bg-muted/30 rounded-lg border shadow-sm flex items-start gap-4 text-sm`}
+                className={`${client ? "" : "mt-4"} flex items-start gap-4 rounded-lg border bg-muted/30 p-4 text-sm shadow-sm`}
               >
-                <div className="bg-primary/10 p-2.5 rounded-full">
+                <div className="rounded-full bg-primary/10 p-2.5">
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div className="grid gap-1">
                   <p className="font-bold text-base leading-none">
                     {selectedPerson.firstName} {selectedPerson.lastName}
                   </p>
-                  <div className="flex flex-col text-muted-foreground gap-0.5 mt-1">
+                  <div className="mt-1 flex flex-col gap-0.5 text-muted-foreground">
                     <p className="flex items-center gap-2">
                       <span className="font-medium text-foreground/70">Email:</span>{" "}
                       {selectedPerson.emails?.find((e) => e.isPrimary)?.address ||
@@ -207,7 +207,7 @@ export function ClientForm({ client }: ClientFormProps) {
             )}
 
             <div className="space-y-4 pt-2">
-              <h3 className="text-sm font-medium border-b pb-2 flex items-center gap-2">
+              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
                 <Heart className="h-4 w-4 text-primary" />
                 Interests & Hobbies
               </h3>
@@ -229,9 +229,9 @@ export function ClientForm({ client }: ClientFormProps) {
                 </Button>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
                 {form.watch("hobbies").length === 0 && (
-                  <p className="text-xs text-muted-foreground p-1 italic">No hobbies listed yet.</p>
+                  <p className="p-1 text-muted-foreground text-xs italic">No hobbies listed yet.</p>
                 )}
                 {form.watch("hobbies").map((hobby, index) => (
                   <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
@@ -249,7 +249,7 @@ export function ClientForm({ client }: ClientFormProps) {
             </div>
 
             <div className="space-y-4 pt-2">
-              <h3 className="text-sm font-medium border-b pb-2 flex items-center gap-2">
+              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
                 <Trophy className="h-4 w-4 text-primary" />
                 Favorite Sports Teams
               </h3>
@@ -268,7 +268,7 @@ export function ClientForm({ client }: ClientFormProps) {
                         .filter((team) => !form.getValues("favoriteSportsTeams").includes(team.name))
                         .map((team) => (
                           <ComboboxItem key={team.id} value={team.name}>
-                            <span className="text-xs font-bold mr-2 text-muted-foreground">[{team.league}]</span>
+                            <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
                             {team.name}
                           </ComboboxItem>
                         ))}
@@ -277,15 +277,15 @@ export function ClientForm({ client }: ClientFormProps) {
                 </Combobox>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4 min-h-[40px] p-2 bg-muted/20 rounded-md border">
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
                 {form.watch("favoriteSportsTeams").length === 0 && (
-                  <p className="text-xs text-muted-foreground p-1 italic">No sports teams linked yet.</p>
+                  <p className="p-1 text-muted-foreground text-xs italic">No sports teams linked yet.</p>
                 )}
                 {form.watch("favoriteSportsTeams").map((teamName, index) => (
                   <Badge
                     key={index}
                     variant="default"
-                    className="gap-1 px-3 py-1 shadow-sm font-bold bg-primary text-primary-foreground"
+                    className="gap-1 bg-primary px-3 py-1 font-bold text-primary-foreground shadow-sm"
                   >
                     {teamName}
                     <button
@@ -300,7 +300,7 @@ export function ClientForm({ client }: ClientFormProps) {
               </div>
             </div>
             <div className="space-y-4 pt-2">
-              <h3 className="text-sm font-medium border-b pb-2 flex items-center gap-2">
+              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
                 <CreditCard className="h-4 w-4 text-primary" />
                 Payment Accounts
               </h3>
@@ -322,25 +322,25 @@ export function ClientForm({ client }: ClientFormProps) {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 mt-4">
+              <div className="mt-4 grid grid-cols-1 gap-2">
                 {(form.watch("paymentAccounts") || []).length === 0 && (
-                  <p className="text-xs text-muted-foreground p-2 italic bg-muted/20 rounded-md border">
+                  <p className="rounded-md border bg-muted/20 p-2 text-muted-foreground text-xs italic">
                     No payment accounts added yet.
                   </p>
                 )}
                 {(form.watch("paymentAccounts") || []).map((account) => (
                   <div
                     key={account.id}
-                    className="flex items-center justify-between p-3 bg-muted/20 rounded-md border group"
+                    className="group flex items-center justify-between rounded-md border bg-muted/20 p-3"
                   >
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{account.name}</span>
+                      <span className="font-medium text-sm">{account.name}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemovePaymentAccount(account.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-muted-foreground opacity-0 transition-colors hover:text-destructive group-hover:opacity-100"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -349,7 +349,7 @@ export function ClientForm({ client }: ClientFormProps) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t font-semibold">
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>

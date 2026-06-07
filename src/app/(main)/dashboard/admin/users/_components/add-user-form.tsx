@@ -80,8 +80,8 @@ export function AddUserForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
             name="firstName"
@@ -133,7 +133,7 @@ export function AddUserForm() {
               <FormControl>
                 <Input placeholder="Leave blank to auto-generate" type="password" {...field} />
               </FormControl>
-              <p className="text-xs text-muted-foreground mt-1 text-left">
+              <p className="mt-1 text-left text-muted-foreground text-xs">
                 If left blank, a random password will be generated for Firebase Auth. The user can use password reset to
                 set their own.
               </p>
