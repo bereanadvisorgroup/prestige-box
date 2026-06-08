@@ -12,7 +12,7 @@ import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { type Accountant, type Company, type Household, type Lawyer, type Person, type Client } from "@/types/crm";
+import type { Accountant, Client, Company, Household, Lawyer, Person } from "@/types/crm";
 
 import { AddressesTable } from "./_components/addresses-table";
 

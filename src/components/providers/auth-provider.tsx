@@ -2,11 +2,15 @@
 
 import { type ReactNode, useEffect } from "react";
 
+import { usePathname, useRouter } from "next/navigation";
+
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { setUser, setProfile, setLoading } = useAuthStore();
+  const { user, isLoading, setUser, setProfile, setLoading } = useAuthStore();
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // 1. Get initial session/user
@@ -76,6 +80,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, [setUser, setProfile, setLoading]);
+
+  // Client-side route guarding
+  useEffect(() => {
+    if (isLoading) return;
+
+    const isDashboardRoute = pathname.startsWith("/dashboard");
+    const isAuthRoute = pathname.startsWith("/auth");
+
+    if (isDashboardRoute && !user) {
+      router.replace("/auth/v1/login");
+    } else if (isAuthRoute && user) {
+      router.replace("/dashboard/default");
+    }
+  }, [user, isLoading, pathname, router]);
 
   return <>{children}</>;
 }

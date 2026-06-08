@@ -9,7 +9,7 @@ import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { type Accountant, type Household, type Lawyer, type Client } from "@/types/crm";
+import type { Accountant, Client, Household, Lawyer } from "@/types/crm";
 
 import { PeopleTable } from "./_components/people-table";
 

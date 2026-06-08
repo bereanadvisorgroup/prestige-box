@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
+
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Lawyer, LawyerSchema } from "@/types/crm";
 
