@@ -51,7 +51,7 @@ export function DeleteUserAlert({ open, onOpenChange, uid, userName }: DeleteUse
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete <strong>{userName}</strong>&apos;s account from
-            Firebase Auth and remove their data from the database.
+            Supabase Auth and remove their data from the database.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

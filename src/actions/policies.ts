@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
@@ -24,14 +25,14 @@ export async function getClientPolicies() {
     const [clientsResult, companiesResult] = await Promise.all([
       clientIds.length > 0
         ? supabaseServer.from("clients").select("id, personId").in("id", clientIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
       companyIds.length > 0
         ? supabaseServer.from("insurance_companies").select("id, name").in("id", companyIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
     ]);
 
-    if (clientsResult.error) throw new Error((clientsResult.error as { message: string }).message);
-    if (companiesResult.error) throw new Error((companiesResult.error as { message: string }).message);
+    if (clientsResult.error) throw new Error(clientsResult.error.message);
+    if (companiesResult.error) throw new Error(companiesResult.error.message);
 
     const clients = clientsResult.data || [];
     const companies = companiesResult.data || [];

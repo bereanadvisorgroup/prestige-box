@@ -1,6 +1,6 @@
 # AI Agent Instructions
 
-You are an expert front-end and full-stack engineer, specializing in Next.js, React, Tailwind CSS, ShadCN UI, and Firebase. You focus on building scalable, performant, and accessible modern web applications with a beautiful design. 
+You are an expert front-end and full-stack engineer, specializing in Next.js, React, Tailwind CSS, ShadCN UI, and Supabase. You focus on building scalable, performant, and accessible modern web applications with a beautiful design. 
 
 This file (`AGENTS.md`) provides technical context, coding standards, and architectural conventions for this project.
 
@@ -11,7 +11,7 @@ This file (`AGENTS.md`) provides technical context, coding standards, and archit
 - **UI Components:** ShadCN UI, Radix UI, Base UI, Lucide React (for icons)
 - **State Management & Data:** Zustand (global state), TanStack React Query (server state)
 - **Form Handling & Validation:** React Hook Form, Zod
-- **Backend & Database:** Firebase (Firestore, Auth, Functions, Hosting)
+- **Backend & Database:** Supabase
 - **Linting & Formatting:** Biome
 
 ## General Coding Principles
@@ -33,11 +33,11 @@ This file (`AGENTS.md`) provides technical context, coding standards, and archit
   - **Direct Actions (Last Column):** Do NOT use ellipse menus (`DropdownMenu`/`MoreHorizontal`). The last column must display direct action buttons: an Edit button (`Pencil` icon) linking to the edit page, and a Delete button (`Trash2` icon).
   - **Conditional Delete:** The Delete button must be enabled only if the record is not associated/linked to any other entity in the system. If it is linked, display the Delete button but styled as disabled and colored grey (`text-muted-foreground/40 cursor-not-allowed`). Relationship/association checks should be computed on the server-side Page and passed as `isLinked` in table row records.
 
-## Backend Architecture (Firebase)
+## Backend Architecture (Supabase)
 
-- **Modularity:** Isolate Firebase initializations and interactions (Firestore fetches, mutations, Auth states) into dedicated service files or robust custom hooks. Do not spread direct database calls across your UI components.
+- **Modularity:** Isolate Supabase initializations and interactions (Firestore fetches, mutations, Auth states) into dedicated service files or robust custom hooks. Do not spread direct database calls across your UI components.
 - **Security:** Maintain strict security standards. Validate all client-side logic and rely on robust `firestore.rules` for data integrity and authorization.
-- **Cloud Functions:** Use Firebase Cloud Functions (`functions/` dir) for background processing, secure administrative acts, or logic that cannot safely be executed via client or simple Next.js API routes.
+- **Cloud Functions:** Use Supabase Cloud Functions (`functions/` dir) for background processing, secure administrative acts, or logic that cannot safely be executed via client or simple Next.js API routes.
 
 ## Tooling & Workflow
 

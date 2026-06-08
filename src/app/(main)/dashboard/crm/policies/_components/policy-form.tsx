@@ -37,7 +37,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
   const [availableCompanies, setAvailableCompanies] = useState<InsuranceCompany[]>([]);
 
   const form = useForm<ClientPolicy>({
-    resolver: zodResolver(ClientPolicySchema),
+    resolver: zodResolver(ClientPolicySchema) as any,
     defaultValues: policy || {
       clientId: "",
       insuranceCompanyId: "",

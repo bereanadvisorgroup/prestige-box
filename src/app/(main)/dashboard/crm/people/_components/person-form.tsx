@@ -48,7 +48,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       : [];
 
   const form = useForm<Person>({
-    resolver: zodResolver(PersonSchema),
+    resolver: zodResolver(PersonSchema) as any,
     mode: "onChange",
     defaultValues: person || {
       prefix: "",
@@ -138,7 +138,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     if (!form.getValues("addresses").some((a) => a.id === addressId)) {
       const isFirst = form.getValues("addresses").length === 0;
       appendAddress({
-        id: addressId,
+        id: addressId!,
         type: "Home",
         isPrimary: isFirst,
       });

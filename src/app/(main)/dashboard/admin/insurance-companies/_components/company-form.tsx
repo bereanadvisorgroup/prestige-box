@@ -27,7 +27,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [newPolicyName, setNewPolicyName] = useState("");
 
   const form = useForm<InsuranceCompany>({
-    resolver: zodResolver(InsuranceCompanySchema),
+    resolver: zodResolver(InsuranceCompanySchema) as any,
     defaultValues: company || {
       name: "",
       websiteUrl: "",

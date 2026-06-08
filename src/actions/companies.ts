@@ -116,7 +116,7 @@ export async function deleteCompany(id: string) {
     revalidatePath("/dashboard/crm/companies");
 
     if (company?.clientIds?.length) {
-      company.clientIds.forEach((clientId) => {
+      (company.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
       });
     }

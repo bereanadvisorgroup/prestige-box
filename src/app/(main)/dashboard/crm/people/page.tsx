@@ -9,6 +9,7 @@ import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { type Accountant, type Household, type Lawyer, type Client } from "@/types/crm";
 
 import { PeopleTable } from "./_components/people-table";
 
@@ -40,10 +41,12 @@ export default async function PeoplePage() {
   }
 
   const rawPeople = peopleRes.people || [];
-  const clients = clientsRes.success && clientsRes.clients ? clientsRes.clients : [];
-  const lawyers = lawyersRes.success && lawyersRes.lawyers ? lawyersRes.lawyers : [];
-  const accountants = accountantsRes.success && accountantsRes.accountants ? accountantsRes.accountants : [];
-  const households = householdsRes.success && householdsRes.households ? householdsRes.households : [];
+  const clients = (clientsRes.success && clientsRes.clients ? clientsRes.clients : []) as Client[];
+  const lawyers = (lawyersRes.success && lawyersRes.lawyers ? lawyersRes.lawyers : []) as Lawyer[];
+  const accountants = (
+    accountantsRes.success && accountantsRes.accountants ? accountantsRes.accountants : []
+  ) as Accountant[];
+  const households = (householdsRes.success && householdsRes.households ? householdsRes.households : []) as Household[];
 
   const people = rawPeople.map((person) => {
     const isLinked =

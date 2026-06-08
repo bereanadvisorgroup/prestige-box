@@ -32,9 +32,7 @@ const formSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-  role: z.string({
-    required_error: "Please select a role.",
-  }),
+  role: z.string().min(1, "Please select a role."),
 });
 
 export function AddUserForm() {
@@ -134,7 +132,7 @@ export function AddUserForm() {
                 <Input placeholder="Leave blank to auto-generate" type="password" {...field} />
               </FormControl>
               <p className="mt-1 text-left text-muted-foreground text-xs">
-                If left blank, a random password will be generated for Firebase Auth. The user can use password reset to
+                If left blank, a random password will be generated for Supabase Auth. The user can use password reset to
                 set their own.
               </p>
               <FormMessage />

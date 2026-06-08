@@ -35,7 +35,7 @@ export function LawyerForm({ lawyer }: LawyerFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<Lawyer>({
-    resolver: zodResolver(LawyerSchema),
+    resolver: zodResolver(LawyerSchema) as any,
     defaultValues: lawyer || {
       personId: "",
       firmName: "",

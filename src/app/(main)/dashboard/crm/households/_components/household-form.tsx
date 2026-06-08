@@ -32,7 +32,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<Household>({
-    resolver: zodResolver(HouseholdSchema),
+    resolver: zodResolver(HouseholdSchema) as any,
     defaultValues: household || {
       name: "",
       addressId: "",

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { supabaseServer } from "@/lib/supabase.server";
-import { type Household, HouseholdSchema } from "@/types/crm";
+import { type Household, HouseholdSchema, type Person } from "@/types/crm";
 
 const TABLE = "households";
 

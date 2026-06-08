@@ -12,6 +12,7 @@ import { getLawyers } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { type Accountant, type Company, type Household, type Lawyer, type Person, type Client } from "@/types/crm";
 
 import { AddressesTable } from "./_components/addresses-table";
 
@@ -46,12 +47,18 @@ export default async function AddressesPage() {
   }
 
   const addresses = result.addresses || [];
-  const people = peopleResult.success && peopleResult.people ? peopleResult.people : [];
-  const households = householdsResult.success && householdsResult.households ? householdsResult.households : [];
-  const companies = companiesResult.success && companiesResult.companies ? companiesResult.companies : [];
-  const lawyers = lawyersResult.success && lawyersResult.lawyers ? lawyersResult.lawyers : [];
-  const accountants = accountantsResult.success && accountantsResult.accountants ? accountantsResult.accountants : [];
-  const clients = clientsResult.success && clientsResult.clients ? clientsResult.clients : [];
+  const people = (peopleResult.success && peopleResult.people ? peopleResult.people : []) as Person[];
+  const households = (
+    householdsResult.success && householdsResult.households ? householdsResult.households : []
+  ) as Household[];
+  const companies = (
+    companiesResult.success && companiesResult.companies ? companiesResult.companies : []
+  ) as Company[];
+  const lawyers = (lawyersResult.success && lawyersResult.lawyers ? lawyersResult.lawyers : []) as Lawyer[];
+  const accountants = (
+    accountantsResult.success && accountantsResult.accountants ? accountantsResult.accountants : []
+  ) as Accountant[];
+  const clients = (clientsResult.success && clientsResult.clients ? clientsResult.clients : []) as Client[];
 
   const enrichedAddresses = addresses.map((addr) => {
     const linkedPeople = people.flatMap((p) => {

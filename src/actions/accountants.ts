@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Accountant, AccountantSchema } from "@/types/crm";
 
@@ -21,14 +22,14 @@ export async function getAccountants() {
     const [peopleResult, addressesResult] = await Promise.all([
       personIds.length > 0
         ? supabaseServer.from("people").select("*").in("id", personIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
       addressIds.length > 0
         ? supabaseServer.from("addresses").select("*").in("id", addressIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
     ]);
 
-    if (peopleResult.error) throw new Error((peopleResult.error as { message: string }).message);
-    if (addressesResult.error) throw new Error((addressesResult.error as { message: string }).message);
+    if (peopleResult.error) throw new Error(peopleResult.error.message);
+    if (addressesResult.error) throw new Error(addressesResult.error.message);
 
     const people = peopleResult.data || [];
     const addresses = addressesResult.data || [];
@@ -170,7 +171,7 @@ export async function deleteAccountant(id: string) {
     revalidatePath("/dashboard/crm/accountants");
 
     if (accountant?.clientIds?.length) {
-      accountant.clientIds.forEach((clientId) => {
+      (accountant.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
       });
     }

@@ -25,7 +25,7 @@ export function AddressForm({ address }: AddressFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<Address>({
-    resolver: zodResolver(AddressSchema),
+    resolver: zodResolver(AddressSchema) as any,
     defaultValues: address || {
       street1: "",
       street2: "",

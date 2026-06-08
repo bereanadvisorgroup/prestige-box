@@ -34,7 +34,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
 
   const form = useForm<Company>({
-    resolver: zodResolver(CompanySchema),
+    resolver: zodResolver(CompanySchema) as any,
     defaultValues: company || {
       name: "",
       dba: "",

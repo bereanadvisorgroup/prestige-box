@@ -26,7 +26,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<Address>({
-    resolver: zodResolver(AddressSchema),
+    resolver: zodResolver(AddressSchema) as any,
     defaultValues: {
       street1: "",
       street2: "",

@@ -26,7 +26,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<Person>({
-    resolver: zodResolver(PersonSchema),
+    resolver: zodResolver(PersonSchema) as any,
     mode: "onChange",
     defaultValues: {
       firstName: "",

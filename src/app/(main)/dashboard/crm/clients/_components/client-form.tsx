@@ -35,7 +35,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
 
   const form = useForm<Client>({
-    resolver: zodResolver(ClientSchema),
+    resolver: zodResolver(ClientSchema) as any,
     defaultValues: client || {
       personId: "",
       hobbies: [],

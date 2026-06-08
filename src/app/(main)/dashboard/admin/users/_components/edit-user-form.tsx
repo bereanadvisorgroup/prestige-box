@@ -23,9 +23,7 @@ const formSchema = z.object({
   lastName: z.string().min(2, {
     message: "Last name must be at least 2 characters.",
   }),
-  role: z.string({
-    required_error: "Please select a role.",
-  }),
+  role: z.string().min(1, "Please select a role."),
 });
 
 interface EditUserFormProps {

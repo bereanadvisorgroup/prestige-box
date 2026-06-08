@@ -35,7 +35,7 @@ export function AccountantForm({ accountant }: AccountantFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<Accountant>({
-    resolver: zodResolver(AccountantSchema),
+    resolver: zodResolver(AccountantSchema) as any,
     defaultValues: accountant || {
       personId: "",
       firmName: "",

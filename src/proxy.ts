@@ -4,11 +4,11 @@ import { NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   // Check if trying to access a protected route (dashboard)
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    // Note: In a real app with Firebase, we would verify the session cookie here.
+    // Note: In a real app with Supabase, we would verify the session cookie here.
     // For now, allow navigation but log the access request.
-    // To strictly enforce without valid Firebase setup right this second, we could
+    // To strictly enforce without valid Supabase setup right this second, we could
     // either mock it or just allow it. The implementation plan said to protect it
-    // but without an active auth provider set up (like Firebase cookies or next-auth)
+    // but without an active auth provider set up (like Supabase cookies or next-auth)
     // we'll simulate the check using a dummy cookie for demonstration, or leave unprotected
     // and rely on client-side protect loops. Let's add the basic structure.
 
