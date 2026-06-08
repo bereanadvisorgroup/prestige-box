@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     const isDashboardRoute = pathname.startsWith("/dashboard");
-    const isAuthRoute = pathname.startsWith("/auth");
+    const isAuthRoute = pathname.startsWith("/auth") && !pathname.includes("/reset-password");
 
     if (isDashboardRoute && !user) {
       router.replace("/auth/v1/login");

@@ -64,6 +64,28 @@ export async function getUsers() {
 
     if (error) throw new Error(error.message);
 
+    // Fetch auth users to map providers
+    const providerMap = new Map<string, string[]>();
+    try {
+      const {
+        data: { users: authUsers },
+        error: authError,
+      } = await supabaseServer.auth.admin.listUsers({ perPage: 1000 });
+      if (authError) throw authError;
+      if (authUsers) {
+        for (const authUser of authUsers) {
+          const providers =
+            authUser.app_metadata?.providers ||
+            (authUser.identities || []).map((i) => i.provider) ||
+            [authUser.app_metadata?.provider].filter(Boolean) ||
+            [];
+          providerMap.set(authUser.id, providers);
+        }
+      }
+    } catch (authErr) {
+      console.warn("[getUsers] Failed to fetch auth providers:", authErr);
+    }
+
     const users = (dbUsers || []).map((dbUser) => ({
       uid: dbUser.uid,
       email: dbUser.email || "",
@@ -72,6 +94,7 @@ export async function getUsers() {
       role: dbUser.role || "client",
       createdAt: dbUser.createdAt || new Date().toISOString(),
       photoURL: dbUser.photoURL || "",
+      providers: providerMap.get(dbUser.uid) || [],
     }));
 
     return { success: true, users };
@@ -158,6 +181,19 @@ export async function getUser(uid: string) {
     return { success: true, user };
   } catch (error) {
     console.error("Failed to fetch user:", error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function resetUserPassword(_uid: string, email: string, origin: string) {
+  try {
+    const { error } = await supabaseServer.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/v1/reset-password`,
+    });
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to reset password for user:", error);
     return { success: false, error: (error as { message: string }).message };
   }
 }
