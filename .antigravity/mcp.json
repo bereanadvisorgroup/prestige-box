@@ -1,25 +1,19 @@
 {
-    "mcpServers": {
-        "drizzle-mcp": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "drizzle-orm-mcp"
-            ],
-            "env": {
-                "DRIZZLE_CONFIG_PATH": "./drizzle.config.ts"
-            }
-        },
-        "shadcn-mcp": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "shadcn-ui-mcp"
-            ]
-        },
-        "vercel-mcp": {
-            "url": "https://mcp.vercel.com",
-            "type": "http"
-        }
+  "mcpServers": {
+    "drizzle-mcp": {
+      "command": "npx",
+      "args": ["-y", "drizzle-orm-mcp"],
+      "env": {
+        "DRIZZLE_CONFIG_PATH": "./drizzle.config.ts"
+      }
+    },
+    "shadcn-mcp": {
+      "command": "npx",
+      "args": ["-y", "shadcn-ui-mcp"]
+    },
+    "vercel-mcp": {
+      "url": "https://mcp.vercel.com",
+      "type": "http"
     }
+  }
 }
