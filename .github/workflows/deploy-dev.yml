@@ -25,9 +25,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Dependencies
-        run: npm ci
-
       - name: Run Drizzle Development Migrations
         env:
           DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_DEV }}
