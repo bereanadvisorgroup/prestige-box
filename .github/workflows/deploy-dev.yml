@@ -11,16 +11,23 @@ jobs:
       - name: Checkout Codebase
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-node-version: 24
-          cache: "npm"
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Install Dependencies
         run: npm ci
 
-      # CRITICAL: Run Drizzle Migrations BEFORE the Vercel Build Step
       - name: Run Drizzle Development Migrations
         env:
           DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_DEV }}
