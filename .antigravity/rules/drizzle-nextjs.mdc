@@ -1,0 +1,167 @@
+---
+description: Enforce App Router architecture patterns, strict Drizzle ORM schema type safety, and Server Action structures.
+globs: src/app/**/*actions.ts, src/app/**/*action.ts, src/db/**/*.ts
+---
+
+# Next.js App Router & Drizzle ORM System Alignment
+
+Always enforce these architectural requirements when writing database interactions, Next.js Server Actions, or querying relational structures.
+
+## 🛠️ Tech Stack Constraints
+- **Framework:** Next.js (App Router architecture, utilizing React Server Components natively)
+- **Database Layer:** Drizzle ORM + PostgreSQL/MySQL/SQLite (configured via `drizzle.config.ts`)
+- **Validation:** Zod (for validating client runtime input safely before committing mutations)
+
+## 🗄️ Drizzle Schema & Type Safety Rules
+1. **Always Use Local MCP Context:** Query the active `drizzle-mcp` server to read structural tables and relational properties from the source files before writing SQL statements.
+2. **Schema Reference:** Never hallucinate db structures. Import raw tables from the project directory mapping alias (e.g., `import { users } from "@/db/schema"`).
+3. **Inferred Types:** Leverage native Drizzle type inference over handwritten interfaces:
+   ```typescript
+   import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
+   export type User = InferSelectModel<typeof users>;
+   export type NewUser = InferInsertModel<typeof users>;
+   ```
+
+## ⚡ Next.js Server Action Standards
+- **Isolation:** Place database mutations inside `.ts` files ending strictly with `.action.ts` or `.actions.ts`.
+- **Directives:** Every single file housing mutations must lead with the `"use server"` string directive at the topmost line.
+- **Error Handling:** Wrap query structures securely in `try/catch` execution routines. Form mutation returns must conform to a standardized wrapper payload schema:
+
+```typescript
+"use server"
+
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2),
+});
+
+export async function createUserAction(prevState: any, formData: FormData) {
+  // 1. Zod input validation
+  const validatedFields = CreateUserSchema.safeParse({
+    email: formData.get("email"),
+    name: formData.get("name"),
+  });
+
+  if (!validatedFields.success) {
+    return { success: false, errors: validatedFields.error.flatten().fieldErrors };
+  }
+
+  try {
+    // 2. Database transaction using Drizzle syntax
+    await db.insert(users).values({
+      email: validatedFields.data.email,
+      name: validatedFields.data.name,
+    });
+
+    // 3. Cache clearing to ensure view freshness
+    revalidatePath("/dashboard/users");
+    return { success: true, message: "User successfully generated" };
+
+  } catch (error) {
+    return { success: false, message: "Database execution failed securely" };
+  }
+}
+```
+
+## 🛑 Prohibited Practices
+- **Never** trigger `db.select()` or database executions from code blocks tagged with `"use client"`.
+- **Never** fall back to writing raw string interpolation queries (`sql(...)`) unless Drizzle's relational queries or core modifiers lack structural capability.
+- **Never** bypass Zod parameter parsing filters when writing parameters directly to storage arrays.
+
+## 👥 Supabase Auth & Schema Relationships
+1. **Schema Separation:** Never define `auth.users` tables manually inside Drizzle schemas.
+2. **External Schema Reference:** To create relationships referencing the core Supabase authentication system, map the foreign keys explicitly using `pgSchema`:
+   ```typescript
+   import { pgSchema, uuid, timestamp } from "drizzle-orm/pg-core";
+
+   // 1. Declare the native Supabase auth schema boundary
+   const authSchema = pgSchema("auth");
+
+   // 2. Reference the immutable target table
+   export const authUsers = authSchema.table("users", {
+     id: uuid("id").primaryKey(),
+   });
+
+   // 3. Connect your public app schema to the auth record safely
+   export const profiles = pgTable("profiles", {
+     id: uuid("id").primaryKey().references(() => authUsers.id, { onDelete: "cascade" }),
+     updatedAt: timestamp("updatedAt"),
+   });
+   ```
+
+## 📊 Strict Migration Controls & Drift Mitigation
+1. **No Destructive Direct Pushes:** Never execute or suggest `drizzle-kit push` inside teammate or production codebases. It bypasses deterministic tracking logs and introduces schema drift.
+2. **Two-Step Generation Workflow:** Always instruct the terminal to safely invoke:
+   - `npx drizzle-kit generate` to safely output localized SQL scripts.
+   - `npx drizzle-kit migrate` (or running via your Supabase local CLI) to formally apply changes with a trackable historical audit trail.
+3. **Database Constraints Handling:** Whenever adding columns configured with `notNull()`, you must explicitly declare an accompanying `.default(...)` value modifier to ensure existing rows do not trigger runtime migration exceptions.
+
+## 💎 Highly-Optimized TypeScript Inference
+1. **Codebase Single Source of Truth:** Enforce Drizzle as the undisputed authority for types. Do not mix type definitions generated by the `supabase gen types typescript` pipeline with standard Drizzle interfaces.
+2. **Dynamic Query Typing:** To cleanly pass sophisticated dynamic datasets (like table joins) between internal system layers, force the agent to use the native `$inferSelect` utility context:
+   ```typescript
+   import { db } from "@/db";
+   
+   // Formulate query structure rules for complex relations
+   const userProfileQuery = db.query.users.findFirst({
+     with: { profile: true }
+   });
+
+   // Extract type boundaries directly from the inferred layout execution
+   export type UserWithProfile = NonNullable<Awaited<ReturnType<typeof getUserProfile>>>;
+   ```
+
+## 🔒 Supabase Row Level Security (RLS) & Client Context
+1. **Bypassing the Postgres Connection Pool:** Direct connections created via `postgres://` connections bypass Supabase RLS policies by logging in as the high-privileged `postgres` administrative role. 
+2. **Enforcing Dynamic User Context:** When processing requests on behalf of the client inside App Router paths, use the `supabase-mcp` tools to audit the active schema, or force the agent to craft a lightweight RLS transaction session utilizing transaction context parameters:
+   ```typescript
+   await db.transaction(async (tx) => {
+     // Inject active supabase metadata directly into the specific database query transaction context
+     await tx.execute(sql`SET LOCAL request.jwt.claim.sub = ${userId};`);
+     await tx.select().from(protectedData);
+   });
+   ```
+
+## 🌐 Supabase Cloud Connection & Pooling Topology
+1. **Connection String Separation:** Maintain two distinct connection strings in `.env.local` to prevent multi-machine execution errors:
+   - `DATABASE_URL`: Set to the **Supabase Transaction Pooler** (Port `6543`, usually with `?pgbouncer=true` or Session Mode dependent on Supabase infrastructure). Use this *exclusively* for initializing your active runtime `db` client instance inside Next.js Server Actions.
+   - `DIRECT_URL`: Set to the **Supabase Session Pooler** (Port `5432`) or direct AWS/Cloud PostgreSQL address. Use this *exclusively* inside `drizzle.config.ts` for running migrations from your terminal.
+2. **Runtime Client Initialization:** Enforce the following multi-environment database initialization pattern:
+   ```typescript
+   import { drizzle } from "drizzle-orm/postgres-js";
+   import postgres from "postgres";
+
+   // Prevent creating multiple connections on hot-reload during local multi-machine development
+   const connectionString = process.env.DATABASE_URL!;
+   
+   const client = globalThis.supabaseClient || postgres(connectionString, { prepare: false });
+   if (process.env.NODE_ENV !== "production") globalThis.supabaseClient = client;
+
+   export const db = drizzle(client);
+   ```
+
+## ⏳ Future-Proofing Supabase Realtime Sync Architecture
+1. **Primary Key Enforcement:** Every single table exposed to future realtime broadcast streams **must** declare a strict, non-nullable `.primaryKey()` row modifier. Tables without designated primary keys will cause Supabase Realtime replication to fail.
+2. **Explicit Realtime Publications Migration:** When the agent generates a migration modifying a table slated for future realtime syncing (e.g., `messages`), it must prompt the developer to include a safe, idempotent raw SQL block in the generated migration file to register the table to the Supabase Realtime publication schema:
+   ```sql
+   -- To be reviewed and appended manually to the migration script file:
+   alter publication supabase_realtime add table public.messages;
+   ```
+3. **Replica Identity Mapping:** Realtime `UPDATE` and `DELETE` events require metadata context to synchronize across client systems. If a table tracks highly active real-time rows, enforce the generation of a `REPLICA IDENTITY FULL` configuration macro inside the Drizzle setup comments or migration files:
+   ```sql
+   ALTER TABLE public.messages REPLICA IDENTITY FULL;
+   ```
+
+## 🔒 Vercel Environment Variable Workflows
+1. **Zero Secret Hardcoding:** Never write raw text strings or secrets directly into Next.js source code blocks. 
+2. **Local Sync Enforcement:** If a required variable is missing or throws an error, instruct the developer to run `vercel env pull .env.local` rather than creating a file manually.
+3. **Environment Audit Command:** To ensure proper variable propagation across machines before running migrations or code builds, utilize the Vercel MCP server to verify that the runtime parameters match the active Vercel project state.
+
+## 🚀 CI/CD Pipeline Operational Integrity
+1. **Migration Precedence:** Never restructure scripts to let Vercel build before Drizzle migrations execute.
+2. **Commit Generated Assets Natively:** When changing database structures, always verify that `npx drizzle-kit generate` snapshots inside `/migrations` are explicitly committed to your Git branch before triggering a push to `dev`, `test`, or `main`.
