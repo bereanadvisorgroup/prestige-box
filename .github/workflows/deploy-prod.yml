@@ -7,6 +7,7 @@ on:
 jobs:
   database-migration:
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -33,6 +34,7 @@ jobs:
   vercel-deployment:
     needs: database-migration
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
