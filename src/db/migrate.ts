@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { DefaultLogger, LogWriter } from "drizzle-orm/logger";
 import postgres from "postgres";
+import path from "path";
 
 // 1. Reuse your exact connection string logic
 function sanitizeConnectionString(url: string): string {
@@ -43,7 +44,8 @@ async function runMigration() {
 
     try {
         // Matches your 'out' folder in drizzle.config.ts
-        await migrate(db, { migrationsFolder: "./supabase/migrations" });
+        const migrationsPath = path.resolve(process.cwd(), "supabase/migrations");
+        await migrate(db, { migrationsFolder: migrationsPath });
         console.log("✅ Migrations completed successfully.");
     } catch (error) {
         console.error("❌ Migration execution failed:");
