@@ -29,7 +29,7 @@ jobs:
       - name: Run Drizzle Production Migrations
         env:
           DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_PROD }}
-        run: npx drizzle-kit migrate
+        run: pnpm dlx tsx src/db/migrate.ts
 
   vercel-deployment:
     needs: database-migration
