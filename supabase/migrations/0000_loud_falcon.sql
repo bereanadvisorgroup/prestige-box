@@ -1,4 +1,4 @@
-CREATE TABLE "accountants" (
+CREATE TABLE IF NOT EXISTS "accountants" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"personId" uuid NOT NULL,
 	"firmName" text NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE "accountants" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "addresses" (
+CREATE TABLE IF NOT EXISTS "addresses" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"street1" text NOT NULL,
 	"street2" text,
@@ -20,7 +20,7 @@ CREATE TABLE "addresses" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "client_policies" (
+CREATE TABLE IF NOT EXISTS "client_policies" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"clientId" uuid NOT NULL,
 	"insuranceCompanyId" uuid NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE "client_policies" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "clients" (
+CREATE TABLE IF NOT EXISTS "clients" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"personId" uuid NOT NULL,
 	"hobbies" text[] DEFAULT '{}'::text[],
@@ -52,7 +52,7 @@ CREATE TABLE "clients" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "companies" (
+CREATE TABLE IF NOT EXISTS "companies" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"dba" text,
@@ -67,7 +67,7 @@ CREATE TABLE "companies" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "households" (
+CREATE TABLE IF NOT EXISTS "households" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"addressId" uuid,
@@ -76,7 +76,7 @@ CREATE TABLE "households" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "insurance_companies" (
+CREATE TABLE IF NOT EXISTS "insurance_companies" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
 	"websiteUrl" text NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE "insurance_companies" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "lawyers" (
+CREATE TABLE IF NOT EXISTS "lawyers" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"personId" uuid NOT NULL,
 	"firmName" text NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE "lawyers" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "people" (
+CREATE TABLE IF NOT EXISTS "people" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"prefix" text,
 	"firstName" text NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE "people" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
 	"uid" uuid PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"firstName" text,

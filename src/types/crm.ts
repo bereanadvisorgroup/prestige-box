@@ -186,7 +186,7 @@ export const CompanySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild"]);
+export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild", "Great Grandchild"]);
 export const FamilyMemberSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
