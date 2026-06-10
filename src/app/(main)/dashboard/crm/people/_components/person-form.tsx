@@ -47,10 +47,45 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
       : [];
 
+  const sanitizePerson = (p?: Person): Person | undefined => {
+    if (!p) return undefined;
+    return {
+      ...p,
+      prefix: p.prefix ?? "",
+      middleName: p.middleName ?? "",
+      lastName: p.lastName ?? "",
+      suffix: p.suffix ?? "",
+      emails: p.emails || defaultEmails,
+      phones: p.phones || defaultPhones,
+      addresses: p.addresses || defaultAddresses,
+      addressIds: p.addressIds || defaultAddresses.map((a) => a.id),
+      driversLicense: p.driversLicense ? {
+        number: p.driversLicense.number ?? "",
+        issueState: ((p.driversLicense as Record<string, unknown>).issueState as string) ?? ((p.driversLicense as Record<string, unknown>).state as string) ?? "",
+        issueDate: p.driversLicense.issueDate ?? "",
+        expirationDate: p.driversLicense.expirationDate ?? "",
+      } : {
+        number: "",
+        issueState: "",
+        issueDate: "",
+        expirationDate: "",
+      },
+      pii: p.pii ? {
+        ssn: p.pii.ssn ?? "",
+        biologicalGender: p.pii.biologicalGender ?? undefined,
+        birthDate: p.pii.birthDate ?? "",
+      } : {
+        ssn: "",
+        biologicalGender: undefined,
+        birthDate: "",
+      },
+    };
+  };
+
   const form = useForm<Person>({
     resolver: zodResolver(PersonSchema) as any,
     mode: "onChange",
-    defaultValues: person || {
+    defaultValues: sanitizePerson(person) || {
       prefix: "",
       firstName: "",
       middleName: "",

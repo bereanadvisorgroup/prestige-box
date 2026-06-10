@@ -151,9 +151,9 @@ export function LiabilitiesTab({ client }: { client: Client }) {
 
         <div className="mt-6 space-y-3">
           {liabilities.length > 0 ? (
-            liabilities.map((loan) => (
+            liabilities.map((loan, index) => (
               <div
-                key={loan.id}
+                key={loan.id || `loan-${index}`}
                 className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:items-center"
               >
                 <div className="flex items-start gap-4">
@@ -162,14 +162,14 @@ export function LiabilitiesTab({ client }: { client: Client }) {
                   </div>
                   <div className="space-y-1">
                     <p className="flex items-center gap-2 font-semibold text-foreground">
-                      {loan.creditorName}
+                      {loan.creditorName || (loan as any).creditor || "Unknown Creditor"}
                       <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-xs uppercase">
-                        {loan.loanType}
+                        {loan.loanType || (loan as any).type || "Unknown"}
                       </span>
                     </p>
                     <p className="font-bold text-foreground/90 text-xl tracking-tight">
                       $
-                      {loan.currentBalance.toLocaleString(undefined, {
+                      {(loan.currentBalance ?? (loan as any).amount ?? 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}

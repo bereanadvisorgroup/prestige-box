@@ -57,7 +57,7 @@ async function main() {
 
   try {
     // 1. Clean up existing data in correct order
-    console.log("🧹 Cleaning up existing database records...");
+    console.log("🧹 Cleaning up existing CRM records...");
 
     await db.delete(clientPolicies);
     await db.delete(lawyers);
@@ -67,17 +67,19 @@ async function main() {
     await db.delete(households);
     await db.delete(people);
     await db.delete(addresses);
-    await db.delete(users);
-    await db.delete(authUsers);
+    // Note: To preserve existing developer auth accounts, we do NOT delete users or authUsers!
 
     console.log("✨ Cleanup completed.");
 
-    // 2. Seed Auth & Public Users
-    console.log("👥 Seeding users...");
+    // 2. Fetch and Seed Auth & Public Users
+    console.log("👥 Checking existing Auth users and seeding defaults...");
+
+    const existingAuthUsers = await db.select().from(authUsers);
+    const existingEmails = new Set(existingAuthUsers.map((u) => u.email.toLowerCase()));
 
     // BCrypt hash for "password123"
     const dummyHash = "$2a$12$R.S91h/G1n/fA5J872o8M.OQy7m4oD14N5e0766hB6lR6o6r6r6r6";
-    const mockUsers = [
+    const defaultMockUsers = [
       {
         email: "admin@prestigebox.dev",
         firstName: "Alex",
@@ -110,28 +112,71 @@ async function main() {
       },
     ];
 
-    for (const u of mockUsers) {
-      const userId = faker.string.uuid();
+    // Insert default mock users if they don't already exist
+    for (const u of defaultMockUsers) {
+      if (!existingEmails.has(u.email.toLowerCase())) {
+        const userId = faker.string.uuid();
+        console.log(`Creating default mock user: ${u.email}`);
 
-      // Insert into auth.users (trigger on_auth_user_created automatically inserts into public.users)
-      await db.insert(authUsers).values({
-        id: userId,
-        email: u.email,
-        encryptedPassword: dummyHash,
-        emailConfirmedAt: new Date(),
-        aud: "authenticated",
-        role: "authenticated",
-        rawAppMetaData: { provider: "email", providers: ["email"] },
-        rawUserMetaData: {
-          firstName: u.firstName,
-          lastName: u.lastName,
-          role: u.role,
-        },
-      });
+        await db.insert(authUsers).values({
+          id: userId,
+          email: u.email,
+          encryptedPassword: dummyHash,
+          emailConfirmedAt: new Date(),
+          aud: "authenticated",
+          role: "authenticated",
+          rawAppMetaData: { provider: "email", providers: ["email"] },
+          rawUserMetaData: {
+            firstName: u.firstName,
+            lastName: u.lastName,
+            role: u.role,
+          },
+        });
 
-      // Update public.users record with photoURL which is not synced by the trigger
-      await db.update(users).set({ photoURL: faker.image.avatar() }).where(eq(users.uid, userId));
+        // The insert trigger handles public.users creation. Let's make sure photoURL is set.
+        await db.update(users).set({ photoURL: faker.image.avatar() }).where(eq(users.uid, userId));
+      }
     }
+
+    // Retrieve the final consolidated list of all Auth users (default + existing developer users)
+    const allAuthUsers = await db.select().from(authUsers);
+    const allPublicUsers = await db.select().from(users);
+    const publicUserMap = new Map(allPublicUsers.map((u) => [u.uid, u]));
+
+    console.log(`Syncing ${allAuthUsers.length} total Auth users to public profiles...`);
+
+    // Ensure every single Auth user has a corresponding record in public.users
+    for (const authUser of allAuthUsers) {
+      const publicUser = publicUserMap.get(authUser.id);
+      const meta = (authUser.rawUserMetaData || {}) as Record<string, unknown>;
+      const firstName = (meta.firstName as string | undefined) || authUser.email.split("@")[0] || "";
+      const lastName = (meta.lastName as string | undefined) || "";
+      const role = (meta.role as string | undefined) || "client";
+
+      if (!publicUser) {
+        // Manually create the public user profile if missing
+        await db.insert(users).values({
+          uid: authUser.id,
+          email: authUser.email,
+          firstName,
+          lastName,
+          role,
+          photoURL: faker.image.avatar(),
+        });
+      } else {
+        // Update the public profile if details are missing or empty
+        const updates: Partial<typeof users.$inferInsert> = {};
+        if (!publicUser.firstName && firstName) updates.firstName = firstName;
+        if (!publicUser.lastName && lastName) updates.lastName = lastName;
+        if (!publicUser.photoURL) updates.photoURL = faker.image.avatar();
+
+        if (Object.keys(updates).length > 0) {
+          await db.update(users).set(updates).where(eq(users.uid, authUser.id));
+        }
+      }
+    }
+
+    console.log("✨ User synchronization and seeding completed.");
 
     // 3. Seed Addresses
     console.log("📍 Seeding addresses...");
@@ -166,13 +211,10 @@ async function main() {
       // Assign 1 or 2 random addresses
       const randomAddresses = faker.helpers.arrayElements(addressData, faker.number.int({ min: 1, max: 2 }));
       const personAddressIds = randomAddresses.map((a) => a.id ?? "");
-      const addressJSON = randomAddresses.map((a) => ({
-        street1: a.street1,
-        street2: a.street2,
-        city: a.city,
-        state: a.state,
-        zipCode: a.zipCode,
-        country: a.country,
+      const addressJSON = randomAddresses.map((a, idx) => ({
+        id: a.id ?? "",
+        type: idx === 0 ? "Home" : "Business",
+        isPrimary: idx === 0,
       }));
 
       peopleData.push({
@@ -183,12 +225,32 @@ async function main() {
         lastName: lName,
         suffix: faker.helpers.maybe(() => faker.person.suffix(), { probability: 0.1 }) || null,
         emails: [
-          { email: faker.internet.email({ firstName: fName, lastName: lName }), type: "personal" },
-          { email: faker.internet.email({ firstName: fName, lastName: lName, provider: "work.com" }), type: "work" },
+          {
+            id: faker.string.uuid(),
+            address: faker.internet.email({ firstName: fName, lastName: lName }),
+            type: "Personal",
+            isPrimary: true,
+          },
+          {
+            id: faker.string.uuid(),
+            address: faker.internet.email({ firstName: fName, lastName: lName, provider: "work.com" }),
+            type: "Work",
+            isPrimary: false,
+          },
         ],
         phones: [
-          { phone: faker.phone.number(), type: "mobile" },
-          { phone: faker.phone.number(), type: "home" },
+          {
+            id: faker.string.uuid(),
+            number: faker.phone.number(),
+            type: "Mobile",
+            isPrimary: true,
+          },
+          {
+            id: faker.string.uuid(),
+            number: faker.phone.number(),
+            type: "Home",
+            isPrimary: false,
+          },
         ],
         driversLicense: {
           number: faker.string.numeric(9),
@@ -197,7 +259,8 @@ async function main() {
         },
         pii: {
           ssn: faker.helpers.fromRegExp(/[0-9]{3}-[0-9]{2}-[0-9]{4}/),
-          dob: faker.date.birthdate({ min: 18, max: 80, mode: "age" }).toISOString().split("T")[0],
+          biologicalGender: faker.helpers.arrayElement(["Male", "Female"]),
+          birthDate: faker.date.birthdate({ min: 18, max: 80, mode: "age" }).toISOString().split("T")[0],
         },
         addresses: addressJSON,
         addressIds: personAddressIds,
@@ -211,12 +274,16 @@ async function main() {
     for (let i = 0; i < 10; i++) {
       const randomAddressId = faker.helpers.arrayElement(addressIds);
       const randomPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 2, max: 5 }));
+      const members = randomPeopleIds.map((pId, idx) => ({
+        personId: pId,
+        role: idx === 0 ? "home_owner" : "dependent",
+      }));
 
       householdData.push({
         id: faker.string.uuid(),
         name: `${faker.person.lastName()} Household`,
         addressId: randomAddressId,
-        memberIds: randomPeopleIds,
+        memberIds: members,
       });
     }
     await db.insert(households).values(householdData);
@@ -302,24 +369,29 @@ async function main() {
         },
       ];
 
+      // Select 2 random other people to be family members
+      const potentialFamilyMembers = peopleIds.filter((p) => p !== personId);
+      const randomFamilyPeople = faker.helpers.arrayElements(potentialFamilyMembers, 2);
+
       const familyMembers = [
         {
-          relation: "Spouse",
-          name: faker.person.fullName(),
-          dob: faker.date.birthdate({ min: 30, max: 70, mode: "age" }).toISOString().split("T")[0],
+          id: faker.string.uuid(),
+          personId: randomFamilyPeople[0],
+          relationship: "Spouse" as const,
         },
         {
-          relation: "Child",
-          name: faker.person.fullName(),
-          dob: faker.date.birthdate({ min: 5, max: 25, mode: "age" }).toISOString().split("T")[0],
+          id: faker.string.uuid(),
+          personId: randomFamilyPeople[1],
+          relationship: "Child" as const,
         },
       ];
 
       const employments = [
         {
-          employer: faker.company.name(),
-          title: faker.person.jobTitle(),
-          salary: faker.number.int({ min: 80000, max: 250000 }),
+          id: faker.string.uuid(),
+          employerName: faker.company.name(),
+          occupation: faker.person.jobTitle(),
+          employerPhone: faker.phone.number(),
           startDate: faker.date.past({ years: 10 }).toISOString().split("T")[0],
         },
       ];
@@ -339,14 +411,19 @@ async function main() {
         lifeDocuments: [{ name: "Term Life Policy Doc", type: "PDF", uploadedAt: faker.date.past().toISOString() }],
         estateDocuments: [{ name: "Last Will & Testament", type: "PDF", uploadedAt: faker.date.past().toISOString() }],
         liabilities: [
-          { type: "Car Loan", creditor: "Ally Auto", amount: faker.number.int({ min: 15000, max: 50000 }) },
+          {
+            id: faker.string.uuid(),
+            loanType: "Auto",
+            creditorName: "Ally Auto",
+            currentBalance: faker.number.int({ min: 15000, max: 50000 }),
+          },
         ],
         mortgages: [
           {
-            lender: "Chase Home Lending",
-            originalAmount: faker.number.int({ min: 250000, max: 750000 }),
-            currentBalance: faker.number.int({ min: 150000, max: 600000 }),
-            rate: "3.5%",
+            id: faker.string.uuid(),
+            addressId: faker.helpers.arrayElement(peopleData[i].addressIds || []),
+            purchasePrice: faker.number.int({ min: 250000, max: 750000 }),
+            currentMarketValue: faker.number.int({ min: 300000, max: 800000 }),
           },
         ],
       });

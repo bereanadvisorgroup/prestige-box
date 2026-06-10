@@ -62,9 +62,6 @@ export default async function ClientPage({ params }: ClientPageProps) {
             <h1 className="font-bold text-3xl tracking-tight">
               {person?.firstName} {person?.lastName}
             </h1>
-            <p className="mt-1 flex items-center gap-2 text-muted-foreground">
-              <UserIcon className="h-4 w-4" /> Client ID: {client.id}
-            </p>
           </div>
         </div>
         <div className="flex gap-2">
