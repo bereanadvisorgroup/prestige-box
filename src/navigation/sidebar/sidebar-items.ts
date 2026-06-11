@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Briefcase,
   Building2,
   DollarSign,
@@ -172,6 +173,18 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 6,
+    label: "Reports",
+    allowedRoles: ["admin"],
+    items: [
+      {
+        title: "Relationship Graph",
+        url: "/dashboard/reports/relationship-graph",
+        icon: BarChart3,
+      },
+    ],
+  },
+  {
+    id: 7,
     label: "Admin Settings",
     allowedRoles: ["admin"],
     items: [

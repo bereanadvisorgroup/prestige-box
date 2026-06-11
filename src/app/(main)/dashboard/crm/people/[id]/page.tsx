@@ -80,8 +80,9 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getRecordKeepers(),
   ]);
 
-  const associatedClient = ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id) || null;
-  
+  const associatedClient =
+    ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id) || null;
+
   const associatedLawFirms = ((lawFirmsRes.success && lawFirmsRes.lawFirms) || []).filter(
     (l) => !!person.id && l.personIds?.includes(person.id),
   );
@@ -118,7 +119,9 @@ export default async function PersonPage({ params }: PersonPageProps) {
   // Fetch addresses
   const addressPromises = (person.addressIds || []).map((addrId) => getAddress(addrId));
   const addressResults = await Promise.all(addressPromises);
-  const addresses = addressResults.map((res) => (res.success && res.address ? res.address : null)).filter(Boolean) as any[];
+  const addresses = addressResults
+    .map((res) => (res.success && res.address ? res.address : null))
+    .filter(Boolean) as any[];
 
   const initials = `${person.firstName[0] || ""}${person.lastName[0] || ""}`.toUpperCase();
 

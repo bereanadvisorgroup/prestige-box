@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import {
   Activity,
   ArrowUpRight,
@@ -37,18 +38,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPhoneNumber } from "@/lib/utils";
 import type {
-  Address,
-  Person,
-  Client,
-  LawFirm,
   AccountingFirm,
   ActuarialFirm,
+  Address,
   Bank,
-  PropertyAndCasualtyFirm,
-  LifeInsuranceCompany,
+  Client,
   DisabilityInsuranceCompany,
+  LawFirm,
+  LifeInsuranceCompany,
   LongTermCareInsurance,
   MoneyManager,
+  Person,
+  PropertyAndCasualtyFirm,
   RecordKeeper,
 } from "@/types/crm";
 
@@ -273,7 +274,10 @@ export function PersonProfileTabs({
                             <div key={email.id} className="flex items-center gap-2 text-sm">
                               <User className="h-4 w-4 text-muted-foreground" />
                               <span className="font-semibold">{email.address}</span>
-                              <Badge variant={email.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
+                              <Badge
+                                variant={email.isPrimary ? "default" : "outline"}
+                                className="px-1.5 py-0 text-[10px]"
+                              >
                                 {email.type} {email.isPrimary && "(Primary)"}
                               </Badge>
                             </div>
@@ -294,7 +298,10 @@ export function PersonProfileTabs({
                             <div key={phone.id} className="flex items-center gap-2 text-sm">
                               <Phone className="h-4 w-4 text-muted-foreground" />
                               <span className="font-semibold">{formatPhoneNumber(phone.number)}</span>
-                              <Badge variant={phone.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
+                              <Badge
+                                variant={phone.isPrimary ? "default" : "outline"}
+                                className="px-1.5 py-0 text-[10px]"
+                              >
                                 {phone.type} {phone.isPrimary && "(Primary)"}
                               </Badge>
                             </div>
@@ -333,7 +340,9 @@ export function PersonProfileTabs({
                           {person.pii.ssn && (
                             <div className="col-span-2">
                               <p className="font-medium text-muted-foreground text-xs">Social Security Number (SSN)</p>
-                              <p className="mt-0.5 font-mono font-semibold text-sm">***-**-{person.pii.ssn.slice(-4)}</p>
+                              <p className="mt-0.5 font-mono font-semibold text-sm">
+                                ***-**-{person.pii.ssn.slice(-4)}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -515,12 +524,14 @@ export function PersonProfileTabs({
                               <div key={idx} className="rounded-lg border p-3 bg-card shadow-sm text-xs space-y-1">
                                 {m.purchasePrice && (
                                   <p className="font-medium">
-                                    Purchase Price: <span className="font-bold">${m.purchasePrice.toLocaleString()}</span>
+                                    Purchase Price:{" "}
+                                    <span className="font-bold">${m.purchasePrice.toLocaleString()}</span>
                                   </p>
                                 )}
                                 {m.currentMarketValue && (
                                   <p className="font-medium text-muted-foreground">
-                                    Current Market Value: <span className="font-bold">${m.currentMarketValue.toLocaleString()}</span>
+                                    Current Market Value:{" "}
+                                    <span className="font-bold">${m.currentMarketValue.toLocaleString()}</span>
                                   </p>
                                 )}
                               </div>
@@ -541,7 +552,10 @@ export function PersonProfileTabs({
                                   Type: <span className="text-foreground">{l.loanType}</span>
                                 </p>
                                 <p className="text-muted-foreground">
-                                  Balance: <span className="font-mono font-bold text-foreground">${l.currentBalance.toLocaleString()}</span>
+                                  Balance:{" "}
+                                  <span className="font-mono font-bold text-foreground">
+                                    ${l.currentBalance.toLocaleString()}
+                                  </span>
                                 </p>
                               </div>
                             ))}
