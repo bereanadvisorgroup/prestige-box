@@ -26,7 +26,7 @@ jobs:
 
       - name: Run Drizzle Preview Migrations
         env:
-          DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_TEST }}
+          DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_PREVIEW_DEV }}
         run: pnpm dlx tsx src/db/migrate.ts
 
   vercel-deployment:
