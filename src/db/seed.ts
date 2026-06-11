@@ -32,6 +32,7 @@ import {
   moneyManagers,
   people,
   propertyAndCasualtyFirms,
+  recordKeepers,
   users,
 } from "./schema";
 
@@ -71,6 +72,7 @@ async function main() {
     await db.delete(longTermCareInsurance);
     await db.delete(lawFirms);
     await db.delete(moneyManagers);
+    await db.delete(recordKeepers);
     await db.delete(accountingFirms);
     await db.delete(actuarialFirms);
     await db.delete(banks);
@@ -728,6 +730,33 @@ async function main() {
       });
     }
     await db.insert(moneyManagers).values(moneyManagerData);
+
+    // 16. Seed Record Keepers
+    console.log("📂 Seeding record keepers...");
+    const recordKeeperData: (typeof recordKeepers.$inferInsert)[] = [];
+    // Map people index 20 to 24 to record keepers
+    for (let i = 0; i < 5; i++) {
+      const personId = peopleIds[20 + i];
+      const randomAddressId = faker.helpers.arrayElement(addressIds);
+      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
+      const recordKeeperClientIds = randomClients.map((c) => c.id ?? "");
+
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[24]);
+      }
+
+      recordKeeperData.push({
+        id: faker.string.uuid(),
+        personIds: associatedPersonIds,
+        firmName: `${faker.company.name()} Record Keeping`,
+        firmAddressId: randomAddressId,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: recordKeeperClientIds,
+      });
+    }
+    await db.insert(recordKeepers).values(recordKeeperData);
 
     console.log("🎉 Seeding completed successfully!");
   } catch (error) {

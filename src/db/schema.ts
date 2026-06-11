@@ -220,3 +220,16 @@ export const moneyManagers = pgTable("money_managers", {
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
+
+// 15. Record Keepers Table
+export const recordKeepers = pgTable("record_keepers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});

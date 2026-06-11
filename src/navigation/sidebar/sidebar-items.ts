@@ -163,6 +163,11 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/admin/money-managers",
         icon: Shield,
       },
+      {
+        title: "Record Keepers",
+        url: "/dashboard/admin/record-keepers",
+        icon: Shield,
+      },
     ],
   },
   {

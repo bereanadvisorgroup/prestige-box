@@ -361,6 +361,18 @@ export const MoneyManagerSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+export const RecordKeeperSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  firmName: z.string().min(1, "Record keeper name is required"),
+  firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 // --- Inferred Types ---
 
 export type Address = z.infer<typeof AddressSchema>;
@@ -384,6 +396,7 @@ export type ActuarialFirm = z.infer<typeof ActuarialFirmSchema>;
 export type Bank = z.infer<typeof BankSchema>;
 export type PropertyAndCasualtyFirm = z.infer<typeof PropertyAndCasualtyFirmSchema>;
 export type MoneyManager = z.infer<typeof MoneyManagerSchema>;
+export type RecordKeeper = z.infer<typeof RecordKeeperSchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
 
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;
