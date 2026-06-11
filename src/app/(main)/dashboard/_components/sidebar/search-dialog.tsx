@@ -1,8 +1,11 @@
 "use client";
 import * as React from "react";
 
-import { ChartBar, Forklift, Gauge, GraduationCap, LayoutDashboard, Search, ShoppingBag } from "lucide-react";
+import { useRouter } from "next/navigation";
 
+import { Loader2, Search } from "lucide-react";
+
+import { globalSearch, type SearchResult } from "@/actions/search";
 import { Button } from "@/components/ui/button";
 import {
   CommandDialog,
@@ -14,21 +17,13 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-const searchItems = [
-  { group: "Dashboards", icon: LayoutDashboard, label: "Default" },
-  { group: "Dashboards", icon: ChartBar, label: "CRM", disabled: true },
-  { group: "Dashboards", icon: Gauge, label: "Analytics", disabled: true },
-  { group: "Dashboards", icon: ShoppingBag, label: "E-Commerce", disabled: true },
-  { group: "Dashboards", icon: GraduationCap, label: "Academy", disabled: true },
-  { group: "Dashboards", icon: Forklift, label: "Logistics", disabled: true },
-  { group: "Authentication", label: "Login v1" },
-  { group: "Authentication", label: "Login v2" },
-  { group: "Authentication", label: "Register v1" },
-  { group: "Authentication", label: "Register v2" },
-];
-
 export function SearchDialog() {
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [results, setResults] = React.useState<SearchResult[]>([]);
+  const [isPending, startTransition] = React.useTransition();
+
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "j" && (e.metaKey || e.ctrlKey)) {
@@ -39,6 +34,50 @@ export function SearchDialog() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  React.useEffect(() => {
+    if (!open) {
+      setSearchQuery("");
+      setResults([]);
+      return;
+    }
+  }, [open]);
+
+  // Debounced search logic
+  React.useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      startTransition(async () => {
+        const res = await globalSearch(searchQuery);
+        if (res.success && res.results) {
+          setResults(res.results);
+        }
+      });
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  // Group results by type
+  const groupedResults = React.useMemo(() => {
+    const groups: Record<string, SearchResult[]> = {};
+    for (const item of results) {
+      if (!groups[item.type]) {
+        groups[item.type] = [];
+      }
+      groups[item.type].push(item);
+    }
+    return groups;
+  }, [results]);
+
+  const handleSelect = (url: string) => {
+    setOpen(false);
+    router.push(url);
+  };
 
   return (
     <>
@@ -54,21 +93,40 @@ export function SearchDialog() {
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search dashboards, users, and more…" />
+        <div className="relative">
+          <CommandInput
+            placeholder="Search across all modules (People, Policies, Firms, etc.)"
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          {isPending && (
+            <div className="absolute top-3 right-3 flex items-center">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {[...new Set(searchItems.map((item) => item.group))].map((group, i) => (
+          {searchQuery.trim().length >= 2 && !isPending && results.length === 0 && (
+            <CommandEmpty>No results found.</CommandEmpty>
+          )}
+          {searchQuery.trim().length < 2 && <CommandEmpty>Type at least 2 characters to search...</CommandEmpty>}
+          {Object.entries(groupedResults).map(([group, items], i) => (
             <React.Fragment key={group}>
               {i !== 0 && <CommandSeparator />}
-              <CommandGroup heading={group} key={group}>
-                {searchItems
-                  .filter((item) => item.group === group)
-                  .map((item) => (
-                    <CommandItem className="!py-1.5" key={item.label} onSelect={() => setOpen(false)}>
-                      {item.icon && <item.icon />}
-                      <span>{item.label}</span>
-                    </CommandItem>
-                  ))}
+              <CommandGroup heading={group}>
+                {items.map((item) => (
+                  <CommandItem
+                    className="!py-2 cursor-pointer"
+                    key={item.id}
+                    value={`${item.title} ${item.subtitle}`}
+                    onSelect={() => handleSelect(item.url)}
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{item.title}</span>
+                      {item.subtitle && <span className="text-muted-foreground text-xs">{item.subtitle}</span>}
+                    </div>
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </React.Fragment>
           ))}
