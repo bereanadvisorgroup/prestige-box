@@ -6,8 +6,6 @@ import { Resend } from "resend";
 
 import { supabaseServer } from "@/lib/supabase.server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function createUser(data: {
   email: string;
   password?: string;
@@ -195,6 +193,7 @@ export async function getUser(uid: string) {
 
 export async function resetUserPassword(_uid: string, email: string, origin: string) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const linkResult = await generateUserRecoveryLink(email, origin);
 
     if (!linkResult.success || !linkResult.link) {
