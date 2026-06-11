@@ -35,7 +35,6 @@ export const columns: ColumnDef<UserProfile>[] = [
               <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
             </Link>
           </div>
-          <span className="pl-6 text-muted-foreground text-xs">{user.uid}</span>
         </div>
       );
     },
