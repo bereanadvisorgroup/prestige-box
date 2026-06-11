@@ -12,7 +12,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase.client";
+import { resetUserPassword } from "@/actions/users";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -32,10 +32,9 @@ export function ForgotPasswordForm() {
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/auth/v1/reset-password`,
-      });
-      if (error) throw error;
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const result = await resetUserPassword("", data.email, origin);
+      if (!result.success) throw new Error(result.error);
       toast.success("Password reset email sent! Please check your inbox.");
       setIsSent(true);
     } catch (error) {

@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
+import { Resend } from "resend";
+
 import { supabaseServer } from "@/lib/supabase.server";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function createUser(data: {
   email: string;
@@ -191,10 +195,34 @@ export async function getUser(uid: string) {
 
 export async function resetUserPassword(_uid: string, email: string, origin: string) {
   try {
-    const { error } = await supabaseServer.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/v1/reset-password`,
+    const linkResult = await generateUserRecoveryLink(email, origin);
+
+    if (!linkResult.success || !linkResult.link) {
+      throw new Error(linkResult.error || "Failed to generate recovery link");
+    }
+
+    const { error: resendError } = await resend.emails.send({
+      from: "Prestige Advisors <noreply@contact.bereanadvisorgroup.com>",
+      to: email,
+      subject: "Reset Your Password",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>Hello,</p>
+          <p>We received a request to reset your password. Click the button below to choose a new password:</p>
+          <div style="margin: 30px 0;">
+            <a href="${linkResult.link}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+          <br />
+          <p style="color: #666; font-size: 14px;">Or, copy and paste this link into your browser:</p>
+          <p style="color: #666; font-size: 14px; word-break: break-all;">${linkResult.link}</p>
+        </div>
+      `,
     });
-    if (error) throw error;
+
+    if (resendError) throw new Error(resendError.message);
+
     return { success: true };
   } catch (error) {
     console.error("Failed to reset password for user:", error);

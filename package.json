@@ -19,7 +19,9 @@
     "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx}": ["biome check --write --no-errors-on-unmatched"]
+    "*.{js,ts,jsx,tsx}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -53,6 +55,7 @@
     "react-hook-form": "^7.78.0",
     "react-resizable-panels": "^4.11.2",
     "recharts": "^3.8.1",
+    "resend": "^6.12.4",
     "simple-icons": "^16.23.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
