@@ -1,13 +1,13 @@
-name: CI/CD Test Environment
+name: CI/CD Preview Environment
 
 on:
   push:
-    branches: [test]
+    branches: [preview]
 
 jobs:
   database-migration:
     runs-on: ubuntu-latest
-    environment: Test
+    environment: Preview
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Drizzle Test Migrations
+      - name: Run Drizzle Preview Migrations
         env:
           DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_TEST }}
         run: pnpm dlx tsx src/db/migrate.ts
@@ -32,7 +32,7 @@ jobs:
   vercel-deployment:
     needs: database-migration
     runs-on: ubuntu-latest
-    environment: Test
+    environment: Preview
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Deploy to Vercel Test
+      - name: Deploy to Vercel Preview
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

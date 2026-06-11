@@ -2,7 +2,7 @@ name: CI/CD Development Environment
 
 on:
   push:
-    branches: [dev]
+    branches: [pre-prod]
 
 jobs:
   database-migration:
