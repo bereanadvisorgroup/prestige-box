@@ -17,15 +17,21 @@ if (process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENVIRONMENT
 // Import database and schema files using relative paths
 import { db } from "./index";
 import {
-  accountants,
+  accountingFirms,
+  actuarialFirms,
   addresses,
+  banks,
   clientPolicies,
   clients,
   companies,
+  disabilityInsuranceCompanies,
   households,
-  insuranceCompanies,
-  lawyers,
+  lawFirms,
+  lifeInsuranceCompanies,
+  longTermCareInsurance,
+  moneyManagers,
   people,
+  propertyAndCasualtyFirms,
   users,
 } from "./schema";
 
@@ -60,8 +66,15 @@ async function main() {
     console.log("🧹 Cleaning up existing CRM records...");
 
     await db.delete(clientPolicies);
-    await db.delete(lawyers);
-    await db.delete(accountants);
+    await db.delete(lifeInsuranceCompanies);
+    await db.delete(disabilityInsuranceCompanies);
+    await db.delete(longTermCareInsurance);
+    await db.delete(lawFirms);
+    await db.delete(moneyManagers);
+    await db.delete(accountingFirms);
+    await db.delete(actuarialFirms);
+    await db.delete(banks);
+    await db.delete(propertyAndCasualtyFirms);
     await db.delete(companies);
     await db.delete(clients);
     await db.delete(households);
@@ -289,9 +302,9 @@ async function main() {
     }
     await db.insert(households).values(householdData);
 
-    // 6. Seed Insurance Companies
-    console.log("🏢 Seeding insurance companies...");
-    const mockInsuranceCompanies = [
+    // 6. Seed Life Insurance Companies
+    console.log("🏢 Seeding life insurance companies...");
+    const mockLifeInsuranceCompanies = [
       { name: "Progressive", websiteUrl: "https://www.progressive.com" },
       { name: "State Farm", websiteUrl: "https://www.statefarm.com" },
       { name: "Allstate", websiteUrl: "https://www.allstate.com" },
@@ -302,25 +315,77 @@ async function main() {
       { name: "Chubb", websiteUrl: "https://www.chubb.com" },
     ];
 
-    const insuranceCompanyIds: string[] = [];
-    const insuranceCompanyData: (typeof insuranceCompanies.$inferInsert)[] = [];
-    for (const company of mockInsuranceCompanies) {
+    const lifeInsuranceCompanyIds: string[] = [];
+    const lifeInsuranceCompanyData: (typeof lifeInsuranceCompanies.$inferInsert)[] = [];
+    for (const company of mockLifeInsuranceCompanies) {
       const insId = faker.string.uuid();
-      insuranceCompanyIds.push(insId);
-      insuranceCompanyData.push({
+      lifeInsuranceCompanyIds.push(insId);
+      lifeInsuranceCompanyData.push({
         id: insId,
         name: company.name,
         websiteUrl: company.websiteUrl,
         policyNames: [
-          "Homeowners Insurance",
-          "Auto Insurance",
-          "Umbrella Policy",
-          "Valuable Personal Property",
-          "Flood Insurance",
+          "Term Life Insurance",
+          "Whole Life Insurance",
+          "Universal Life Insurance",
+          "Variable Life Insurance",
+          "Indexed Universal Life",
         ],
+        phone: faker.phone.number(),
+        personIds: faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 2 })),
       });
     }
-    await db.insert(insuranceCompanies).values(insuranceCompanyData);
+    await db.insert(lifeInsuranceCompanies).values(lifeInsuranceCompanyData);
+
+    // 6b. Seed Disability Insurance Companies
+    console.log("🏢 Seeding disability insurance companies...");
+    const mockDisabilityInsuranceCompanies = [
+      { name: "Mutual of Omaha", websiteUrl: "https://www.mutualofomaha.com" },
+      { name: "Guardian Life", websiteUrl: "https://www.guardianlife.com" },
+      { name: "Unum", websiteUrl: "https://www.unum.com" },
+      { name: "The Standard", websiteUrl: "https://www.standard.com" },
+    ];
+
+    const disabilityInsuranceCompanyIds: string[] = [];
+    const disabilityInsuranceCompanyData: (typeof disabilityInsuranceCompanies.$inferInsert)[] = [];
+    for (const company of mockDisabilityInsuranceCompanies) {
+      const insId = faker.string.uuid();
+      disabilityInsuranceCompanyIds.push(insId);
+      disabilityInsuranceCompanyData.push({
+        id: insId,
+        name: company.name,
+        websiteUrl: company.websiteUrl,
+        policyNames: ["Short Term Disability", "Long Term Disability"],
+        phone: faker.phone.number(),
+        personIds: faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 2 })),
+      });
+    }
+    await db.insert(disabilityInsuranceCompanies).values(disabilityInsuranceCompanyData);
+
+    // 6c. Seed Long Term Care Insurance
+    console.log("🏢 Seeding long term care insurance...");
+    const mockLongTermCareInsurance = [
+      { name: "John Hancock", websiteUrl: "https://www.johnhancock.com" },
+      { name: "Mutual of Omaha", websiteUrl: "https://www.mutualofomaha.com" },
+      { name: "Genworth Financial", websiteUrl: "https://www.genworth.com" },
+      { name: "Transamerica", websiteUrl: "https://www.transamerica.com" },
+    ];
+
+    const longTermCareInsuranceIds: string[] = [];
+    const longTermCareInsuranceData: (typeof longTermCareInsurance.$inferInsert)[] = [];
+    for (const company of mockLongTermCareInsurance) {
+      const insId = faker.string.uuid();
+      longTermCareInsuranceIds.push(insId);
+      longTermCareInsuranceData.push({
+        id: insId,
+        name: company.name,
+        websiteUrl: company.websiteUrl,
+        policyNames: ["Long Term Care"],
+        phone: faker.phone.number(),
+        personIds: faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 2 })),
+      });
+    }
+    await db.insert(longTermCareInsurance).values(longTermCareInsuranceData);
 
     // 7. Seed Clients
     console.log("💼 Seeding clients...");
@@ -459,8 +524,20 @@ async function main() {
     const clientPolicyData: (typeof clientPolicies.$inferInsert)[] = [];
     for (let i = 0; i < 45; i++) {
       const client = faker.helpers.arrayElement(clientData);
-      const insCompanyId = faker.helpers.arrayElement(insuranceCompanyIds);
-      const insCompany = insuranceCompanyData.find((c) => c.id === insCompanyId);
+      const policyType = faker.helpers.arrayElement(["life", "disability", "long_term_care"]);
+
+      const insCompanyId = policyType === "life" ? faker.helpers.arrayElement(lifeInsuranceCompanyIds) : null;
+      const disabilityCompanyId =
+        policyType === "disability" ? faker.helpers.arrayElement(disabilityInsuranceCompanyIds) : null;
+      const longTermCareInsuranceId =
+        policyType === "long_term_care" ? faker.helpers.arrayElement(longTermCareInsuranceIds) : null;
+
+      const insCompany =
+        policyType === "life"
+          ? lifeInsuranceCompanyData.find((c) => c.id === insCompanyId)
+          : policyType === "disability"
+            ? disabilityInsuranceCompanyData.find((c) => c.id === disabilityCompanyId)
+            : longTermCareInsuranceData.find((c) => c.id === longTermCareInsuranceId);
 
       const policyName = faker.helpers.arrayElement(insCompany?.policyNames ?? []);
       const policyNumber = faker.helpers.fromRegExp(/POL[0-9]{10}/);
@@ -476,7 +553,9 @@ async function main() {
       clientPolicyData.push({
         id: faker.string.uuid(),
         clientId: client.id ?? "",
-        insuranceCompanyId: insCompanyId,
+        lifeInsuranceCompanyId: insCompanyId,
+        disabilityInsuranceCompanyId: disabilityCompanyId,
+        longTermCareInsuranceId: longTermCareInsuranceId,
         paymentAccountId: paymentAccountId,
         policyName: policyName,
         policyNumber: policyNumber,
@@ -488,50 +567,167 @@ async function main() {
     }
     await db.insert(clientPolicies).values(clientPolicyData);
 
-    // 10. Seed Lawyers
-    console.log("⚖️ Seeding lawyers...");
-    const lawyerData: (typeof lawyers.$inferInsert)[] = [];
-    // Map people index 30 to 34 to lawyers
+    // 10. Seed Law Firms
+    console.log("⚖️ Seeding law firms...");
+    const lawFirmData: (typeof lawFirms.$inferInsert)[] = [];
+    // Map people index 30 to 34 to law firms
     for (let i = 0; i < 5; i++) {
       const personId = peopleIds[30 + i];
       const randomAddressId = faker.helpers.arrayElement(addressIds);
       const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
-      const lawyerClientIds = randomClients.map((c) => c.id ?? "");
+      const lawFirmClientIds = randomClients.map((c) => c.id ?? "");
 
       const associatedPersonIds = [personId];
       if (i === 0) {
         associatedPersonIds.push(peopleIds[34]);
       }
 
-      lawyerData.push({
+      lawFirmData.push({
         id: faker.string.uuid(),
         personIds: associatedPersonIds,
         firmName: `${faker.company.name()} LLP`,
         firmAddressId: randomAddressId,
-        clientIds: lawyerClientIds,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: lawFirmClientIds,
       });
     }
-    await db.insert(lawyers).values(lawyerData);
+    await db.insert(lawFirms).values(lawFirmData);
 
-    // 11. Seed Accountants
-    console.log("📊 Seeding accountants...");
-    const accountantData: (typeof accountants.$inferInsert)[] = [];
-    // Map people index 35 to 39 to accountants
+    // 11. Seed Accounting Firms
+    console.log("📊 Seeding accounting firms...");
+    const accountingFirmData: (typeof accountingFirms.$inferInsert)[] = [];
+    // Map people index 35 to 39 to accounting firms
     for (let i = 0; i < 5; i++) {
       const personId = peopleIds[35 + i];
       const randomAddressId = faker.helpers.arrayElement(addressIds);
       const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
-      const accountantClientIds = randomClients.map((c) => c.id ?? "");
+      const accountingFirmClientIds = randomClients.map((c) => c.id ?? "");
 
-      accountantData.push({
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[39]);
+      }
+
+      accountingFirmData.push({
         id: faker.string.uuid(),
-        personId: personId,
+        personIds: associatedPersonIds,
         firmName: `${faker.company.name()} CPAs`,
         firmAddressId: randomAddressId,
-        clientIds: accountantClientIds,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: accountingFirmClientIds,
       });
     }
-    await db.insert(accountants).values(accountantData);
+    await db.insert(accountingFirms).values(accountingFirmData);
+
+    // 12. Seed Actuarial Firms
+    console.log("🧮 Seeding actuarial firms...");
+    const actuarialFirmData: (typeof actuarialFirms.$inferInsert)[] = [];
+    // Map people index 40 to 42 to actuarial firms
+    for (let i = 0; i < 3; i++) {
+      const personId = peopleIds[40 + i];
+      const randomAddressId = faker.helpers.arrayElement(addressIds);
+      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
+      const actuarialFirmClientIds = randomClients.map((c) => c.id ?? "");
+
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[42]);
+      }
+
+      actuarialFirmData.push({
+        id: faker.string.uuid(),
+        personIds: associatedPersonIds,
+        firmName: `${faker.company.name()} Actuarial`,
+        firmAddressId: randomAddressId,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: actuarialFirmClientIds,
+      });
+    }
+    await db.insert(actuarialFirms).values(actuarialFirmData);
+
+    // 13. Seed Banks
+    console.log("🏦 Seeding banks...");
+    const bankData: (typeof banks.$inferInsert)[] = [];
+    // Map people index 43 to 45 to banks
+    for (let i = 0; i < 3; i++) {
+      const personId = peopleIds[43 + i];
+      const randomAddressId = faker.helpers.arrayElement(addressIds);
+      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
+      const bankClientIds = randomClients.map((c) => c.id ?? "");
+
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[45]);
+      }
+
+      bankData.push({
+        id: faker.string.uuid(),
+        personIds: associatedPersonIds,
+        firmName: `${faker.company.name()} Bank`,
+        firmAddressId: randomAddressId,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: bankClientIds,
+      });
+    }
+    await db.insert(banks).values(bankData);
+
+    // 14. Seed Property and Casualty Firms
+    console.log("🛡️ Seeding property and casualty firms...");
+    const propertyAndCasualtyFirmData: (typeof propertyAndCasualtyFirms.$inferInsert)[] = [];
+    // Map people index 46 to 49 to property and casualty firms
+    for (let i = 0; i < 4; i++) {
+      const personId = peopleIds[46 + i];
+      const randomAddressId = faker.helpers.arrayElement(addressIds);
+      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
+      const propertyAndCasualtyFirmClientIds = randomClients.map((c) => c.id ?? "");
+
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[49]);
+      }
+
+      propertyAndCasualtyFirmData.push({
+        id: faker.string.uuid(),
+        personIds: associatedPersonIds,
+        firmName: `${faker.company.name()} P&C`,
+        firmAddressId: randomAddressId,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: propertyAndCasualtyFirmClientIds,
+      });
+    }
+    await db.insert(propertyAndCasualtyFirms).values(propertyAndCasualtyFirmData);
+
+    // 15. Seed Money Managers
+    console.log("💼 Seeding money managers...");
+    const moneyManagerData: (typeof moneyManagers.$inferInsert)[] = [];
+    // Map people index 25 to 29 to money managers
+    for (let i = 0; i < 5; i++) {
+      const personId = peopleIds[25 + i];
+      const randomAddressId = faker.helpers.arrayElement(addressIds);
+      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
+      const moneyManagerClientIds = randomClients.map((c) => c.id ?? "");
+
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[29]);
+      }
+
+      moneyManagerData.push({
+        id: faker.string.uuid(),
+        personIds: associatedPersonIds,
+        firmName: `${faker.company.name()} Wealth`,
+        firmAddressId: randomAddressId,
+        website: faker.internet.url(),
+        phone: faker.phone.number(),
+        clientIds: moneyManagerClientIds,
+      });
+    }
+    await db.insert(moneyManagers).values(moneyManagerData);
 
     console.log("🎉 Seeding completed successfully!");
   } catch (error) {

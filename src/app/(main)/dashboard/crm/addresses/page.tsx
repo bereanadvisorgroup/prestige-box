@@ -3,30 +3,56 @@ export const dynamic = "force-dynamic";
 
 import { AlertCircle, Plus } from "lucide-react";
 
-import { getAccountants } from "@/actions/accountants";
+import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddresses } from "@/actions/addresses";
+import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getHouseholds } from "@/actions/households";
-import { getLawyers } from "@/actions/lawyers";
+import { getLawFirms } from "@/actions/law-firms";
 import { getPeople } from "@/actions/people";
+import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { Accountant, Client, Company, Household, Lawyer, Person } from "@/types/crm";
+import type {
+  AccountingFirm,
+  ActuarialFirm,
+  Bank,
+  Client,
+  Company,
+  Household,
+  LawFirm,
+  Person,
+  PropertyAndCasualtyFirm,
+} from "@/types/crm";
 
 import { AddressesTable } from "./_components/addresses-table";
 
 export default async function AddressesPage() {
-  const [result, peopleResult, householdsResult, companiesResult, lawyersResult, accountantsResult, clientsResult] =
-    await Promise.all([
-      getAddresses(),
-      getPeople(),
-      getHouseholds(),
-      getCompanies(),
-      getLawyers(),
-      getAccountants(),
-      getClients(),
-    ]);
+  const [
+    result,
+    peopleResult,
+    householdsResult,
+    companiesResult,
+    lawFirmsResult,
+    accountingFirmsResult,
+    actuarialFirmsResult,
+    banksResult,
+    propertyAndCasualtyFirmsResult,
+    clientsResult,
+  ] = await Promise.all([
+    getAddresses(),
+    getPeople(),
+    getHouseholds(),
+    getCompanies(),
+    getLawFirms(),
+    getAccountingFirms(),
+    getActuarialFirms(),
+    getBanks(),
+    getPropertyAndCasualtyFirms(),
+    getClients(),
+  ]);
 
   if (!result.success) {
     return (
@@ -54,10 +80,19 @@ export default async function AddressesPage() {
   const companies = (
     companiesResult.success && companiesResult.companies ? companiesResult.companies : []
   ) as Company[];
-  const lawyers = (lawyersResult.success && lawyersResult.lawyers ? lawyersResult.lawyers : []) as Lawyer[];
-  const accountants = (
-    accountantsResult.success && accountantsResult.accountants ? accountantsResult.accountants : []
-  ) as Accountant[];
+  const lawFirms = (lawFirmsResult.success && lawFirmsResult.lawFirms ? lawFirmsResult.lawFirms : []) as LawFirm[];
+  const accountingFirms = (
+    accountingFirmsResult.success && accountingFirmsResult.accountingFirms ? accountingFirmsResult.accountingFirms : []
+  ) as AccountingFirm[];
+  const actuarialFirms = (
+    actuarialFirmsResult.success && actuarialFirmsResult.actuarialFirms ? actuarialFirmsResult.actuarialFirms : []
+  ) as ActuarialFirm[];
+  const banks = (banksResult.success && banksResult.banks ? banksResult.banks : []) as Bank[];
+  const propertyAndCasualtyFirms = (
+    propertyAndCasualtyFirmsResult.success && propertyAndCasualtyFirmsResult.propertyAndCasualtyFirms
+      ? propertyAndCasualtyFirmsResult.propertyAndCasualtyFirms
+      : []
+  ) as PropertyAndCasualtyFirm[];
   const clients = (clientsResult.success && clientsResult.clients ? clientsResult.clients : []) as Client[];
 
   const enrichedAddresses = addresses.map((addr) => {
@@ -88,8 +123,11 @@ export default async function AddressesPage() {
       linkedPeople.length > 0 ||
       households.some((h) => h.addressId === addr.id) ||
       companies.some((c) => c.addressId === addr.id) ||
-      lawyers.some((l) => l.firmAddressId === addr.id) ||
-      accountants.some((a) => a.firmAddressId === addr.id) ||
+      lawFirms.some((l) => l.firmAddressId === addr.id) ||
+      accountingFirms.some((a) => a.firmAddressId === addr.id) ||
+      actuarialFirms.some((act) => act.firmAddressId === addr.id) ||
+      banks.some((b) => b.firmAddressId === addr.id) ||
+      propertyAndCasualtyFirms.some((pc) => pc.firmAddressId === addr.id) ||
       clients.some((c) => c.mortgages?.some((m) => m.addressId === addr.id)) ||
       clients.some((c) => c.employments?.some((e) => e.employerAddressId === addr.id));
 

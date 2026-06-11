@@ -85,11 +85,35 @@ export const HouseholdSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const InsuranceCompanySchema = z.object({
+export const LifeInsuranceCompanySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Insurance company name is required"),
   websiteUrl: z.string().url("Invalid website URL"),
   policyNames: z.array(z.string()).default([]),
+  phone: z.string().optional().or(z.literal("")),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const DisabilityInsuranceCompanySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Insurance company name is required"),
+  websiteUrl: z.string().url("Invalid website URL"),
+  policyNames: z.array(z.string()).default([]),
+  phone: z.string().optional().or(z.literal("")),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const LongTermCareInsuranceSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Insurance name is required"),
+  websiteUrl: z.string().url("Invalid website URL"),
+  policyNames: z.array(z.string()).default([]),
+  phone: z.string().optional().or(z.literal("")),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -251,8 +275,10 @@ export const PaymentSchedule = z.enum(["monthly", "quarterly", "semi-annually", 
 export const ClientPolicySchema = z.object({
   id: z.string().optional(),
   clientId: z.string(),
-  insuranceCompanyId: z.string(),
-  paymentAccountId: z.string().optional(),
+  lifeInsuranceCompanyId: z.string().optional().nullable(),
+  disabilityInsuranceCompanyId: z.string().optional().nullable(),
+  longTermCareInsuranceId: z.string().optional().nullable(),
+  paymentAccountId: z.string().optional().nullable(),
   policyName: z.string().min(1, "Policy name is required"),
   policyNumber: z.string().min(1, "Policy number is required"),
   premiumAmount: z.number().min(0, "Premium must be positive"),
@@ -263,21 +289,73 @@ export const ClientPolicySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const LawyerSchema = z.object({
+export const LawFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
-export const AccountantSchema = z.object({
+export const AccountingFirmSchema = z.object({
   id: z.string().optional(),
-  personId: z.string(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const ActuarialFirmSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  firmName: z.string().min(1, "Firm name is required"),
+  firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const BankSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  firmName: z.string().min(1, "Bank name is required"),
+  firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const PropertyAndCasualtyFirmSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  firmName: z.string().min(1, "Firm name is required"),
+  firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const MoneyManagerSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  firmName: z.string().min(1, "Money manager name is required"),
+  firmAddressId: z.string().optional(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -290,7 +368,9 @@ export type PersonAddress = z.infer<typeof PersonAddressSchema>;
 export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
-export type InsuranceCompany = z.infer<typeof InsuranceCompanySchema>;
+export type LifeInsuranceCompany = z.infer<typeof LifeInsuranceCompanySchema>;
+export type DisabilityInsuranceCompany = z.infer<typeof DisabilityInsuranceCompanySchema>;
+export type LongTermCareInsurance = z.infer<typeof LongTermCareInsuranceSchema>;
 export type PaymentAccount = z.infer<typeof PaymentAccountSchema>;
 export type SitusType = z.infer<typeof SitusTypeSchema>;
 export type NexusType = z.infer<typeof NexusTypeSchema>;
@@ -298,9 +378,14 @@ export type Situs = z.infer<typeof SitusSchema>;
 export type Nexus = z.infer<typeof NexusSchema>;
 export type Client = z.infer<typeof ClientSchema>;
 export type Company = z.infer<typeof CompanySchema>;
-export type Lawyer = z.infer<typeof LawyerSchema>;
-export type Accountant = z.infer<typeof AccountantSchema>;
+export type LawFirm = z.infer<typeof LawFirmSchema>;
+export type AccountingFirm = z.infer<typeof AccountingFirmSchema>;
+export type ActuarialFirm = z.infer<typeof ActuarialFirmSchema>;
+export type Bank = z.infer<typeof BankSchema>;
+export type PropertyAndCasualtyFirm = z.infer<typeof PropertyAndCasualtyFirmSchema>;
+export type MoneyManager = z.infer<typeof MoneyManagerSchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
+
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;
 export type FamilyMember = z.infer<typeof FamilyMemberSchema>;
 export type Employment = z.infer<typeof EmploymentSchema>;

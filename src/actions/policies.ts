@@ -21,23 +21,39 @@ export async function getClientPolicies() {
 
     // Enrich with client and company data
     const clientIds = Array.from(new Set(policies.map((p) => p.clientId)));
-    const companyIds = Array.from(new Set(policies.map((p) => p.insuranceCompanyId)));
+    const companyIds = Array.from(new Set(policies.map((p) => p.lifeInsuranceCompanyId).filter(Boolean)));
+    const disabilityCompanyIds = Array.from(
+      new Set(policies.map((p) => p.disabilityInsuranceCompanyId).filter(Boolean)),
+    );
+    const longTermCareInsuranceIds = Array.from(
+      new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean)),
+    );
 
-    const [clientsResult, companiesResult] = await Promise.all([
+    const [clientsResult, companiesResult, disabilityCompaniesResult, longTermCareResult] = await Promise.all([
       clientIds.length > 0
         ? supabaseServer.from("clients").select("id, personId").in("id", clientIds)
         : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
       companyIds.length > 0
-        ? supabaseServer.from("insurance_companies").select("id, name").in("id", companyIds)
+        ? supabaseServer.from("life_insurance_companies").select("id, name").in("id", companyIds)
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+      disabilityCompanyIds.length > 0
+        ? supabaseServer.from("disability_insurance_companies").select("id, name").in("id", disabilityCompanyIds)
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+      longTermCareInsuranceIds.length > 0
+        ? supabaseServer.from("long_term_care_insurance").select("id, name").in("id", longTermCareInsuranceIds)
         : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
     ]);
 
     if (clientsResult.error) throw new Error(clientsResult.error.message);
     if (companiesResult.error) throw new Error(companiesResult.error.message);
+    if (disabilityCompaniesResult.error) throw new Error(disabilityCompaniesResult.error.message);
+    if (longTermCareResult.error) throw new Error(longTermCareResult.error.message);
 
     const clients = clientsResult.data || [];
     const companies = companiesResult.data || [];
-    const companiesMap = companies.reduce(
+    const disabilityCompanies = disabilityCompaniesResult.data || [];
+    const longTermCareInsurances = longTermCareResult.data || [];
+    const companiesMap = [...companies, ...disabilityCompanies, ...longTermCareInsurances].reduce(
       (acc, c) => {
         acc[c.id] = c.name;
         return acc;
@@ -77,7 +93,10 @@ export async function getClientPolicies() {
       ...policy,
       clientName: clientsMap[policy.clientId]?.name || "Unknown Client",
       clientPhotoUrl: clientsMap[policy.clientId]?.photoUrl || null,
-      carrierName: companiesMap[policy.insuranceCompanyId] || "Unknown Carrier",
+      carrierName:
+        companiesMap[
+          policy.lifeInsuranceCompanyId || policy.disabilityInsuranceCompanyId || policy.longTermCareInsuranceId || ""
+        ] || "Unknown Carrier",
     }));
 
     return { success: true, policies: enrichedPolicies };

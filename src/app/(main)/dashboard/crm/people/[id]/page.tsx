@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import {
   ArrowUpRight,
+  Building2,
+  Calculator,
   Contact,
   Fingerprint,
   GraduationCap,
@@ -11,14 +13,18 @@ import {
   Pencil,
   Phone,
   ReceiptText,
+  Shield,
   User,
 } from "lucide-react";
 
-import { getAccountants } from "@/actions/accountants";
+import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
+import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
-import { getLawyers } from "@/actions/lawyers";
-import { getPerson } from "@/actions/people";
+import { getLawFirms } from "@/actions/law-firms";
+import { getPeople, getPerson } from "@/actions/people";
+import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,15 +48,33 @@ export default async function PersonPage({ params }: PersonPageProps) {
   const person = result.person;
 
   // Fetch roles
-  const [clientsRes, lawyersRes, accountantsRes] = await Promise.all([getClients(), getLawyers(), getAccountants()]);
+  const [clientsRes, lawFirmsRes, accountingFirmsRes, actuarialFirmsRes, banksRes, propertyAndCasualtyFirmsRes] =
+    await Promise.all([
+      getClients(),
+      getLawFirms(),
+      getAccountingFirms(),
+      getActuarialFirms(),
+      getBanks(),
+      getPropertyAndCasualtyFirms(),
+    ]);
 
   const associatedClient = ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id);
-  const associatedLawyer = ((lawyersRes.success && lawyersRes.lawyers) || []).find((l) =>
-    !!person.id && l.personIds?.includes(person.id),
+  const associatedLawFirm = ((lawFirmsRes.success && lawFirmsRes.lawFirms) || []).find(
+    (l) => !!person.id && l.personIds?.includes(person.id),
   );
-  const associatedAccountant = ((accountantsRes.success && accountantsRes.accountants) || []).find(
-    (a) => a.personId === person.id,
+  const associatedAccountingFirm = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).find(
+    (a) => !!person.id && a.personIds?.includes(person.id),
   );
+  const associatedActuarialFirm = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).find(
+    (act) => !!person.id && act.personIds?.includes(person.id),
+  );
+  const associatedBank = ((banksRes.success && banksRes.banks) || []).find(
+    (b) => !!person.id && b.personIds?.includes(person.id),
+  );
+  const associatedPropertyAndCasualty = (
+    (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) ||
+    []
+  ).find((pc) => !!person.id && pc.personIds?.includes(person.id));
 
   // Fetch addresses
   const addressPromises = (person.addressIds || []).map((addrId) => getAddress(addrId));
@@ -93,23 +117,47 @@ export default async function PersonPage({ params }: PersonPageProps) {
                   </Badge>
                 </Link>
               )}
-              {associatedLawyer && (
-                <Link href={`/dashboard/crm/lawyers/${associatedLawyer.id}`}>
+              {associatedLawFirm && (
+                <Link href={`/dashboard/crm/law-firms/${associatedLawFirm.id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-purple-100 text-purple-800 hover:bg-purple-200">
-                    <GraduationCap className="h-3 w-3" /> Lawyer <ArrowUpRight className="h-3 w-3" />
+                    <Building2 className="h-3 w-3" /> Law Firm <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {associatedAccountant && (
-                <Link href={`/dashboard/crm/accountants/${associatedAccountant.id}`}>
+              {associatedAccountingFirm && (
+                <Link href={`/dashboard/crm/accounting-firms/${associatedAccountingFirm.id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-amber-100 text-amber-800 hover:bg-amber-200">
-                    <ReceiptText className="h-3 w-3" /> Accountant <ArrowUpRight className="h-3 w-3" />
+                    <ReceiptText className="h-3 w-3" /> Accounting Firm <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {!associatedClient && !associatedLawyer && !associatedAccountant && (
-                <Badge variant="outline">Contact</Badge>
+              {associatedActuarialFirm && (
+                <Link href={`/dashboard/crm/actuarial-firms/${associatedActuarialFirm.id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-indigo-100 text-indigo-800 hover:bg-indigo-200">
+                    <Calculator className="h-3 w-3" /> Actuarial Firm <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
               )}
+              {associatedBank && (
+                <Link href={`/dashboard/crm/banks/${associatedBank.id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
+                    <Building2 className="h-3 w-3" /> Bank <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {associatedPropertyAndCasualty && (
+                <Link href={`/dashboard/crm/property-and-casualty/${associatedPropertyAndCasualty.id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-teal-100 text-teal-800 hover:bg-teal-200">
+                    <Shield className="h-3 w-3" /> Property And Casualty <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {!associatedClient &&
+                !associatedLawFirm &&
+                !associatedAccountingFirm &&
+                !associatedActuarialFirm &&
+                !associatedBank &&
+                !associatedPropertyAndCasualty && <Badge variant="outline">Contact</Badge>}
             </div>
           </div>
         </div>

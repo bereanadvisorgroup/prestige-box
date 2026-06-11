@@ -10,7 +10,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getClients } from "@/actions/clients";
-import { getInsuranceCompanies } from "@/actions/insurance-companies";
+import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
+import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
+import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +24,9 @@ import {
   type Client,
   type ClientPolicy,
   ClientPolicySchema,
-  type InsuranceCompany,
+  type DisabilityInsuranceCompany,
+  type LifeInsuranceCompany,
+  type LongTermCareInsurance,
   type PaymentAccount,
 } from "@/types/crm";
 
@@ -30,17 +34,25 @@ interface PolicyFormProps {
   policy?: ClientPolicy;
 }
 
+type MergedCompany =
+  | (LifeInsuranceCompany & { type: "life" })
+  | (DisabilityInsuranceCompany & { type: "disability" })
+  | (LongTermCareInsurance & { type: "long_term_care" });
+
 export function PolicyForm({ policy }: PolicyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableClients, setAvailableClients] = useState<(Client & { person?: any })[]>([]);
-  const [availableCompanies, setAvailableCompanies] = useState<InsuranceCompany[]>([]);
+  const [availableCompanies, setAvailableCompanies] = useState<MergedCompany[]>([]);
 
   const form = useForm<ClientPolicy>({
     resolver: zodResolver(ClientPolicySchema) as any,
-    defaultValues: policy || {
+    defaultValues: (policy as any) || {
       clientId: "",
-      insuranceCompanyId: "",
+      lifeInsuranceCompanyId:
+        policy?.lifeInsuranceCompanyId || policy?.disabilityInsuranceCompanyId || policy?.longTermCareInsuranceId || "",
+      disabilityInsuranceCompanyId: policy?.disabilityInsuranceCompanyId || null,
+      longTermCareInsuranceId: policy?.longTermCareInsuranceId || null,
       policyName: "",
       policyNumber: "",
       premiumAmount: 0,
@@ -53,14 +65,40 @@ export function PolicyForm({ policy }: PolicyFormProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const [clientResult, companyResult] = await Promise.all([getClients(), getInsuranceCompanies()]);
+      const [clientResult, lifeResult, disabilityResult, longTermCareResult] = await Promise.all([
+        getClients(),
+        getLifeInsuranceCompanies(),
+        getDisabilityInsuranceCompanies(),
+        getLongTermCareInsurances(),
+      ]);
 
       if (clientResult.success && clientResult.clients) {
         setAvailableClients(clientResult.clients);
       }
-      if (companyResult.success && companyResult.companies) {
-        setAvailableCompanies(companyResult.companies);
+
+      const companiesList: MergedCompany[] = [];
+      if (lifeResult.success && lifeResult.companies) {
+        companiesList.push(
+          ...(lifeResult.companies as LifeInsuranceCompany[]).map((c) => ({ ...c, type: "life" as const })),
+        );
       }
+      if (disabilityResult.success && disabilityResult.companies) {
+        companiesList.push(
+          ...(disabilityResult.companies as DisabilityInsuranceCompany[]).map((c) => ({
+            ...c,
+            type: "disability" as const,
+          })),
+        );
+      }
+      if (longTermCareResult.success && longTermCareResult.companies) {
+        companiesList.push(
+          ...(longTermCareResult.companies as LongTermCareInsurance[]).map((c) => ({
+            ...c,
+            type: "long_term_care" as const,
+          })),
+        );
+      }
+      setAvailableCompanies(companiesList);
     }
     fetchData();
   }, []);
@@ -70,11 +108,22 @@ export function PolicyForm({ policy }: PolicyFormProps) {
       setIsLoading(true);
       const isEditing = !!policy?.id;
 
+      const selectedCarrier = availableCompanies.find((c) => c.id === values.lifeInsuranceCompanyId);
+      const isDisability = selectedCarrier?.type === "disability";
+      const isLongTermCare = selectedCarrier?.type === "long_term_care";
+
+      const finalValues = {
+        ...values,
+        lifeInsuranceCompanyId: isDisability || isLongTermCare ? null : values.lifeInsuranceCompanyId,
+        disabilityInsuranceCompanyId: isDisability ? values.lifeInsuranceCompanyId : null,
+        longTermCareInsuranceId: isLongTermCare ? values.lifeInsuranceCompanyId : null,
+      };
+
       let result;
       if (isEditing) {
-        result = await updateClientPolicy(policy.id!, values);
+        result = await updateClientPolicy(policy.id!, finalValues);
       } else {
-        result = await createClientPolicy(values);
+        result = await createClientPolicy(finalValues);
       }
 
       if (result.success) {
@@ -92,7 +141,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
     }
   }
 
-  const selectedCompany = availableCompanies.find((c) => c.id === form.watch("insuranceCompanyId"));
+  const selectedCompany = availableCompanies.find((c) => c.id === form.watch("lifeInsuranceCompanyId"));
   const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
 
   return (
@@ -152,7 +201,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
               {/* Company Selection */}
               <FormField
                 control={form.control}
-                name="insuranceCompanyId"
+                name="lifeInsuranceCompanyId"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Insurance Carrier</FormLabel>
@@ -287,7 +336,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                       <CreditCard className="h-4 w-4 text-muted-foreground" />
                       Payment Account
                     </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!selectedClient}>
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={!selectedClient}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={selectedClient ? "Select an account" : "Select client first"} />

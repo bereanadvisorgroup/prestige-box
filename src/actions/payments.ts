@@ -31,22 +31,38 @@ export async function getPaymentsForMonth(month: number, year: number) {
 
     // Fetch dependencies
     const clientIds = Array.from(new Set(policies.map((p) => p.clientId)));
-    const companyIds = Array.from(new Set(policies.map((p) => p.insuranceCompanyId)));
+    const companyIds = Array.from(new Set(policies.map((p) => p.lifeInsuranceCompanyId).filter(Boolean)));
+    const disabilityCompanyIds = Array.from(
+      new Set(policies.map((p) => p.disabilityInsuranceCompanyId).filter(Boolean)),
+    );
+    const longTermCareInsuranceIds = Array.from(
+      new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean)),
+    );
 
-    const [clientsResult, companiesResult] = await Promise.all([
+    const [clientsResult, companiesResult, disabilityCompaniesResult, longTermCareResult] = await Promise.all([
       clientIds.length > 0
         ? supabaseServer.from("clients").select("*").in("id", clientIds)
         : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
       companyIds.length > 0
-        ? supabaseServer.from("insurance_companies").select("*").in("id", companyIds)
+        ? supabaseServer.from("life_insurance_companies").select("*").in("id", companyIds)
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+      disabilityCompanyIds.length > 0
+        ? supabaseServer.from("disability_insurance_companies").select("*").in("id", disabilityCompanyIds)
+        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+      longTermCareInsuranceIds.length > 0
+        ? supabaseServer.from("long_term_care_insurance").select("*").in("id", longTermCareInsuranceIds)
         : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
     ]);
 
     if (clientsResult.error) throw new Error(clientsResult.error.message);
     if (companiesResult.error) throw new Error(companiesResult.error.message);
+    if (disabilityCompaniesResult.error) throw new Error(disabilityCompaniesResult.error.message);
+    if (longTermCareResult.error) throw new Error(longTermCareResult.error.message);
 
     const clients = clientsResult.data || [];
     const companies = companiesResult.data || [];
+    const disabilityCompanies = disabilityCompaniesResult.data || [];
+    const longTermCareInsurances = longTermCareResult.data || [];
 
     const personIds = Array.from(new Set(clients.map((c) => c.personId)));
     let peopleMap: Record<string, Record<string, unknown>> = {};
@@ -70,12 +86,12 @@ export async function getPaymentsForMonth(month: number, year: number) {
       };
     }
 
-    const companiesMap = companies.reduce(
+    const companiesMap = [...companies, ...disabilityCompanies, ...longTermCareInsurances].reduce(
       (acc, doc) => {
         acc[doc.id] = doc;
         return acc;
       },
-      {} as Record<string, (typeof companies)[number]>,
+      {} as Record<string, any>,
     );
 
     const endDate = new Date(year, month + 1, 0);
@@ -84,7 +100,10 @@ export async function getPaymentsForMonth(month: number, year: number) {
       const effectiveDate = new Date(policy.effectiveDate);
       const schedule = policy.paymentSchedule;
       const client = clientsMap[policy.clientId];
-      const company = companiesMap[policy.insuranceCompanyId];
+      const company =
+        companiesMap[
+          policy.lifeInsuranceCompanyId || policy.disabilityInsuranceCompanyId || policy.longTermCareInsuranceId || ""
+        ];
 
       // Calculate payment months based on schedule
       let interval = 1;

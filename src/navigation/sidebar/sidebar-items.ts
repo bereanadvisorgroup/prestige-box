@@ -3,7 +3,6 @@ import {
   Building2,
   DollarSign,
   FileText,
-  GraduationCap,
   Home,
   LayoutDashboard,
   Lock,
@@ -59,19 +58,9 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Payments",
+        title: "Benefit Payments",
         url: "/dashboard/crm/payments",
         icon: DollarSign,
-      },
-      {
-        title: "DEMO CRM Pipeline",
-        url: "/dashboard/crm-pipeline",
-        icon: LayoutDashboard,
-      },
-      {
-        title: "DEMO Finance",
-        url: "/dashboard/finance",
-        icon: LayoutDashboard,
       },
     ],
   },
@@ -123,24 +112,61 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Law Firms",
-        url: "/dashboard/crm/lawyers",
-        icon: GraduationCap,
-      },
-      {
-        title: "Accountants",
-        url: "/dashboard/crm/accountants",
+        title: "Accounting Firms",
+        url: "/dashboard/crm/accounting-firms",
         icon: ReceiptText,
       },
       {
-        title: "Insurance",
-        url: "/dashboard/admin/insurance-companies",
+        title: "Actuarial Firms",
+        url: "/dashboard/crm/actuarial-firms",
+        icon: ReceiptText,
+      },
+      {
+        title: "Banks",
+        url: "/dashboard/crm/banks",
+        icon: Building2,
+      },
+      {
+        title: "Law Firms",
+        url: "/dashboard/crm/law-firms",
+        icon: Building2,
+      },
+      {
+        title: "Property And Casualty",
+        url: "/dashboard/crm/property-and-casualty",
         icon: Shield,
       },
     ],
   },
   {
     id: 5,
+    label: "Vendors",
+    allowedRoles: ["admin"],
+    items: [
+      {
+        title: "Life Insurance",
+        url: "/dashboard/admin/life-insurance-companies",
+        icon: Shield,
+      },
+      {
+        title: "Disability Insurance",
+        url: "/dashboard/admin/disability-insurance-companies",
+        icon: Shield,
+      },
+      {
+        title: "Long Term Care",
+        url: "/dashboard/admin/long-term-care-insurance",
+        icon: Shield,
+      },
+      {
+        title: "Money Managers",
+        url: "/dashboard/admin/money-managers",
+        icon: Shield,
+      },
+    ],
+  },
+  {
+    id: 6,
     label: "Admin Settings",
     allowedRoles: ["admin"],
     items: [

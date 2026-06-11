@@ -2,22 +2,37 @@ import Link from "next/link";
 
 import { AlertCircle, Plus } from "lucide-react";
 
-import { getAccountants } from "@/actions/accountants";
+import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getActuarialFirms } from "@/actions/actuarial-firms";
+import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
-import { getLawyers } from "@/actions/lawyers";
+import { getLawFirms } from "@/actions/law-firms";
 import { getClientPolicies } from "@/actions/policies";
+import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { ClientsTable } from "./_components/clients-table";
 
 export default async function ClientsPage() {
-  const [clientsRes, policiesRes, lawyersRes, accountantsRes, companiesRes] = await Promise.all([
+  const [
+    clientsRes,
+    policiesRes,
+    lawFirmsRes,
+    accountingFirmsRes,
+    actuarialFirmsRes,
+    banksRes,
+    propertyAndCasualtyFirmsRes,
+    companiesRes,
+  ] = await Promise.all([
     getClients(),
     getClientPolicies(),
-    getLawyers(),
-    getAccountants(),
+    getLawFirms(),
+    getAccountingFirms(),
+    getActuarialFirms(),
+    getBanks(),
+    getPropertyAndCasualtyFirms(),
     getCompanies(),
   ]);
 
@@ -41,15 +56,26 @@ export default async function ClientsPage() {
 
   const rawClients = clientsRes.clients || [];
   const policies = policiesRes.success && policiesRes.policies ? policiesRes.policies : [];
-  const lawyers = lawyersRes.success && lawyersRes.lawyers ? lawyersRes.lawyers : [];
-  const accountants = accountantsRes.success && accountantsRes.accountants ? accountantsRes.accountants : [];
+  const lawFirms = lawFirmsRes.success && lawFirmsRes.lawFirms ? lawFirmsRes.lawFirms : [];
+  const accountingFirms =
+    accountingFirmsRes.success && accountingFirmsRes.accountingFirms ? accountingFirmsRes.accountingFirms : [];
+  const actuarialFirms =
+    actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms ? actuarialFirmsRes.actuarialFirms : [];
+  const banks = banksRes.success && banksRes.banks ? banksRes.banks : [];
+  const propertyAndCasualtyFirms =
+    propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms
+      ? propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms
+      : [];
   const companies = companiesRes.success && companiesRes.companies ? companiesRes.companies : [];
 
   const clients = rawClients.map((client) => {
     const isLinked =
       policies.some((p) => p.clientId === client.id) ||
-      lawyers.some((l) => l.clientIds?.includes(client.id!)) ||
-      accountants.some((a) => a.clientIds?.includes(client.id!)) ||
+      lawFirms.some((l) => l.clientIds?.includes(client.id!)) ||
+      accountingFirms.some((a) => a.clientIds?.includes(client.id!)) ||
+      actuarialFirms.some((act) => act.clientIds?.includes(client.id!)) ||
+      banks.some((b) => b.clientIds?.includes(client.id!)) ||
+      propertyAndCasualtyFirms.some((pc) => pc.clientIds?.includes(client.id!)) ||
       companies.some((comp) => comp.clientIds?.includes(client.id!));
 
     return {

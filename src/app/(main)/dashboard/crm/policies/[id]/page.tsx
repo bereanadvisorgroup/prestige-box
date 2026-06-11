@@ -98,12 +98,19 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
 
   // Fetch the carrier info
   let carrierName = "Unknown Carrier";
-  if (policy.insuranceCompanyId) {
+  const carrierId =
+    policy.lifeInsuranceCompanyId || policy.disabilityInsuranceCompanyId || policy.longTermCareInsuranceId;
+  const tableName = policy.lifeInsuranceCompanyId
+    ? "life_insurance_companies"
+    : policy.disabilityInsuranceCompanyId
+      ? "disability_insurance_companies"
+      : "long_term_care_insurance";
+  if (carrierId) {
     try {
       const { data: carrierDoc, error } = await supabaseServer
-        .from("insurance_companies")
+        .from(tableName)
         .select("name")
-        .eq("id", policy.insuranceCompanyId)
+        .eq("id", carrierId)
         .single();
       if (carrierDoc && !error) {
         carrierName = carrierDoc.name || "Unknown Carrier";

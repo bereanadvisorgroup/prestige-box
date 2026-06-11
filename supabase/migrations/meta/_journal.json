@@ -29,6 +29,90 @@
       "when": 1781140319451,
       "tag": "0003_third_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781173640877,
+      "tag": "0004_mature_ben_urich",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1781173656679,
+      "tag": "0005_past_cassandra_nova",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781175077909,
+      "tag": "0006_ancient_winter_soldier",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781175084637,
+      "tag": "0007_concerned_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781176084926,
+      "tag": "0008_needy_betty_brant",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781178321484,
+      "tag": "0009_dapper_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781180700587,
+      "tag": "0010_fine_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781189976495,
+      "tag": "0011_rename_insurance_to_life",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781191045357,
+      "tag": "0012_add_phone_and_people_to_life_insurance",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781192214932,
+      "tag": "0013_careless_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1781193500958,
+      "tag": "0014_long_susan_delgado",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1781194714627,
+      "tag": "0015_stale_ogun",
+      "breakpoints": true
     }
   ]
 }

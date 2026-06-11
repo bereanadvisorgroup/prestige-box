@@ -1,0 +1,320 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Globe, ListPlus, Phone, Shield, Trash2, Users } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+import { createLongTermCareInsurance, updateLongTermCareInsurance } from "@/actions/long-term-care-insurance";
+import { getPeople } from "@/actions/people";
+import { PersonAvatar } from "@/components/crm/person-avatar";
+import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { type LongTermCareInsurance, LongTermCareInsuranceSchema, type Person } from "@/types/crm";
+
+interface InsuranceFormProps {
+  company?: LongTermCareInsurance;
+}
+
+export function InsuranceForm({ company }: InsuranceFormProps) {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [newPolicyName, setNewPolicyName] = useState("");
+  const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
+
+  const form = useForm<LongTermCareInsurance>({
+    resolver: zodResolver(LongTermCareInsuranceSchema) as any,
+    defaultValues: company || {
+      name: "",
+      websiteUrl: "",
+      policyNames: ["Long Term Care"],
+      phone: "",
+      personIds: [],
+    },
+  });
+
+  useEffect(() => {
+    async function fetchPeople() {
+      const result = await getPeople();
+      if (result.success && result.people) {
+        setAvailablePeople(result.people);
+      }
+    }
+    fetchPeople();
+  }, []);
+
+  const handleAddPerson = (personId: string) => {
+    const current = form.getValues("personIds") || [];
+    if (!current.includes(personId)) {
+      form.setValue("personIds", [...current, personId]);
+      form.trigger("personIds");
+    } else {
+      toast.error("This person is already associated with this carrier");
+    }
+  };
+
+  const handleRemovePerson = (personId: string) => {
+    const current = form.getValues("personIds") || [];
+    form.setValue(
+      "personIds",
+      current.filter((id) => id !== personId),
+    );
+    form.trigger("personIds");
+  };
+
+  async function onSubmit(values: LongTermCareInsurance) {
+    try {
+      setIsLoading(true);
+      const isEditing = !!company?.id;
+
+      let result;
+      if (isEditing) {
+        result = await updateLongTermCareInsurance(company.id!, values);
+      } else {
+        result = await createLongTermCareInsurance(values);
+      }
+
+      if (result.success) {
+        toast.success(
+          isEditing ? "Long Term Care Insurance carrier updated" : "Long Term Care Insurance carrier created",
+        );
+        router.push("/dashboard/admin/long-term-care-insurance");
+        router.refresh();
+      } else {
+        toast.error(result.error || `Failed to ${isEditing ? "update" : "create"} carrier`);
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const handleAddPolicy = () => {
+    if (!newPolicyName.trim()) return;
+    const current = form.getValues("policyNames") || [];
+    if (current.includes(newPolicyName.trim())) {
+      toast.error("Policy already exists");
+      return;
+    }
+    form.setValue("policyNames", [...current, newPolicyName.trim()]);
+    setNewPolicyName("");
+  };
+
+  const handleRemovePolicy = (name: string) => {
+    const current = form.getValues("policyNames") || [];
+    form.setValue(
+      "policyNames",
+      current.filter((n) => n !== name),
+    );
+  };
+
+  return (
+    <Card className="mx-auto w-full max-w-2xl shadow-md">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <Shield className="h-5 w-5 text-primary" />
+          {company ? "Edit Long Term Care Insurance Carrier" : "Add Long Term Care Insurance Carrier"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-1">
+                    <FormLabel>Carrier Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. John Hancock" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="websiteUrl"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-1">
+                    <FormLabel>Website URL</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Globe className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                        <Input className="pl-9" placeholder="johnhancock.com" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-1">
+                    <FormLabel className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Phone Number
+                    </FormLabel>
+                    <FormControl>
+                      <PhoneInput placeholder="555-123-4567" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="personIds"
+              render={({ field }) => (
+                <FormItem className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      Associated Professionals
+                    </FormLabel>
+                    <span className="text-muted-foreground text-xs">
+                      {(field.value || []).length} professional(s) added
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(field.value || []).map((pId) => {
+                      const person = availablePeople.find((p) => p.id === pId);
+                      return (
+                        <div
+                          key={pId}
+                          className="flex flex-col items-start justify-between gap-4 rounded-md border bg-muted/10 p-4 md:flex-row md:items-center"
+                        >
+                          <div className="flex items-center gap-3">
+                            <PersonAvatar
+                              photoUrl={person?.photoUrl}
+                              firstName={person?.firstName}
+                              lastName={person?.lastName}
+                              size="sm"
+                            />
+                            <div>
+                              <p className="font-medium text-sm">
+                                {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {person?.emails?.find((e) => e.isPrimary)?.address ||
+                                  person?.emails?.[0]?.address ||
+                                  "No Email"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => handleRemovePerson(pId)}
+                            className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+
+                    {(field.value || []).length === 0 && (
+                      <div className="rounded-md border border-dashed bg-muted/5 py-6 text-center">
+                        <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground opacity-20" />
+                        <p className="text-muted-foreground text-sm">No professionals associated yet.</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 pt-2">
+                      <FormLabel>Add Professional to Long Term Care Insurance Carrier</FormLabel>
+                      <PersonSearchSelect
+                        people={availablePeople.filter((p) => !(field.value || []).includes(p.id!))}
+                        onValueChange={(val) => handleAddPerson(val)}
+                        onPersonCreated={(newPerson) => {
+                          setAvailablePeople((prev) => [...prev, newPerson]);
+                          handleAddPerson(newPerson.id!);
+                        }}
+                        placeholder="Search professionals by name..."
+                        value=""
+                      />
+                      <FormDescription>Select professionals to add them to this carrier.</FormDescription>
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="flex items-center gap-2 font-semibold text-sm">
+                  <ListPlus className="h-4 w-4" />
+                  Supported Policy Names
+                </h3>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. Individual Long Term Care"
+                  value={newPolicyName}
+                  onChange={(e) => setNewPolicyName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddPolicy();
+                    }
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={handleAddPolicy}>
+                  Add
+                </Button>
+              </div>
+
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+                {(form.watch("policyNames") || []).length === 0 && (
+                  <span className="p-1 text-muted-foreground text-xs italic">No policies added yet.</span>
+                )}
+                {(form.watch("policyNames") || []).map((policy, index) => (
+                  <Badge key={index} variant="secondary" className="group gap-1 px-3 py-1">
+                    {policy}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePolicy(policy)}
+                      className="ml-1 rounded-full transition-colors hover:bg-destructive-foreground/20"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading} className="font-bold">
+                {isLoading ? "Saving..." : company ? "Update Carrier" : "Create Carrier"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}

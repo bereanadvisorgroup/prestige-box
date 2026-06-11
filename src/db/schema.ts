@@ -55,12 +55,38 @@ export const households = pgTable("households", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
-// 5. Insurance Companies Table
-export const insuranceCompanies = pgTable("insurance_companies", {
+// 5. Life Insurance Companies Table
+export const lifeInsuranceCompanies = pgTable("life_insurance_companies", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   websiteUrl: text("websiteUrl").notNull(),
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
+  phone: text("phone"),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 5b. Disability Insurance Companies Table
+export const disabilityInsuranceCompanies = pgTable("disability_insurance_companies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  websiteUrl: text("websiteUrl").notNull(),
+  policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
+  phone: text("phone"),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 5c. Long Term Care Insurance Table
+export const longTermCareInsurance = pgTable("long_term_care_insurance", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  websiteUrl: text("websiteUrl").notNull(),
+  policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
+  phone: text("phone"),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -103,7 +129,9 @@ export const companies = pgTable("companies", {
 export const clientPolicies = pgTable("client_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
   clientId: uuid("clientId").notNull(),
-  insuranceCompanyId: uuid("insuranceCompanyId").notNull(),
+  lifeInsuranceCompanyId: uuid("lifeInsuranceCompanyId"),
+  disabilityInsuranceCompanyId: uuid("disabilityInsuranceCompanyId"),
+  longTermCareInsuranceId: uuid("longTermCareInsuranceId"),
   paymentAccountId: text("paymentAccountId"),
   policyName: text("policyName").notNull(),
   policyNumber: text("policyNumber").notNull(),
@@ -115,23 +143,79 @@ export const clientPolicies = pgTable("client_policies", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
-// 9. Lawyers Table
-export const lawyers = pgTable("lawyers", {
+// 9. Law Firms Table
+export const lawFirms = pgTable("law_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
-// 10. Accountants Table
-export const accountants = pgTable("accountants", {
+// 10. Accounting Firms Table
+export const accountingFirms = pgTable("accounting_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
-  personId: uuid("personId").notNull(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 11. Actuarial Firms Table
+export const actuarialFirms = pgTable("actuarial_firms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 12. Banks Table
+export const banks = pgTable("banks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 13. Property And Casualty Firms Table
+export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 14. Money Managers Table
+export const moneyManagers = pgTable("money_managers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
