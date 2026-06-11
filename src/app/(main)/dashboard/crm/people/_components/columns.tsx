@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Row } from "@tanstack/react-table";
 import { ArrowUpRight, Pencil, Trash2, User } from "lucide-react";
 
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
@@ -23,7 +24,7 @@ export const columns = (onDelete: (person: Person) => void) => [
       const name = `${person.firstName} ${person.lastName}`;
       return (
         <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" />
+          <PersonAvatar photoUrl={person.photoUrl} firstName={person.firstName} lastName={person.lastName} />
           <Link
             href={`/dashboard/crm/people/${person.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

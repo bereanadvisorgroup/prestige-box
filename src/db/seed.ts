@@ -224,6 +224,7 @@ async function main() {
         middleName: mName,
         lastName: lName,
         suffix: faker.helpers.maybe(() => faker.person.suffix(), { probability: 0.1 }) || null,
+        photoUrl: faker.image.avatar(),
         emails: [
           {
             id: faker.string.uuid(),

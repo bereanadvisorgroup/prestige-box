@@ -6,6 +6,7 @@ import { Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Pencil, Phone,
 import { getAddress } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
 import { getCompany } from "@/actions/companies";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -198,21 +199,29 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                       <Link
                         key={client.id}
                         href={`/dashboard/crm/clients/${client.id}`}
-                        className="group block flex items-center justify-between p-4 transition-colors hover:bg-muted/5"
+                        className="group flex items-center justify-between p-4 transition-colors hover:bg-muted/5"
                       >
-                        <div className="space-y-1">
-                          <p className="font-semibold transition-colors group-hover:text-primary">
-                            {person?.firstName} {person?.lastName}
-                          </p>
-                          <p className="flex items-center gap-2 text-muted-foreground text-xs">
-                            {person?.email && <span>{person.email}</span>}
-                            {person?.mobilePhone && (
-                              <>
-                                <span>•</span>
-                                <span>{formatPhoneNumber(person.mobilePhone)}</span>
-                              </>
-                            )}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <PersonAvatar
+                            photoUrl={person?.photoUrl}
+                            firstName={person?.firstName}
+                            lastName={person?.lastName}
+                            size="sm"
+                          />
+                          <div className="space-y-1">
+                            <p className="font-semibold transition-colors group-hover:text-primary">
+                              {person?.firstName} {person?.lastName}
+                            </p>
+                            <p className="flex items-center gap-2 text-muted-foreground text-xs">
+                              {person?.email && <span>{person.email}</span>}
+                              {person?.mobilePhone && (
+                                <>
+                                  <span>•</span>
+                                  <span>{formatPhoneNumber(person.mobilePhone)}</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
                         </div>
                       </Link>
                     );
@@ -263,7 +272,7 @@ function GlobeIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}
-      xmlns="http://www.w3.org/0rem"
+      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -273,6 +282,7 @@ function GlobeIcon(props: React.SVGProps<SVGSVGElement>) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      <title>Globe</title>
       <circle cx="12" cy="12" r="10" />
       <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
       <path d="M2 12h20" />

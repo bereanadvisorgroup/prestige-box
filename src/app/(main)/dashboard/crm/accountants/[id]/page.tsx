@@ -5,6 +5,7 @@ import { ArrowUpRight, Briefcase, Building2, Edit, Mail, MapPin, Phone, ReceiptT
 
 import { getAccountant } from "@/actions/accountants";
 import { getClients } from "@/actions/clients";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -38,9 +39,22 @@ export default async function AccountantDetailsPage({ params }: AccountantDetail
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <ReceiptText className="h-8 w-8" />
-          </div>
+          <Avatar className="h-16 w-16 border-2 border-primary/10">
+            {person?.photoUrl && (
+              <AvatarImage
+                src={person.photoUrl}
+                alt={person ? `${person.firstName} ${person.lastName}` : "Accountant"}
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-primary/5 text-xl text-primary flex items-center justify-center h-full w-full">
+              {person ? (
+                `${person.firstName?.[0] || ""}${person.lastName?.[0] || ""}`
+              ) : (
+                <ReceiptText className="h-8 w-8" />
+              )}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <h1 className="font-bold text-3xl tracking-tight">
               {person ? `${person.firstName} ${person.lastName}` : "Unknown Accountant"}

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,9 +131,12 @@ export function FamilyTab({ client }: { client: Client }) {
                   className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary">
-                      <User className="h-6 w-6" />
-                    </div>
+                    <PersonAvatar
+                      photoUrl={person?.photoUrl}
+                      firstName={person?.firstName}
+                      lastName={person?.lastName}
+                      size="default"
+                    />
                     <div className="space-y-1">
                       <p className="flex items-center gap-2 font-semibold text-foreground text-sm">
                         {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}

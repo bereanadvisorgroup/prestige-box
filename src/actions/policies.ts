@@ -46,33 +46,37 @@ export async function getClientPolicies() {
     );
 
     const personIds = Array.from(new Set(clients.map((c) => c.personId)));
-    let peopleMap: Record<string, string> = {};
+    let peopleMap: Record<string, { name: string; photoUrl: string | null }> = {};
     if (personIds.length > 0) {
       const { data: people, error: peopleError } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName")
+        .select("id, firstName, lastName, photoUrl")
         .in("id", personIds);
       if (peopleError) throw new Error((peopleError as { message: string }).message);
       peopleMap = (people || []).reduce(
         (acc, p) => {
-          acc[p.id] = `${p.firstName} ${p.lastName}`;
+          acc[p.id] = {
+            name: `${p.firstName} ${p.lastName}`,
+            photoUrl: p.photoUrl || null,
+          };
           return acc;
         },
-        {} as Record<string, string>,
+        {} as Record<string, { name: string; photoUrl: string | null }>,
       );
     }
 
     const clientsMap = clients.reduce(
       (acc, c) => {
-        acc[c.id] = peopleMap[c.personId] || "Unknown Client";
+        acc[c.id] = peopleMap[c.personId] || { name: "Unknown Client", photoUrl: null };
         return acc;
       },
-      {} as Record<string, string>,
+      {} as Record<string, { name: string; photoUrl: string | null }>,
     );
 
     const enrichedPolicies = policies.map((policy) => ({
       ...policy,
-      clientName: clientsMap[policy.clientId] || "Unknown Client",
+      clientName: clientsMap[policy.clientId]?.name || "Unknown Client",
+      clientPhotoUrl: clientsMap[policy.clientId]?.photoUrl || null,
       carrierName: companiesMap[policy.insuranceCompanyId] || "Unknown Carrier",
     }));
 

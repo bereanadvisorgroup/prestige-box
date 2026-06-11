@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Row } from "@tanstack/react-table";
 import { ArrowUpRight, MapPin, Pencil, ReceiptText, Trash2 } from "lucide-react";
 
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Accountant, Address, Person } from "@/types/crm";
@@ -22,7 +23,12 @@ export const columns = (onDelete: (accountant: Accountant) => void) => [
       const name = accountant.person ? `${accountant.person.firstName} ${accountant.person.lastName}` : "Unknown";
       return (
         <div className="flex items-center gap-2">
-          <ReceiptText className="h-4 w-4 text-muted-foreground" />
+          <PersonAvatar
+            photoUrl={accountant.person?.photoUrl}
+            firstName={accountant.person?.firstName}
+            lastName={accountant.person?.lastName}
+            fallbackIcon={<ReceiptText className="h-3.5 w-3.5 text-muted-foreground" />}
+          />
           <Link
             href={`/dashboard/crm/accountants/${accountant.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

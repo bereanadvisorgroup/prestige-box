@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Camera, Trash2, UploadCloud } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -18,7 +19,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
-import { Camera, Trash2, UploadCloud } from "lucide-react";
 
 const formSchema = z.object({
   firstName: z.string().min(2, {

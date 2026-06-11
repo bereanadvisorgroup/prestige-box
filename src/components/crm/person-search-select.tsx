@@ -3,6 +3,7 @@
 import { Plus, User } from "lucide-react";
 
 import { PersonDialog } from "@/app/(main)/dashboard/crm/people/_components/person-dialog";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Button } from "@/components/ui/button";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import type { Person } from "@/types/crm";
@@ -58,7 +59,7 @@ export function PersonSearchSelect({
           {people.map((p) => (
             <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
               <div className="flex items-center gap-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <PersonAvatar photoUrl={p.photoUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />
                 <div className="flex flex-col">
                   <span className="font-medium">
                     {p.firstName} {p.lastName}

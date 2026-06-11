@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Eye, EyeOff, MapPin, Plus, Trash2 } from "lucide-react";
+import { Camera, Check, Eye, EyeOff, MapPin, Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
 import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -19,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SsnInput } from "@/components/ui/ssn-input";
+import { supabase } from "@/lib/supabase.client";
+import { getInitials } from "@/lib/utils";
 import { type Address, type Person, PersonSchema } from "@/types/crm";
 
 interface PersonFormProps {
@@ -32,6 +35,61 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
   const [showSSN, setShowSSN] = useState(false);
   const [addressSearchQuery, setAddressSearchQuery] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please select a valid image (JPEG, PNG, GIF, or WebP).");
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be under 2MB.");
+        return;
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const folderId = person?.id || crypto.randomUUID();
+      const filePath = `people/${folderId}/${Date.now()}-photo.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+
+      form.setValue("photoUrl", publicUrl, { shouldDirty: true });
+      toast.success("Photo uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload profile photo.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    const currentPhotoUrl = form.getValues("photoUrl");
+    if (currentPhotoUrl && currentPhotoUrl.includes("/avatars/") && currentPhotoUrl.includes("people/")) {
+      try {
+        const oldPath = currentPhotoUrl.split("/public/avatars/")[1];
+        if (oldPath) {
+          await supabase.storage.from("avatars").remove([oldPath]);
+        }
+      } catch (removeErr) {
+        console.warn("Could not delete custom photo from storage:", removeErr);
+      }
+    }
+    form.setValue("photoUrl", null, { shouldDirty: true });
+    toast.success("Photo removed!");
+  };
 
   const defaultEmails = person?.emails?.length
     ? person.emails
@@ -55,6 +113,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       middleName: p.middleName ?? "",
       lastName: p.lastName ?? "",
       suffix: p.suffix ?? "",
+      photoUrl: p.photoUrl ?? "",
       emails: p.emails || defaultEmails,
       phones: p.phones || defaultPhones,
       addresses: p.addresses || defaultAddresses,
@@ -98,6 +157,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       middleName: "",
       lastName: "",
       suffix: "",
+      photoUrl: "",
       emails: defaultEmails,
       phones: defaultPhones,
       addresses: defaultAddresses,
@@ -241,6 +301,68 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
               <h3 className="border-b pb-2 font-medium text-sm">Personal Information</h3>
+
+              {/* Photo Upload Section */}
+              <div className="flex flex-col items-center gap-6 pb-6 sm:flex-row border-b border-muted/50">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/40 transition-all duration-300"
+                  aria-label="Upload profile photo"
+                >
+                  <Avatar className="h-[88px] w-[88px]">
+                    <AvatarImage
+                      src={form.watch("photoUrl") || undefined}
+                      alt="Profile Preview"
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">
+                      {getInitials(`${form.watch("firstName")} ${form.watch("lastName")}`)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <Camera className="h-5 w-5 text-white" />
+                    <span className="mt-1 text-[9px] text-white font-medium">Upload Photo</span>
+                  </div>
+
+                  {isUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
+                      <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handleFileUpload(file);
+                  }}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                <div className="flex flex-col gap-1.5 text-center sm:text-left">
+                  <h4 className="font-semibold text-sm">Profile Picture</h4>
+                  <p className="text-muted-foreground text-xs">
+                    Click the avatar to upload a photo (JPEG, PNG, up to 2MB).
+                  </p>
+                  {form.watch("photoUrl") && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemovePhoto}
+                      className="h-7 w-fit gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40 transition-all duration-300 mt-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Remove Photo
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <FormField
                   control={form.control}

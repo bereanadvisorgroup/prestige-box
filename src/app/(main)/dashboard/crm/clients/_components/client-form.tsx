@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { createClient, updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
 import { getClientPoliciesByClient } from "@/actions/policies";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -181,9 +182,12 @@ export function ClientForm({ client }: ClientFormProps) {
               <div
                 className={`${client ? "" : "mt-4"} flex items-start gap-4 rounded-lg border bg-muted/30 p-4 text-sm shadow-sm`}
               >
-                <div className="rounded-full bg-primary/10 p-2.5">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
+                <PersonAvatar
+                  photoUrl={selectedPerson.photoUrl}
+                  firstName={selectedPerson.firstName}
+                  lastName={selectedPerson.lastName}
+                  size="default"
+                />
                 <div className="grid gap-1">
                   <p className="font-bold text-base leading-none">
                     {selectedPerson.firstName} {selectedPerson.lastName}

@@ -5,6 +5,7 @@ import { ArrowUpRight, Globe, Mail, MapPin, Pencil, Phone, User, Users } from "l
 
 import { getAddress } from "@/actions/addresses";
 import { getPeople } from "@/actions/people";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
           id: p.id!,
           firstName: p.firstName,
           lastName: p.lastName,
+          photoUrl: p.photoUrl,
           email: p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "N/A",
           phone: p.phones?.find((ph) => ph.isPrimary)?.number || p.phones?.[0]?.number || "N/A",
           type: addrLink.type,
@@ -52,6 +54,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
           id: p.id!,
           firstName: p.firstName,
           lastName: p.lastName,
+          photoUrl: p.photoUrl,
           email: p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "N/A",
           phone: p.phones?.find((ph) => ph.isPrimary)?.number || p.phones?.[0]?.number || "N/A",
           type: "Home",
@@ -140,26 +143,34 @@ export default async function AddressPage({ params }: AddressPageProps) {
                 <div className="divide-y">
                   {associatedPeople.map((person) => (
                     <div key={person.id} className="group flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
-                            {person.firstName} {person.lastName}
-                          </span>
-                          <Badge variant={person.isPrimary ? "default" : "secondary"} className="py-0 text-[10px]">
-                            {person.type} {person.isPrimary && "(Primary)"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-muted-foreground text-xs">
-                          {person.email && person.email !== "N/A" && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" /> {person.email}
+                      <div className="flex items-center gap-3">
+                        <PersonAvatar
+                          photoUrl={person.photoUrl}
+                          firstName={person.firstName}
+                          lastName={person.lastName}
+                          size="sm"
+                        />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">
+                              {person.firstName} {person.lastName}
                             </span>
-                          )}
-                          {person.phone && person.phone !== "N/A" && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" /> {formatPhoneNumber(person.phone)}
-                            </span>
-                          )}
+                            <Badge variant={person.isPrimary ? "default" : "secondary"} className="py-0 text-[10px]">
+                              {person.type} {person.isPrimary && "(Primary)"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-muted-foreground text-xs">
+                            {person.email && person.email !== "N/A" && (
+                              <span className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" /> {person.email}
+                              </span>
+                            )}
+                            {person.phone && person.phone !== "N/A" && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" /> {formatPhoneNumber(person.phone)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <Link href={`/dashboard/crm/people/${person.id}`}>

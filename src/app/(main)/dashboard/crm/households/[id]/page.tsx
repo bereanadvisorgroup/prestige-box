@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, Home, Mail, MapPin, Pencil, Phone, User, Users } from "lucide-react";
 
 import { getHousehold } from "@/actions/households";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,29 +131,37 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                         key={person.id}
                         className="group flex items-center justify-between py-4 first:pt-0 last:pb-0"
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">
-                              {person.firstName} {person.lastName}
-                            </span>
-                            <Badge
-                              variant={role === "home_owner" ? "default" : "secondary"}
-                              className="py-0 text-[10px] capitalize"
-                            >
-                              {role?.replace("_", " ")}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-4 text-muted-foreground text-xs">
-                            {email && (
-                              <span className="flex items-center gap-1">
-                                <Mail className="h-3 w-3" /> {email}
+                        <div className="flex items-center gap-3">
+                          <PersonAvatar
+                            photoUrl={person.photoUrl}
+                            firstName={person.firstName}
+                            lastName={person.lastName}
+                            size="sm"
+                          />
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm">
+                                {person.firstName} {person.lastName}
                               </span>
-                            )}
-                            {phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" /> {formatPhoneNumber(phone)}
-                              </span>
-                            )}
+                              <Badge
+                                variant={role === "home_owner" ? "default" : "secondary"}
+                                className="py-0 text-[10px] capitalize"
+                              >
+                                {role?.replace("_", " ")}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-muted-foreground text-xs">
+                              {email && (
+                                <span className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3" /> {email}
+                                </span>
+                              )}
+                              {phone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" /> {formatPhoneNumber(phone)}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <Link href={`/dashboard/crm/people/${person.id}`}>

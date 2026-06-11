@@ -13,6 +13,7 @@ import { getAddresses } from "@/actions/addresses";
 import { createHousehold, updateHousehold } from "@/actions/households";
 import { getPeople } from "@/actions/people";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,9 +172,12 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                       className="flex flex-col items-start justify-between gap-4 rounded-md border bg-muted/10 p-4 md:flex-row md:items-center"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-primary/10 p-2">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
+                        <PersonAvatar
+                          photoUrl={person?.photoUrl}
+                          firstName={person?.firstName}
+                          lastName={person?.lastName}
+                          size="sm"
+                        />
                         <div>
                           <p className="font-medium text-sm">
                             {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}

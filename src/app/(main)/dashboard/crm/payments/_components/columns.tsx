@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Row } from "@tanstack/react-table";
 import { Calendar, CreditCard, DollarSign, Shield, User } from "lucide-react";
 
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 
@@ -12,15 +13,20 @@ export const columns = [
   {
     accessorKey: "clientName",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Client" />,
-    cell: ({ row }: { row: Row<any> }) => (
-      <Link
-        href={`/dashboard/crm/clients/${row.original.clientId}`}
-        className="flex items-center gap-2 decoration-primary/50 underline-offset-4 hover:underline"
-      >
-        <User className="h-3 w-3 text-muted-foreground" />
-        <span className="font-medium text-black">{row.original.clientName}</span>
-      </Link>
-    ),
+    cell: ({ row }: { row: Row<any> }) => {
+      const parts = row.original.clientName?.split(/\s+/) || [];
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      return (
+        <Link
+          href={`/dashboard/crm/clients/${row.original.clientId}`}
+          className="flex items-center gap-2 decoration-primary/50 underline-offset-4 hover:underline"
+        >
+          <PersonAvatar photoUrl={row.original.clientPhotoUrl} firstName={firstName} lastName={lastName} size="sm" />
+          <span className="font-medium text-black">{row.original.clientName}</span>
+        </Link>
+      );
+    },
   },
   {
     accessorKey: "paymentAccountName",

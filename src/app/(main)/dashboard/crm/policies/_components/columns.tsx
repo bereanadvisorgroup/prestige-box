@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Row } from "@tanstack/react-table";
 import { ArrowUpRight, Calendar, Pencil, Shield, Trash2, User } from "lucide-react";
 
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,23 +16,26 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
   {
     accessorKey: "clientName",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Client" />,
-    cell: ({ row }: { row: Row<any> }) => (
-      <div className="flex flex-col">
-        <div className="flex items-center gap-1">
-          <Link
-            href={`/dashboard/crm/policies/${row.original.id}`}
-            className="flex items-center gap-1 font-semibold text-primary hover:underline"
-          >
-            <span>{row.original.clientName}</span>
-            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-          </Link>
+    cell: ({ row }: { row: Row<any> }) => {
+      const parts = row.original.clientName?.split(/\s+/) || [];
+      const firstName = parts[0] || "";
+      const lastName = parts.slice(1).join(" ") || "";
+      return (
+        <div className="flex items-center gap-2">
+          <PersonAvatar photoUrl={row.original.clientPhotoUrl} firstName={firstName} lastName={lastName} size="sm" />
+          <div className="flex flex-col">
+            <Link
+              href={`/dashboard/crm/policies/${row.original.id}`}
+              className="flex items-center gap-1 font-semibold text-primary hover:underline"
+            >
+              <span>{row.original.clientName}</span>
+              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+            </Link>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">Policy Client</span>
+          </div>
         </div>
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-tighter">
-          <User className="h-2.5 w-2.5" />
-          Policy Client
-        </span>
-      </div>
-    ),
+      );
+    },
   },
   {
     accessorKey: "carrierName",

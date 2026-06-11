@@ -58,6 +58,7 @@ export const PersonSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
   suffix: z.string().optional(),
+  photoUrl: z.string().optional().nullable(),
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
   driversLicense: DriversLicenseSchema.optional(),

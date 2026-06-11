@@ -9,6 +9,7 @@ export interface ScheduledPayment {
   policyId: string;
   clientId: string;
   clientName: string;
+  clientPhotoUrl?: string | null;
   policyName: string;
   policyNumber: string;
   carrierName: string;
@@ -125,7 +126,7 @@ export async function getPaymentsForMonth(month: number, year: number) {
             ? clientPayments.find((a) => a.id === policy.paymentAccountId)?.name || "Unknown Account"
             : "No Account Selected";
 
-          const clientPerson = client?.person as { firstName?: string; lastName?: string } | null;
+          const clientPerson = client?.person as { firstName?: string; lastName?: string; photoUrl?: string } | null;
           const clientName = clientPerson
             ? `${clientPerson.firstName || ""} ${clientPerson.lastName || ""}`.trim()
             : "Unknown Client";
@@ -134,6 +135,7 @@ export async function getPaymentsForMonth(month: number, year: number) {
             policyId: policy.id,
             clientId: policy.clientId,
             clientName,
+            clientPhotoUrl: clientPerson?.photoUrl || null,
             policyName: policy.policyName,
             policyNumber: policy.policyNumber,
             carrierName: company?.name || "Unknown Carrier",

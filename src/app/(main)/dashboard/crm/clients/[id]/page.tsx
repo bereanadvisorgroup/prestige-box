@@ -7,7 +7,7 @@ import { getClient } from "@/actions/clients";
 import { getCompaniesByClient } from "@/actions/companies";
 import { getClientPoliciesByClient } from "@/actions/policies";
 import { getSportsNews } from "@/actions/sports";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +53,13 @@ export default async function ClientPage({ params }: ClientPageProps) {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 border-2 border-primary/10">
+            {person?.photoUrl && (
+              <AvatarImage
+                src={person.photoUrl}
+                alt={`${person.firstName} ${person.lastName}`}
+                className="object-cover"
+              />
+            )}
             <AvatarFallback className="bg-primary/5 text-2xl text-primary">
               {person?.firstName?.[0]}
               {person?.lastName?.[0]}

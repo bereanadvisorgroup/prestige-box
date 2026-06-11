@@ -19,7 +19,7 @@ import { getAddress } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
 import { getLawyers } from "@/actions/lawyers";
 import { getPerson } from "@/actions/people";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +63,13 @@ export default async function PersonPage({ params }: PersonPageProps) {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
+            {person.photoUrl && (
+              <AvatarImage
+                src={person.photoUrl}
+                alt={`${person.firstName} ${person.lastName}`}
+                className="object-cover"
+              />
+            )}
             <AvatarFallback className="rounded-md bg-primary/5 font-bold text-2xl text-primary">
               {initials || <User className="h-8 w-8" />}
             </AvatarFallback>

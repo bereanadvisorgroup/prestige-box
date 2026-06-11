@@ -5,6 +5,7 @@ import { AlertCircle, ArrowLeft, Calendar, FileText, User } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getClientPolicy } from "@/actions/policies";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,9 +165,17 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                 <div className="space-y-4">
                   <div>
                     <p className="mb-1 font-medium text-muted-foreground text-sm">Name</p>
-                    <p className="font-medium text-foreground">
-                      {personData.firstName} {personData.lastName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <PersonAvatar
+                        photoUrl={personData.photoUrl}
+                        firstName={personData.firstName}
+                        lastName={personData.lastName}
+                        size="sm"
+                      />
+                      <p className="font-medium text-foreground">
+                        {personData.firstName} {personData.lastName}
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <p className="mb-1 font-medium text-muted-foreground text-sm">Email</p>
