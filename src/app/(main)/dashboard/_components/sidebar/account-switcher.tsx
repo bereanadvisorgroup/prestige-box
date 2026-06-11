@@ -68,8 +68,8 @@ export function AccountSwitcher() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <BadgeCheck />
+          <DropdownMenuItem onClick={() => router.push("/dashboard/profile")} className="cursor-pointer">
+            <BadgeCheck className="mr-2 h-4 w-4" />
             Account
           </DropdownMenuItem>
           <DropdownMenuItem>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -10,11 +10,16 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { updateUser } from "@/actions/users";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { UserProfile, UserRole } from "@/stores/auth.store";
+import { Spinner } from "@/components/ui/spinner";
+import { supabase } from "@/lib/supabase.client";
+import { getInitials } from "@/lib/utils";
+import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
+import { Camera, Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -33,6 +38,12 @@ interface EditUserFormProps {
 export function EditUserForm({ user }: EditUserFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [photoURL, setPhotoURL] = useState<string>(user.photoURL || "");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { profile: currentProfile, setProfile } = useAuthStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,6 +54,89 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Please select a valid image (JPEG, PNG, GIF, or WebP).");
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("File size must be under 2MB.");
+        return;
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.uid}/${Date.now()}-avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = urlData.publicUrl;
+
+      // Clean up old custom photo if it was in avatars bucket
+      if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.uid)) {
+        try {
+          const oldPath = photoURL.split("/public/avatars/")[1];
+          if (oldPath) {
+            await supabase.storage.from("avatars").remove([oldPath]);
+          }
+        } catch (removeErr) {
+          console.warn("Could not clean up old custom avatar file:", removeErr);
+        }
+      }
+
+      setPhotoURL(publicUrl);
+      toast.success("Photo uploaded successfully! Save changes to persist.");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload profile photo.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileUpload(file);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileUpload(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.uid)) {
+      try {
+        const oldPath = photoURL.split("/public/avatars/")[1];
+        if (oldPath) {
+          await supabase.storage.from("avatars").remove([oldPath]);
+        }
+      } catch (removeErr) {
+        console.warn("Could not delete custom avatar from storage:", removeErr);
+      }
+    }
+    setPhotoURL("");
+    toast.success("Photo removed! Save changes to persist.");
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
@@ -50,9 +144,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
         firstName: values.firstName,
         lastName: values.lastName,
         role: values.role as UserRole,
+        photoURL: photoURL || undefined,
       });
 
       if (result.success) {
+        if (currentProfile && currentProfile.uid === user.uid) {
+          setProfile({
+            ...currentProfile,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            role: values.role as UserRole,
+            photoURL: photoURL || "",
+          });
+        }
         toast.success("User updated successfully");
         router.push("/dashboard/admin/users");
         router.refresh();
@@ -70,6 +174,72 @@ export function EditUserForm({ user }: EditUserFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
+        {/* Photo Section */}
+        <div className="flex flex-col items-center gap-6 sm:flex-row pb-4 border-b">
+          <div
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-dashed transition-all duration-300 ${
+              isDragging
+                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                : "border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/40"
+            }`}
+            aria-label="Upload profile photo"
+          >
+            <Avatar className="h-[88px] w-[88px]">
+              <AvatarImage
+                src={photoURL || undefined}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="object-cover"
+              />
+              <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">
+                {getInitials(`${user.firstName} ${user.lastName}`)}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <Camera className="h-5 w-5 text-white" />
+              <span className="mt-1 text-[8px] text-white font-medium">Upload</span>
+            </div>
+
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
+                <Spinner className="h-6 w-6 text-primary" />
+              </div>
+            )}
+          </div>
+
+          <input
+            id="avatar-upload-input"
+            type="file"
+            ref={fileInputRef}
+            onChange={onFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <h2 className="font-semibold text-base">Profile Picture</h2>
+            <p className="text-muted-foreground text-xs">
+              Click the avatar to upload an image, or drag and drop a file (up to 2MB).
+            </p>
+            {photoURL && (
+              <Button
+                id="remove-photo-btn"
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRemovePhoto}
+                className="h-7 w-fit gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40 transition-all duration-300"
+              >
+                <Trash2 className="h-3 w-3" />
+                Remove Photo
+              </Button>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}

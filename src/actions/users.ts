@@ -104,7 +104,10 @@ export async function getUsers() {
   }
 }
 
-export async function updateUser(uid: string, data: { firstName: string; lastName: string; role: string }) {
+export async function updateUser(
+  uid: string,
+  data: { firstName: string; lastName: string; role: string; photoURL?: string },
+) {
   try {
     // Update Document in public.users table
     const { error: dbError } = await supabaseServer
@@ -113,6 +116,7 @@ export async function updateUser(uid: string, data: { firstName: string; lastNam
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
+        photoURL: data.photoURL,
         updatedAt: new Date().toISOString(),
       })
       .eq("uid", uid);

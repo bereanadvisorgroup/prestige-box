@@ -59,26 +59,33 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       phones: p.phones || defaultPhones,
       addresses: p.addresses || defaultAddresses,
       addressIds: p.addressIds || defaultAddresses.map((a) => a.id),
-      driversLicense: p.driversLicense ? {
-        number: p.driversLicense.number ?? "",
-        issueState: ((p.driversLicense as Record<string, unknown>).issueState as string) ?? ((p.driversLicense as Record<string, unknown>).state as string) ?? "",
-        issueDate: p.driversLicense.issueDate ?? "",
-        expirationDate: p.driversLicense.expirationDate ?? "",
-      } : {
-        number: "",
-        issueState: "",
-        issueDate: "",
-        expirationDate: "",
-      },
-      pii: p.pii ? {
-        ssn: p.pii.ssn ?? "",
-        biologicalGender: p.pii.biologicalGender ?? undefined,
-        birthDate: p.pii.birthDate ?? "",
-      } : {
-        ssn: "",
-        biologicalGender: undefined,
-        birthDate: "",
-      },
+      driversLicense: p.driversLicense
+        ? {
+            number: p.driversLicense.number ?? "",
+            issueState:
+              ((p.driversLicense as Record<string, unknown>).issueState as string) ??
+              ((p.driversLicense as Record<string, unknown>).state as string) ??
+              "",
+            issueDate: p.driversLicense.issueDate ?? "",
+            expirationDate: p.driversLicense.expirationDate ?? "",
+          }
+        : {
+            number: "",
+            issueState: "",
+            issueDate: "",
+            expirationDate: "",
+          },
+      pii: p.pii
+        ? {
+            ssn: p.pii.ssn ?? "",
+            biologicalGender: p.pii.biologicalGender ?? undefined,
+            birthDate: p.pii.birthDate ?? "",
+          }
+        : {
+            ssn: "",
+            biologicalGender: undefined,
+            birthDate: "",
+          },
     };
   };
 
