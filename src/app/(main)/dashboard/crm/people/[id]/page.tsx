@@ -5,15 +5,16 @@ import {
   ArrowUpRight,
   Building2,
   Calculator,
-  Contact,
-  Fingerprint,
-  GraduationCap,
-  Mail,
-  MapPin,
+  Database,
+  HeartHandshake,
+  HeartPulse,
+  Landmark,
   Pencil,
-  Phone,
   ReceiptText,
+  Scale,
   Shield,
+  ShieldAlert,
+  TrendingUp,
   User,
 } from "lucide-react";
 
@@ -22,14 +23,19 @@ import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
+import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
 import { getLawFirms } from "@/actions/law-firms";
-import { getPeople, getPerson } from "@/actions/people";
+import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
+import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
+import { getMoneyManagers } from "@/actions/money-managers";
+import { getPerson } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
+import { getRecordKeepers } from "@/actions/record-keepers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPhoneNumber } from "@/lib/utils";
+
+import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
 interface PersonPageProps {
   params: {
@@ -47,41 +53,87 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   const person = result.person;
 
-  // Fetch roles
-  const [clientsRes, lawFirmsRes, accountingFirmsRes, actuarialFirmsRes, banksRes, propertyAndCasualtyFirmsRes] =
-    await Promise.all([
-      getClients(),
-      getLawFirms(),
-      getAccountingFirms(),
-      getActuarialFirms(),
-      getBanks(),
-      getPropertyAndCasualtyFirms(),
-    ]);
+  // Fetch roles/associations
+  const [
+    clientsRes,
+    lawFirmsRes,
+    accountingFirmsRes,
+    actuarialFirmsRes,
+    banksRes,
+    propertyAndCasualtyFirmsRes,
+    lifeRes,
+    disabilityRes,
+    ltcRes,
+    moneyRes,
+    recordRes,
+  ] = await Promise.all([
+    getClients(),
+    getLawFirms(),
+    getAccountingFirms(),
+    getActuarialFirms(),
+    getBanks(),
+    getPropertyAndCasualtyFirms(),
+    getLifeInsuranceCompanies(),
+    getDisabilityInsuranceCompanies(),
+    getLongTermCareInsurances(),
+    getMoneyManagers(),
+    getRecordKeepers(),
+  ]);
 
-  const associatedClient = ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id);
-  const associatedLawFirm = ((lawFirmsRes.success && lawFirmsRes.lawFirms) || []).find(
+  const associatedClient = ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id) || null;
+  
+  const associatedLawFirms = ((lawFirmsRes.success && lawFirmsRes.lawFirms) || []).filter(
     (l) => !!person.id && l.personIds?.includes(person.id),
   );
-  const associatedAccountingFirm = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).find(
+  const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
     (a) => !!person.id && a.personIds?.includes(person.id),
   );
-  const associatedActuarialFirm = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).find(
+  const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => !!person.id && act.personIds?.includes(person.id),
   );
-  const associatedBank = ((banksRes.success && banksRes.banks) || []).find(
+  const associatedBanks = ((banksRes.success && banksRes.banks) || []).filter(
     (b) => !!person.id && b.personIds?.includes(person.id),
   );
-  const associatedPropertyAndCasualty = (
+  const associatedPropertyAndCasualties = (
     (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) ||
     []
-  ).find((pc) => !!person.id && pc.personIds?.includes(person.id));
+  ).filter((pc) => !!person.id && pc.personIds?.includes(person.id));
+
+  const associatedLife = ((lifeRes.success && lifeRes.companies) || []).filter(
+    (c) => !!person.id && c.personIds?.includes(person.id),
+  );
+  const associatedDisability = ((disabilityRes.success && disabilityRes.companies) || []).filter(
+    (c) => !!person.id && c.personIds?.includes(person.id),
+  );
+  const associatedLtc = ((ltcRes.success && ltcRes.companies) || []).filter(
+    (c) => !!person.id && c.personIds?.includes(person.id),
+  );
+  const associatedMoneyManagers = ((moneyRes.success && moneyRes.moneyManagers) || []).filter(
+    (c) => !!person.id && c.personIds?.includes(person.id),
+  );
+  const associatedRecordKeepers = ((recordRes.success && recordRes.recordKeepers) || []).filter(
+    (c) => !!person.id && c.personIds?.includes(person.id),
+  );
 
   // Fetch addresses
   const addressPromises = (person.addressIds || []).map((addrId) => getAddress(addrId));
   const addressResults = await Promise.all(addressPromises);
-  const addresses = addressResults.map((res) => (res.success && res.address ? res.address : null)).filter(Boolean);
+  const addresses = addressResults.map((res) => (res.success && res.address ? res.address : null)).filter(Boolean) as any[];
 
   const initials = `${person.firstName[0] || ""}${person.lastName[0] || ""}`.toUpperCase();
+
+  const hasAnyAssociation =
+    associatedClient ||
+    associatedLawFirms.length > 0 ||
+    associatedAccountingFirms.length > 0 ||
+    associatedActuarialFirms.length > 0 ||
+    associatedBanks.length > 0 ||
+    associatedPropertyAndCasualties.length > 0 ||
+    associatedLife.length > 0 ||
+    associatedDisability.length > 0 ||
+    associatedLtc.length > 0 ||
+    associatedMoneyManagers.length > 0 ||
+    associatedRecordKeepers.length > 0;
 
   return (
     <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
@@ -117,47 +169,77 @@ export default async function PersonPage({ params }: PersonPageProps) {
                   </Badge>
                 </Link>
               )}
-              {associatedLawFirm && (
-                <Link href={`/dashboard/crm/law-firms/${associatedLawFirm.id}`}>
+              {associatedLawFirms.length > 0 && (
+                <Link href={`/dashboard/crm/law-firms/${associatedLawFirms[0].id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-purple-100 text-purple-800 hover:bg-purple-200">
-                    <Building2 className="h-3 w-3" /> Law Firm <ArrowUpRight className="h-3 w-3" />
+                    <Scale className="h-3 w-3" /> Law Firm <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {associatedAccountingFirm && (
-                <Link href={`/dashboard/crm/accounting-firms/${associatedAccountingFirm.id}`}>
+              {associatedAccountingFirms.length > 0 && (
+                <Link href={`/dashboard/crm/accounting-firms/${associatedAccountingFirms[0].id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-amber-100 text-amber-800 hover:bg-amber-200">
                     <ReceiptText className="h-3 w-3" /> Accounting Firm <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {associatedActuarialFirm && (
-                <Link href={`/dashboard/crm/actuarial-firms/${associatedActuarialFirm.id}`}>
+              {associatedActuarialFirms.length > 0 && (
+                <Link href={`/dashboard/crm/actuarial-firms/${associatedActuarialFirms[0].id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-indigo-100 text-indigo-800 hover:bg-indigo-200">
                     <Calculator className="h-3 w-3" /> Actuarial Firm <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {associatedBank && (
-                <Link href={`/dashboard/crm/banks/${associatedBank.id}`}>
+              {associatedBanks.length > 0 && (
+                <Link href={`/dashboard/crm/banks/${associatedBanks[0].id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-                    <Building2 className="h-3 w-3" /> Bank <ArrowUpRight className="h-3 w-3" />
+                    <Landmark className="h-3 w-3" /> Bank <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {associatedPropertyAndCasualty && (
-                <Link href={`/dashboard/crm/property-and-casualty/${associatedPropertyAndCasualty.id}`}>
+              {associatedPropertyAndCasualties.length > 0 && (
+                <Link href={`/dashboard/crm/property-and-casualty/${associatedPropertyAndCasualties[0].id}`}>
                   <Badge className="flex cursor-pointer items-center gap-1 border-none bg-teal-100 text-teal-800 hover:bg-teal-200">
                     <Shield className="h-3 w-3" /> Property And Casualty <ArrowUpRight className="h-3 w-3" />
                   </Badge>
                 </Link>
               )}
-              {!associatedClient &&
-                !associatedLawFirm &&
-                !associatedAccountingFirm &&
-                !associatedActuarialFirm &&
-                !associatedBank &&
-                !associatedPropertyAndCasualty && <Badge variant="outline">Contact</Badge>}
+              {associatedLife.length > 0 && (
+                <Link href={`/dashboard/admin/life-insurance-companies/${associatedLife[0].id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-red-100 text-red-800 hover:bg-red-200">
+                    <HeartHandshake className="h-3 w-3" /> Life Insurance <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {associatedDisability.length > 0 && (
+                <Link href={`/dashboard/admin/disability-insurance-companies/${associatedDisability[0].id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-orange-100 text-orange-800 hover:bg-orange-200">
+                    <ShieldAlert className="h-3 w-3" /> Disability Insurance <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {associatedLtc.length > 0 && (
+                <Link href={`/dashboard/admin/long-term-care-insurance/${associatedLtc[0].id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-pink-100 text-pink-800 hover:bg-pink-200">
+                    <HeartPulse className="h-3 w-3" /> Long Term Care <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {associatedMoneyManagers.length > 0 && (
+                <Link href={`/dashboard/admin/money-managers/${associatedMoneyManagers[0].id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-cyan-100 text-cyan-800 hover:bg-cyan-200">
+                    <TrendingUp className="h-3 w-3" /> Money Manager <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {associatedRecordKeepers.length > 0 && (
+                <Link href={`/dashboard/admin/record-keepers/${associatedRecordKeepers[0].id}`}>
+                  <Badge className="flex cursor-pointer items-center gap-1 border-none bg-slate-100 text-slate-800 hover:bg-slate-200">
+                    <Database className="h-3 w-3" /> Record Keeper <ArrowUpRight className="h-3 w-3" />
+                  </Badge>
+                </Link>
+              )}
+              {!hasAnyAssociation && <Badge variant="outline">Contact</Badge>}
             </div>
           </div>
         </div>
@@ -169,184 +251,21 @@ export default async function PersonPage({ params }: PersonPageProps) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="space-y-6">
-          {/* Contact Details */}
-          <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
-            <CardHeader className="bg-muted/30 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Contact className="h-5 w-5 text-primary" /> Contact Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <div>
-                <p className="mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Email Addresses
-                </p>
-                {person.emails && person.emails.length > 0 ? (
-                  <div className="space-y-2">
-                    {person.emails.map((email) => (
-                      <div key={email.id} className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">{email.address}</span>
-                        <Badge variant={email.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
-                          {email.type} {email.isPrimary && "(Primary)"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No email addresses listed.</p>
-                )}
-              </div>
-
-              <div>
-                <p className="mt-4 mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Phone Numbers
-                </p>
-                {person.phones && person.phones.length > 0 ? (
-                  <div className="space-y-2">
-                    {person.phones.map((phone) => (
-                      <div key={phone.id} className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">{formatPhoneNumber(phone.number)}</span>
-                        <Badge variant={phone.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
-                          {phone.type} {phone.isPrimary && "(Primary)"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No phone numbers listed.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Personal Details */}
-          {(person.pii || person.driversLicense) && (
-            <Card className="border-none shadow-md">
-              <CardHeader className="border-b bg-muted/10 pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Fingerprint className="h-5 w-5 text-primary" /> Personal Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-6">
-                {person.pii && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {person.pii.birthDate && (
-                      <div>
-                        <p className="font-medium text-muted-foreground text-xs">Date of Birth</p>
-                        <p className="mt-0.5 font-semibold text-sm">{person.pii.birthDate}</p>
-                      </div>
-                    )}
-                    {person.pii.biologicalGender && (
-                      <div>
-                        <p className="font-medium text-muted-foreground text-xs">Biological Gender</p>
-                        <p className="mt-0.5 font-semibold text-sm">{person.pii.biologicalGender}</p>
-                      </div>
-                    )}
-                    {person.pii.ssn && (
-                      <div className="col-span-2">
-                        <p className="font-medium text-muted-foreground text-xs">Social Security Number (SSN)</p>
-                        <p className="mt-0.5 font-mono font-semibold text-sm">***-**-{person.pii.ssn.slice(-4)}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {person.driversLicense?.number && (
-                  <div className="mt-2 border-t pt-4">
-                    <p className="mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                      Driver's License
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground text-xs">License Number</p>
-                        <p className="font-mono font-semibold">{person.driversLicense.number}</p>
-                      </div>
-                      {person.driversLicense.issueState && (
-                        <div>
-                          <p className="text-muted-foreground text-xs">State</p>
-                          <p className="font-semibold">{person.driversLicense.issueState}</p>
-                        </div>
-                      )}
-                      {person.driversLicense.issueDate && (
-                        <div>
-                          <p className="text-muted-foreground text-xs">Issue Date</p>
-                          <p className="font-semibold">{person.driversLicense.issueDate}</p>
-                        </div>
-                      )}
-                      {person.driversLicense.expirationDate && (
-                        <div>
-                          <p className="text-muted-foreground text-xs">Expiration Date</p>
-                          <p className="font-semibold">{person.driversLicense.expirationDate}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Addresses */}
-        <div className="space-y-6">
-          <Card className="h-full border-none shadow-md">
-            <CardHeader className="border-b bg-muted/10 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-5 w-5 text-primary" /> Associated Locations
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              {addresses.length > 0 ? (
-                <div className="space-y-4">
-                  {addresses.map((address: any) => {
-                    const personAddrInfo = person.addresses?.find((a) => a.id === address.id);
-                    return (
-                      <div
-                        key={address.id}
-                        className="group flex items-start justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/5"
-                      >
-                        <div className="space-y-1">
-                          <p className="font-semibold text-sm">{address.street1}</p>
-                          {address.street2 && <p className="text-sm">{address.street2}</p>}
-                          <p className="text-muted-foreground text-xs">
-                            {address.city}, {address.state} {address.zipCode}
-                          </p>
-                          {personAddrInfo && (
-                            <Badge
-                              variant={personAddrInfo.isPrimary ? "default" : "secondary"}
-                              className="mt-1 py-0 text-[10px]"
-                            >
-                              {personAddrInfo.type} {personAddrInfo.isPrimary && "(Primary)"}
-                            </Badge>
-                          )}
-                        </div>
-                        <Link href={`/dashboard/crm/addresses/${address.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          >
-                            <ArrowUpRight className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-8 text-center text-muted-foreground">
-                  <MapPin className="mx-auto mb-2 h-10 w-10 opacity-20" />
-                  <p className="text-sm">No addresses associated with this person.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <PersonProfileTabs
+        person={person}
+        addresses={addresses}
+        associatedClient={associatedClient}
+        associatedLawFirms={associatedLawFirms}
+        associatedAccountingFirms={associatedAccountingFirms}
+        associatedActuarialFirms={associatedActuarialFirms}
+        associatedBanks={associatedBanks}
+        associatedPropertyAndCasualties={associatedPropertyAndCasualties}
+        associatedLife={associatedLife}
+        associatedDisability={associatedDisability}
+        associatedLtc={associatedLtc}
+        associatedMoneyManagers={associatedMoneyManagers}
+        associatedRecordKeepers={associatedRecordKeepers}
+      />
     </div>
   );
 }

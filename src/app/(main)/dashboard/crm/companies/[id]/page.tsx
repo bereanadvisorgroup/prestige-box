@@ -47,9 +47,6 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
           </Avatar>
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
-            <p className="mt-1 flex items-center gap-2 text-muted-foreground">
-              <Building2 className="h-4 w-4" /> Company ID: {company.id}
-            </p>
           </div>
         </div>
         <div className="flex gap-2">
