@@ -24,9 +24,6 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel
 
-      - name: Install DotEnv
-        run: npm install -g dotenv
-
       - name: Link Project & Pull Settings
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
         env:
@@ -42,7 +39,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Build Project Artifacts
-        run: dotenv -e .env -- vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx dotenv-cli -e .env -- vercel build --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
