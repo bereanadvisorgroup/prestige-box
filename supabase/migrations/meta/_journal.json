@@ -15,6 +15,20 @@
       "when": 1781137790652,
       "tag": "0001_chilly_thing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781140315667,
+      "tag": "0002_fair_killraven",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781140319451,
+      "tag": "0003_third_kingpin",
+      "breakpoints": true
     }
   ]
 }

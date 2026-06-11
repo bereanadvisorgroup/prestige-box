@@ -1,0 +1,1 @@
+ALTER TABLE "lawyers" ADD COLUMN "personIds" uuid[] DEFAULT '{}'::uuid[] NOT NULL;

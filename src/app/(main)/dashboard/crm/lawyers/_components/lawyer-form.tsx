@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GraduationCap, MapPin, Users } from "lucide-react";
+import { GraduationCap, MapPin, Trash2, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ import { getClients } from "@/actions/clients";
 import { createLawyer, updateLawyer } from "@/actions/lawyers";
 import { getPeople } from "@/actions/people";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,12 +38,31 @@ export function LawyerForm({ lawyer }: LawyerFormProps) {
   const form = useForm<Lawyer>({
     resolver: zodResolver(LawyerSchema) as any,
     defaultValues: lawyer || {
-      personId: "",
+      personIds: [],
       firmName: "",
       firmAddressId: "",
       clientIds: [],
     },
   });
+
+  const handleAddPerson = (personId: string) => {
+    const current = form.getValues("personIds") || [];
+    if (!current.includes(personId)) {
+      form.setValue("personIds", [...current, personId]);
+      form.trigger("personIds");
+    } else {
+      toast.error("This person is already associated with this law firm");
+    }
+  };
+
+  const handleRemovePerson = (personId: string) => {
+    const current = form.getValues("personIds") || [];
+    form.setValue(
+      "personIds",
+      current.filter((id) => id !== personId),
+    );
+    form.trigger("personIds");
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -108,36 +128,12 @@ export function LawyerForm({ lawyer }: LawyerFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <GraduationCap className="h-5 w-5" />
-          {lawyer ? "Edit Lawyer" : "Add Lawyer"}
+          {lawyer ? "Edit Law Firm" : "Add Law Firm"}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="personId"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Lawyer Name (Person)
-                  </FormLabel>
-                  <PersonSearchSelect
-                    value={field.value || ""}
-                    onValueChange={(val) => field.onChange(val)}
-                    people={availablePeople}
-                    onPersonCreated={(newPerson) => {
-                      setAvailablePeople((prev) => [...prev, newPerson]);
-                      field.onChange(newPerson.id);
-                    }}
-                  />
-                  <FormDescription>Select the person record for this lawyer.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="firmName"
@@ -171,6 +167,88 @@ export function LawyerForm({ lawyer }: LawyerFormProps) {
                     }}
                   />
                   <FormDescription>Select from shared addresses.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="personIds"
+              render={({ field }) => (
+                <FormItem className="space-y-4">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      Associated Professionals
+                    </FormLabel>
+                    <span className="text-muted-foreground text-xs">
+                      {(field.value || []).length} professional(s) added
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(field.value || []).map((pId) => {
+                      const person = availablePeople.find((p) => p.id === pId);
+                      return (
+                        <div
+                          key={pId}
+                          className="flex flex-col items-start justify-between gap-4 rounded-md border bg-muted/10 p-4 md:flex-row md:items-center"
+                        >
+                          <div className="flex items-center gap-3">
+                            <PersonAvatar
+                              photoUrl={person?.photoUrl}
+                              firstName={person?.firstName}
+                              lastName={person?.lastName}
+                              size="sm"
+                            />
+                            <div>
+                              <p className="font-medium text-sm">
+                                {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                {person?.emails?.find((e) => e.isPrimary)?.address ||
+                                  person?.emails?.[0]?.address ||
+                                  "No Email"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={() => handleRemovePerson(pId)}
+                            className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+
+                    {(field.value || []).length === 0 && (
+                      <div className="rounded-md border border-dashed bg-muted/5 py-6 text-center">
+                        <Users className="mx-auto mb-2 h-8 w-8 text-muted-foreground opacity-20" />
+                        <p className="text-muted-foreground text-sm">No professionals associated yet.</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 pt-2">
+                      <FormLabel>Add Professional to Law Firm</FormLabel>
+                      <PersonSearchSelect
+                        people={availablePeople.filter((p) => !(field.value || []).includes(p.id!))}
+                        onValueChange={(val) => handleAddPerson(val)}
+                        onPersonCreated={(newPerson) => {
+                          setAvailablePeople((prev) => [...prev, newPerson]);
+                          handleAddPerson(newPerson.id!);
+                        }}
+                        placeholder="Search professionals by name..."
+                        value=""
+                      />
+                      <FormDescription>Select professionals to add them to this firm.</FormDescription>
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

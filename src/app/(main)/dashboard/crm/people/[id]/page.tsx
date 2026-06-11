@@ -45,7 +45,9 @@ export default async function PersonPage({ params }: PersonPageProps) {
   const [clientsRes, lawyersRes, accountantsRes] = await Promise.all([getClients(), getLawyers(), getAccountants()]);
 
   const associatedClient = ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id);
-  const associatedLawyer = ((lawyersRes.success && lawyersRes.lawyers) || []).find((l) => l.personId === person.id);
+  const associatedLawyer = ((lawyersRes.success && lawyersRes.lawyers) || []).find((l) =>
+    !!person.id && l.personIds?.includes(person.id),
+  );
   const associatedAccountant = ((accountantsRes.success && accountantsRes.accountants) || []).find(
     (a) => a.personId === person.id,
   );

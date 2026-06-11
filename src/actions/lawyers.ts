@@ -17,7 +17,7 @@ export async function getLawyers() {
     if (!lawyers || lawyers.length === 0) return { success: true, lawyers: [] };
 
     // Fetch person and address details
-    const personIds = Array.from(new Set(lawyers.map((l) => l.personId)));
+    const personIds = Array.from(new Set(lawyers.flatMap((l) => l.personIds || [])));
     const addressIds = Array.from(new Set(lawyers.map((l) => l.firmAddressId).filter(Boolean))) as string[];
 
     const [peopleResult, addressesResult] = await Promise.all([
@@ -53,7 +53,7 @@ export async function getLawyers() {
 
     const lawyersWithDetails = lawyers.map((lawyer) => ({
       ...lawyer,
-      person: peopleMap[lawyer.personId] || null,
+      people: ((lawyer.personIds as string[]) || []).map((id: string) => peopleMap[id]).filter(Boolean),
       address: lawyer.firmAddressId ? addressMap[lawyer.firmAddressId] : null,
     }));
 
@@ -71,15 +71,15 @@ export async function getLawyer(id: string) {
     if (lawyerError) throw new Error((lawyerError as { message: string }).message);
     if (!lawyer) return { success: false, error: "Lawyer not found" };
 
-    // Fetch person details
-    const { data: person, error: personError } = await supabaseServer
-      .from("people")
-      .select("*")
-      .eq("id", lawyer.personId)
-      .single();
-
-    if (personError && personError.code !== "PGRST116") {
-      throw new Error((personError as { message: string }).message);
+    // Fetch people details
+    let people: any[] = [];
+    if (lawyer.personIds && lawyer.personIds.length > 0) {
+      const { data: peopleData, error: peopleError } = await supabaseServer
+        .from("people")
+        .select("*")
+        .in("id", lawyer.personIds);
+      if (peopleError) throw new Error(peopleError.message);
+      people = peopleData || [];
     }
 
     // Fetch address details
@@ -95,7 +95,7 @@ export async function getLawyer(id: string) {
       }
     }
 
-    return { success: true, lawyer: lawyer as Lawyer, person: person || null, address };
+    return { success: true, lawyer: lawyer as Lawyer, people, address };
   } catch (error) {
     console.error(`[getLawyer] Error:`, error);
     return { success: false, error: (error as { message: string }).message };

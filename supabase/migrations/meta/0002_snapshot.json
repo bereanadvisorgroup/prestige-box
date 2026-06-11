@@ -1,6 +1,6 @@
 {
-  "id": "b129901d-ad7f-4344-b14a-b95326cf4b4e",
-  "prevId": "92e60b30-7519-43b4-9067-f06703537687",
+  "id": "e9022ea6-b37d-4eff-a7d6-6f4db1a4fec5",
+  "prevId": "b129901d-ad7f-4344-b14a-b95326cf4b4e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -540,12 +540,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "personId": {
-          "name": "personId",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
         },
         "firmName": {
           "name": "firmName",

@@ -118,7 +118,7 @@ export const clientPolicies = pgTable("client_policies", {
 // 9. Lawyers Table
 export const lawyers = pgTable("lawyers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  personId: uuid("personId").notNull(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),

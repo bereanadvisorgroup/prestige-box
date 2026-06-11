@@ -265,7 +265,7 @@ export const ClientPolicySchema = z.object({
 
 export const LawyerSchema = z.object({
   id: z.string().optional(),
-  personId: z.string(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   clientIds: z.array(z.string()).default([]),

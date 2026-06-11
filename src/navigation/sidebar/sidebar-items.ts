@@ -123,7 +123,7 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Lawyers",
+        title: "Law Firms",
         url: "/dashboard/crm/lawyers",
         icon: GraduationCap,
       },

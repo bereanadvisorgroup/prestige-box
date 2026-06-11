@@ -51,7 +51,7 @@ export default async function PeoplePage() {
   const people = rawPeople.map((person) => {
     const isLinked =
       clients.some((c) => c.personId === person.id) ||
-      lawyers.some((l) => l.personId === person.id) ||
+      lawyers.some((l) => !!person.id && l.personIds?.includes(person.id)) ||
       accountants.some((a) => a.personId === person.id) ||
       households.some((h) => h.memberIds?.some((m) => m.personId === person.id)) ||
       clients.some((c) => c.familyMembers?.some((m) => m.personId === person.id));

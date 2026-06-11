@@ -498,9 +498,14 @@ async function main() {
       const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 2, max: 6 }));
       const lawyerClientIds = randomClients.map((c) => c.id ?? "");
 
+      const associatedPersonIds = [personId];
+      if (i === 0) {
+        associatedPersonIds.push(peopleIds[34]);
+      }
+
       lawyerData.push({
         id: faker.string.uuid(),
-        personId: personId,
+        personIds: associatedPersonIds,
         firmName: `${faker.company.name()} LLP`,
         firmAddressId: randomAddressId,
         clientIds: lawyerClientIds,

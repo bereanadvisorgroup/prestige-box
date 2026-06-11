@@ -7,6 +7,7 @@ import { ArrowUpRight, GraduationCap, MapPin, Pencil, Trash2 } from "lucide-reac
 
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { Address, Lawyer, Person } from "@/types/crm";
 
@@ -16,35 +17,45 @@ export type EnrichedLawyer = Lawyer & {
 
 export const columns = (onDelete: (lawyer: Lawyer) => void) => [
   {
-    accessorKey: "person",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Name" />,
-    cell: ({ row }: { row: Row<EnrichedLawyer & { person?: Person }> }) => {
-      const lawyer = row.original;
-      const name = lawyer.person ? `${lawyer.person.firstName} ${lawyer.person.lastName}` : "Unknown";
-      return (
-        <div className="flex items-center gap-2">
-          <PersonAvatar
-            photoUrl={lawyer.person?.photoUrl}
-            firstName={lawyer.person?.firstName}
-            lastName={lawyer.person?.lastName}
-            fallbackIcon={<GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />}
-          />
-          <Link
-            href={`/dashboard/crm/lawyers/${lawyer.id}`}
-            className="flex items-center gap-1 font-medium text-primary hover:underline"
-          >
-            <span>{name}</span>
-            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-          </Link>
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: "firmName",
     header: ({ column }: any) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<Lawyer> }) => {
       return <span className="text-sm">{row.original.firmName}</span>;
+    },
+  },
+  {
+    accessorKey: "people",
+    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Name" />,
+    cell: ({ row }: { row: Row<EnrichedLawyer & { people?: Person[] }> }) => {
+      const lawyer = row.original;
+      const people = lawyer.people || [];
+      const names = people.length > 0 ? people.map((p) => `${p.firstName} ${p.lastName}`).join(", ") : "Unknown";
+      return (
+        <div className="flex items-center gap-2">
+          <AvatarGroup>
+            {people.slice(0, 3).map((person) => (
+              <PersonAvatar
+                key={person.id}
+                photoUrl={person.photoUrl}
+                firstName={person.firstName}
+                lastName={person.lastName}
+                size="sm"
+                fallbackIcon={<GraduationCap className="h-3 w-3 text-muted-foreground" />}
+              />
+            ))}
+            {people.length > 3 && (
+              <AvatarGroupCount className="text-[10px] font-bold">+{people.length - 3}</AvatarGroupCount>
+            )}
+          </AvatarGroup>
+          <Link
+            href={`/dashboard/crm/lawyers/${lawyer.id}`}
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <span className="max-w-[200px] truncate">{names}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+          </Link>
+        </div>
+      );
     },
   },
   {

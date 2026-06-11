@@ -54,11 +54,7 @@ export function LawyersTable({ data }: LawyersTableProps) {
         onClose={() => setLawyerToDelete(null)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        lawyerName={
-          lawyerToDelete
-            ? `${(lawyerToDelete as any).person?.firstName} ${(lawyerToDelete as any).person?.lastName}`
-            : ""
-        }
+        lawyerName={lawyerToDelete ? lawyerToDelete.firmName : ""}
       />
     </>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowUpRight, Briefcase, Building2, Edit, GraduationCap, Mail, MapPin, Phone, Users } from "lucide-react";
+import { ArrowUpRight, Briefcase, Building2, Edit, Mail, MapPin, Phone, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getLawyer } from "@/actions/lawyers";
@@ -26,8 +26,8 @@ export default async function LawyerDetailsPage({ params }: LawyerDetailsPagePro
     notFound();
   }
 
-  const { lawyer, person: personRaw, address: addressRaw } = result;
-  const person = personRaw as Person | null;
+  const { lawyer, people: peopleRaw, address: addressRaw } = result;
+  const people = (peopleRaw || []) as Person[];
   const address = addressRaw as Address | null;
 
   // Fetch associated clients details
@@ -39,67 +39,95 @@ export default async function LawyerDetailsPage({ params }: LawyerDetailsPagePro
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-primary/10">
-            {person?.photoUrl && (
-              <AvatarImage
-                src={person.photoUrl}
-                alt={person ? `${person.firstName} ${person.lastName}` : "Lawyer"}
-                className="object-cover"
-              />
-            )}
-            <AvatarFallback className="bg-primary/5 text-xl text-primary flex items-center justify-center h-full w-full">
-              {person ? (
-                `${person.firstName?.[0] || ""}${person.lastName?.[0] || ""}`
-              ) : (
-                <GraduationCap className="h-8 w-8" />
-              )}
+          <Avatar className="h-16 w-16 border-2 border-primary/10 rounded-md">
+            <AvatarFallback className="bg-primary/5 text-primary flex items-center justify-center h-full w-full rounded-md">
+              <Building2 className="h-8 w-8 text-primary" />
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="font-bold text-3xl tracking-tight">
-              {person ? `${person.firstName} ${person.lastName}` : "Unknown Lawyer"}
-            </h1>
-            <p className="mt-1 flex items-center gap-2 text-muted-foreground">
-              <Building2 className="h-4 w-4" />
-              {lawyer.firmName}
+            <h1 className="font-bold text-3xl tracking-tight">{lawyer.firmName}</h1>
+            <p className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
+              <Users className="h-4 w-4" />
+              {people.length} Associated Professional{people.length === 1 ? "" : "s"}
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="font-semibold shadow-sm">
           <Link href={`/dashboard/crm/lawyers/${lawyer.id}/edit`}>
             <Edit className="mr-2 h-4 w-4" />
-            Edit Lawyer
+            Edit Law Firm
           </Link>
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Card className="h-fit md:col-span-1">
+        <Card className="h-fit md:col-span-1 border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">Contact Information</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Associated Professionals
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="font-medium text-sm leading-none">Email</p>
-                <p className="text-muted-foreground text-sm">
-                  {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address || "N/A"}
-                </p>
+          <CardContent className="space-y-6">
+            {people.length > 0 ? (
+              <div className="space-y-4">
+                {people.map((person, index) => {
+                  const email = person.emails?.find((e) => e.isPrimary)?.address || person.emails?.[0]?.address;
+                  const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number;
+                  return (
+                    <div key={person.id} className="space-y-3">
+                      {index > 0 && <Separator className="my-3" />}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border border-muted">
+                          {person.photoUrl && (
+                            <AvatarImage
+                              src={person.photoUrl}
+                              alt={`${person.firstName} ${person.lastName}`}
+                              className="object-cover"
+                            />
+                          )}
+                          <AvatarFallback className="bg-primary/5 text-xs text-primary font-bold">
+                            {person.firstName?.[0] || ""}
+                            {person.lastName?.[0] || ""}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <Link
+                            href={`/dashboard/crm/people/${person.id}`}
+                            className="font-semibold text-sm hover:underline text-primary flex items-center gap-0.5"
+                          >
+                            {person.firstName} {person.lastName}
+                            <ArrowUpRight className="h-3 w-3 opacity-60" />
+                          </Link>
+                          <p className="text-muted-foreground text-xs font-medium">Legal Professional</p>
+                        </div>
+                      </div>
+
+                      <div className="pl-13 space-y-1 text-xs">
+                        {email && (
+                          <div className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                            <Mail className="h-3.5 w-3.5" />
+                            <a href={`mailto:${email}`}>{email}</a>
+                          </div>
+                        )}
+                        {phone && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Phone className="h-3.5 w-3.5" />
+                            <span>{formatPhoneNumber(phone)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="font-medium text-sm leading-none">Phone</p>
-                <p className="text-muted-foreground text-sm">
-                  {formatPhoneNumber(person?.phones?.find((p) => p.isPrimary)?.number || person?.phones?.[0]?.number) ||
-                    "N/A"}
-                </p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">No associated professionals.</p>
+            )}
+
             <Separator />
-            <div className="flex items-start gap-3">
+
+            <div className="flex items-start gap-3 pt-2">
               <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
               <div className="space-y-1">
                 <p className="font-medium text-sm leading-none">Firm Address</p>
