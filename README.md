@@ -1,3 +1,3 @@
 # Prestige Box
 
-Customer Relationship Management (CRM) for Financial Advisors.
+Customer Relationship Management (CRM) for prestegious Financial Advisors.
