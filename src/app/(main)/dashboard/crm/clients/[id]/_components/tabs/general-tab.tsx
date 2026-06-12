@@ -4,8 +4,9 @@ import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { CreditCard, Heart, Trash2, Trophy } from "lucide-react";
+import { CreditCard, Heart, Trash2, Trophy, Users, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 import { updateClient } from "@/actions/clients";
 import { getClientPoliciesByClient } from "@/actions/policies";
@@ -17,14 +18,17 @@ import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
 import type { Client, PaymentAccount } from "@/types/crm";
 
-export function GeneralTab({ client }: { client: Client }) {
+export function GeneralTab({ client, allClients = [] }: { client: Client; allClients?: any[] }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [hobbies, setHobbies] = useState<string[]>(client.hobbies || []);
   const [hobbyInput, setHobbyInput] = useState("");
   const [favoriteTeams, setFavoriteTeams] = useState<string[]>(client.favoriteSportsTeams || []);
+  const [referredById, setReferredById] = useState<string | null>(client.referredById || null);
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>(client.paymentAccounts || []);
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
+
+  const referredClients = allClients.filter((c) => c.referredById === client.id);
 
   const handleUpdate = async (updates: Partial<Client>) => {
     try {
@@ -95,8 +99,83 @@ export function GeneralTab({ client }: { client: Client }) {
     handleUpdate({ paymentAccounts: next });
   };
 
+  const handleSetReferrer = (val: string) => {
+    // val can be the ID or "none"
+    const newId = val === "none" ? null : val;
+    setReferredById(newId);
+    handleUpdate({ referredById: newId });
+  };
+
   return (
     <div className="space-y-6">
+      <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
+        <CardHeader className="bg-muted/10">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Users className="h-5 w-5 text-primary" /> Referrals
+          </CardTitle>
+          <CardDescription>Manage who referred this client and the clients they have referred.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">Referred By</label>
+            <Combobox
+              onValueChange={(val: any) => {
+                if (typeof val === "string") handleSetReferrer(val);
+              }}
+            >
+              <ComboboxInput
+                placeholder="Search clients..."
+                value={
+                  referredById
+                    ? allClients.find((c) => c.id === referredById)
+                      ? `${allClients.find((c) => c.id === referredById)?.person?.firstName || ""} ${allClients.find((c) => c.id === referredById)?.person?.lastName || ""}`
+                      : ""
+                    : ""
+                }
+              />
+              <ComboboxContent>
+                <ComboboxList>
+                  <ComboboxItem value="none">
+                    <span className="text-muted-foreground italic">None / Clear</span>
+                  </ComboboxItem>
+                  {allClients
+                    .filter((c) => c.id !== client.id) // Cannot refer self
+                    .map((c) => (
+                      <ComboboxItem key={c.id} value={c.id}>
+                        {c.person?.firstName} {c.person?.lastName}
+                      </ComboboxItem>
+                    ))}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">Referred Clients</label>
+            <div className="rounded-md border bg-muted/5 p-4">
+              {referredClients.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {referredClients.map((refClient) => (
+                    <div key={refClient.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                      <span className="text-sm font-medium">
+                        {refClient.person?.firstName} {refClient.person?.lastName}
+                      </span>
+                      <Link href={`/dashboard/crm/clients/${refClient.id}`}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary">
+                          <LinkIcon className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic text-center">This client has not referred anyone yet.</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
         <CardHeader className="bg-muted/10">
           <CardTitle className="flex items-center gap-2 text-lg">

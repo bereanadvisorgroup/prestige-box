@@ -256,6 +256,7 @@ export const MortgageSchema = z.object({
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
+  referredById: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),

@@ -6,7 +6,7 @@ import { Pencil } from "lucide-react";
 import { getAccountingFirms } from "@/actions/accounting-firms";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
-import { getClient } from "@/actions/clients";
+import { getClient, getClients } from "@/actions/clients";
 import { getCompaniesByClient } from "@/actions/companies";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
 import { getLawFirms } from "@/actions/law-firms";
@@ -54,6 +54,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     ltcRes,
     moneyRes,
     recordRes,
+    allClientsResult,
   ] = await Promise.all([
     getClientPoliciesByClient(id),
     getCompaniesByClient(id),
@@ -67,6 +68,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     getLongTermCareInsurances(),
     getMoneyManagers(),
     getRecordKeepers(),
+    getClients(),
   ]);
 
   const policies = (policiesResult.success ? policiesResult.policies : []) as (ClientPolicy & { id: string })[];
@@ -151,6 +153,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
       <ClientProfileTabs
         client={client}
         person={person}
+        allClients={allClientsResult.success ? allClientsResult.clients : []}
         associatedCompanies={companies}
         associatedPolicies={policies}
         teamsNews={teamsNews}

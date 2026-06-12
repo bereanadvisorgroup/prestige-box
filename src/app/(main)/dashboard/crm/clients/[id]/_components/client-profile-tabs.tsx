@@ -55,6 +55,7 @@ import { PersonalTab } from "./tabs/personal-tab";
 interface ClientProfileTabsProps {
   client: Client;
   person: Person | null;
+  allClients: any[];
   associatedCompanies: (Company & { id: string })[];
   associatedPolicies: (ClientPolicy & { id: string })[];
   teamsNews: any[];
@@ -138,6 +139,7 @@ function AssociationCardList({
 export function ClientProfileTabs({
   client,
   person,
+  allClients,
   associatedCompanies,
   associatedPolicies,
   teamsNews,
@@ -214,7 +216,7 @@ export function ClientProfileTabs({
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Preferences / Editing */}
               <div className="lg:col-span-2 space-y-6">
-                <GeneralTab client={client} />
+                <GeneralTab client={client} allClients={allClients} />
               </div>
 
               {/* Companies, Policies, and Sports News */}

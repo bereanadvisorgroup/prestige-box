@@ -95,6 +95,7 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   personId: uuid("personId").notNull(),
+  referredById: uuid("referredById"), // Self-referencing ID for referrals
   hobbies: text("hobbies").array().default(sql`'{}'::text[]`),
   favoriteSportsTeams: text("favoriteSportsTeams").array().default(sql`'{}'::text[]`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
