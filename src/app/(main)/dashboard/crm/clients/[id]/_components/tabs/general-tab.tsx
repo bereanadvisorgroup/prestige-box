@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { CreditCard, Heart, Trash2, Trophy, Users, Link as LinkIcon } from "lucide-react";
+import { CreditCard, Heart, Link as LinkIcon, Trash2, Trophy, Users } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 
 import { updateClient } from "@/actions/clients";
 import { getClientPoliciesByClient } from "@/actions/policies";
@@ -117,7 +117,7 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">Referred By</label>
+            <label className="font-semibold text-foreground text-sm">Referred By</label>
             <Combobox
               onValueChange={(val: any) => {
                 if (typeof val === "string") handleSetReferrer(val);
@@ -151,17 +151,24 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">Referred Clients</label>
+            <label className="font-semibold text-foreground text-sm">Referred Clients</label>
             <div className="rounded-md border bg-muted/5 p-4">
               {referredClients.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {referredClients.map((refClient) => (
-                    <div key={refClient.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                      <span className="text-sm font-medium">
+                    <div
+                      key={refClient.id}
+                      className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="font-medium text-sm">
                         {refClient.person?.firstName} {refClient.person?.lastName}
                       </span>
                       <Link href={`/dashboard/crm/clients/${refClient.id}`}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-primary"
+                        >
                           <LinkIcon className="h-3 w-3" />
                         </Button>
                       </Link>
@@ -169,7 +176,9 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground italic text-center">This client has not referred anyone yet.</p>
+                <p className="text-center text-muted-foreground text-xs italic">
+                  This client has not referred anyone yet.
+                </p>
               )}
             </div>
           </div>

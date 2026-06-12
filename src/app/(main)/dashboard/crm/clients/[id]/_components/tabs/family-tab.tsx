@@ -123,11 +123,11 @@ export function FamilyTab({ client }: { client: Client }) {
 
         <div className="mt-6 space-y-3">
           {members.length > 0 ? (
-            members.map((member) => {
+            members.map((member, index) => {
               const person = people.find((p) => p.id === member.personId);
               return (
                 <div
-                  key={member.id}
+                  key={member.id || index}
                   className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center"
                 >
                   <div className="flex items-center gap-4">

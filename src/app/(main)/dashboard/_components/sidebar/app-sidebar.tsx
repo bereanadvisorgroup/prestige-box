@@ -1,10 +1,34 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
-import { CircleHelp, ClipboardList, Command, Database, File, Search, Settings } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import {
+  ArrowLeft,
+  Briefcase,
+  Building2,
+  Calculator,
+  Command,
+  Database,
+  DollarSign,
+  FileText,
+  HeartHandshake,
+  HeartPulse,
+  Landmark,
+  LayoutDashboard,
+  ReceiptText,
+  Scale,
+  Shield,
+  ShieldAlert,
+  TrendingUp,
+  User,
+  Users,
+} from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
+import { getClientAssociationCounts } from "@/actions/clients";
 import {
   Sidebar,
   SidebarContent,
@@ -15,50 +39,136 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { APP_CONFIG } from "@/config/app-config";
+import type { NavGroup } from "@/navigation/sidebar/sidebar-items";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
 import { useAuthStore } from "@/stores/auth.store";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
 import { NavMain } from "./nav-main";
 
-const _data = {
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: CircleHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: Database,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: ClipboardList,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: File,
-    },
-  ],
-};
+const getClientSidebarItems = (clientId: string, counts: Record<string, number>): NavGroup[] => [
+  {
+    id: 10,
+    items: [
+      {
+        title: "Back to Clients",
+        url: "/dashboard/crm/clients",
+        icon: ArrowLeft,
+      },
+    ],
+  },
+  {
+    id: 11,
+    label: "General Info",
+    items: [
+      {
+        title: "General",
+        url: `/dashboard/crm/clients/${clientId}`,
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Personal",
+        url: `/dashboard/crm/clients/${clientId}/personal`,
+        icon: User,
+      },
+      {
+        title: "Family",
+        url: `/dashboard/crm/clients/${clientId}/family`,
+        icon: Users,
+      },
+      {
+        title: "Employment",
+        url: `/dashboard/crm/clients/${clientId}/employment`,
+        icon: Briefcase,
+      },
+      {
+        title: "Estate Planning",
+        url: `/dashboard/crm/clients/${clientId}/estate-planning`,
+        icon: FileText,
+      },
+      {
+        title: "Liabilities",
+        url: `/dashboard/crm/clients/${clientId}/liabilities`,
+        icon: DollarSign,
+      },
+    ],
+  },
+  {
+    id: 12,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/clients/${clientId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/clients/${clientId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/clients/${clientId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/clients/${clientId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/clients/${clientId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+    ],
+  },
+  {
+    id: 13,
+    label: "Vendors",
+    items: [
+      {
+        title: "Life Insurance",
+        url: `/dashboard/crm/clients/${clientId}/life-insurance`,
+        icon: HeartHandshake,
+        badge: counts.lifeInsurance || 0,
+      },
+      {
+        title: "Disability Insurance",
+        url: `/dashboard/crm/clients/${clientId}/disability-insurance`,
+        icon: ShieldAlert,
+        badge: counts.disabilityInsurance || 0,
+      },
+      {
+        title: "Long Term Care",
+        url: `/dashboard/crm/clients/${clientId}/long-term-care`,
+        icon: HeartPulse,
+        badge: counts.longTermCare || 0,
+      },
+      {
+        title: "Money Managers",
+        url: `/dashboard/crm/clients/${clientId}/money-managers`,
+        icon: TrendingUp,
+        badge: counts.moneyManagers || 0,
+      },
+      {
+        title: "Record Keepers",
+        url: `/dashboard/crm/clients/${clientId}/record-keepers`,
+        icon: Database,
+        badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
     useShallow((s) => ({
       sidebarVariant: s.sidebarVariant,
@@ -74,10 +184,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile } = useAuthStore();
   const userRole = profile?.role || "client"; // Default to least privileged or handle null case
 
-  // Filter sidebar items based on user role
-  const filteredSidebarItems = sidebarItems.filter(
-    (group) => !group.allowedRoles || group.allowedRoles.includes(userRole),
-  );
+  const isCrmStaff = userRole === "admin" || userRole === "advisor";
+  const clientMatch = pathname.match(/^\/dashboard\/crm\/clients\/([a-zA-Z0-9-]+)/);
+  const clientId = clientMatch && clientMatch[1] !== "new" && clientMatch[1] !== "edit" ? clientMatch[1] : null;
+
+  const isClientView = isCrmStaff && clientId;
+
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (clientId) {
+      getClientAssociationCounts(clientId).then((res) => {
+        if (res.success && res.counts) {
+          setCounts(res.counts);
+        }
+      });
+    }
+  }, [clientId]);
+
+  // Filter sidebar items based on user role or client context
+  const filteredSidebarItems = isClientView
+    ? getClientSidebarItems(clientId, counts)
+    : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
 
   return (
     <Sidebar {...props} variant={variant} collapsible={collapsible}>
@@ -95,8 +223,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={filteredSidebarItems} />
-        {/* <NavDocuments items={data.documents} /> */}
-        {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>

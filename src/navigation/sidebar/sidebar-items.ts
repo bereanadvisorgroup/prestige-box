@@ -31,6 +31,7 @@ export interface NavMainItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  badge?: number;
 }
 
 export interface NavGroup {

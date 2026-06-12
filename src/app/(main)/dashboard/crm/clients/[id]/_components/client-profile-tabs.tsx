@@ -97,11 +97,11 @@ function AssociationCardList({
           {items.map((item) => (
             <div
               key={item.id}
-              className="group flex flex-col justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/5 shadow-sm"
+              className="group flex flex-col justify-between rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/5"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-foreground">{item.name}</h4>
+                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
                   <Link href={`${linkPrefix}/${item.id}`}>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                       <ArrowUpRight className="h-4 w-4" />
@@ -109,20 +109,20 @@ function AssociationCardList({
                   </Link>
                 </div>
                 {item.website && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <Globe className="h-3.5 w-3.5" />
                     <a
                       href={item.website.startsWith("http") ? item.website : `https://${item.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:underline text-blue-600 dark:text-blue-400"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {item.website.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
                 )}
                 {item.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <Phone className="h-3.5 w-3.5" />
                     <span>{formatPhoneNumber(item.phone)}</span>
                   </div>
@@ -215,7 +215,7 @@ export function ClientProfileTabs({
           <TabsContent value="general" className="m-0 border-0 p-4 outline-none md:p-6 lg:p-8">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Preferences / Editing */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-6 lg:col-span-2">
                 <GeneralTab client={client} allClients={allClients} />
               </div>
 
@@ -303,7 +303,7 @@ export function ClientProfileTabs({
                         {associatedPolicies.map((policy) => (
                           <div
                             key={policy.id}
-                            className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5 text-sm"
+                            className="flex items-center justify-between p-4 text-sm transition-colors hover:bg-muted/5"
                           >
                             <div className="space-y-1">
                               <p className="font-semibold">{policy.policyName}</p>
@@ -311,7 +311,7 @@ export function ClientProfileTabs({
                             </div>
                             <div className="space-y-1 text-right">
                               <p className="font-medium">${policy.premiumAmount.toLocaleString()}</p>
-                              <Badge variant="secondary" className="text-[9px] uppercase px-1 py-0">
+                              <Badge variant="secondary" className="px-1 py-0 text-[9px] uppercase">
                                 {policy.paymentSchedule}
                               </Badge>
                             </div>
@@ -370,13 +370,13 @@ export function ClientProfileTabs({
                                       <span className="line-clamp-2">{article.title}</span>
                                       <ExternalLink className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                                     </p>
-                                    <p className="mt-1 text-muted-foreground text-[10px]">{article.source}</p>
+                                    <p className="mt-1 text-[10px] text-muted-foreground">{article.source}</p>
                                   </div>
                                 </div>
                               </a>
                             ))
                           ) : (
-                            <p className="text-muted-foreground text-[10px]">No recent news found.</p>
+                            <p className="text-[10px] text-muted-foreground">No recent news found.</p>
                           )}
                         </CardContent>
                       </Card>
@@ -419,7 +419,7 @@ export function ClientProfileTabs({
           </TabsContent>
 
           {/* Liabilities Tab */}
-          <TabsContent value="liabilities" className="m-0 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8 space-y-8">
+          <TabsContent value="liabilities" className="m-0 space-y-8 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8">
             <LiabilitiesTab client={client} />
             {person && <MortgageTab client={client} person={person} />}
           </TabsContent>
@@ -427,7 +427,7 @@ export function ClientProfileTabs({
           {/* Associated Professional Services Tab */}
           <TabsContent value="professional-services" className="m-0 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-6 lg:col-span-2">
                 {associatedLawFirms.length > 0 && (
                   <AssociationCardList
                     title="Associated Law Firms"
@@ -540,7 +540,7 @@ export function ClientProfileTabs({
           {/* Associated Vendors Tab */}
           <TabsContent value="vendors" className="m-0 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-6 lg:col-span-2">
                 {associatedLife.length > 0 && (
                   <AssociationCardList
                     title="Associated Life Insurance Companies"

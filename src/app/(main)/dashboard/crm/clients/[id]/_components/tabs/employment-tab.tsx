@@ -156,7 +156,7 @@ export function EmploymentTab({ client }: { client: Client }) {
 
         <div className="mt-6 space-y-3">
           {employments.length > 0 ? (
-            employments.map((emp) => {
+            employments.map((emp, index) => {
               const calculateYears = (start?: string, end?: string) => {
                 if (!start) return null;
                 const startDate = new Date(start);
@@ -168,7 +168,7 @@ export function EmploymentTab({ client }: { client: Client }) {
 
               return (
                 <div
-                  key={emp.id}
+                  key={emp.id || index}
                   className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:items-center"
                 >
                   <div className="flex items-start gap-4">

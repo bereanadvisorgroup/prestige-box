@@ -136,9 +136,9 @@ export function DocumentsTab({
 
         <div className="mt-8 space-y-3">
           {documents.length > 0 ? (
-            documents.map((doc) => (
+            documents.map((doc, index) => (
               <div
-                key={doc.id}
+                key={doc.id || `doc-${index}`}
                 className="flex items-center justify-between rounded-md border bg-background p-3 shadow-sm transition-colors hover:bg-muted/5"
               >
                 <div className="flex items-center gap-3">

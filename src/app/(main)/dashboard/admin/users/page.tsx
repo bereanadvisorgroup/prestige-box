@@ -5,9 +5,9 @@ import { AlertCircle, Plus } from "lucide-react";
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { supabaseServer } from "@/lib/supabase.server";
 import type { UserProfile } from "@/stores/auth.store";
 
-import { supabaseServer } from "@/lib/supabase.server";
 import { UsersTable } from "./_components/users-table";
 
 export default async function ManageUsersPage() {

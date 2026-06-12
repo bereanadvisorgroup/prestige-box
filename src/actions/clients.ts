@@ -134,3 +134,62 @@ export async function deleteClient(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function getClientAssociationCounts(clientId: string) {
+  try {
+    const [
+      policiesRes,
+      lawFirmsRes,
+      accountingFirmsRes,
+      actuarialFirmsRes,
+      banksRes,
+      propertyAndCasualtyRes,
+      moneyManagersRes,
+      recordKeepersRes,
+      lifeRes,
+      disabilityRes,
+      ltcRes,
+    ] = await Promise.all([
+      supabaseServer
+        .from("client_policies")
+        .select("lifeInsuranceCompanyId, disabilityInsuranceCompanyId, longTermCareInsuranceId")
+        .eq("clientId", clientId),
+      supabaseServer.from("law_firms").select("id, clientIds"),
+      supabaseServer.from("accounting_firms").select("id, clientIds"),
+      supabaseServer.from("actuarial_firms").select("id, clientIds"),
+      supabaseServer.from("banks").select("id, clientIds"),
+      supabaseServer.from("property_and_casualty_firms").select("id, clientIds"),
+      supabaseServer.from("money_managers").select("id, clientIds"),
+      supabaseServer.from("record_keepers").select("id, clientIds"),
+      supabaseServer.from("life_insurance_companies").select("id"),
+      supabaseServer.from("disability_insurance_companies").select("id"),
+      supabaseServer.from("long_term_care_insurance").select("id"),
+    ]);
+
+    const policies = policiesRes.data || [];
+    const policyLifeIds = new Set(policies.map((p) => p.lifeInsuranceCompanyId).filter(Boolean));
+    const policyDisabilityIds = new Set(policies.map((p) => p.disabilityInsuranceCompanyId).filter(Boolean));
+    const policyLtcIds = new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean));
+
+    const filterByIds = (list: any[]) => list.filter((item) => item.clientIds?.includes(clientId)).length;
+
+    return {
+      success: true,
+      counts: {
+        accountingFirms: filterByIds(accountingFirmsRes.data || []),
+        actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
+        banks: filterByIds(banksRes.data || []),
+        lawFirms: filterByIds(lawFirmsRes.data || []),
+        propertyAndCasualty: filterByIds(propertyAndCasualtyRes.data || []),
+        moneyManagers: filterByIds(moneyManagersRes.data || []),
+        recordKeepers: filterByIds(recordKeepersRes.data || []),
+        lifeInsurance: (lifeRes.data || []).filter((c) => policyLifeIds.has(c.id)).length,
+        disabilityInsurance: (disabilityRes.data || []).filter((c) => policyDisabilityIds.has(c.id)).length,
+        longTermCare: (ltcRes.data || []).filter((c) => policyLtcIds.has(c.id)).length,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching association counts", error);
+    return { success: false, error: (error as Error).message };
+  }
+}

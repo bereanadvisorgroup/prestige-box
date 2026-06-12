@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { ChevronRight } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
@@ -65,10 +66,20 @@ const NavItemExpanded = ({
               isActive={isActive(item.url)}
               tooltip={item.title}
             >
-              <Link prefetch={false} href={item.url} target={item.newTab ? "_blank" : undefined}>
+              <Link
+                prefetch={false}
+                href={item.url}
+                target={item.newTab ? "_blank" : undefined}
+                className="flex w-full items-center"
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
                 {item.comingSoon && <IsComingSoon />}
+                {item.badge !== undefined && item.badge > 0 && (
+                  <Badge variant="secondary" className="ml-auto rounded-full px-2 py-0.5 font-semibold text-[10px]">
+                    {item.badge}
+                  </Badge>
+                )}
               </Link>
             </SidebarMenuButton>
           )}
@@ -174,9 +185,22 @@ export function NavMain({ items }: NavMainProps) {
                           tooltip={item.title}
                           isActive={isItemActive(item.url)}
                         >
-                          <Link prefetch={false} href={item.url} target={item.newTab ? "_blank" : undefined}>
+                          <Link
+                            prefetch={false}
+                            href={item.url}
+                            target={item.newTab ? "_blank" : undefined}
+                            className="flex w-full items-center"
+                          >
                             {item.icon && <item.icon />}
                             <span>{item.title}</span>
+                            {item.badge !== undefined && item.badge > 0 && (
+                              <Badge
+                                variant="secondary"
+                                className="ml-auto rounded-full px-2 py-0.5 font-semibold text-[10px]"
+                              >
+                                {item.badge}
+                              </Badge>
+                            )}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
