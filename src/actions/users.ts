@@ -245,11 +245,16 @@ export async function resetUserPassword(_uid: string, email: string, origin: str
 
 export async function generateUserRecoveryLink(email: string, origin: string) {
   try {
+    const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    const redirectTo = bypassSecret
+      ? `${origin}/auth/v1/reset-password?x-vercel-protection-bypass=${bypassSecret}`
+      : `${origin}/auth/v1/reset-password`;
+
     const { data, error } = await supabaseServer.auth.admin.generateLink({
       type: "recovery",
       email: email,
       options: {
-        redirectTo: `${origin}/auth/v1/reset-password`,
+        redirectTo,
       },
     });
     if (error) throw error;
