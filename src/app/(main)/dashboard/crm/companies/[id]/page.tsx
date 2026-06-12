@@ -37,28 +37,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   ).filter((c) => (company.clientIds || []).includes(c.id!));
 
   return (
-    <div className="fade-in mx-auto w-full max-w-7xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
-      <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
-              <Building2 className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/crm/companies/${id}/edit`}>
-            <Button>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Company
-            </Button>
-          </Link>
-        </div>
-      </div>
-
+    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-6">
           <Card className="overflow-hidden border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
@@ -146,7 +125,9 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        <div className="space-y-6">
           <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -176,10 +157,35 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        <div className="space-y-6">
-          <Card className="h-full border-none shadow-md">
+          <Card className="border-none shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Briefcase className="h-5 w-5 text-primary" /> Nexus Records
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {(company.nexusRecords || []).length > 0 ? (
+                <div className="max-h-[300px] divide-y overflow-y-auto">
+                  {(company.nexusRecords || []).map((nexus, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5">
+                      <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
+                      <Badge variant="outline" className="font-normal text-xs">
+                        {nexus.type}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                  <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-20" />
+                  <p className="text-sm">No nexus records available.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -233,32 +239,6 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Briefcase className="h-5 w-5 text-primary" /> Nexus Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {(company.nexusRecords || []).length > 0 ? (
-                <div className="max-h-[300px] divide-y overflow-y-auto">
-                  {(company.nexusRecords || []).map((nexus, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5">
-                      <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
-                      <Badge variant="outline" className="font-normal text-xs">
-                        {nexus.type}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-                  <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-20" />
-                  <p className="text-sm">No nexus records available.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

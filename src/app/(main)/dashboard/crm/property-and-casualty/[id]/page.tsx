@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowUpRight, Briefcase, Edit, Globe, Mail, MapPin, Phone, Shield, Users } from "lucide-react";
+import { ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, Shield, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
+import { getCompanies } from "@/actions/companies";
 import { getPropertyAndCasualtyFirm } from "@/actions/property-and-casualty";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPhoneNumber } from "@/lib/utils";
-import type { Address, Person } from "@/types/crm";
+import type { Address, Company, Person } from "@/types/crm";
 
 interface PropertyAndCasualtyDetailsPageProps {
   params: Promise<{
@@ -34,6 +35,11 @@ export default async function PropertyAndCasualtyDetailsPage({ params }: Propert
   const clientsResult = await getClients();
   const allClients = clientsResult.success && clientsResult.clients ? clientsResult.clients : [];
   const associatedClients = allClients.filter((c) => (propertyAndCasualtyFirm.clientIds || []).includes(c.id!));
+
+  // Fetch associated companies details
+  const companiesResult = await getCompanies();
+  const allCompanies = companiesResult.success && companiesResult.companies ? companiesResult.companies : [];
+  const associatedCompanies = allCompanies.filter((c) => (propertyAndCasualtyFirm.companyIds || []).includes(c.id!));
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
@@ -187,59 +193,114 @@ export default async function PropertyAndCasualtyDetailsPage({ params }: Propert
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5" />
-              Associated Clients
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {associatedClients.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {associatedClients.map((client) => {
-                  const clientPerson = client.person as Person | null;
-                  const clientName = clientPerson
-                    ? `${clientPerson.firstName} ${clientPerson.lastName}`
-                    : "Unknown Client";
-                  const clientEmail =
-                    clientPerson?.emails?.find((e) => e.isPrimary)?.address || clientPerson?.emails?.[0]?.address || "";
-                  const clientPhone =
-                    clientPerson?.phones?.find((p) => p.isPrimary)?.number || clientPerson?.phones?.[0]?.number || "";
+        <div className="md:col-span-2 flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="h-5 w-5" />
+                Associated Clients
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {associatedClients.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {associatedClients.map((client) => {
+                    const clientPerson = client.person as Person | null;
+                    const clientName = clientPerson
+                      ? `${clientPerson.firstName} ${clientPerson.lastName}`
+                      : "Unknown Client";
+                    const clientEmail =
+                      clientPerson?.emails?.find((e) => e.isPrimary)?.address ||
+                      clientPerson?.emails?.[0]?.address ||
+                      "";
+                    const clientPhone =
+                      clientPerson?.phones?.find((p) => p.isPrimary)?.number || clientPerson?.phones?.[0]?.number || "";
 
-                  return (
-                    <Link
-                      key={client.id}
-                      href={`/dashboard/crm/clients/${client.id}`}
-                      className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5 font-semibold text-sm transition-colors group-hover:text-primary">
-                          <Briefcase className="h-4 w-4 text-muted-foreground" />
-                          {clientName}
+                    return (
+                      <Link
+                        key={client.id}
+                        href={`/dashboard/crm/clients/${client.id}`}
+                        className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 font-semibold text-sm transition-colors group-hover:text-primary">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            {clientName}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {clientEmail && <span className="mr-3">{clientEmail}</span>}
+                            {clientPhone && <span>{formatPhoneNumber(clientPhone)}</span>}
+                          </div>
                         </div>
-                        <div className="text-muted-foreground text-xs">
-                          {clientEmail && <span className="mr-3">{clientEmail}</span>}
-                          {clientPhone && <span>{formatPhoneNumber(clientPhone)}</span>}
-                        </div>
-                      </div>
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-muted/20 py-10 text-center text-muted-foreground">
+                  <p>No associated clients found.</p>
+                  <Button asChild variant="link" className="mt-2">
+                    <Link href={`/dashboard/crm/property-and-casualty/${propertyAndCasualtyFirm.id}/edit`}>
+                      Link Clients
                     </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed bg-muted/20 py-10 text-center text-muted-foreground">
-                <p>No associated clients found.</p>
-                <Button asChild variant="link" className="mt-2">
-                  <Link href={`/dashboard/crm/property-and-casualty/${propertyAndCasualtyFirm.id}/edit`}>
-                    Link Clients
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Building2 className="h-5 w-5" />
+                Associated Companies
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {associatedCompanies.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {associatedCompanies.map((company) => {
+                    const companyName = company.name;
+                    const companyPhone = company.phone || "";
+                    const companyWebsite = company.website || "";
+
+                    return (
+                      <Link
+                        key={company.id}
+                        href={`/dashboard/crm/companies/${company.id}`}
+                        className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 font-semibold text-sm transition-colors group-hover:text-primary">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            {companyName}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {companyWebsite && (
+                              <span className="mr-3">{companyWebsite.replace(/^https?:\/\//, "")}</span>
+                            )}
+                            {companyPhone && <span>{formatPhoneNumber(companyPhone)}</span>}
+                          </div>
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-muted/20 py-10 text-center text-muted-foreground">
+                  <p>No associated companies found.</p>
+                  <Button asChild variant="link" className="mt-2">
+                    <Link href={`/dashboard/crm/property-and-casualty/${propertyAndCasualtyFirm.id}/edit`}>
+                      Link Companies
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

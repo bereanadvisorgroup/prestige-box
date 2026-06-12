@@ -5,10 +5,9 @@ import { Building2, HeartPulse } from "lucide-react";
 import { getClient } from "@/actions/clients";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { getClientPoliciesByClient } from "@/actions/policies";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
 import type { ClientPolicy } from "@/types/crm";
-
-import { AssociationCardList } from "../_components/association-card-list";
 
 interface Props {
   params: Promise<{ id: string }>;

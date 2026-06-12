@@ -120,6 +120,11 @@ export async function createMoneyManager(data: Partial<MoneyManager>) {
         revalidatePath(`/dashboard/crm/clients/${id}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/companies/${id}`);
+      });
+    }
 
     return { success: true, id: inserted.id };
   } catch (error) {
@@ -147,6 +152,11 @@ export async function updateMoneyManager(id: string, data: Partial<MoneyManager>
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
 
     return { success: true };
   } catch (error) {
@@ -170,6 +180,11 @@ export async function deleteMoneyManager(id: string) {
     if (moneyManager?.clientIds?.length) {
       (moneyManager.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (moneyManager?.companyIds?.length) {
+      (moneyManager.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 

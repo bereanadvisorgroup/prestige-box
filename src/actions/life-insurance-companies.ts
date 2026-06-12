@@ -87,6 +87,12 @@ export async function createLifeInsuranceCompany(data: Partial<LifeInsuranceComp
 
     revalidatePath("/dashboard/admin/life-insurance-companies");
 
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
+
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error(`[createLifeInsuranceCompany] Error:`, error);
@@ -108,6 +114,12 @@ export async function updateLifeInsuranceCompany(id: string, data: Partial<LifeI
     revalidatePath("/dashboard/admin/life-insurance-companies");
     revalidatePath(`/dashboard/admin/life-insurance-companies/${id}`);
 
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[updateLifeInsuranceCompany] Error:`, error);
@@ -117,11 +129,23 @@ export async function updateLifeInsuranceCompany(id: string, data: Partial<LifeI
 
 export async function deleteLifeInsuranceCompany(id: string) {
   try {
+    const { data: company, error: getError } = await supabaseServer
+      .from(TABLE)
+      .select("companyIds")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
 
     revalidatePath("/dashboard/admin/life-insurance-companies");
+
+    if (!getError && company?.companyIds?.length) {
+      (company.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
 
     return { success: true };
   } catch (error) {

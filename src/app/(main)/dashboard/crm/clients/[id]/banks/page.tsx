@@ -4,9 +4,8 @@ import { Building2, Landmark } from "lucide-react";
 
 import { getBanks } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
-
-import { AssociationCardList } from "../_components/association-card-list";
 
 interface Props {
   params: Promise<{ id: string }>;

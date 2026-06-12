@@ -87,6 +87,12 @@ export async function createLongTermCareInsurance(data: Partial<LongTermCareInsu
 
     revalidatePath("/dashboard/admin/long-term-care-insurance");
 
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
+
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error(`[createLongTermCareInsurance] Error:`, error);
@@ -108,6 +114,12 @@ export async function updateLongTermCareInsurance(id: string, data: Partial<Long
     revalidatePath("/dashboard/admin/long-term-care-insurance");
     revalidatePath(`/dashboard/admin/long-term-care-insurance/${id}`);
 
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[updateLongTermCareInsurance] Error:`, error);
@@ -117,11 +129,23 @@ export async function updateLongTermCareInsurance(id: string, data: Partial<Long
 
 export async function deleteLongTermCareInsurance(id: string) {
   try {
+    const { data: company, error: getError } = await supabaseServer
+      .from(TABLE)
+      .select("companyIds")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
 
     revalidatePath("/dashboard/admin/long-term-care-insurance");
+
+    if (!getError && company?.companyIds?.length) {
+      (company.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
 
     return { success: true };
   } catch (error) {

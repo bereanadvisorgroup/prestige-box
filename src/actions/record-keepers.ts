@@ -120,6 +120,11 @@ export async function createRecordKeeper(data: Partial<RecordKeeper>) {
         revalidatePath(`/dashboard/crm/clients/${id}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/companies/${id}`);
+      });
+    }
 
     return { success: true, id: inserted.id };
   } catch (error) {
@@ -147,6 +152,11 @@ export async function updateRecordKeeper(id: string, data: Partial<RecordKeeper>
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
+      });
+    }
 
     return { success: true };
   } catch (error) {
@@ -170,6 +180,11 @@ export async function deleteRecordKeeper(id: string) {
     if (recordKeeper?.clientIds?.length) {
       (recordKeeper.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (recordKeeper?.companyIds?.length) {
+      (recordKeeper.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 

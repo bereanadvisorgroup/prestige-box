@@ -29,6 +29,7 @@ import {
 import { useShallow } from "zustand/react/shallow";
 
 import { getClientAssociationCounts } from "@/actions/clients";
+import { getCompanyAssociationCounts } from "@/actions/companies";
 import {
   Sidebar,
   SidebarContent,
@@ -167,6 +168,102 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
   },
 ];
 
+const getCompanySidebarItems = (companyId: string, counts: Record<string, number>): NavGroup[] => [
+  {
+    id: 20,
+    items: [
+      {
+        title: "Back to Companies",
+        url: "/dashboard/crm/companies",
+        icon: ArrowLeft,
+      },
+    ],
+  },
+  {
+    id: 21,
+    label: "General Info",
+    items: [
+      {
+        title: "General",
+        url: `/dashboard/crm/companies/${companyId}`,
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    id: 22,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/companies/${companyId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/companies/${companyId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/companies/${companyId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/companies/${companyId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/companies/${companyId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+    ],
+  },
+  {
+    id: 23,
+    label: "Vendors",
+    items: [
+      {
+        title: "Life Insurance",
+        url: `/dashboard/crm/companies/${companyId}/life-insurance`,
+        icon: HeartHandshake,
+        badge: counts.lifeInsurance || 0,
+      },
+      {
+        title: "Disability Insurance",
+        url: `/dashboard/crm/companies/${companyId}/disability-insurance`,
+        icon: ShieldAlert,
+        badge: counts.disabilityInsurance || 0,
+      },
+      {
+        title: "Long Term Care",
+        url: `/dashboard/crm/companies/${companyId}/long-term-care`,
+        icon: HeartPulse,
+        badge: counts.longTermCare || 0,
+      },
+      {
+        title: "Money Managers",
+        url: `/dashboard/crm/companies/${companyId}/money-managers`,
+        icon: TrendingUp,
+        badge: counts.moneyManagers || 0,
+      },
+      {
+        title: "Record Keepers",
+        url: `/dashboard/crm/companies/${companyId}/record-keepers`,
+        icon: Database,
+        badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
@@ -188,7 +285,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const clientMatch = pathname.match(/^\/dashboard\/crm\/clients\/([a-zA-Z0-9-]+)/);
   const clientId = clientMatch && clientMatch[1] !== "new" && clientMatch[1] !== "edit" ? clientMatch[1] : null;
 
+  const companyMatch = pathname.match(/^\/dashboard\/crm\/companies\/([a-zA-Z0-9-]+)/);
+  const companyId = companyMatch && companyMatch[1] !== "new" && companyMatch[1] !== "edit" ? companyMatch[1] : null;
+
   const isClientView = isCrmStaff && clientId;
+  const isCompanyView = isCrmStaff && companyId;
 
   const [counts, setCounts] = useState<Record<string, number>>({});
 
@@ -199,13 +300,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           setCounts(res.counts);
         }
       });
+    } else if (companyId) {
+      getCompanyAssociationCounts(companyId).then((res) => {
+        if (res.success && res.counts) {
+          setCounts(res.counts);
+        }
+      });
     }
-  }, [clientId]);
+  }, [clientId, companyId]);
 
-  // Filter sidebar items based on user role or client context
+  // Filter sidebar items based on user role or client/company context
   const filteredSidebarItems = isClientView
     ? getClientSidebarItems(clientId, counts)
-    : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
+    : isCompanyView
+      ? getCompanySidebarItems(companyId, counts)
+      : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
 
   return (
     <Sidebar {...props} variant={variant} collapsible={collapsible}>

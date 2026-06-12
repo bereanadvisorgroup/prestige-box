@@ -9,6 +9,7 @@ import { Globe, ListPlus, Phone, Shield, Trash2, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { getCompanies } from "@/actions/companies";
 import {
   createDisabilityInsuranceCompany,
   updateDisabilityInsuranceCompany,
@@ -19,10 +20,16 @@ import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type DisabilityInsuranceCompany, DisabilityInsuranceCompanySchema, type Person } from "@/types/crm";
+import {
+  type Company,
+  type DisabilityInsuranceCompany,
+  DisabilityInsuranceCompanySchema,
+  type Person,
+} from "@/types/crm";
 
 interface CompanyFormProps {
   company?: DisabilityInsuranceCompany;
@@ -33,6 +40,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [newPolicyName, setNewPolicyName] = useState("");
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
+  const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
 
   const form = useForm<DisabilityInsuranceCompany>({
     resolver: zodResolver(DisabilityInsuranceCompanySchema) as any,
@@ -42,18 +50,34 @@ export function CompanyForm({ company }: CompanyFormProps) {
       policyNames: ["Short Term Disability", "Long Term Disability"],
       phone: "",
       personIds: [],
+      companyIds: [],
     },
   });
 
   useEffect(() => {
-    async function fetchPeople() {
-      const result = await getPeople();
-      if (result.success && result.people) {
-        setAvailablePeople(result.people);
+    async function fetchData() {
+      const [peopleResult, companiesResult] = await Promise.all([getPeople(), getCompanies()]);
+      if (peopleResult.success && peopleResult.people) {
+        setAvailablePeople(peopleResult.people);
+      }
+      if (companiesResult.success && companiesResult.companies) {
+        setAvailableCompanies(companiesResult.companies);
       }
     }
-    fetchPeople();
+    fetchData();
   }, []);
+
+  const handleToggleCompany = (companyId: string) => {
+    const current = form.getValues("companyIds") || [];
+    if (current.includes(companyId)) {
+      form.setValue(
+        "companyIds",
+        current.filter((id) => id !== companyId),
+      );
+    } else {
+      form.setValue("companyIds", [...current, companyId]);
+    }
+  };
 
   const handleAddPerson = (personId: string) => {
     const current = form.getValues("personIds") || [];
@@ -302,6 +326,59 @@ export function CompanyForm({ company }: CompanyFormProps) {
                     </button>
                   </Badge>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="flex items-center gap-2 font-medium text-sm">
+                <Users className="h-4 w-4 text-primary" />
+                Associated Companies
+              </h3>
+
+              <div className="space-y-2">
+                <Combobox
+                  onValueChange={(val: any) => {
+                    if (typeof val === "string") handleToggleCompany(val);
+                  }}
+                >
+                  <ComboboxInput placeholder="Search to link companies..." />
+                  <ComboboxContent>
+                    <ComboboxList>
+                      {availableCompanies
+                        .filter((company) => !(form.getValues("companyIds") || []).includes(company.id!))
+                        .map((company) => (
+                          <ComboboxItem key={company.id} value={company.id!} label={company.name}>
+                            {company.name}
+                          </ComboboxItem>
+                        ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+                {(form.watch("companyIds") || []).length === 0 && (
+                  <p className="p-1 text-muted-foreground text-xs italic">No companies linked yet.</p>
+                )}
+                {(form.watch("companyIds") || []).map((companyId) => {
+                  const company = availableCompanies.find((c) => c.id === companyId);
+                  return (
+                    <Badge
+                      key={companyId}
+                      variant="secondary"
+                      className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
+                    >
+                      {company ? company.name : "Unknown Company"}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCompany(companyId)}
+                        className="ml-1 transition-colors hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
 

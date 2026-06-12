@@ -136,6 +136,11 @@ export async function createPropertyAndCasualtyFirm(data: Partial<PropertyAndCas
         revalidatePath(`/dashboard/crm/clients/${id}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/companies/${id}`);
+      });
+    }
 
     return { success: true, id: inserted.id };
   } catch (error) {
@@ -161,6 +166,11 @@ export async function updatePropertyAndCasualtyFirm(id: string, data: Partial<Pr
     if (data.clientIds?.length) {
       data.clientIds.forEach((clientId) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 
@@ -190,6 +200,11 @@ export async function deletePropertyAndCasualtyFirm(id: string) {
     if (propertyAndCasualtyFirm?.clientIds?.length) {
       (propertyAndCasualtyFirm.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (propertyAndCasualtyFirm?.companyIds?.length) {
+      (propertyAndCasualtyFirm.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 

@@ -5,10 +5,10 @@ import { Building2, ShieldAlert } from "lucide-react";
 import { getClient } from "@/actions/clients";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
 import { getClientPoliciesByClient } from "@/actions/policies";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
 import type { ClientPolicy } from "@/types/crm";
 
-import { AssociationCardList } from "../_components/association-card-list";
 import { DocumentsTab } from "../_components/tabs/documents-tab";
 
 interface Props {

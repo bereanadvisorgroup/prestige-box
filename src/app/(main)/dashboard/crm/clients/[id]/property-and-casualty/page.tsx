@@ -4,9 +4,9 @@ import { Building2, Shield } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
 
-import { AssociationCardList } from "../_components/association-card-list";
 import { DocumentsTab } from "../_components/tabs/documents-tab";
 
 interface Props {

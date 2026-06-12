@@ -127,3 +127,52 @@ export async function deleteCompany(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function getCompanyAssociationCounts(companyId: string) {
+  try {
+    const [
+      lawFirmsRes,
+      accountingFirmsRes,
+      actuarialFirmsRes,
+      banksRes,
+      propertyAndCasualtyRes,
+      moneyManagersRes,
+      recordKeepersRes,
+      lifeRes,
+      disabilityRes,
+      ltcRes,
+    ] = await Promise.all([
+      supabaseServer.from("law_firms").select("id, companyIds"),
+      supabaseServer.from("accounting_firms").select("id, companyIds"),
+      supabaseServer.from("actuarial_firms").select("id, companyIds"),
+      supabaseServer.from("banks").select("id, companyIds"),
+      supabaseServer.from("property_and_casualty_firms").select("id, companyIds"),
+      supabaseServer.from("money_managers").select("id, companyIds"),
+      supabaseServer.from("record_keepers").select("id, companyIds"),
+      supabaseServer.from("life_insurance_companies").select("id, companyIds"),
+      supabaseServer.from("disability_insurance_companies").select("id, companyIds"),
+      supabaseServer.from("long_term_care_insurance").select("id, companyIds"),
+    ]);
+
+    const filterByIds = (list: any[]) => list.filter((item) => item.companyIds?.includes(companyId)).length;
+
+    return {
+      success: true,
+      counts: {
+        accountingFirms: filterByIds(accountingFirmsRes.data || []),
+        actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
+        banks: filterByIds(banksRes.data || []),
+        lawFirms: filterByIds(lawFirmsRes.data || []),
+        propertyAndCasualty: filterByIds(propertyAndCasualtyRes.data || []),
+        moneyManagers: filterByIds(moneyManagersRes.data || []),
+        recordKeepers: filterByIds(recordKeepersRes.data || []),
+        lifeInsurance: filterByIds(lifeRes.data || []),
+        disabilityInsurance: filterByIds(disabilityRes.data || []),
+        longTermCare: filterByIds(ltcRes.data || []),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching company association counts", error);
+    return { success: false, error: (error as Error).message };
+  }
+}

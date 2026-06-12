@@ -124,6 +124,11 @@ export async function createAccountingFirm(data: Partial<AccountingFirm>) {
         revalidatePath(`/dashboard/crm/clients/${id}`);
       });
     }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((id) => {
+        revalidatePath(`/dashboard/crm/companies/${id}`);
+      });
+    }
 
     return { success: true, id: inserted.id };
   } catch (error) {
@@ -149,6 +154,11 @@ export async function updateAccountingFirm(id: string, data: Partial<AccountingF
     if (data.clientIds?.length) {
       data.clientIds.forEach((clientId) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (data.companyIds?.length) {
+      data.companyIds.forEach((companyId) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 
@@ -178,6 +188,11 @@ export async function deleteAccountingFirm(id: string) {
     if (accountingFirm?.clientIds?.length) {
       (accountingFirm.clientIds as string[]).forEach((clientId: string) => {
         revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+    if (accountingFirm?.companyIds?.length) {
+      (accountingFirm.companyIds as string[]).forEach((companyId: string) => {
+        revalidatePath(`/dashboard/crm/companies/${companyId}`);
       });
     }
 

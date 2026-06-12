@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
+import { getCompanies } from "@/actions/companies";
 import { getPeople } from "@/actions/people";
 import { createPropertyAndCasualtyFirm, updatePropertyAndCasualtyFirm } from "@/actions/property-and-casualty";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
@@ -26,6 +27,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import {
   type Address,
   type Client,
+  type Company,
   type Person,
   type PropertyAndCasualtyFirm,
   PropertyAndCasualtyFirmSchema,
@@ -39,6 +41,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableClients, setAvailableClients] = useState<Client[]>([]);
+  const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
@@ -51,6 +54,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
       website: propertyAndCasualtyFirm?.website || "",
       phone: propertyAndCasualtyFirm?.phone || "",
       clientIds: propertyAndCasualtyFirm?.clientIds || [],
+      companyIds: propertyAndCasualtyFirm?.companyIds || [],
     },
   });
 
@@ -75,13 +79,17 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
 
   useEffect(() => {
     async function fetchData() {
-      const [clientsResult, addressesResult, peopleResult] = await Promise.all([
+      const [clientsResult, companiesResult, addressesResult, peopleResult] = await Promise.all([
         getClients(),
+        getCompanies(),
         getAddresses(),
         getPeople(),
       ]);
       if (clientsResult.success && clientsResult.clients) {
         setAvailableClients(clientsResult.clients);
+      }
+      if (companiesResult.success && companiesResult.companies) {
+        setAvailableCompanies(companiesResult.companies);
       }
       if (addressesResult.success && addressesResult.addresses) {
         setAvailableAddresses(addressesResult.addresses);
@@ -102,6 +110,18 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
       );
     } else {
       form.setValue("clientIds", [...current, clientId]);
+    }
+  };
+
+  const handleToggleCompany = (companyId: string) => {
+    const current = form.getValues("companyIds") || [];
+    if (current.includes(companyId)) {
+      form.setValue(
+        "companyIds",
+        current.filter((id) => id !== companyId),
+      );
+    } else {
+      form.setValue("companyIds", [...current, companyId]);
     }
   };
 
@@ -353,6 +373,58 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                       <button
                         type="button"
                         onClick={() => handleToggleClient(clientId)}
+                        className="ml-1 transition-colors hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="flex items-center gap-2 font-medium text-sm">
+                <Users className="h-4 w-4 text-primary" />
+                Associated Companies
+              </h3>
+
+              <div className="space-y-2">
+                <Combobox
+                  onValueChange={(val: any) => {
+                    if (typeof val === "string") handleToggleCompany(val);
+                  }}
+                >
+                  <ComboboxInput placeholder="Search to link companies..." />
+                  <ComboboxContent>
+                    <ComboboxList>
+                      {availableCompanies
+                        .filter((company) => !(form.getValues("companyIds") || []).includes(company.id!))
+                        .map((company) => (
+                          <ComboboxItem key={company.id} value={company.id!} label={company.name}>
+                            {company.name}
+                          </ComboboxItem>
+                        ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+
+              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+                {(form.watch("companyIds") || []).length === 0 && (
+                  <p className="p-1 text-muted-foreground text-xs italic">No companies linked yet.</p>
+                )}
+                {(form.watch("companyIds") || []).map((companyId) => {
+                  const company = availableCompanies.find((c) => c.id === companyId);
+                  return (
+                    <Badge
+                      key={companyId}
+                      variant="secondary"
+                      className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
+                    >
+                      {company ? company.name : "Unknown Company"}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCompany(companyId)}
                         className="ml-1 transition-colors hover:text-destructive"
                       >
                         ×

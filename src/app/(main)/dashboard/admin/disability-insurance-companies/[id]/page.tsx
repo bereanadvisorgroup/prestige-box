@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import {
   ArrowUpRight,
+  Building2,
   Calendar,
   Globe,
   Mail,
@@ -14,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompany } from "@/actions/disability-insurance-companies";
 import { getClientPolicies } from "@/actions/policies";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,6 +48,11 @@ export default async function DisabilityInsuranceCompanyPage({ params }: Disabil
   const policiesResult = await getClientPolicies();
   const allPolicies = policiesResult.success && policiesResult.policies ? policiesResult.policies : [];
   const linkedPolicies = allPolicies.filter((p) => p.disabilityInsuranceCompanyId === company.id);
+
+  // Fetch associated companies
+  const companiesResult = await getCompanies();
+  const allCompanies = companiesResult.success && companiesResult.companies ? companiesResult.companies : [];
+  const associatedCompanies = allCompanies.filter((c) => (company.companyIds || []).includes(c.id!));
 
   return (
     <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
@@ -186,9 +193,52 @@ export default async function DisabilityInsuranceCompanyPage({ params }: Disabil
           </Card>
         </div>
 
-        {/* Client Policies list Card */}
+        {/* Client Policies & Associated Companies list Card */}
         <div className="space-y-6 md:col-span-2">
           <ActivePoliciesList initialPolicies={linkedPolicies} />
+
+          <Card className="border shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Building2 className="h-5 w-5" />
+                Associated Companies
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {associatedCompanies.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {associatedCompanies.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/dashboard/crm/companies/${c.id}`}
+                      className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 font-semibold text-sm transition-colors group-hover:text-primary">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {c.name}
+                        </div>
+                        <div className="text-muted-foreground text-xs">
+                          {c.website && <span className="mr-3">{c.website.replace(/^https?:\/\//, "")}</span>}
+                          {c.phone && <span>{formatPhoneNumber(c.phone)}</span>}
+                        </div>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-60 transition-opacity group-hover:opacity-100" />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed bg-muted/20 py-10 text-center text-muted-foreground">
+                  <p>No associated companies found.</p>
+                  <Button asChild variant="link" className="mt-2">
+                    <Link href={`/dashboard/admin/disability-insurance-companies/${company.id}/edit`}>
+                      Link Companies
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

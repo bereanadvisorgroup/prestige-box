@@ -4,9 +4,8 @@ import { Building2, TrendingUp } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getMoneyManagers } from "@/actions/money-managers";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
-
-import { AssociationCardList } from "../_components/association-card-list";
 
 interface Props {
   params: Promise<{ id: string }>;
