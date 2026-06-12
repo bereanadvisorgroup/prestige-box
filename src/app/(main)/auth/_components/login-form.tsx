@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase.client";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
 
 import { GoogleButton } from "./social-auth/google-button";
+import { MicrosoftButton } from "./social-auth/microsoft-button";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -110,6 +111,25 @@ export function LoginForm() {
     }
   };
 
+  const onMicrosoftLogin = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "azure",
+        options: {
+          scopes: "email",
+          redirectTo: `${window.location.origin}/dashboard/default`,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Microsoft Login Error:", error);
+      toast.error((error as { message: string }).message || "Could not authenticate with Microsoft.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -180,6 +200,7 @@ export function LoginForm() {
 
       <div className="grid gap-2 sm:grid-cols-1">
         <GoogleButton type="button" onClick={onGoogleLogin} />
+        <MicrosoftButton type="button" onClick={onMicrosoftLogin} />
       </div>
     </Form>
   );
