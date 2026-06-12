@@ -7,10 +7,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { UserProfile } from "@/stores/auth.store";
 
+import { supabaseServer } from "@/lib/supabase.server";
 import { UsersTable } from "./_components/users-table";
 
 export default async function ManageUsersPage() {
-  const result = await getUsers();
+  const [
+    result,
+    {
+      data: { user: currentUser },
+    },
+  ] = await Promise.all([getUsers(), supabaseServer.auth.getUser()]);
 
   if (!result.success) {
     return (
@@ -30,7 +36,11 @@ export default async function ManageUsersPage() {
     );
   }
 
-  const users = result.users as UserProfile[];
+  const currentUid = currentUser?.id;
+  const users = (result.users || []).map((user) => ({
+    ...user,
+    isLinked: user.uid === currentUid,
+  }));
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">

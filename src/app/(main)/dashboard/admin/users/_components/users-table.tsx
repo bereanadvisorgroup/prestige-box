@@ -8,7 +8,7 @@ import type { UserProfile } from "@/stores/auth.store";
 import { columns } from "./columns";
 
 interface UsersTableProps {
-  data: UserProfile[];
+  data: (UserProfile & { isLinked?: boolean })[];
 }
 
 export function UsersTable({ data }: UsersTableProps) {

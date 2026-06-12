@@ -12,6 +12,7 @@ export async function createUser(data: {
   firstName: string;
   lastName: string;
   role: string;
+  origin: string;
 }) {
   try {
     // 1. Create User in Supabase Auth via Admin API
@@ -23,6 +24,9 @@ export async function createUser(data: {
       user_metadata: {
         firstName: data.firstName,
         lastName: data.lastName,
+        role: data.role,
+      },
+      app_metadata: {
         role: data.role,
       },
     });
@@ -45,6 +49,13 @@ export async function createUser(data: {
 
     if (dbError) {
       console.error("[createUser] Warning: Database profile insert failed, trigger may handle this:", dbError.message);
+    }
+
+    // 3. Send initial password reset email
+    try {
+      await resetUserPassword(authRecord.user.id, data.email, data.origin);
+    } catch (emailErr) {
+      console.error("[createUser] Warning: Failed to send initial password reset email:", emailErr);
     }
 
     revalidatePath("/dashboard/admin/users");
@@ -108,7 +119,7 @@ export async function getUsers() {
 
 export async function updateUser(
   uid: string,
-  data: { firstName: string; lastName: string; role: string; photoURL?: string },
+  data: { firstName: string; lastName: string; role: string; photoURL?: string | null },
 ) {
   try {
     // Update Document in public.users table
@@ -118,7 +129,7 @@ export async function updateUser(
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        photoURL: data.photoURL,
+        photoURL: data.photoURL ?? null,
         updatedAt: new Date().toISOString(),
       })
       .eq("uid", uid);
@@ -130,6 +141,9 @@ export async function updateUser(
       user_metadata: {
         firstName: data.firstName,
         lastName: data.lastName,
+        role: data.role,
+      },
+      app_metadata: {
         role: data.role,
       },
     });

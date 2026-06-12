@@ -54,6 +54,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
     },
   });
 
+  const watchedFirstName = form.watch("firstName");
+  const watchedLastName = form.watch("lastName");
+  const initials = getInitials(`${watchedFirstName} ${watchedLastName}`);
+
   const handleFileUpload = async (file: File) => {
     try {
       setIsUploading(true);
@@ -144,7 +148,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
         firstName: values.firstName,
         lastName: values.lastName,
         role: values.role as UserRole,
-        photoURL: photoURL || undefined,
+        photoURL: photoURL || null,
       });
 
       if (result.success) {
@@ -191,12 +195,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
             <Avatar className="h-[88px] w-[88px]">
               <AvatarImage
                 src={photoURL || undefined}
-                alt={`${user.firstName} ${user.lastName}`}
+                alt={`${watchedFirstName} ${watchedLastName}`}
                 className="object-cover"
               />
-              <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">
-                {getInitials(`${user.firstName} ${user.lastName}`)}
-              </AvatarFallback>
+              <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">{initials}</AvatarFallback>
             </Avatar>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -281,7 +283,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />

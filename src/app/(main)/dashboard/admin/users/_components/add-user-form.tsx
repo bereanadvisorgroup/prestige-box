@@ -59,6 +59,7 @@ export function AddUserForm() {
         firstName: values.firstName,
         lastName: values.lastName,
         role: values.role,
+        origin: window.location.origin,
       });
 
       if (result.success) {
@@ -146,7 +147,7 @@ export function AddUserForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />

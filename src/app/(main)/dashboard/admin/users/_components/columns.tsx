@@ -15,7 +15,7 @@ import type { UserProfile } from "@/stores/auth.store";
 import { DeleteUserAlert } from "./delete-user-alert";
 import { ResetPasswordAlert } from "./reset-password-alert";
 
-export const columns: ColumnDef<UserProfile>[] = [
+export const columns: ColumnDef<UserProfile & { isLinked?: boolean }>[] = [
   {
     accessorKey: "userName",
     header: "Name",
@@ -75,6 +75,7 @@ export const columns: ColumnDef<UserProfile>[] = [
 
       const providers = (user as UserProfile & { providers?: string[] }).providers;
       const isEmailUser = !providers || providers.length === 0 || providers.includes("email");
+      const isDeletable = !user.isLinked;
 
       return (
         <div className="flex items-center justify-end gap-2">
@@ -90,18 +91,36 @@ export const columns: ColumnDef<UserProfile>[] = [
             </Button>
           )}
           <Link href={`/dashboard/admin/users/${user.uid}/edit`}>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              title="Edit User"
+            >
               <Pencil className="h-4 w-4" />
             </Button>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive/80"
-            onClick={() => setShowDeleteAlert(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {isDeletable ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive/80"
+              onClick={() => setShowDeleteAlert(true)}
+              title="Delete User"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 cursor-not-allowed text-muted-foreground/40"
+              disabled
+              title="You cannot delete your own account"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
 
           {isEmailUser && (
             <ResetPasswordAlert

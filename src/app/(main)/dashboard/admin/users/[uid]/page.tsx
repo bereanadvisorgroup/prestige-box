@@ -5,15 +5,15 @@ import { format } from "date-fns";
 import { Calendar, Fingerprint, Mail, Pencil, Shield, User } from "lucide-react";
 
 import { getUser } from "@/actions/users";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface UserPageProps {
-  params: {
+  params: Promise<{
     uid: string;
-  };
+  }>;
 }
 
 export default async function UserPage({ params }: UserPageProps) {
@@ -33,6 +33,11 @@ export default async function UserPage({ params }: UserPageProps) {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
+            <AvatarImage
+              src={user.photoURL || undefined}
+              alt={`${user.firstName} ${user.lastName}`}
+              className="object-cover"
+            />
             <AvatarFallback className="rounded-md bg-primary/5 font-bold text-2xl text-primary">
               {initials || <User className="h-8 w-8" />}
             </AvatarFallback>
@@ -65,16 +70,6 @@ export default async function UserPage({ params }: UserPageProps) {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/10 p-2 text-primary">
-                <Fingerprint className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">User ID (UID)</p>
-                <p className="mt-1 font-mono font-semibold text-sm">{user.uid}</p>
-              </div>
-            </div>
-
             <div className="flex items-start gap-3">
               <div className="rounded-full bg-primary/10 p-2 text-primary">
                 <Mail className="h-4 w-4" />
