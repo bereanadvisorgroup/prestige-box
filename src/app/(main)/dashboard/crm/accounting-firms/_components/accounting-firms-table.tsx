@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeleteAccountingFirmAlert } from "./delete-accounting-firm-alert";
 
 interface AccountingFirmsTableProps {
-  data: any[];
+  data: AccountingFirm[];
 }
 
 export function AccountingFirmsTable({ data }: AccountingFirmsTableProps) {

@@ -27,7 +27,7 @@ export function AddressSearchSelect({
   return (
     <Combobox
       value={value || ""}
-      onValueChange={(val: any) => {
+      onValueChange={(val: unknown) => {
         if (typeof val === "string") onValueChange(val);
       }}
     >

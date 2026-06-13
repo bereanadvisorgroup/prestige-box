@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Pencil, Phone, Users } from "lucide-react";
+import { Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Phone, Users } from "lucide-react";
 
 import { getAddress } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
 import { getCompany } from "@/actions/companies";
 import { PersonAvatar } from "@/components/crm/person-avatar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPhoneNumber } from "@/lib/utils";
 
@@ -238,7 +236,6 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
               )}
             </CardContent>
           </Card>
-
         </div>
       </div>
     </div>

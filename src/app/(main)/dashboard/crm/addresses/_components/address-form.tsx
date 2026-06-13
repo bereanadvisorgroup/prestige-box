@@ -25,6 +25,7 @@ export function AddressForm({ address }: AddressFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<Address>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(AddressSchema) as any,
     defaultValues: address || {
       street1: "",
@@ -41,12 +42,7 @@ export function AddressForm({ address }: AddressFormProps) {
       setIsLoading(true);
       const isEditing = !!address?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateAddress(address.id!, values);
-      } else {
-        result = await createAddress(values);
-      }
+      const result = isEditing ? await updateAddress(address.id!, values) : await createAddress(values);
 
       if (result.success) {
         toast.success(isEditing ? "Address updated successfully" : "Address created successfully");

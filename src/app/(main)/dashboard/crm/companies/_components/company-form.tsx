@@ -34,6 +34,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
 
   const form = useForm<Company>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(CompanySchema) as any,
     defaultValues: company || {
       name: "",
@@ -96,12 +97,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
       setIsLoading(true);
       const isEditing = !!company?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateCompany(company.id!, values);
-      } else {
-        result = await createCompany(values);
-      }
+      const result = isEditing ? await updateCompany(company.id!, values) : await createCompany(values);
 
       if (result.success) {
         toast.success(isEditing ? "Company record updated" : "Company record created");
@@ -444,7 +440,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleClient(val);
                   }}
                 >
@@ -454,7 +450,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                       {availableClients
                         .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
                         .map((client) => {
-                          const person = (client as any).person;
+                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
                           if (!person) return null;
                           return (
                             <ComboboxItem
@@ -477,7 +473,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as any)?.person;
+                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
                   return (
                     <Badge
                       key={clientId}

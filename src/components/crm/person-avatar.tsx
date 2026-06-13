@@ -30,7 +30,7 @@ export function PersonAvatar({
   return (
     <Avatar className={className} size={size}>
       {photoUrl && <AvatarImage src={photoUrl} alt={name || "Person avatar"} className="object-cover" />}
-      <AvatarFallback className="bg-primary/5 text-primary font-semibold">
+      <AvatarFallback className="bg-primary/5 font-semibold text-primary">
         {initials !== "?" ? initials : fallbackIcon || <User className="h-3.5 w-3.5 text-muted-foreground" />}
       </AvatarFallback>
     </Avatar>

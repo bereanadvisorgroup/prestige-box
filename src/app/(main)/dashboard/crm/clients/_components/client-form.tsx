@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, Heart, Trash2, Trophy, User } from "lucide-react";
+import { CreditCard, Heart, Trash2, Trophy } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -36,6 +36,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
 
   const form = useForm<Client>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(ClientSchema) as any,
     defaultValues: client || {
       personId: "",
@@ -119,12 +120,7 @@ export function ClientForm({ client }: ClientFormProps) {
       setIsLoading(true);
       const isEditing = !!client?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateClient(client.id!, values);
-      } else {
-        result = await createClient(values);
-      }
+      const result = isEditing ? await updateClient(client.id!, values) : await createClient(values);
 
       if (result.success) {
         toast.success(isEditing ? "Client record updated" : "Client record created");
@@ -261,7 +257,7 @@ export function ClientForm({ client }: ClientFormProps) {
               <div className="space-y-2">
                 <FormLabel>Search and Link Teams</FormLabel>
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleSportsTeam(val);
                   }}
                 >

@@ -122,7 +122,7 @@ export function EmploymentTab({ client }: { client: Client }) {
               <Label>Employer Phone</Label>
               <PhoneInput
                 value={employerPhone}
-                onChange={(val: any) => setEmployerPhone(val?.target?.value ?? val ?? "")}
+                onChange={(e) => setEmployerPhone(e.target.value)}
                 placeholder="555-555-5555"
               />
             </div>

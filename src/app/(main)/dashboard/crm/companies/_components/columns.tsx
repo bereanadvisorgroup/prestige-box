@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Building2, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -14,10 +14,10 @@ export type EnrichedCompany = Company & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (company: Company) => void) => [
+export const columns = (onDelete: (company: Company) => void): ColumnDef<EnrichedCompany>[] => [
   {
     accessorKey: "name",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Company Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedCompany> }) => {
       const company = row.original;
       return (
@@ -36,7 +36,7 @@ export const columns = (onDelete: (company: Company) => void) => [
   },
   {
     accessorKey: "website",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Website" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Website" />,
     cell: ({ row }: { row: Row<Company> }) => {
       const website = row.original.website;
       if (!website) return "-";
@@ -55,7 +55,7 @@ export const columns = (onDelete: (company: Company) => void) => [
   },
   {
     accessorKey: "phone",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
     cell: ({ row }: { row: Row<Company> }) => {
       const phone = row.original.phone;
       if (!phone) return "-";
@@ -69,7 +69,7 @@ export const columns = (onDelete: (company: Company) => void) => [
   },
   {
     id: "clientsCount",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Associated Clients" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Associated Clients" />,
     cell: ({ row }: { row: Row<Company> }) => {
       const count = row.original.clientIds?.length || 0;
       return (

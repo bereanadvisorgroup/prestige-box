@@ -14,6 +14,7 @@ import {
   HeartPulse,
   Home,
   Landmark,
+  type LucideIcon,
   Mail,
   MapPin,
   Phone,
@@ -83,7 +84,7 @@ function AssociationCardList({
   description: string;
   items: { id: string; name: string; website?: string | null; phone?: string | null }[];
   linkPrefix: string;
-  icon: any;
+  icon: LucideIcon;
 }) {
   return (
     <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
@@ -426,7 +427,7 @@ export function AddressProfileTabs({
                           <Briefcase className="h-4 w-4 text-primary" /> Employment History
                         </h4>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          {client.employments.map((emp: any, i: number) => (
+                          {client.employments.map((emp, i) => (
                             <div key={i} className="rounded-lg border bg-card p-4 text-sm shadow-sm">
                               <p className="font-bold">{emp.occupation}</p>
                               <p className="mt-0.5 text-muted-foreground text-xs">{emp.employerName}</p>
@@ -450,7 +451,7 @@ export function AddressProfileTabs({
                               <Home className="h-4 w-4 text-primary" /> Mortgages
                             </h4>
                             <div className="space-y-2">
-                              {client.mortgages.map((m: any, idx: number) => (
+                              {client.mortgages.map((m, idx) => (
                                 <div key={idx} className="space-y-1 rounded-lg border bg-card p-3 text-xs shadow-sm">
                                   {m.purchasePrice && (
                                     <p className="font-medium">
@@ -475,7 +476,7 @@ export function AddressProfileTabs({
                               <CreditCard className="h-4 w-4 text-primary" /> Liabilities
                             </h4>
                             <div className="space-y-2">
-                              {client.liabilities.map((l: any, idx: number) => (
+                              {client.liabilities.map((l, idx) => (
                                 <div key={idx} className="space-y-1 rounded-lg border bg-card p-3 text-xs shadow-sm">
                                   <p className="font-bold">{l.creditorName}</p>
                                   <p className="font-semibold text-muted-foreground">

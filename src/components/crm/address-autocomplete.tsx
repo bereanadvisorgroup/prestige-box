@@ -10,6 +10,9 @@ import { Spinner } from "@/components/ui/spinner";
 
 const libraries: Libraries = ["places"];
 
+// biome-ignore lint/suspicious/noExplicitAny: Google Maps global object
+declare const google: any;
+
 interface AddressAutocompleteProps {
   value?: string;
   onValueChange?: (value: string) => void;
@@ -60,7 +63,7 @@ export function AddressAutocomplete({
         types: ["address"],
       });
 
-      autocompleteRef.current.addListener("place_changed", () => {
+      autocompleteRef.current!.addListener("place_changed", () => {
         const place = autocompleteRef.current?.getPlace();
         if (place?.address_components) {
           let streetNumber = "";

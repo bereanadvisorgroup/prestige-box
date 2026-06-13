@@ -6,7 +6,6 @@ import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { supabaseServer } from "@/lib/supabase.server";
-import type { UserProfile } from "@/stores/auth.store";
 
 import { UsersTable } from "./_components/users-table";
 

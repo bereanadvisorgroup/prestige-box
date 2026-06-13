@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Globe, Pencil, Phone, Shield, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -15,10 +15,12 @@ export type EnrichedLongTermCareInsurance = LongTermCareInsurance & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (company: LongTermCareInsurance) => void) => [
+export const columns = (
+  onDelete: (company: LongTermCareInsurance) => void,
+): ColumnDef<EnrichedLongTermCareInsurance>[] => [
   {
     accessorKey: "name",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Company Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedLongTermCareInsurance> }) => {
       const company = row.original;
       return (

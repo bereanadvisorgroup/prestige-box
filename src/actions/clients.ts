@@ -171,7 +171,8 @@ export async function getClientAssociationCounts(clientId: string) {
     const policyDisabilityIds = new Set(policies.map((p) => p.disabilityInsuranceCompanyId).filter(Boolean));
     const policyLtcIds = new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean));
 
-    const filterByIds = (list: any[]) => list.filter((item) => item.clientIds?.includes(clientId)).length;
+    const filterByIds = (list: { clientIds?: string[] | null }[]) =>
+      list.filter((item) => item.clientIds?.includes(clientId)).length;
 
     return {
       success: true,

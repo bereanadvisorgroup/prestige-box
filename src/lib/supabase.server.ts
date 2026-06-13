@@ -25,7 +25,7 @@ function getClient() {
 }
 
 export const supabaseServer = new Proxy({} as unknown as SupabaseClient, {
-  get(target, prop, receiver) {
+  get(_target, prop, receiver) {
     const activeClient = getClient();
     const value = Reflect.get(activeClient, prop, receiver);
     if (typeof value === "function") {
@@ -33,15 +33,15 @@ export const supabaseServer = new Proxy({} as unknown as SupabaseClient, {
     }
     return value;
   },
-  set(target, prop, value, receiver) {
+  set(_target, prop, value, receiver) {
     const activeClient = getClient();
     return Reflect.set(activeClient, prop, value, receiver);
   },
-  ownKeys(target) {
+  ownKeys(_target) {
     const activeClient = getClient();
     return Reflect.ownKeys(activeClient);
   },
-  getOwnPropertyDescriptor(target, prop) {
+  getOwnPropertyDescriptor(_target, prop) {
     const activeClient = getClient();
     return Reflect.getOwnPropertyDescriptor(activeClient, prop);
   },

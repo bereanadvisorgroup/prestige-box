@@ -26,9 +26,9 @@ export function GraphControls({
   groups,
 }: GraphControlsProps) {
   return (
-    <Card className="p-4 flex flex-col gap-6 bg-background/95 backdrop-blur shadow-md max-h-[80vh] overflow-y-auto">
+    <Card className="flex max-h-[80vh] flex-col gap-6 overflow-y-auto bg-background/95 p-4 shadow-md backdrop-blur">
       <div>
-        <h3 className="font-semibold text-sm mb-3">Controls</h3>
+        <h3 className="mb-3 font-semibold text-sm">Controls</h3>
         <Button variant="outline" size="sm" className="w-full justify-start" onClick={onResetZoom}>
           <RefreshCcw className="mr-2 h-4 w-4" />
           Reset Zoom
@@ -36,7 +36,7 @@ export function GraphControls({
       </div>
 
       <div>
-        <h3 className="font-semibold text-sm mb-3">Repulsion Strength</h3>
+        <h3 className="mb-3 font-semibold text-sm">Repulsion Strength</h3>
         <Slider
           value={[repulsionStrength]}
           min={50}
@@ -48,11 +48,11 @@ export function GraphControls({
       </div>
 
       <div>
-        <h3 className="font-semibold text-sm mb-3">Visible Entities</h3>
+        <h3 className="mb-3 font-semibold text-sm">Visible Entities</h3>
         <div className="flex flex-col gap-3">
           {groups.map((group) => (
             <div key={group} className="flex items-center justify-between">
-              <Label htmlFor={`toggle-${group}`} className="text-xs cursor-pointer">
+              <Label htmlFor={`toggle-${group}`} className="cursor-pointer text-xs">
                 {group}
               </Label>
               <Switch

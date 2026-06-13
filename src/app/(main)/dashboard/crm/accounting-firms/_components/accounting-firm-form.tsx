@@ -46,6 +46,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<AccountingFirm>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(AccountingFirmSchema) as any,
     defaultValues: {
       personIds: accountingFirm?.personIds || [],
@@ -130,12 +131,9 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
       setIsLoading(true);
       const isEditing = !!accountingFirm?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateAccountingFirm(accountingFirm.id!, values);
-      } else {
-        result = await createAccountingFirm(values);
-      }
+      const result = isEditing
+        ? await updateAccountingFirm(accountingFirm.id!, values)
+        : await createAccountingFirm(values);
 
       if (result.success) {
         toast.success(isEditing ? "Accounting Firm record updated" : "Accounting Firm record created");
@@ -243,7 +241,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
               render={({ field }) => (
                 <FormItem className="space-y-4">
                   <div className="flex items-center justify-between border-b pb-2">
-                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 font-medium text-sm">
                       <Users className="h-4 w-4 text-primary" />
                       Associated Professionals
                     </FormLabel>
@@ -328,7 +326,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleClient(val);
                   }}
                 >
@@ -338,7 +336,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
                       {availableClients
                         .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
                         .map((client) => {
-                          const person = (client as any).person;
+                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
                           if (!person) return null;
                           return (
                             <ComboboxItem
@@ -361,7 +359,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as any)?.person;
+                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
                   return (
                     <Badge
                       key={clientId}
@@ -389,7 +387,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleCompany(val);
                   }}
                 >

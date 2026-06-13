@@ -41,12 +41,12 @@ export function GraphView({ nodes, links }: GraphViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="w-full relative z-20">
+      <div className="relative z-20 w-full">
         <EntityFocusSearch nodes={nodes} focusedNodeId={focusedNodeId} onNodeFocus={setFocusedNodeId} />
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-6 relative">
-        <Card className="flex-1 overflow-hidden relative border shadow-sm z-10">
+      <div className="relative flex flex-col gap-6 xl:flex-row">
+        <Card className="relative z-10 flex-1 overflow-hidden border shadow-sm">
           <ForceGraph
             ref={forceGraphRef}
             nodes={nodes}
@@ -57,7 +57,7 @@ export function GraphView({ nodes, links }: GraphViewProps) {
           />
         </Card>
 
-        <div className="w-full xl:w-72 shrink-0 z-10">
+        <div className="z-10 w-full shrink-0 xl:w-72">
           <GraphControls
             groups={Object.keys(GROUP_COLORS)}
             visibleGroups={visibleGroups}

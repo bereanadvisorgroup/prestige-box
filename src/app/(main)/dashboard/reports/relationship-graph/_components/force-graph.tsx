@@ -58,7 +58,9 @@ export const ForceGraph = React.forwardRef<ForceGraphRef, ForceGraphProps>(
     // Build adjacency list for focus mode
     const adjacencyList = React.useMemo(() => {
       const adj = new Map<string, Set<string>>();
-      filteredNodes.forEach((n) => adj.set(n.id, new Set()));
+      filteredNodes.forEach((n) => {
+        adj.set(n.id, new Set());
+      });
       filteredLinks.forEach((l) => {
         adj.get(l.source)?.add(l.target);
         adj.get(l.target)?.add(l.source);
@@ -69,6 +71,25 @@ export const ForceGraph = React.forwardRef<ForceGraphRef, ForceGraphProps>(
     // D3 variables
     const zoomRef = React.useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
     const simulationRef = React.useRef<d3.Simulation<SimulationNode, SimulationLink> | null>(null);
+
+    // Drag helper
+    const drag = React.useCallback((simulation: d3.Simulation<SimulationNode, SimulationLink>) => {
+      function dragstarted(event: any, d: any) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event: any, d: any) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event: any, d: any) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+    }, []);
 
     React.useImperativeHandle(ref, () => ({
       resetZoom: () => {
@@ -185,7 +206,7 @@ export const ForceGraph = React.forwardRef<ForceGraphRef, ForceGraphProps>(
             link.style("opacity", 0.3);
           }
         })
-        .on("click", (event, d) => {
+        .on("click", (_event, d) => {
           if (d.url) {
             router.push(d.url);
           }
@@ -206,7 +227,7 @@ export const ForceGraph = React.forwardRef<ForceGraphRef, ForceGraphProps>(
       return () => {
         simulation.stop();
       };
-    }, [filteredNodes, filteredLinks, repulsionStrength, adjacencyList, router]); // Notice focusedNodeId is handled in a separate effect
+    }, [filteredNodes, filteredLinks, repulsionStrength, adjacencyList, router, focusedNodeId, drag]); // Notice focusedNodeId is handled in a separate effect
 
     // Handle Focus Mode
     React.useEffect(() => {
@@ -247,39 +268,20 @@ export const ForceGraph = React.forwardRef<ForceGraphRef, ForceGraphProps>(
       }
     }, [focusedNodeId, adjacencyList]);
 
-    // Drag helper
-    const drag = (simulation: d3.Simulation<SimulationNode, SimulationLink>) => {
-      function dragstarted(event: any, d: any) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-      }
-      function dragged(event: any, d: any) {
-        d.fx = event.x;
-        d.fy = event.y;
-      }
-      function dragended(event: any, d: any) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-      }
-      return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
-    };
-
     return (
-      <div className="relative w-full h-[700px]" ref={containerRef}>
-        <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing rounded-lg" />
+      <div className="relative h-[700px] w-full" ref={containerRef}>
+        <svg ref={svgRef} className="h-full w-full cursor-grab rounded-lg active:cursor-grabbing" />
 
         {/* Custom Tooltip */}
-        {tooltip && tooltip.visible && (
+        {tooltip?.visible && (
           <div
-            className="fixed z-50 pointer-events-none bg-popover text-popover-foreground border shadow-md rounded-md px-3 py-2 text-sm transform -translate-x-1/2"
+            className="pointer-events-none fixed z-50 -translate-x-1/2 transform rounded-md border bg-popover px-3 py-2 text-popover-foreground text-sm shadow-md"
             style={{ left: tooltip.x, top: tooltip.y }}
           >
             <div className="font-semibold">{tooltip.name}</div>
-            <div className="text-xs text-muted-foreground flex items-center justify-between gap-4 mt-1">
+            <div className="mt-1 flex items-center justify-between gap-4 text-muted-foreground text-xs">
               <span>{tooltip.type}</span>
-              <span className="font-mono bg-muted px-1 rounded">{tooltip.connections} links</span>
+              <span className="rounded bg-muted px-1 font-mono">{tooltip.connections} links</span>
             </div>
           </div>
         )}

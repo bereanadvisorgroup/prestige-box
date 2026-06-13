@@ -67,7 +67,8 @@
         "useSelfClosingElements": "error",
         "noParameterAssign": "error",
         "noInferrableTypes": "error",
-        "noUselessElse": "error"
+        "noUselessElse": "error",
+        "noNonNullAssertion": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "warn",

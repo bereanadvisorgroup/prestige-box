@@ -50,13 +50,13 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
     }
     try {
       setIsLoading(true);
-      let statementPath;
+      let statementPath: string | undefined;
 
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();
         const randomStr = Math.random().toString(36).substring(7);
         const filePath = `clients/${client.id}/mortgages/${randomStr}_${Date.now()}.${fileExt}`;
-        const { data, error } = await supabase.storage.from("documents").upload(filePath, statementFile);
+        const { error } = await supabase.storage.from("documents").upload(filePath, statementFile);
         if (error) throw error;
         const {
           data: { publicUrl },
@@ -86,9 +86,9 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
       } else {
         throw new Error("Failed to update client with new mortgage details.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Mortgage upload error:", error);
-      toast.error(error.message || "Error adding mortgage details");
+      toast.error(error instanceof Error ? error.message : "Error adding mortgage");
     } finally {
       setIsLoading(false);
     }
@@ -205,6 +205,7 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
                 >
                   <div className="relative h-48 w-full shrink-0 border-border/50 border-b bg-muted/30 xl:h-auto xl:w-48 xl:border-r xl:border-b-0">
                     <iframe
+                      title={`Google Map showing ${addrStr}`}
                       width="100%"
                       height="100%"
                       style={{ border: 0, minHeight: "100%" }}

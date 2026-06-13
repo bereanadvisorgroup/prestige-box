@@ -91,7 +91,7 @@ export async function getPaymentsForMonth(month: number, year: number) {
         acc[doc.id] = doc;
         return acc;
       },
-      {} as Record<string, any>,
+      {} as Record<string, { name: string } & Record<string, unknown>>,
     );
 
     const endDate = new Date(year, month + 1, 0);

@@ -3,16 +3,13 @@
 import Link from "next/link";
 
 import {
-  Activity,
   ArrowUpRight,
   Briefcase,
-  Building2,
   Calculator,
   Contact,
   CreditCard,
   Database,
   Fingerprint,
-  FolderOpen,
   Globe,
   Heart,
   HeartHandshake,
@@ -20,16 +17,13 @@ import {
   Home,
   Landmark,
   MapPin,
-  Percent,
   Phone,
   ReceiptText,
   Scale,
   Shield,
   ShieldAlert,
-  Stethoscope,
   TrendingUp,
   User,
-  Wallet,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -95,11 +89,11 @@ function AssociationCardList({
           {items.map((item) => (
             <div
               key={item.id}
-              className="group flex flex-col justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/5 shadow-sm"
+              className="group flex flex-col justify-between rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-muted/5"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-foreground">{item.name}</h4>
+                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
                   <Link href={`${linkPrefix}/${item.id}`}>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                       <ArrowUpRight className="h-4 w-4" />
@@ -107,20 +101,20 @@ function AssociationCardList({
                   </Link>
                 </div>
                 {item.website && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <Globe className="h-3.5 w-3.5" />
                     <a
                       href={item.website.startsWith("http") ? item.website : `https://${item.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="hover:underline text-blue-600 dark:text-blue-400"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {item.website.replace(/^https?:\/\//, "")}
                     </a>
                   </div>
                 )}
                 {item.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
                     <Phone className="h-3.5 w-3.5" />
                     <span>{formatPhoneNumber(item.phone)}</span>
                   </div>
@@ -446,7 +440,7 @@ export function PersonProfileTabs({
           {associatedClient && (
             <TabsContent value="client" className="m-0 border-0 outline-none">
               <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
-                <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between flex-wrap gap-4">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 bg-muted/10 pb-4">
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <User className="h-5 w-5 text-primary" /> Client Profile
@@ -462,7 +456,7 @@ export function PersonProfileTabs({
                 <CardContent className="space-y-6 pt-6">
                   {associatedClient.hobbies && associatedClient.hobbies.length > 0 && (
                     <div>
-                      <h4 className="font-semibold text-sm mb-2 text-muted-foreground flex items-center gap-1.5">
+                      <h4 className="mb-2 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                         <Heart className="h-4 w-4 text-primary" /> Hobbies & Interests
                       </h4>
                       <div className="flex flex-wrap gap-2">
@@ -477,7 +471,7 @@ export function PersonProfileTabs({
 
                   {associatedClient.favoriteSportsTeams && associatedClient.favoriteSportsTeams.length > 0 && (
                     <div>
-                      <h4 className="font-semibold text-sm mb-2 text-muted-foreground flex items-center gap-1.5">
+                      <h4 className="mb-2 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                         <TrendingUp className="h-4 w-4 text-primary" /> Favorite Sports Teams
                       </h4>
                       <div className="flex flex-wrap gap-2">
@@ -492,16 +486,16 @@ export function PersonProfileTabs({
 
                   {associatedClient.employments && associatedClient.employments.length > 0 && (
                     <div className="border-t pt-4">
-                      <h4 className="font-semibold text-sm mb-3 text-muted-foreground flex items-center gap-1.5">
+                      <h4 className="mb-3 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                         <Briefcase className="h-4 w-4 text-primary" /> Employment History
                       </h4>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {associatedClient.employments.map((emp: any, i: number) => (
-                          <div key={i} className="rounded-lg border p-4 bg-card shadow-sm text-sm">
+                          <div key={i} className="rounded-lg border bg-card p-4 text-sm shadow-sm">
                             <p className="font-bold">{emp.occupation}</p>
-                            <p className="text-muted-foreground text-xs mt-0.5">{emp.employerName}</p>
+                            <p className="mt-0.5 text-muted-foreground text-xs">{emp.employerName}</p>
                             {(emp.startDate || emp.endDate) && (
-                              <p className="text-muted-foreground text-[10px] mt-2">
+                              <p className="mt-2 text-[10px] text-muted-foreground">
                                 {emp.startDate || "Present"} - {emp.endDate || "Present"}
                               </p>
                             )}
@@ -513,15 +507,15 @@ export function PersonProfileTabs({
 
                   {((associatedClient.mortgages && associatedClient.mortgages.length > 0) ||
                     (associatedClient.liabilities && associatedClient.liabilities.length > 0)) && (
-                    <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
                       {associatedClient.mortgages && associatedClient.mortgages.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-sm mb-3 text-muted-foreground flex items-center gap-1.5">
+                          <h4 className="mb-3 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                             <Home className="h-4 w-4 text-primary" /> Mortgages
                           </h4>
                           <div className="space-y-2">
                             {associatedClient.mortgages.map((m: any, idx: number) => (
-                              <div key={idx} className="rounded-lg border p-3 bg-card shadow-sm text-xs space-y-1">
+                              <div key={idx} className="space-y-1 rounded-lg border bg-card p-3 text-xs shadow-sm">
                                 {m.purchasePrice && (
                                   <p className="font-medium">
                                     Purchase Price:{" "}
@@ -541,19 +535,19 @@ export function PersonProfileTabs({
                       )}
                       {associatedClient.liabilities && associatedClient.liabilities.length > 0 && (
                         <div>
-                          <h4 className="font-semibold text-sm mb-3 text-muted-foreground flex items-center gap-1.5">
+                          <h4 className="mb-3 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                             <CreditCard className="h-4 w-4 text-primary" /> Liabilities
                           </h4>
                           <div className="space-y-2">
                             {associatedClient.liabilities.map((l: any, idx: number) => (
-                              <div key={idx} className="rounded-lg border p-3 bg-card shadow-sm text-xs space-y-1">
+                              <div key={idx} className="space-y-1 rounded-lg border bg-card p-3 text-xs shadow-sm">
                                 <p className="font-bold">{l.creditorName}</p>
-                                <p className="text-muted-foreground font-semibold">
+                                <p className="font-semibold text-muted-foreground">
                                   Type: <span className="text-foreground">{l.loanType}</span>
                                 </p>
                                 <p className="text-muted-foreground">
                                   Balance:{" "}
-                                  <span className="font-mono font-bold text-foreground">
+                                  <span className="font-bold font-mono text-foreground">
                                     ${l.currentBalance.toLocaleString()}
                                   </span>
                                 </p>

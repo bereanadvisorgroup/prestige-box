@@ -63,12 +63,9 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
   };
 
   const handleToggleSportsTeam = (teamName: string) => {
-    let next;
-    if (favoriteTeams.includes(teamName)) {
-      next = favoriteTeams.filter((t) => t !== teamName);
-    } else {
-      next = [...favoriteTeams, teamName];
-    }
+    const next = favoriteTeams.includes(teamName)
+      ? favoriteTeams.filter((t) => t !== teamName)
+      : [...favoriteTeams, teamName];
     setFavoriteTeams(next);
     handleUpdate({ favoriteSportsTeams: next });
   };
@@ -117,13 +114,16 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="space-y-2">
-            <label className="font-semibold text-foreground text-sm">Referred By</label>
+            <label htmlFor="referred-by-select" className="font-semibold text-foreground text-sm">
+              Referred By
+            </label>
             <Combobox
-              onValueChange={(val: any) => {
+              onValueChange={(val: unknown) => {
                 if (typeof val === "string") handleSetReferrer(val);
               }}
             >
               <ComboboxInput
+                id="referred-by-select"
                 placeholder="Search clients..."
                 value={
                   referredById
@@ -151,7 +151,7 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
           </div>
 
           <div className="space-y-2">
-            <label className="font-semibold text-foreground text-sm">Referred Clients</label>
+            <span className="block font-semibold text-foreground text-sm">Referred Clients</span>
             <div className="rounded-md border bg-muted/5 p-4">
               {referredClients.length > 0 ? (
                 <div className="flex flex-col gap-2">

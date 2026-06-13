@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import { supabaseServer } from "@/lib/supabase.server";
-import { type LawFirm, LawFirmSchema } from "@/types/crm";
+import { type LawFirm, LawFirmSchema, type Person } from "@/types/crm";
 
 const TABLE = "law_firms";
 
@@ -72,7 +72,7 @@ export async function getLawFirm(id: string) {
     if (!lawFirm) return { success: false, error: "Law Firm not found" };
 
     // Fetch people details
-    let people: any[] = [];
+    let people: Person[] = [];
     if (lawFirm.personIds && lawFirm.personIds.length > 0) {
       const { data: peopleData, error: peopleError } = await supabaseServer
         .from("people")

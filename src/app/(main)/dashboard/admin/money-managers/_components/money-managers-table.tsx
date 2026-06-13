@@ -9,11 +9,11 @@ import { DataTable } from "@/components/data-table/data-table";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
 import type { MoneyManager } from "@/types/crm";
 
-import { columns } from "./columns";
+import { columns, type EnrichedMoneyManager } from "./columns";
 import { DeleteMoneyManagerAlert } from "./delete-money-manager-alert";
 
 interface MoneyManagersTableProps {
-  data: any[];
+  data: EnrichedMoneyManager[];
 }
 
 export function MoneyManagersTable({ data }: MoneyManagersTableProps) {

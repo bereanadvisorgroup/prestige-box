@@ -46,8 +46,9 @@ export function PolicyForm({ policy }: PolicyFormProps) {
   const [availableCompanies, setAvailableCompanies] = useState<MergedCompany[]>([]);
 
   const form = useForm<ClientPolicy>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(ClientPolicySchema) as any,
-    defaultValues: (policy as any) || {
+    defaultValues: (policy as Record<string, unknown>) || {
       clientId: "",
       lifeInsuranceCompanyId:
         policy?.lifeInsuranceCompanyId || policy?.disabilityInsuranceCompanyId || policy?.longTermCareInsuranceId || "",
@@ -119,12 +120,9 @@ export function PolicyForm({ policy }: PolicyFormProps) {
         longTermCareInsuranceId: isLongTermCare ? values.lifeInsuranceCompanyId : null,
       };
 
-      let result;
-      if (isEditing) {
-        result = await updateClientPolicy(policy.id!, finalValues);
-      } else {
-        result = await createClientPolicy(finalValues);
-      }
+      const result = isEditing
+        ? await updateClientPolicy(policy.id!, finalValues)
+        : await createClientPolicy(finalValues);
 
       if (result.success) {
         toast.success(isEditing ? "Policy updated" : "Policy created");
@@ -165,7 +163,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormLabel>Client</FormLabel>
                     <Combobox
                       value={field.value}
-                      onValueChange={(val: any) => {
+                      onValueChange={(val) => {
                         if (typeof val === "string") {
                           field.onChange(val);
                           form.setValue("paymentAccountId", ""); // Reset payment account when client changes
@@ -207,7 +205,7 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                     <FormLabel>Insurance Carrier</FormLabel>
                     <Combobox
                       value={field.value}
-                      onValueChange={(val: any) => {
+                      onValueChange={(val) => {
                         if (typeof val === "string") {
                           field.onChange(val);
                           form.setValue("policyName", ""); // Reset policy name when carrier changes

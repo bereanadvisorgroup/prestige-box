@@ -154,7 +154,8 @@ export async function getCompanyAssociationCounts(companyId: string) {
       supabaseServer.from("long_term_care_insurance").select("id, companyIds"),
     ]);
 
-    const filterByIds = (list: any[]) => list.filter((item) => item.companyIds?.includes(companyId)).length;
+    const filterByIds = (list: { companyIds?: string[] | null }[]) =>
+      list.filter((item) => item.companyIds?.includes(companyId)).length;
 
     return {
       success: true,

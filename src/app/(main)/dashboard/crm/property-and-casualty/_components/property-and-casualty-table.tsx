@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeletePropertyAndCasualtyAlert } from "./delete-property-and-casualty-alert";
 
 interface PropertyAndCasualtyTableProps {
-  data: any[];
+  data: PropertyAndCasualtyFirm[];
 }
 
 export function PropertyAndCasualtyTable({ data }: PropertyAndCasualtyTableProps) {

@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Home, Pencil, Trash2, Users } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Household } from "@/types/crm";
 
-export const columns = (onDelete: (household: Household) => void) => [
+export const columns = (onDelete: (household: Household) => void): ColumnDef<Household>[] => [
   {
     accessorKey: "name",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Household Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Household Name" />,
     cell: ({ row }: { row: Row<Household> }) => {
       const household = row.original;
       return (

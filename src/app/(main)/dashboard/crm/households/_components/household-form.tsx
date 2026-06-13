@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Trash2, User, Users } from "lucide-react";
+import { MapPin, Trash2, Users } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<Household>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(HouseholdSchema) as any,
     defaultValues: household || {
       name: "",
@@ -73,12 +74,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
       setIsLoading(true);
       const isEditing = !!household?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateHousehold(household.id!, values);
-      } else {
-        result = await createHousehold(values);
-      }
+      const result = isEditing ? await updateHousehold(household.id!, values) : await createHousehold(values);
 
       if (result.success) {
         toast.success(isEditing ? "Household updated successfully" : "Household created successfully");

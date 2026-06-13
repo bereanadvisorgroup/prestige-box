@@ -19,7 +19,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Form State
-  const [loanType, setLoanType] = useState("");
+  const [loanType, setLoanType] = useState<LoanInfo["loanType"] | "">("");
   const [creditorName, setCreditorName] = useState("");
   const [currentBalance, setCurrentBalance] = useState("");
   const [statementFile, setStatementFile] = useState<File | null>(null);
@@ -31,13 +31,13 @@ export function LiabilitiesTab({ client }: { client: Client }) {
     }
     try {
       setIsLoading(true);
-      let statementPath;
+      let statementPath: string | undefined;
 
       if (statementFile) {
         const fileExt = statementFile.name.split(".").pop();
         const randomStr = Math.random().toString(36).substring(7);
         const filePath = `clients/${client.id}/liabilities/${randomStr}_${Date.now()}.${fileExt}`;
-        const { data, error } = await supabase.storage.from("documents").upload(filePath, statementFile);
+        const { error } = await supabase.storage.from("documents").upload(filePath, statementFile);
         if (error) throw error;
         const {
           data: { publicUrl },
@@ -47,7 +47,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
 
       const newLoan: LoanInfo = {
         id: crypto.randomUUID(),
-        loanType: loanType as any,
+        loanType: loanType as LoanInfo["loanType"],
         creditorName,
         currentBalance: parseFloat(currentBalance),
         statementPath,
@@ -67,9 +67,9 @@ export function LiabilitiesTab({ client }: { client: Client }) {
       } else {
         throw new Error("Failed to update client with new liability details.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Liability upload error:", error);
-      toast.error(error.message || "Error adding liability");
+      toast.error(error instanceof Error ? error.message : "Error adding liability");
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +99,7 @@ export function LiabilitiesTab({ client }: { client: Client }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div className="space-y-2">
               <Label>Loan Type</Label>
-              <Select value={loanType} onValueChange={setLoanType}>
+              <Select value={loanType} onValueChange={(val) => setLoanType(val as LoanInfo["loanType"])}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -162,17 +162,20 @@ export function LiabilitiesTab({ client }: { client: Client }) {
                   </div>
                   <div className="space-y-1">
                     <p className="flex items-center gap-2 font-semibold text-foreground">
-                      {loan.creditorName || (loan as any).creditor || "Unknown Creditor"}
+                      {loan.creditorName || (loan as unknown as { creditor?: string }).creditor || "Unknown Creditor"}
                       <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-xs uppercase">
-                        {loan.loanType || (loan as any).type || "Unknown"}
+                        {loan.loanType || (loan as unknown as { type?: string }).type || "Unknown"}
                       </span>
                     </p>
                     <p className="font-bold text-foreground/90 text-xl tracking-tight">
                       $
-                      {(loan.currentBalance ?? (loan as any).amount ?? 0).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {(loan.currentBalance ?? (loan as unknown as { amount?: number }).amount ?? 0).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      )}
                     </p>
                   </div>
                 </div>

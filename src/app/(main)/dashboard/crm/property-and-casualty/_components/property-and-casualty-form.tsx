@@ -46,6 +46,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<PropertyAndCasualtyFirm>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(PropertyAndCasualtyFirmSchema) as any,
     defaultValues: {
       personIds: propertyAndCasualtyFirm?.personIds || [],
@@ -130,12 +131,9 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
       setIsLoading(true);
       const isEditing = !!propertyAndCasualtyFirm?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updatePropertyAndCasualtyFirm(propertyAndCasualtyFirm.id!, values);
-      } else {
-        result = await createPropertyAndCasualtyFirm(values);
-      }
+      const result = isEditing
+        ? await updatePropertyAndCasualtyFirm(propertyAndCasualtyFirm.id!, values)
+        : await createPropertyAndCasualtyFirm(values);
 
       if (result.success) {
         toast.success(
@@ -245,7 +243,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
               render={({ field }) => (
                 <FormItem className="space-y-4">
                   <div className="flex items-center justify-between border-b pb-2">
-                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 font-medium text-sm">
                       <Users className="h-4 w-4 text-primary" />
                       Associated Professionals
                     </FormLabel>
@@ -329,7 +327,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleClient(val);
                   }}
                 >
@@ -339,7 +337,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                       {availableClients
                         .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
                         .map((client) => {
-                          const person = (client as any).person;
+                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
                           if (!person) return null;
                           return (
                             <ComboboxItem
@@ -362,7 +360,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as any)?.person;
+                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
                   return (
                     <Badge
                       key={clientId}
@@ -390,7 +388,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleCompany(val);
                   }}
                 >

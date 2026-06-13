@@ -77,7 +77,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
 
   const handleRemovePhoto = async () => {
     const currentPhotoUrl = form.getValues("photoUrl");
-    if (currentPhotoUrl && currentPhotoUrl.includes("/avatars/") && currentPhotoUrl.includes("people/")) {
+    if (currentPhotoUrl?.includes("/avatars/") && currentPhotoUrl.includes("people/")) {
       try {
         const oldPath = currentPhotoUrl.split("/public/avatars/")[1];
         if (oldPath) {
@@ -149,6 +149,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   };
 
   const form = useForm<Person>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(PersonSchema) as any,
     mode: "onChange",
     defaultValues: sanitizePerson(person) || {
@@ -265,17 +266,12 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
 
       const isEditing = !!person?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updatePerson(person.id!, submission);
-      } else {
-        result = await createPerson(submission);
-      }
+      const result = isEditing ? await updatePerson(person.id!, submission) : await createPerson(submission);
 
       if (result.success) {
         toast.success(isEditing ? "Person updated successfully" : "Person created successfully");
         if (onSuccess) {
-          onSuccess(isEditing ? person.id! : (result as any).id);
+          onSuccess(isEditing ? person.id! : (result as unknown as { id: string }).id);
         } else {
           router.push("/dashboard/crm/people");
         }
@@ -303,10 +299,11 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               <h3 className="border-b pb-2 font-medium text-sm">Personal Information</h3>
 
               {/* Photo Upload Section */}
-              <div className="flex flex-col items-center gap-6 pb-6 sm:flex-row border-b border-muted/50">
-                <div
+              <div className="flex flex-col items-center gap-6 border-muted/50 border-b pb-6 sm:flex-row">
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/40 transition-all duration-300"
+                  className="group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-muted-foreground/30 border-dashed transition-all duration-300 hover:border-primary/50 hover:bg-accent/40"
                   aria-label="Upload profile photo"
                 >
                   <Avatar className="h-[88px] w-[88px]">
@@ -315,22 +312,22 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       alt="Profile Preview"
                       className="object-cover"
                     />
-                    <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">
+                    <AvatarFallback className="bg-primary/5 font-bold text-lg text-primary">
                       {getInitials(`${form.watch("firstName")} ${form.watch("lastName")}`)}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <Camera className="h-5 w-5 text-white" />
-                    <span className="mt-1 text-[9px] text-white font-medium">Upload Photo</span>
+                    <span className="mt-1 font-medium text-[9px] text-white">Upload Photo</span>
                   </div>
 
                   {isUploading && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
-                      <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                      <span className="h-5 w-5 animate-spin rounded-full border-primary border-b-2" />
                     </div>
                   )}
-                </div>
+                </button>
 
                 <input
                   type="file"
@@ -354,7 +351,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       variant="outline"
                       size="sm"
                       onClick={handleRemovePhoto}
-                      className="h-7 w-fit gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40 transition-all duration-300 mt-1"
+                      className="mt-1 h-7 w-fit gap-1.5 border-red-200 text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40"
                     >
                       <Trash2 className="h-3 w-3" />
                       Remove Photo
@@ -524,7 +521,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               onChange={() => {
                                 // Set all to false, then this to true
                                 const currentEmails = form.getValues("emails");
-                                currentEmails.forEach((_, i) => form.setValue(`emails.${i}.isPrimary`, false));
+                                currentEmails.forEach((_, i) => {
+                                  form.setValue(`emails.${i}.isPrimary`, false);
+                                });
                                 form.setValue(`emails.${index}.isPrimary`, true);
                               }}
                               className="h-4 w-4"
@@ -618,7 +617,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               checked={checkField.value}
                               onChange={() => {
                                 const currentPhones = form.getValues("phones");
-                                currentPhones.forEach((_, i) => form.setValue(`phones.${i}.isPrimary`, false));
+                                currentPhones.forEach((_, i) => {
+                                  form.setValue(`phones.${i}.isPrimary`, false);
+                                });
                                 form.setValue(`phones.${index}.isPrimary`, true);
                               }}
                               className="h-4 w-4"
@@ -848,9 +849,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                   checked={checkField.value}
                                   onChange={() => {
                                     const currentAddresses = form.getValues("addresses");
-                                    currentAddresses.forEach((_, i) =>
-                                      form.setValue(`addresses.${i}.isPrimary`, false),
-                                    );
+                                    currentAddresses.forEach((_, i) => {
+                                      form.setValue(`addresses.${i}.isPrimary`, false);
+                                    });
                                     form.setValue(`addresses.${index}.isPrimary`, true);
                                   }}
                                   className="h-4 w-4"

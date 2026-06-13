@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, Pencil, Trash2, User } from "lucide-react";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -15,10 +15,10 @@ export type EnrichedPerson = Person & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (person: Person) => void) => [
+export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedPerson>[] => [
   {
     accessorKey: "name",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }: { row: Row<EnrichedPerson> }) => {
       const person = row.original;
       const name = `${person.firstName} ${person.lastName}`;
@@ -38,7 +38,7 @@ export const columns = (onDelete: (person: Person) => void) => [
   },
   {
     id: "email",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Email" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
     cell: ({ row }: { row: Row<Person> }) => {
       const email =
         row.original.emails?.find((e) => e.isPrimary)?.address || row.original.emails?.[0]?.address || "N/A";
@@ -47,7 +47,7 @@ export const columns = (onDelete: (person: Person) => void) => [
   },
   {
     id: "mobilePhone",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
     cell: ({ row }: { row: Row<Person> }) => {
       const phone = row.original.phones?.find((p) => p.isPrimary)?.number || row.original.phones?.[0]?.number;
       return <span>{formatPhoneNumber(phone) || "N/A"}</span>;

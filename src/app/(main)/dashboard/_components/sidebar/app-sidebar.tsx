@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Briefcase,
-  Building2,
   Calculator,
   Command,
   Database,

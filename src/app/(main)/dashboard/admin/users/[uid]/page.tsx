@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { format } from "date-fns";
-import { Calendar, Fingerprint, Mail, Pencil, Shield, User } from "lucide-react";
+import { Calendar, Mail, Pencil, Shield, User } from "lucide-react";
 
 import { getUser } from "@/actions/users";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

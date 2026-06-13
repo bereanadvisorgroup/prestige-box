@@ -55,7 +55,7 @@ export function DocumentsTab({
       const randomStr = Math.random().toString(36).substring(7);
       const filePath = `clients/${client.id}/${category}/${randomStr}_${Date.now()}.${fileExt}`;
 
-      const { data, error } = await supabase.storage.from("documents").upload(filePath, file);
+      const { error } = await supabase.storage.from("documents").upload(filePath, file);
 
       if (error) throw error;
 
@@ -84,9 +84,9 @@ export function DocumentsTab({
       } else {
         throw new Error("Failed to update database");
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      toast.error(e.message || "Failed to upload document");
+      toast.error(e instanceof Error ? e.message : "Failed to upload document");
     } finally {
       setIsUploading(false);
     }
@@ -101,9 +101,11 @@ export function DocumentsTab({
       <CardContent className="space-y-6 pt-6">
         <div className="flex flex-col items-end gap-4 rounded-lg border bg-background p-4 shadow-sm sm:flex-row">
           <div className="w-full space-y-2 sm:w-1/3">
-            <label className="font-medium text-sm">Document Type</label>
+            <label htmlFor={`doc-type-${category}`} className="font-medium text-sm">
+              Document Type
+            </label>
             <Select value={addingDocType} onValueChange={setAddingDocType}>
-              <SelectTrigger>
+              <SelectTrigger id={`doc-type-${category}`}>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -116,7 +118,9 @@ export function DocumentsTab({
             </Select>
           </div>
           <div className="w-full flex-1 space-y-2">
-            <label className="font-medium text-sm">File</label>
+            <label htmlFor={`file-upload-${category}`} className="font-medium text-sm">
+              File
+            </label>
             <input
               id={`file-upload-${category}`}
               type="file"

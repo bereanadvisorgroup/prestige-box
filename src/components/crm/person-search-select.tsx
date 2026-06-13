@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, User } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { PersonDialog } from "@/app/(main)/dashboard/crm/people/_components/person-dialog";
 import { PersonAvatar } from "@/components/crm/person-avatar";
@@ -30,7 +30,7 @@ export function PersonSearchSelect({
   return (
     <Combobox
       value={value || ""}
-      onValueChange={(val: any) => {
+      onValueChange={(val: unknown) => {
         if (typeof val === "string") onValueChange(val);
       }}
       disabled={disabled}

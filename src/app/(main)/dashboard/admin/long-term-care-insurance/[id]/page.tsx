@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowUpRight,
   Building2,
-  Calendar,
   Globe,
   Mail,
   Pencil,
@@ -23,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency, formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/utils";
 
 import { ActivePoliciesList } from "../_components/active-policies-list";
 
@@ -83,7 +82,7 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
               {company.phone && (
                 <span className="flex items-center gap-1.5">
                   <Phone className="h-4 w-4" />
-                  <a href={`tel:${company.phone}`} className="hover:underline text-foreground">
+                  <a href={`tel:${company.phone}`} className="text-foreground hover:underline">
                     {formatPhoneNumber(company.phone)}
                   </a>
                 </span>
@@ -128,7 +127,7 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
 
           <Card className="border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5 text-primary" />
                 Associated Professionals
               </CardTitle>
@@ -137,8 +136,8 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
               {people.length > 0 ? (
                 <div className="space-y-4">
                   {people.map((person, index) => {
-                    const email = person.emails?.find((e: any) => e.isPrimary)?.address || person.emails?.[0]?.address;
-                    const phone = person.phones?.find((p: any) => p.isPrimary)?.number || person.phones?.[0]?.number;
+                    const email = person.emails?.find((e) => e.isPrimary)?.address || person.emails?.[0]?.address;
+                    const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number;
                     return (
                       <div key={person.id} className="space-y-3">
                         {index > 0 && <Separator className="my-3" />}
@@ -151,7 +150,7 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
                                 className="object-cover"
                               />
                             )}
-                            <AvatarFallback className="bg-primary/5 text-xs text-primary font-bold">
+                            <AvatarFallback className="bg-primary/5 font-bold text-primary text-xs">
                               {person.firstName?.[0] || ""}
                               {person.lastName?.[0] || ""}
                             </AvatarFallback>
@@ -159,16 +158,16 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
                           <div>
                             <Link
                               href={`/dashboard/crm/people/${person.id}`}
-                              className="font-semibold text-sm hover:underline text-primary flex items-center gap-0.5"
+                              className="flex items-center gap-0.5 font-semibold text-primary text-sm hover:underline"
                             >
                               {person.firstName} {person.lastName}
                               <ArrowUpRight className="h-3 w-3 opacity-60" />
                             </Link>
-                            <p className="text-muted-foreground text-xs font-medium">Insurance Professional</p>
+                            <p className="font-medium text-muted-foreground text-xs">Insurance Professional</p>
                           </div>
                         </div>
 
-                        <div className="pl-13 space-y-1 text-xs">
+                        <div className="space-y-1 pl-13 text-xs">
                           {email && (
                             <div className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                               <Mail className="h-3.5 w-3.5" />

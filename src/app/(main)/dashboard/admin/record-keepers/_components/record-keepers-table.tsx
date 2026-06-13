@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeleteRecordKeeperAlert } from "./delete-record-keeper-alert";
 
 interface RecordKeepersTableProps {
-  data: any[];
+  data: RecordKeeper[];
 }
 
 export function RecordKeepersTable({ data }: RecordKeepersTableProps) {

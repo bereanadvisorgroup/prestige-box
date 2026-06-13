@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import { supabaseServer } from "@/lib/supabase.server";
-import { type AccountingFirm, AccountingFirmSchema } from "@/types/crm";
+import { type AccountingFirm, AccountingFirmSchema, type Person } from "@/types/crm";
 
 const TABLE = "accounting_firms";
 
@@ -76,7 +76,7 @@ export async function getAccountingFirm(id: string) {
     if (!accountingFirm) return { success: false, error: "Accounting Firm not found" };
 
     // Fetch people details
-    let people: any[] = [];
+    let people: Person[] = [];
     if (accountingFirm.personIds && accountingFirm.personIds.length > 0) {
       const { data: peopleData, error: peopleError } = await supabaseServer
         .from("people")

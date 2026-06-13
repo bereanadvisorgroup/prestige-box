@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeleteActuarialFirmAlert } from "./delete-actuarial-firm-alert";
 
 interface ActuarialFirmsTableProps {
-  data: any[];
+  data: ActuarialFirm[];
 }
 
 export function ActuarialFirmsTable({ data }: ActuarialFirmsTableProps) {

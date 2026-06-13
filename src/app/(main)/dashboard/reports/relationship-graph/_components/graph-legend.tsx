@@ -19,11 +19,11 @@ interface GraphLegendProps {
 export function GraphLegend({ groups }: GraphLegendProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm font-medium text-muted-foreground mr-2">Legend:</span>
+      <span className="mr-2 font-medium text-muted-foreground text-sm">Legend:</span>
       {groups.map((group) => (
         <Badge key={group} variant="outline" className="flex items-center gap-1.5 px-2 py-0.5">
           <span
-            className="w-2.5 h-2.5 rounded-full"
+            className="h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: GROUP_COLORS[group] || "var(--muted)" }}
           />
           {group}

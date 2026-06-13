@@ -35,6 +35,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
 
   const form = useForm<LongTermCareInsurance>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(LongTermCareInsuranceSchema) as any,
     defaultValues: company || {
       name: "",
@@ -95,12 +96,9 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
       setIsLoading(true);
       const isEditing = !!company?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateLongTermCareInsurance(company.id!, values);
-      } else {
-        result = await createLongTermCareInsurance(values);
-      }
+      const result = isEditing
+        ? await updateLongTermCareInsurance(company.id!, values)
+        : await createLongTermCareInsurance(values);
 
       if (result.success) {
         toast.success(
@@ -203,7 +201,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-4 pt-2">
                   <div className="flex items-center justify-between border-b pb-2">
-                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 font-medium text-sm">
                       <Users className="h-4 w-4 text-primary" />
                       Associated Professionals
                     </FormLabel>
@@ -331,7 +329,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleCompany(val);
                   }}
                 >

@@ -2,24 +2,22 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, ExternalLink, Pencil, Phone, ReceiptText, Trash2 } from "lucide-react";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
-import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
-import type { AccountingFirm, Address, Person } from "@/types/crm";
+import type { AccountingFirm } from "@/types/crm";
 
 export type EnrichedAccountingFirm = AccountingFirm & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (accountingFirm: AccountingFirm) => void) => [
+export const columns = (onDelete: (accountingFirm: AccountingFirm) => void): ColumnDef<AccountingFirm>[] => [
   {
     accessorKey: "firmName",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Firm Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<AccountingFirm> }) => {
       const accountingFirm = row.original;
       return (
@@ -36,7 +34,7 @@ export const columns = (onDelete: (accountingFirm: AccountingFirm) => void) => [
 
   {
     accessorKey: "phone",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone Number" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone Number" />,
     cell: ({ row }: { row: Row<AccountingFirm> }) => {
       const phone = row.original.phone;
       if (!phone) return "-";
@@ -50,7 +48,7 @@ export const columns = (onDelete: (accountingFirm: AccountingFirm) => void) => [
   },
   {
     accessorKey: "website",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Website" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Website" />,
     cell: ({ row }: { row: Row<AccountingFirm> }) => {
       const website = row.original.website;
       if (!website) return "-";
@@ -69,7 +67,7 @@ export const columns = (onDelete: (accountingFirm: AccountingFirm) => void) => [
   },
   {
     id: "clientsCount",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Clients" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Clients" />,
     cell: ({ row }: { row: Row<AccountingFirm> }) => {
       const count = row.original.clientIds?.length || 0;
       return (

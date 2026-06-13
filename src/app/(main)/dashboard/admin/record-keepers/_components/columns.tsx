@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -14,10 +14,10 @@ export type EnrichedRecordKeeper = RecordKeeper & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (recordKeeper: RecordKeeper) => void) => [
+export const columns = (onDelete: (recordKeeper: RecordKeeper) => void): ColumnDef<RecordKeeper>[] => [
   {
     accessorKey: "firmName",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Firm Name" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const recordKeeper = row.original;
       return (
@@ -34,7 +34,7 @@ export const columns = (onDelete: (recordKeeper: RecordKeeper) => void) => [
 
   {
     accessorKey: "phone",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone Number" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone Number" />,
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const phone = row.original.phone;
       if (!phone) return "-";
@@ -48,7 +48,7 @@ export const columns = (onDelete: (recordKeeper: RecordKeeper) => void) => [
   },
   {
     accessorKey: "website",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Website" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Website" />,
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const website = row.original.website;
       if (!website) return "-";
@@ -67,7 +67,7 @@ export const columns = (onDelete: (recordKeeper: RecordKeeper) => void) => [
   },
   {
     id: "clientsCount",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Clients" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Clients" />,
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const count = row.original.clientIds?.length || 0;
       return (

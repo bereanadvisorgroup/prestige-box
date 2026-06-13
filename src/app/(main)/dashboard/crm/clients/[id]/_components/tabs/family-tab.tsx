@@ -20,7 +20,7 @@ export function FamilyTab({ client }: { client: Client }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const [selectedPersonId, setSelectedPersonId] = useState("");
-  const [selectedRelationship, setSelectedRelationship] = useState<string>("");
+  const [selectedRelationship, setSelectedRelationship] = useState<FamilyMember["relationship"] | "">("");
 
   useEffect(() => {
     async function load() {
@@ -39,7 +39,7 @@ export function FamilyTab({ client }: { client: Client }) {
       const newMember: FamilyMember = {
         id: crypto.randomUUID(),
         personId: selectedPersonId,
-        relationship: selectedRelationship as any,
+        relationship: selectedRelationship as FamilyMember["relationship"],
       };
 
       const updated = [...members, newMember];
@@ -84,9 +84,11 @@ export function FamilyTab({ client }: { client: Client }) {
       <CardContent className="space-y-6 pt-6">
         <div className="flex flex-col items-end gap-4 rounded-lg border bg-background p-4 shadow-sm md:flex-row">
           <div className="w-full flex-1 space-y-2">
-            <label className="font-medium text-sm">Select Person</label>
+            <label htmlFor="person-select" className="font-medium text-sm">
+              Select Person
+            </label>
             <Select value={selectedPersonId} onValueChange={setSelectedPersonId}>
-              <SelectTrigger>
+              <SelectTrigger id="person-select">
                 <SelectValue placeholder="Search or select person" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
@@ -99,9 +101,14 @@ export function FamilyTab({ client }: { client: Client }) {
             </Select>
           </div>
           <div className="w-full flex-1 space-y-2">
-            <label className="font-medium text-sm">Relationship</label>
-            <Select value={selectedRelationship} onValueChange={setSelectedRelationship}>
-              <SelectTrigger>
+            <label htmlFor="relationship-select" className="font-medium text-sm">
+              Relationship
+            </label>
+            <Select
+              value={selectedRelationship}
+              onValueChange={(val) => setSelectedRelationship(val as FamilyMember["relationship"])}
+            >
+              <SelectTrigger id="relationship-select">
                 <SelectValue placeholder="Select relationship" />
               </SelectTrigger>
               <SelectContent>

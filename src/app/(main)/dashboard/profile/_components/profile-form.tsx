@@ -120,7 +120,7 @@ export function ProfileForm() {
       const publicUrl = urlData.publicUrl;
 
       // 4. Remove old custom photo if it was in the avatars storage
-      if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.id)) {
+      if (photoURL?.includes("/avatars/") && photoURL.includes(user.id)) {
         try {
           const oldPath = photoURL.split("/public/avatars/")[1];
           if (oldPath) {
@@ -173,7 +173,7 @@ export function ProfileForm() {
   const handleRemovePhoto = async () => {
     if (!user) return;
     // If it's a custom uploaded photo, remove it from storage immediately to keep bucket clean
-    if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.id)) {
+    if (photoURL?.includes("/avatars/") && photoURL.includes(user.id)) {
       try {
         const oldPath = photoURL.split("/public/avatars/")[1];
         if (oldPath) {
@@ -238,14 +238,15 @@ export function ProfileForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Photo Upload Section */}
         <div className="flex flex-col items-center gap-6 sm:flex-row">
-          <div
+          <button
+            type="button"
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`group relative flex h-28 w-28 cursor-pointer items-center justify-center rounded-full border-2 border-dashed transition-all duration-300 ${
               isDragging
-                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                ? "scale-105 border-primary bg-primary/10 shadow-lg"
                 : "border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/40"
             }`}
             aria-label="Upload profile photo"
@@ -256,7 +257,7 @@ export function ProfileForm() {
                 alt={`${profile.firstName} ${profile.lastName}`}
                 className="object-cover"
               />
-              <AvatarFallback className="text-xl font-bold bg-primary/5 text-primary">
+              <AvatarFallback className="bg-primary/5 font-bold text-primary text-xl">
                 {getInitials(`${profile.firstName} ${profile.lastName}`)}
               </AvatarFallback>
             </Avatar>
@@ -264,7 +265,7 @@ export function ProfileForm() {
             {/* Hover overlay with Upload icon */}
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Camera className="h-6 w-6 text-white" />
-              <span className="mt-1 text-[10px] text-white font-medium">Upload Photo</span>
+              <span className="mt-1 font-medium text-[10px] text-white">Upload Photo</span>
             </div>
 
             {isUploading && (
@@ -272,7 +273,7 @@ export function ProfileForm() {
                 <Spinner className="h-8 w-8 text-primary" />
               </div>
             )}
-          </div>
+          </button>
 
           <input
             id="avatar-upload-input"
@@ -296,7 +297,7 @@ export function ProfileForm() {
                   variant="outline"
                   size="sm"
                   onClick={handleUseGooglePhoto}
-                  className="h-8 gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all duration-300"
+                  className="h-8 gap-2 border-primary/20 transition-all duration-300 hover:bg-primary/5 hover:text-primary"
                 >
                   <UploadCloud className="h-3.5 w-3.5" />
                   Use Google Photo
@@ -309,7 +310,7 @@ export function ProfileForm() {
                   variant="outline"
                   size="sm"
                   onClick={handleRemovePhoto}
-                  className="h-8 gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40 transition-all duration-300"
+                  className="h-8 gap-2 border-red-200 text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Remove Photo

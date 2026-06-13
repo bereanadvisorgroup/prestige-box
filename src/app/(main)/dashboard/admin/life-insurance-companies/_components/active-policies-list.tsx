@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import { ArrowUpRight, Calendar, Search, Shield, ShieldAlert } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,7 +45,7 @@ export function ActivePoliciesList({ initialPolicies }: ActivePoliciesListProps)
               placeholder="Search by client name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-background"
+              className="bg-background pl-9"
             />
           </div>
         </div>

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, Calendar, Pencil, Shield, Trash2, User } from "lucide-react";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpRight, Calendar, Pencil, Shield, Trash2 } from "lucide-react";
 
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -12,11 +12,17 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import type { ClientPolicy } from "@/types/crm";
 
-export const columns = (onDelete: (policy: ClientPolicy) => void) => [
+export type EnrichedPolicy = ClientPolicy & {
+  clientName?: string;
+  clientPhotoUrl?: string | null;
+  carrierName?: string;
+};
+
+export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<EnrichedPolicy>[] => [
   {
     accessorKey: "clientName",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Client" />,
-    cell: ({ row }: { row: Row<any> }) => {
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Client" />,
+    cell: ({ row }: { row: Row<EnrichedPolicy> }) => {
       const parts = row.original.clientName?.split(/\s+/) || [];
       const firstName = parts[0] || "";
       const lastName = parts.slice(1).join(" ") || "";
@@ -40,7 +46,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
   {
     accessorKey: "carrierName",
     header: "Carrier",
-    cell: ({ row }: { row: Row<any> }) => (
+    cell: ({ row }: { row: Row<EnrichedPolicy> }) => (
       <div className="flex items-center gap-2">
         <Shield className="h-3 w-3 text-primary" />
         <span className="font-medium text-sm">{row.original.carrierName}</span>
@@ -49,7 +55,7 @@ export const columns = (onDelete: (policy: ClientPolicy) => void) => [
   },
   {
     accessorKey: "policyName",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Policy Details" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Policy Details" />,
     cell: ({ row }: { row: Row<ClientPolicy> }) => (
       <div className="flex flex-col">
         <Link href={`/dashboard/crm/policies/${row.original.id}`} className="hover:underline">

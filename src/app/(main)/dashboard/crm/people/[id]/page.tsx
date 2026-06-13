@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import {
   ArrowUpRight,
-  Building2,
   Calculator,
   Database,
   HeartHandshake,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, MapPin, Pencil, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -14,10 +14,10 @@ export type EnrichedAddress = Address & {
   isLinked?: boolean;
 };
 
-export const columns = (onDelete: (address: Address) => void) => [
+export const columns = (onDelete: (address: Address) => void): ColumnDef<EnrichedAddress>[] => [
   {
     accessorKey: "street1",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Street Address" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Street Address" />,
     cell: ({ row }: { row: Row<EnrichedAddress> }) => {
       const address = row.original;
       return (
@@ -36,19 +36,19 @@ export const columns = (onDelete: (address: Address) => void) => [
   },
   {
     accessorKey: "city",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="City" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="City" />,
   },
   {
     accessorKey: "state",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="State" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="State" />,
   },
   {
     accessorKey: "zipCode",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Zip Code" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Zip Code" />,
   },
   {
     accessorKey: "linkedPeople",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Associated People" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Associated People" />,
     cell: ({ row }: { row: Row<EnrichedAddress> }) => {
       const people = row.original.linkedPeople || [];
       if (people.length === 0) return <span className="text-muted-foreground">-</span>;

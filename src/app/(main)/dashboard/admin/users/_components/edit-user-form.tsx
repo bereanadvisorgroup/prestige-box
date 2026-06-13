@@ -84,7 +84,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
       const publicUrl = urlData.publicUrl;
 
       // Clean up old custom photo if it was in avatars bucket
-      if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.uid)) {
+      if (photoURL?.includes("/avatars/") && photoURL.includes(user.uid)) {
         try {
           const oldPath = photoURL.split("/public/avatars/")[1];
           if (oldPath) {
@@ -127,7 +127,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   };
 
   const handleRemovePhoto = async () => {
-    if (photoURL && photoURL.includes("/avatars/") && photoURL.includes(user.uid)) {
+    if (photoURL?.includes("/avatars/") && photoURL.includes(user.uid)) {
       try {
         const oldPath = photoURL.split("/public/avatars/")[1];
         if (oldPath) {
@@ -179,15 +179,16 @@ export function EditUserForm({ user }: EditUserFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         {/* Photo Section */}
-        <div className="flex flex-col items-center gap-6 sm:flex-row pb-4 border-b">
-          <div
+        <div className="flex flex-col items-center gap-6 border-b pb-4 sm:flex-row">
+          <button
+            type="button"
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-dashed transition-all duration-300 ${
               isDragging
-                ? "border-primary bg-primary/10 shadow-lg scale-105"
+                ? "scale-105 border-primary bg-primary/10 shadow-lg"
                 : "border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/40"
             }`}
             aria-label="Upload profile photo"
@@ -198,12 +199,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 alt={`${watchedFirstName} ${watchedLastName}`}
                 className="object-cover"
               />
-              <AvatarFallback className="text-lg font-bold bg-primary/5 text-primary">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-primary/5 font-bold text-lg text-primary">{initials}</AvatarFallback>
             </Avatar>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Camera className="h-5 w-5 text-white" />
-              <span className="mt-1 text-[8px] text-white font-medium">Upload</span>
+              <span className="mt-1 font-medium text-[8px] text-white">Upload</span>
             </div>
 
             {isUploading && (
@@ -211,7 +212,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 <Spinner className="h-6 w-6 text-primary" />
               </div>
             )}
-          </div>
+          </button>
 
           <input
             id="avatar-upload-input"
@@ -234,7 +235,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleRemovePhoto}
-                className="h-7 w-fit gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40 transition-all duration-300"
+                className="h-7 w-fit gap-1.5 border-red-200 text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40"
               >
                 <Trash2 className="h-3 w-3" />
                 Remove Photo

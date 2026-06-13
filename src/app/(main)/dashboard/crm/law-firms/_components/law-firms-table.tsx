@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeleteLawFirmAlert } from "./delete-law-firm-alert";
 
 interface LawFirmsTableProps {
-  data: any[];
+  data: LawFirm[];
 }
 
 export function LawFirmsTable({ data }: LawFirmsTableProps) {

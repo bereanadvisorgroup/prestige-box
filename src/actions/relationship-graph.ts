@@ -168,18 +168,27 @@ export async function getRelationshipGraphData() {
       }
     });
 
+    interface FirmNodeData {
+      id: string;
+      firmAddressId?: string | null;
+      personIds?: string[] | null;
+      clientIds?: string[] | null;
+      firmName?: string;
+      name?: string;
+    }
+
     // Vendors & Professional Services Helper
     const addFirmNodesAndLinks = (
-      firms: any[],
+      firms: FirmNodeData[],
       group: string,
       entityType: string,
       urlPrefix: string,
-      nameField = "firmName",
+      nameField: "name" | "firmName" = "firmName",
     ) => {
       (firms || []).forEach((f) => {
         nodes.push({
           id: f.id,
-          name: f[nameField] || entityType,
+          name: (nameField === "name" ? f.name : f.firmName) || entityType,
           group,
           entityType,
           url: `${urlPrefix}/${f.id}`,

@@ -2,25 +2,26 @@
 
 import Link from "next/link";
 
-import type { Row } from "@tanstack/react-table";
-import { ArrowUpRight, Pencil, Trash2, User } from "lucide-react";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
-import type { Client } from "@/types/crm";
+import type { Client, Person } from "@/types/crm";
 
 export type EnrichedClient = Client & {
   isLinked?: boolean;
+  person?: Person | null;
 };
 
-export const columns = (onDelete: (client: Client) => void) => [
+export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedClient>[] => [
   {
     id: "personName",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Client Name" />,
-    cell: ({ row }: { row: Row<any> }) => {
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Client Name" />,
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
       const person = row.original.person;
       if (!person) return "-";
       return (
@@ -41,20 +42,24 @@ export const columns = (onDelete: (client: Client) => void) => [
   },
   {
     id: "email",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Email" />,
-    cell: ({ row }: { row: Row<any> }) => {
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
       const person = row.original.person;
-      if (!person?.email) return "-";
-      return <span className="text-sm">{person.email}</span>;
+      if (!person) return "-";
+      const email = person.emails?.find((e) => e.isPrimary)?.address || person.emails?.[0]?.address;
+      if (!email) return "-";
+      return <span className="text-sm">{email}</span>;
     },
   },
   {
     id: "phone",
-    header: ({ column }: any) => <DataTableColumnHeader column={column} title="Phone" />,
-    cell: ({ row }: { row: Row<any> }) => {
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
       const person = row.original.person;
-      if (!person?.mobilePhone) return "-";
-      return <span className="whitespace-nowrap text-sm">{formatPhoneNumber(person.mobilePhone)}</span>;
+      if (!person) return "-";
+      const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number;
+      if (!phone) return "-";
+      return <span className="whitespace-nowrap text-sm">{formatPhoneNumber(phone)}</span>;
     },
   },
   {

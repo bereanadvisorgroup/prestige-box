@@ -121,10 +121,8 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
                 <div className="divide-y">
                   {members.map(({ person, role }) => {
                     if (!person) return null;
-                    const email =
-                      person.emails?.find((e: any) => e.isPrimary)?.address || person.emails?.[0]?.address || "";
-                    const phone =
-                      person.phones?.find((p: any) => p.isPrimary)?.number || person.phones?.[0]?.number || "";
+                    const email = person.emails?.find((e) => e.isPrimary)?.address || person.emails?.[0]?.address || "";
+                    const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number || "";
 
                     return (
                       <div

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import { supabaseServer } from "@/lib/supabase.server";
-import { type DisabilityInsuranceCompany, DisabilityInsuranceCompanySchema } from "@/types/crm";
+import { type DisabilityInsuranceCompany, DisabilityInsuranceCompanySchema, type Person } from "@/types/crm";
 
 const TABLE = "disability_insurance_companies";
 
@@ -34,7 +34,7 @@ export async function getDisabilityInsuranceCompanies() {
         acc[person.id] = person;
         return acc;
       },
-      {} as Record<string, any>,
+      {} as Record<string, Person>,
     );
 
     const companiesWithDetails = companies.map((company) => ({
@@ -57,7 +57,7 @@ export async function getDisabilityInsuranceCompany(id: string) {
     if (!company) return { success: false, error: "Disability Insurance Company not found" };
 
     // Fetch people details
-    let people: any[] = [];
+    let people: Person[] = [];
     if (company.personIds && company.personIds.length > 0) {
       const { data: peopleData, error: peopleError } = await supabaseServer
         .from("people")

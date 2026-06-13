@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPhoneNumber } from "@/lib/utils";
-import type { Address, Company, Person } from "@/types/crm";
+import type { Address, Person } from "@/types/crm";
 
 interface RecordKeeperDetailsPageProps {
   params: Promise<{
@@ -45,8 +45,8 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 border-2 border-primary/10 rounded-md">
-            <AvatarFallback className="bg-primary/5 text-primary flex items-center justify-center h-full w-full rounded-md">
+          <Avatar className="h-16 w-16 rounded-md border-2 border-primary/10">
+            <AvatarFallback className="flex h-full w-full items-center justify-center rounded-md bg-primary/5 text-primary">
               <Building2 className="h-8 w-8 text-primary" />
             </AvatarFallback>
           </Avatar>
@@ -67,9 +67,9 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Card className="h-fit md:col-span-1 border shadow-sm">
+        <Card className="h-fit border shadow-sm md:col-span-1">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Users className="h-5 w-5 text-primary" />
               Associated Professionals
             </CardTitle>
@@ -92,7 +92,7 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
                               className="object-cover"
                             />
                           )}
-                          <AvatarFallback className="bg-primary/5 text-xs text-primary font-bold">
+                          <AvatarFallback className="bg-primary/5 font-bold text-primary text-xs">
                             {person.firstName?.[0] || ""}
                             {person.lastName?.[0] || ""}
                           </AvatarFallback>
@@ -100,16 +100,16 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
                         <div>
                           <Link
                             href={`/dashboard/crm/people/${person.id}`}
-                            className="font-semibold text-sm hover:underline text-primary flex items-center gap-0.5"
+                            className="flex items-center gap-0.5 font-semibold text-primary text-sm hover:underline"
                           >
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="text-muted-foreground text-xs font-medium">Plan Administrator</p>
+                          <p className="font-medium text-muted-foreground text-xs">Plan Administrator</p>
                         </div>
                       </div>
 
-                      <div className="pl-13 space-y-1 text-xs">
+                      <div className="space-y-1 pl-13 text-xs">
                         {email && (
                           <div className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <Mail className="h-3.5 w-3.5" />
@@ -166,7 +166,7 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 text-sm hover:underline flex items-center gap-1"
+                      className="flex items-center gap-1 text-blue-600 text-sm hover:underline"
                     >
                       {recordKeeper.website.replace(/^https?:\/\//, "")}
                       <ArrowUpRight className="h-3 w-3 opacity-60" />
@@ -193,7 +193,7 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
           </CardContent>
         </Card>
 
-        <div className="md:col-span-2 flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">

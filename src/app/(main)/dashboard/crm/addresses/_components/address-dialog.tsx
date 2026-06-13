@@ -26,6 +26,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<Address>({
+    // biome-ignore lint/suspicious/noExplicitAny: zodResolver return type mismatch with useForm generic Address type
     resolver: zodResolver(AddressSchema) as any,
     defaultValues: {
       street1: "",

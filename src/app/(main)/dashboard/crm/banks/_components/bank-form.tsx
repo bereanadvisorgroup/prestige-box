@@ -39,6 +39,7 @@ export function BankForm({ bank }: BankFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
   const form = useForm<Bank>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(BankSchema) as any,
     defaultValues: {
       personIds: bank?.personIds || [],
@@ -123,12 +124,7 @@ export function BankForm({ bank }: BankFormProps) {
       setIsLoading(true);
       const isEditing = !!bank?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateBank(bank.id!, values);
-      } else {
-        result = await createBank(values);
-      }
+      const result = isEditing ? await updateBank(bank.id!, values) : await createBank(values);
 
       if (result.success) {
         toast.success(isEditing ? "Bank record updated" : "Bank record created");
@@ -236,7 +232,7 @@ export function BankForm({ bank }: BankFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-4">
                   <div className="flex items-center justify-between border-b pb-2">
-                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 font-medium text-sm">
                       <Users className="h-4 w-4 text-primary" />
                       Associated Professionals
                     </FormLabel>
@@ -320,7 +316,7 @@ export function BankForm({ bank }: BankFormProps) {
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleClient(val);
                   }}
                 >
@@ -330,7 +326,7 @@ export function BankForm({ bank }: BankFormProps) {
                       {availableClients
                         .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
                         .map((client) => {
-                          const person = (client as any).person;
+                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
                           if (!person) return null;
                           return (
                             <ComboboxItem
@@ -353,7 +349,7 @@ export function BankForm({ bank }: BankFormProps) {
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as any)?.person;
+                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
                   return (
                     <Badge
                       key={clientId}
@@ -381,7 +377,7 @@ export function BankForm({ bank }: BankFormProps) {
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleCompany(val);
                   }}
                 >

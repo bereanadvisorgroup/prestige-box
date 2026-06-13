@@ -13,7 +13,7 @@ import { columns } from "./columns";
 import { DeleteBankAlert } from "./delete-bank-alert";
 
 interface BanksTableProps {
-  data: any[];
+  data: Bank[];
 }
 
 export function BanksTable({ data }: BanksTableProps) {

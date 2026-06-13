@@ -35,6 +35,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
 
   const form = useForm<LifeInsuranceCompany>({
+    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(LifeInsuranceCompanySchema) as any,
     defaultValues: company || {
       name: "",
@@ -95,12 +96,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
       setIsLoading(true);
       const isEditing = !!company?.id;
 
-      let result;
-      if (isEditing) {
-        result = await updateLifeInsuranceCompany(company.id!, values);
-      } else {
-        result = await createLifeInsuranceCompany(values);
-      }
+      const result = isEditing
+        ? await updateLifeInsuranceCompany(company.id!, values)
+        : await createLifeInsuranceCompany(values);
 
       if (result.success) {
         toast.success(isEditing ? "Life insurance company updated" : "Life insurance company created");
@@ -201,7 +199,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-4 pt-2">
                   <div className="flex items-center justify-between border-b pb-2">
-                    <FormLabel className="font-medium text-sm flex items-center gap-2">
+                    <FormLabel className="flex items-center gap-2 font-medium text-sm">
                       <Users className="h-4 w-4 text-primary" />
                       Associated Professionals
                     </FormLabel>
@@ -329,7 +327,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
               <div className="space-y-2">
                 <Combobox
-                  onValueChange={(val: any) => {
+                  onValueChange={(val) => {
                     if (typeof val === "string") handleToggleCompany(val);
                   }}
                 >
