@@ -20,6 +20,7 @@ export const columns = (
 ): ColumnDef<EnrichedDisabilityInsuranceCompany>[] => [
   {
     accessorKey: "name",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedDisabilityInsuranceCompany> }) => {
       const company = row.original;

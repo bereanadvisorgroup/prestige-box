@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,7 +28,30 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>(client.paymentAccounts || []);
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
 
+  const [referrerSearchQuery, setReferrerSearchQuery] = useState("");
+
   const referredClients = allClients.filter((c) => c.referredById === client.id);
+
+  const selectedReferrer = allClients.find((c) => c.id === referredById);
+  const selectedReferrerName = selectedReferrer
+    ? `${selectedReferrer.person?.firstName || ""} ${selectedReferrer.person?.lastName || ""}`.trim()
+    : "";
+
+  useEffect(() => {
+    setReferrerSearchQuery(selectedReferrerName);
+  }, [selectedReferrerName]);
+
+  const filteredReferrers = useMemo(() => {
+    const candidates = allClients.filter((c) => c.id !== client.id);
+    if (!referrerSearchQuery) return candidates;
+    if (selectedReferrerName && referrerSearchQuery === selectedReferrerName) {
+      return candidates;
+    }
+    return candidates.filter((c) => {
+      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
+      return name.toLowerCase().includes(referrerSearchQuery.toLowerCase());
+    });
+  }, [allClients, client.id, referrerSearchQuery, selectedReferrerName]);
 
   const handleUpdate = async (updates: Partial<Client>) => {
     try {
@@ -118,33 +141,24 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
               Referred By
             </label>
             <Combobox
+              value={referredById || ""}
               onValueChange={(val: unknown) => {
                 if (typeof val === "string") handleSetReferrer(val);
               }}
+              inputValue={referrerSearchQuery}
+              onInputValueChange={setReferrerSearchQuery}
             >
-              <ComboboxInput
-                id="referred-by-select"
-                placeholder="Search clients..."
-                value={
-                  referredById
-                    ? allClients.find((c) => c.id === referredById)
-                      ? `${allClients.find((c) => c.id === referredById)?.person?.firstName || ""} ${allClients.find((c) => c.id === referredById)?.person?.lastName || ""}`
-                      : ""
-                    : ""
-                }
-              />
+              <ComboboxInput id="referred-by-select" placeholder="Search clients..." />
               <ComboboxContent>
                 <ComboboxList>
                   <ComboboxItem value="none">
                     <span className="text-muted-foreground italic">None / Clear</span>
                   </ComboboxItem>
-                  {allClients
-                    .filter((c) => c.id !== client.id) // Cannot refer self
-                    .map((c) => (
-                      <ComboboxItem key={c.id} value={c.id}>
-                        {c.person?.firstName} {c.person?.lastName}
-                      </ComboboxItem>
-                    ))}
+                  {filteredReferrers.map((c) => (
+                    <ComboboxItem key={c.id} value={c.id} label={`${c.person?.firstName} ${c.person?.lastName}`}>
+                      {c.person?.firstName} {c.person?.lastName}
+                    </ComboboxItem>
+                  ))}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>

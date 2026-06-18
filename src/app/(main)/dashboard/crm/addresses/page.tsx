@@ -1,7 +1,6 @@
-import Link from "next/link";
 export const dynamic = "force-dynamic";
 
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
@@ -14,7 +13,6 @@ import { getLawFirms } from "@/actions/law-firms";
 import { getPeople } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import type {
   AccountingFirm,
   ActuarialFirm,
@@ -135,23 +133,8 @@ export default async function AddressesPage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
-      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="font-bold text-3xl tracking-tight">Addresses</h1>
-          <p className="mt-2 text-muted-foreground">View, add, and manage location records in your CRM.</p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/crm/addresses/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Address
-          </Link>
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        <AddressesTable data={enrichedAddresses} />
-      </div>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6">
+      <AddressesTable data={enrichedAddresses} />
     </div>
   );
 }

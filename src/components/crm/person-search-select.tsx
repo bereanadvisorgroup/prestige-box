@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+
 import { Plus } from "lucide-react";
 
 import { PersonDialog } from "@/app/(main)/dashboard/crm/people/_components/person-dialog";
@@ -26,19 +28,47 @@ export function PersonSearchSelect({
   disabled = false,
 }: PersonSearchSelectProps) {
   const selectedPerson = people.find((p) => p.id === value);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const selectedName = selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : "";
+
+  // Sync searchQuery with selected person when value changes
+  useEffect(() => {
+    setSearchQuery(selectedName);
+  }, [selectedName]);
+
+  const filteredPeople = useMemo(() => {
+    if (!searchQuery) return people;
+    // If query matches the selected person's name exactly, show all people so they can browse
+    if (selectedName && searchQuery === selectedName) {
+      return people;
+    }
+    return people.filter((p) => `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [people, searchQuery, selectedName]);
 
   return (
     <Combobox
-      value={value || ""}
+      value={value || null}
       onValueChange={(val: unknown) => {
-        if (typeof val === "string") onValueChange(val);
+        if (typeof val === "string") {
+          onValueChange(val);
+          const person = people.find((p) => p.id === val);
+          if (person) setSearchQuery(`${person.firstName} ${person.lastName}`);
+        } else if (val === null) {
+          onValueChange("");
+          setSearchQuery("");
+        }
       }}
+      inputValue={searchQuery}
+      onInputValueChange={setSearchQuery}
       disabled={disabled}
+      onOpenChange={(open) => {
+        if (!open) {
+          setSearchQuery(selectedName);
+        }
+      }}
     >
-      <ComboboxInput
-        placeholder={placeholder}
-        value={selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : ""}
-      />
+      <ComboboxInput placeholder={placeholder} />
       <ComboboxContent>
         <div className="border-b p-1">
           <PersonDialog
@@ -56,7 +86,7 @@ export function PersonSearchSelect({
           />
         </div>
         <ComboboxList>
-          {people.map((p) => (
+          {filteredPeople.map((p) => (
             <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
               <div className="flex items-center gap-2">
                 <PersonAvatar photoUrl={p.photoUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />

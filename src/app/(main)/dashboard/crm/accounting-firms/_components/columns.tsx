@@ -17,6 +17,7 @@ export type EnrichedAccountingFirm = AccountingFirm & {
 export const columns = (onDelete: (accountingFirm: AccountingFirm) => void): ColumnDef<AccountingFirm>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<AccountingFirm> }) => {
       const accountingFirm = row.original;

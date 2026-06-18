@@ -20,6 +20,8 @@ export type EnrichedClient = Client & {
 export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedClient>[] => [
   {
     id: "personName",
+    accessorFn: (row) => (row.person ? `${row.person.firstName} ${row.person.lastName}` : ""),
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Client Name" />,
     cell: ({ row }: { row: Row<EnrichedClient> }) => {
       const person = row.original.person;

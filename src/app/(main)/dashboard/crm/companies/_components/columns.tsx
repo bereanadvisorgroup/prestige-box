@@ -17,6 +17,7 @@ export type EnrichedCompany = Company & {
 export const columns = (onDelete: (company: Company) => void): ColumnDef<EnrichedCompany>[] => [
   {
     accessorKey: "name",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedCompany> }) => {
       const company = row.original;

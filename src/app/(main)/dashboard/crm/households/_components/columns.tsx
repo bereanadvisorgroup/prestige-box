@@ -12,6 +12,7 @@ import type { Household } from "@/types/crm";
 export const columns = (onDelete: (household: Household) => void): ColumnDef<Household>[] => [
   {
     accessorKey: "name",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Household Name" />,
     cell: ({ row }: { row: Row<Household> }) => {
       const household = row.original;

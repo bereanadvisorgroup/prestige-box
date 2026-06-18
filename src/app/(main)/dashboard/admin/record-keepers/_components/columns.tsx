@@ -17,6 +17,7 @@ export type EnrichedRecordKeeper = RecordKeeper & {
 export const columns = (onDelete: (recordKeeper: RecordKeeper) => void): ColumnDef<RecordKeeper>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const recordKeeper = row.original;

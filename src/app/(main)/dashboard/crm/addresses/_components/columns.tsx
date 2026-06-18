@@ -17,6 +17,7 @@ export type EnrichedAddress = Address & {
 export const columns = (onDelete: (address: Address) => void): ColumnDef<EnrichedAddress>[] => [
   {
     accessorKey: "street1",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Street Address" />,
     cell: ({ row }: { row: Row<EnrichedAddress> }) => {
       const address = row.original;

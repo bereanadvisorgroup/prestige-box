@@ -21,6 +21,7 @@ export type EnrichedPolicy = ClientPolicy & {
 export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<EnrichedPolicy>[] => [
   {
     accessorKey: "clientName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Client" />,
     cell: ({ row }: { row: Row<EnrichedPolicy> }) => {
       const parts = row.original.clientName?.split(/\s+/) || [];

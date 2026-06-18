@@ -35,6 +35,12 @@ export async function getClients() {
       person: peopleMap[client.personId] || null,
     }));
 
+    clientWithPeople.sort((a, b) => {
+      const nameA = `${a.person?.firstName || ""} ${a.person?.lastName || ""}`.trim().toLowerCase();
+      const nameB = `${b.person?.firstName || ""} ${b.person?.lastName || ""}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
     return { success: true, clients: clientWithPeople };
   } catch (error) {
     console.error(`[getClients] Error:`, error);

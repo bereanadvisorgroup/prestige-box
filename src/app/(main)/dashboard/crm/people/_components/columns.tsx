@@ -17,11 +17,13 @@ export type EnrichedPerson = Person & {
 
 export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedPerson>[] => [
   {
-    accessorKey: "name",
+    id: "name",
+    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }: { row: Row<EnrichedPerson> }) => {
       const person = row.original;
-      const name = `${person.firstName} ${person.lastName}`;
+      const name = row.getValue("name") as string;
       return (
         <div className="flex items-center gap-2">
           <PersonAvatar photoUrl={person.photoUrl} firstName={person.firstName} lastName={person.lastName} />

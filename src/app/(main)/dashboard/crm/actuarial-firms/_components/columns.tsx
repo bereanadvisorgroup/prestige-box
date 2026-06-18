@@ -17,6 +17,7 @@ export type EnrichedActuarialFirm = ActuarialFirm & {
 export const columns = (onDelete: (actuarialFirm: ActuarialFirm) => void): ColumnDef<ActuarialFirm>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<ActuarialFirm> }) => {
       const actuarialFirm = row.original;

@@ -17,6 +17,7 @@ export type EnrichedBank = Bank & {
 export const columns = (onDelete: (bank: Bank) => void): ColumnDef<Bank>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Bank Name" />,
     cell: ({ row }: { row: Row<Bank> }) => {
       const bank = row.original;

@@ -17,6 +17,7 @@ export type EnrichedMoneyManager = MoneyManager & {
 export const columns = (onDelete: (moneyManager: MoneyManager) => void): ColumnDef<MoneyManager>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<MoneyManager> }) => {
       const moneyManager = row.original;

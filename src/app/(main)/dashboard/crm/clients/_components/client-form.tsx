@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -34,6 +34,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
+  const [teamSearchQuery, setTeamSearchQuery] = useState("");
 
   const form = useForm<Client>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
@@ -45,6 +46,18 @@ export function ClientForm({ client }: ClientFormProps) {
       paymentAccounts: [],
     },
   });
+
+  const watchedTeams = form.watch("favoriteSportsTeams") || [];
+
+  const filteredSportsTeams = useMemo(() => {
+    const base = sportsTeams.filter((team) => !watchedTeams.includes(team.name));
+    if (!teamSearchQuery) return base;
+    return base.filter(
+      (team) =>
+        team.name.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
+        team.league.toLowerCase().includes(teamSearchQuery.toLowerCase()),
+    );
+  }, [teamSearchQuery, watchedTeams]);
 
   useEffect(() => {
     async function fetchPeople() {
@@ -258,20 +271,23 @@ export function ClientForm({ client }: ClientFormProps) {
                 <FormLabel>Search and Link Teams</FormLabel>
                 <Combobox
                   onValueChange={(val) => {
-                    if (typeof val === "string") handleToggleSportsTeam(val);
+                    if (typeof val === "string") {
+                      handleToggleSportsTeam(val);
+                      setTeamSearchQuery("");
+                    }
                   }}
+                  inputValue={teamSearchQuery}
+                  onInputValueChange={setTeamSearchQuery}
                 >
                   <ComboboxInput placeholder="Search NFL, MLB, NBA, NHL..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {sportsTeams
-                        .filter((team) => !form.getValues("favoriteSportsTeams").includes(team.name))
-                        .map((team) => (
-                          <ComboboxItem key={team.id} value={team.name}>
-                            <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
-                            {team.name}
-                          </ComboboxItem>
-                        ))}
+                      {filteredSportsTeams.map((team) => (
+                        <ComboboxItem key={team.id} value={team.name}>
+                          <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
+                          {team.name}
+                        </ComboboxItem>
+                      ))}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>

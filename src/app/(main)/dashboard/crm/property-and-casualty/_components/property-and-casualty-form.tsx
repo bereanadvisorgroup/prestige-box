@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -40,10 +40,13 @@ interface PropertyAndCasualtyFormProps {
 export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAndCasualtyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<Client[]>([]);
+  const [availableClients, setAvailableClients] = useState<(Client & { person: Person | null })[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
+
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
 
   const form = useForm<PropertyAndCasualtyFirm>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
@@ -101,6 +104,24 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
     }
     fetchData();
   }, []);
+
+  const watchedClientIds = form.watch("clientIds") || [];
+  const watchedCompanyIds = form.watch("companyIds") || [];
+
+  const filteredClients = useMemo(() => {
+    const base = availableClients.filter((client) => !watchedClientIds.includes(client.id!));
+    if (!clientSearchQuery) return base;
+    return base.filter((c) => {
+      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
+      return name.toLowerCase().includes(clientSearchQuery.toLowerCase());
+    });
+  }, [availableClients, clientSearchQuery, watchedClientIds]);
+
+  const filteredCompanies = useMemo(() => {
+    const base = availableCompanies.filter((company) => !watchedCompanyIds.includes(company.id!));
+    if (!companySearchQuery) return base;
+    return base.filter((c) => c.name.toLowerCase().includes(companySearchQuery.toLowerCase()));
+  }, [availableCompanies, companySearchQuery, watchedCompanyIds]);
 
   const handleToggleClient = (clientId: string) => {
     const current = form.getValues("clientIds") || [];
@@ -328,27 +349,30 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
               <div className="space-y-2">
                 <Combobox
                   onValueChange={(val) => {
-                    if (typeof val === "string") handleToggleClient(val);
+                    if (typeof val === "string") {
+                      handleToggleClient(val);
+                      setClientSearchQuery("");
+                    }
                   }}
+                  inputValue={clientSearchQuery}
+                  onInputValueChange={setClientSearchQuery}
                 >
                   <ComboboxInput placeholder="Search to link clients..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {availableClients
-                        .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
-                        .map((client) => {
-                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
-                          if (!person) return null;
-                          return (
-                            <ComboboxItem
-                              key={client.id}
-                              value={client.id!}
-                              label={`${person.firstName} ${person.lastName}`}
-                            >
-                              {person.firstName} {person.lastName}
-                            </ComboboxItem>
-                          );
-                        })}
+                      {filteredClients.map((client) => {
+                        const person = (client as { person?: { firstName: string; lastName: string } }).person;
+                        if (!person) return null;
+                        return (
+                          <ComboboxItem
+                            key={client.id}
+                            value={client.id!}
+                            label={`${person.firstName} ${person.lastName}`}
+                          >
+                            {person.firstName} {person.lastName}
+                          </ComboboxItem>
+                        );
+                      })}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>
@@ -389,19 +413,22 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
               <div className="space-y-2">
                 <Combobox
                   onValueChange={(val) => {
-                    if (typeof val === "string") handleToggleCompany(val);
+                    if (typeof val === "string") {
+                      handleToggleCompany(val);
+                      setCompanySearchQuery("");
+                    }
                   }}
+                  inputValue={companySearchQuery}
+                  onInputValueChange={setCompanySearchQuery}
                 >
                   <ComboboxInput placeholder="Search to link companies..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {availableCompanies
-                        .filter((company) => !(form.getValues("companyIds") || []).includes(company.id!))
-                        .map((company) => (
-                          <ComboboxItem key={company.id} value={company.id!} label={company.name}>
-                            {company.name}
-                          </ComboboxItem>
-                        ))}
+                      {filteredCompanies.map((company) => (
+                        <ComboboxItem key={company.id} value={company.id!} label={company.name}>
+                          {company.name}
+                        </ComboboxItem>
+                      ))}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>

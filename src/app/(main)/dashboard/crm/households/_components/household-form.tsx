@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Trash2, Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -91,8 +91,6 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
     }
   }
 
-  const selectedAddress = availableAddresses.find((a) => a.id === form.watch("addressId"));
-
   return (
     <Card className="mx-auto w-full max-w-3xl shadow-sm">
       <CardHeader>
@@ -133,20 +131,6 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                         field.onChange(newAddr.id);
                       }}
                     />
-                    {selectedAddress && (
-                      <div className="mt-2 flex items-start gap-2 rounded-md border bg-muted/30 p-3 text-sm">
-                        <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">
-                            {selectedAddress.street1}
-                            {selectedAddress.street2 ? `, ${selectedAddress.street2}` : ""}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {selectedAddress.city}, {selectedAddress.state} {selectedAddress.zipCode}
-                          </p>
-                        </div>
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}

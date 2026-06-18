@@ -14,11 +14,7 @@ export default function ProfilePage() {
         <h1 className="font-bold text-3xl tracking-tight" id="profile-heading">
           My Profile
         </h1>
-        <p className="text-muted-foreground">
-          View and update your personal information, profile photo, and security preferences.
-        </p>
       </header>
-
       <section
         className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm"
         aria-labelledby="profile-heading"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -21,7 +21,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Address, type Client, type Company, CompanySchema, US_STATES } from "@/types/crm";
+import { type Address, type Client, type Company, CompanySchema, type Person, US_STATES } from "@/types/crm";
 
 interface CompanyFormProps {
   company?: Company;
@@ -30,8 +30,10 @@ interface CompanyFormProps {
 export function CompanyForm({ company }: CompanyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<Client[]>([]);
+  const [availableClients, setAvailableClients] = useState<(Client & { person: Person | null })[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
+
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
 
   const form = useForm<Company>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
@@ -79,6 +81,17 @@ export function CompanyForm({ company }: CompanyFormProps) {
     }
     fetchData();
   }, []);
+
+  const watchedClientIds = form.watch("clientIds") || [];
+
+  const filteredClients = useMemo(() => {
+    const base = availableClients.filter((client) => !watchedClientIds.includes(client.id!));
+    if (!clientSearchQuery) return base;
+    return base.filter((c) => {
+      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
+      return name.toLowerCase().includes(clientSearchQuery.toLowerCase());
+    });
+  }, [availableClients, clientSearchQuery, watchedClientIds]);
 
   const handleToggleClient = (clientId: string) => {
     const current = form.getValues("clientIds") || [];
@@ -441,27 +454,30 @@ export function CompanyForm({ company }: CompanyFormProps) {
               <div className="space-y-2">
                 <Combobox
                   onValueChange={(val) => {
-                    if (typeof val === "string") handleToggleClient(val);
+                    if (typeof val === "string") {
+                      handleToggleClient(val);
+                      setClientSearchQuery("");
+                    }
                   }}
+                  inputValue={clientSearchQuery}
+                  onInputValueChange={setClientSearchQuery}
                 >
                   <ComboboxInput placeholder="Search to link clients..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {availableClients
-                        .filter((client) => !(form.getValues("clientIds") || []).includes(client.id!))
-                        .map((client) => {
-                          const person = (client as { person?: { firstName: string; lastName: string } }).person;
-                          if (!person) return null;
-                          return (
-                            <ComboboxItem
-                              key={client.id}
-                              value={client.id!}
-                              label={`${person.firstName} ${person.lastName}`}
-                            >
-                              {person.firstName} {person.lastName}
-                            </ComboboxItem>
-                          );
-                        })}
+                      {filteredClients.map((client) => {
+                        const person = (client as { person?: { firstName: string; lastName: string } }).person;
+                        if (!person) return null;
+                        return (
+                          <ComboboxItem
+                            key={client.id}
+                            value={client.id!}
+                            label={`${person.firstName} ${person.lastName}`}
+                          >
+                            {person.firstName} {person.lastName}
+                          </ComboboxItem>
+                        );
+                      })}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>

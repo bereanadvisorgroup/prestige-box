@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -28,22 +28,25 @@ import {
   type LifeInsuranceCompany,
   type LongTermCareInsurance,
   type PaymentAccount,
+  type Person,
 } from "@/types/crm";
 
-interface PolicyFormProps {
-  policy?: ClientPolicy;
+interface MergedCompany {
+  id?: string;
+  name: string;
+  type: "life" | "disability" | "long_term_care";
+  paymentAccounts?: PaymentAccount[];
+  policyNames: string[];
 }
 
-type MergedCompany =
-  | (LifeInsuranceCompany & { type: "life" })
-  | (DisabilityInsuranceCompany & { type: "disability" })
-  | (LongTermCareInsurance & { type: "long_term_care" });
-
-export function PolicyForm({ policy }: PolicyFormProps) {
+export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<(Client & { person?: any })[]>([]);
+  const [availableClients, setAvailableClients] = useState<(Client & { person: Person | null })[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<MergedCompany[]>([]);
+
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [carrierSearchQuery, setCarrierSearchQuery] = useState("");
 
   const form = useForm<ClientPolicy>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
@@ -104,6 +107,45 @@ export function PolicyForm({ policy }: PolicyFormProps) {
     fetchData();
   }, []);
 
+  const selectedCompany = availableCompanies.find((c) => c.id === form.watch("lifeInsuranceCompanyId"));
+  const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
+
+  const selectedClientName = selectedClient
+    ? `${selectedClient.person?.firstName} ${selectedClient.person?.lastName}`
+    : "";
+  const selectedCarrierName = selectedCompany?.name || "";
+
+  useEffect(() => {
+    setClientSearchQuery(selectedClientName);
+  }, [selectedClientName]);
+
+  useEffect(() => {
+    setCarrierSearchQuery(selectedCarrierName);
+  }, [selectedCarrierName]);
+
+  const filteredClients = useMemo(() => {
+    if (!clientSearchQuery) return availableClients;
+    if (selectedClientName && clientSearchQuery === selectedClientName) {
+      return availableClients;
+    }
+    return availableClients.filter((c) => {
+      const name = `${c.person?.firstName} ${c.person?.lastName}`;
+      const email = c.person?.emails?.find((e) => e.isPrimary)?.address || c.person?.emails?.[0]?.address || "";
+      return (
+        name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+        email.toLowerCase().includes(clientSearchQuery.toLowerCase())
+      );
+    });
+  }, [availableClients, clientSearchQuery, selectedClientName]);
+
+  const filteredCompanies = useMemo(() => {
+    if (!carrierSearchQuery) return availableCompanies;
+    if (selectedCarrierName && carrierSearchQuery === selectedCarrierName) {
+      return availableCompanies;
+    }
+    return availableCompanies.filter((c) => c.name.toLowerCase().includes(carrierSearchQuery.toLowerCase()));
+  }, [availableCompanies, carrierSearchQuery, selectedCarrierName]);
+
   async function onSubmit(values: ClientPolicy) {
     try {
       setIsLoading(true);
@@ -139,9 +181,6 @@ export function PolicyForm({ policy }: PolicyFormProps) {
     }
   }
 
-  const selectedCompany = availableCompanies.find((c) => c.id === form.watch("lifeInsuranceCompanyId"));
-  const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
-
   return (
     <Card className="mx-auto w-full max-w-3xl shadow-md">
       <CardHeader>
@@ -169,23 +208,24 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                           form.setValue("paymentAccountId", ""); // Reset payment account when client changes
                         }
                       }}
+                      inputValue={clientSearchQuery}
+                      onInputValueChange={setClientSearchQuery}
                       disabled={!!policy}
                     >
-                      <ComboboxInput
-                        placeholder="Search clients..."
-                        value={
-                          selectedClient ? `${selectedClient.person?.firstName} ${selectedClient.person?.lastName}` : ""
-                        }
-                      />
+                      <ComboboxInput placeholder="Search clients..." />
                       <ComboboxContent>
                         <ComboboxList>
-                          {availableClients.map((c) => (
+                          {filteredClients.map((c) => (
                             <ComboboxItem
                               key={c.id}
                               value={c.id!}
                               label={`${c.person?.firstName} ${c.person?.lastName}`}
                             >
-                              {c.person?.firstName} {c.person?.lastName} ({c.person?.email})
+                              {c.person?.firstName} {c.person?.lastName} (
+                              {c.person?.emails?.find((e) => e.isPrimary)?.address ||
+                                c.person?.emails?.[0]?.address ||
+                                "No Email"}
+                              )
                             </ComboboxItem>
                           ))}
                         </ComboboxList>
@@ -211,11 +251,13 @@ export function PolicyForm({ policy }: PolicyFormProps) {
                           form.setValue("policyName", ""); // Reset policy name when carrier changes
                         }
                       }}
+                      inputValue={carrierSearchQuery}
+                      onInputValueChange={setCarrierSearchQuery}
                     >
-                      <ComboboxInput placeholder="Search carriers..." value={selectedCompany?.name || ""} />
+                      <ComboboxInput placeholder="Search carriers..." />
                       <ComboboxContent>
                         <ComboboxList>
-                          {availableCompanies.map((c) => (
+                          {filteredCompanies.map((c) => (
                             <ComboboxItem key={c.id} value={c.id!} label={c.name}>
                               {c.name}
                             </ComboboxItem>

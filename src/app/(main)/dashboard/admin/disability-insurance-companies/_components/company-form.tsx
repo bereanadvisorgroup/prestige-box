@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -42,6 +42,8 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
 
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
+
   const form = useForm<DisabilityInsuranceCompany>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
     resolver: zodResolver(DisabilityInsuranceCompanySchema) as any,
@@ -67,6 +69,14 @@ export function CompanyForm({ company }: CompanyFormProps) {
     }
     fetchData();
   }, []);
+
+  const watchedCompanyIds = form.watch("companyIds") || [];
+
+  const filteredCompanies = useMemo(() => {
+    const base = availableCompanies.filter((company) => !watchedCompanyIds.includes(company.id!));
+    if (!companySearchQuery) return base;
+    return base.filter((c) => c.name.toLowerCase().includes(companySearchQuery.toLowerCase()));
+  }, [availableCompanies, companySearchQuery, watchedCompanyIds]);
 
   const handleToggleCompany = (companyId: string) => {
     const current = form.getValues("companyIds") || [];
@@ -336,19 +346,22 @@ export function CompanyForm({ company }: CompanyFormProps) {
               <div className="space-y-2">
                 <Combobox
                   onValueChange={(val) => {
-                    if (typeof val === "string") handleToggleCompany(val);
+                    if (typeof val === "string") {
+                      handleToggleCompany(val);
+                      setCompanySearchQuery("");
+                    }
                   }}
+                  inputValue={companySearchQuery}
+                  onInputValueChange={setCompanySearchQuery}
                 >
                   <ComboboxInput placeholder="Search to link companies..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {availableCompanies
-                        .filter((company) => !(form.getValues("companyIds") || []).includes(company.id!))
-                        .map((company) => (
-                          <ComboboxItem key={company.id} value={company.id!} label={company.name}>
-                            {company.name}
-                          </ComboboxItem>
-                        ))}
+                      {filteredCompanies.map((company) => (
+                        <ComboboxItem key={company.id} value={company.id!} label={company.name}>
+                          {company.name}
+                        </ComboboxItem>
+                      ))}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>

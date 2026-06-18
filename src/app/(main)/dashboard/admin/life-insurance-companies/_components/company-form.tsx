@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -33,6 +33,8 @@ export function CompanyForm({ company }: CompanyFormProps) {
   const [newPolicyName, setNewPolicyName] = useState("");
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
+
+  const [companySearchQuery, setCompanySearchQuery] = useState("");
 
   const form = useForm<LifeInsuranceCompany>({
     // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch

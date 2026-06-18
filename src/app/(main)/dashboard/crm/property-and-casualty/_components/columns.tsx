@@ -17,6 +17,7 @@ export type EnrichedPropertyAndCasualtyFirm = PropertyAndCasualtyFirm & {
 export const columns = (onDelete: (firm: PropertyAndCasualtyFirm) => void): ColumnDef<PropertyAndCasualtyFirm>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<PropertyAndCasualtyFirm> }) => {
       const firm = row.original;

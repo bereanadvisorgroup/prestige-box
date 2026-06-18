@@ -17,6 +17,7 @@ export type EnrichedLawFirm = LawFirm & {
 export const columns = (onDelete: (lawFirm: LawFirm) => void): ColumnDef<LawFirm>[] => [
   {
     accessorKey: "firmName",
+    filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Firm Name" />,
     cell: ({ row }: { row: Row<LawFirm> }) => {
       const lawFirm = row.original;
