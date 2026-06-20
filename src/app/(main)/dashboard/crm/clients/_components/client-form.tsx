@@ -12,11 +12,13 @@ import { toast } from "sonner";
 import { createClient, updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
 import { getClientPoliciesByClient } from "@/actions/policies";
+import { createUser } from "@/actions/users";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -42,6 +44,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [hobbyInput, setHobbyInput] = useState("");
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
+  const [createPortalAccount, setCreatePortalAccount] = useState(true);
 
   const form = useForm<ClientFormInput, any, ClientFormValues>({
     resolver: zodResolver(ClientFormSchema),
@@ -151,6 +154,27 @@ export function ClientForm({ client }: ClientFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Client record updated" : "Client record created");
+        
+        if (!isEditing && createPortalAccount && selectedPerson) {
+          const email = selectedPerson.emails?.find((e) => e.isPrimary)?.address || selectedPerson.emails?.[0]?.address;
+          if (email) {
+            const userResult = await createUser({
+              email,
+              firstName: selectedPerson.firstName,
+              lastName: selectedPerson.lastName,
+              role: "client",
+              origin: window.location.origin
+            });
+            if (userResult.success) {
+              toast.success("Client portal account created successfully.");
+            } else {
+              toast.error("Failed to create portal account: " + userResult.error);
+            }
+          } else {
+            toast.warning("Could not create portal account: Person has no email address.");
+          }
+        }
+
         router.push("/dashboard/crm/clients");
         router.refresh();
       } else {
@@ -198,6 +222,23 @@ export function ClientForm({ client }: ClientFormProps) {
                     </FormItem>
                   )}
                 />
+                {selectedPerson && (
+                  <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                    <Checkbox 
+                      id="createPortalAccount"
+                      checked={createPortalAccount}
+                      onCheckedChange={(checked) => setCreatePortalAccount(checked === true)}
+                    />
+                    <div className="space-y-1 leading-none">
+                      <label htmlFor="createPortalAccount" className="font-medium text-sm leading-none cursor-pointer">
+                        Create Client Portal Account
+                      </label>
+                      <p className="text-muted-foreground text-sm">
+                        Automatically create a user account for this client. An email with a password setup link will be sent to their primary email address.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -233,8 +274,10 @@ export function ClientForm({ client }: ClientFormProps) {
               </div>
             )}
 
-            <div className="space-y-4 pt-2">
-              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
+            {!!client && (
+              <>
+                <div className="space-y-4 pt-2">
+                  <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
                 <Heart className="h-4 w-4 text-primary" />
                 Interests & Hobbies
               </h3>
@@ -378,6 +421,8 @@ export function ClientForm({ client }: ClientFormProps) {
                 ))}
               </div>
             </div>
+          </>
+        )}
 
             <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
