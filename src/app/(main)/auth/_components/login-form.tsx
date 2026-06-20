@@ -36,7 +36,7 @@ export function LoginForm() {
     },
   });
 
-  const { setUser, setProfile, setLoading, loading } = useAuthStore();
+  const { setUser, setProfile, setLoading, isLoading } = useAuthStore();
   const router = useRouter();
   const log = useLogger();
 
@@ -199,8 +199,8 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit" disabled={!mounted || loading}>
-          {loading ? "Logging in..." : "Login"}
+        <Button className="w-full" type="submit" disabled={!mounted || isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
 
