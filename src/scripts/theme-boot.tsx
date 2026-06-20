@@ -8,6 +8,8 @@
  */
 import { PREFERENCE_DEFAULTS, PREFERENCE_PERSISTENCE } from "@/lib/preferences/preferences-config";
 
+import Script from "next/script";
+
 export function ThemeBootScript() {
   const persistence = JSON.stringify({
     theme_mode: PREFERENCE_PERSISTENCE.theme_mode,
@@ -109,5 +111,5 @@ export function ThemeBootScript() {
   `;
 
   /* biome-ignore lint/security/noDangerouslySetInnerHtml: required for pre-hydration boot script */
-  return <script dangerouslySetInnerHTML={{ __html: code }} />;
+  return <Script id="theme-boot" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: code }} />;
 }

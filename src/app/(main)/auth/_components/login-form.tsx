@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase.client";
+import { useLogger } from 'next-axiom';
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
 
 import { GoogleButton } from "./social-auth/google-button";
@@ -36,6 +37,7 @@ export function LoginForm() {
 
   const { setUser, setProfile, setLoading } = useAuthStore();
   const router = useRouter();
+  const log = useLogger();
 
   const handleAuthUser = async (user: import("@supabase/supabase-js").User) => {
     setUser(user);
@@ -72,6 +74,7 @@ export function LoginForm() {
     }
 
     setProfile(profile);
+    log.info("User logged in", { userId: user.id, email: user.email, role: profile.role });
     toast.success("Login successful!");
     const defaultRoute =
       profile.role === "admin" || profile.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
@@ -89,6 +92,7 @@ export function LoginForm() {
       await handleAuthUser(authData.user);
     } catch (error) {
       console.error("Login Error:", error);
+      log.error("Login failed", { error: (error as Error).message });
       toast.error((error as { message: string }).message || "Invalid email or password.");
     } finally {
       setLoading(false);

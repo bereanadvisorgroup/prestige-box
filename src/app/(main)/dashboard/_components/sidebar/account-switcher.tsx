@@ -15,15 +15,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
+import { useLogger } from 'next-axiom';
 import { useAuthStore } from "@/stores/auth.store";
 
 export function AccountSwitcher() {
   const router = useRouter();
   const { user, profile, logout } = useAuthStore();
+  const log = useLogger();
 
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      log.info("User logged out", { userId: profile.uid, email: profile.email });
       logout();
       router.push("/auth/v1/login");
     } catch (error) {
