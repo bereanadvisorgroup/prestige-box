@@ -16,7 +16,9 @@
     "check:fix": "biome check --write",
     "prepare": "husky",
     "generate:presets": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/scripts/generate-theme-presets.ts",
-    "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts"
+    "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
@@ -67,6 +69,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@faker-js/faker": "^10.4.0",
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/d3": "^7.4.3",
     "@types/google.maps": "^3.65.1",

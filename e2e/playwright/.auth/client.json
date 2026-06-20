@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "auth-storage",
+          "value": "{\"state\":{\"profile\":{\"uid\":\"3cad8ac7-62ed-4c18-b9ee-3da41b971b28\",\"email\":\"client1@prestigebox.dev\",\"role\":\"client\",\"firstName\":\"Test\",\"lastName\":\"Client\",\"phone\":\"\",\"photoURL\":\"\"}},\"version\":0}"
+        },
+        {
+          "name": "sb-qaphglyghxbbaufbjddz-auth-token",
+          "value": "{\"access_token\":\"eyJhbGciOiJFUzI1NiIsImtpZCI6IjIxMTQ2NWI3LTVhZGMtNDQxNi1hNmJmLWY1YzU4OWIwNTkxZiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3FhcGhnbHlnaHhiYmF1ZmJqZGR6LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzY2FkOGFjNy02MmVkLTRjMTgtYjllZS0zZGE0MWI5NzFiMjgiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgxOTg1OTk4LCJpYXQiOjE3ODE5ODIzOTgsImVtYWlsIjoiY2xpZW50MUBwcmVzdGlnZWJveC5kZXYiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJzdE5hbWUiOiJUZXN0IiwibGFzdE5hbWUiOiJDbGllbnQiLCJyb2xlIjoiY2xpZW50In0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3ODE5ODIzOTh9XSwic2Vzc2lvbl9pZCI6IjY5NTMyOGYyLTkwNDItNDAyOC1hN2VjLTVhNjRiYzdmYjFiZCIsImlzX2Fub255bW91cyI6ZmFsc2V9.RI9MrpqaVzch96C29Zmpl_OhpX09K731QNuBdPbMFv6vskp7dAs71Zrya3JOdz2seXNY212RY6qCE4xI_sL7eg\",\"token_type\":\"bearer\",\"expires_in\":3600,\"expires_at\":1781985998,\"refresh_token\":\"u3zr4qaypjiv\",\"user\":{\"id\":\"3cad8ac7-62ed-4c18-b9ee-3da41b971b28\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"client1@prestigebox.dev\",\"email_confirmed_at\":\"2026-06-20T18:37:10.601304Z\",\"phone\":\"\",\"confirmed_at\":\"2026-06-20T18:37:10.601304Z\",\"last_sign_in_at\":\"2026-06-20T19:06:38.35051439Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"email_verified\":true,\"firstName\":\"Test\",\"lastName\":\"Client\",\"role\":\"client\"},\"identities\":[{\"identity_id\":\"76bf316a-37d7-4a7c-9c10-f2363bdb6f56\",\"id\":\"3cad8ac7-62ed-4c18-b9ee-3da41b971b28\",\"user_id\":\"3cad8ac7-62ed-4c18-b9ee-3da41b971b28\",\"identity_data\":{\"email\":\"client1@prestigebox.dev\",\"email_verified\":false,\"phone_verified\":false,\"sub\":\"3cad8ac7-62ed-4c18-b9ee-3da41b971b28\"},\"provider\":\"email\",\"last_sign_in_at\":\"2026-06-20T18:37:10.599123Z\",\"created_at\":\"2026-06-20T18:37:10.599176Z\",\"updated_at\":\"2026-06-20T18:37:10.599176Z\",\"email\":\"client1@prestigebox.dev\"}],\"created_at\":\"2026-06-20T18:37:10.597671Z\",\"updated_at\":\"2026-06-20T19:06:38.352572Z\",\"is_anonymous\":false},\"weak_password\":null}"
+        }
+      ]
+    }
+  ]
+}

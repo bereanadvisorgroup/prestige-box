@@ -18,6 +18,13 @@
         "DRIZZLE_CONFIG_PATH": "./drizzle.config.ts"
       }
     },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
     "shadcn-mcp": {
       "command": "npx",
       "args": [

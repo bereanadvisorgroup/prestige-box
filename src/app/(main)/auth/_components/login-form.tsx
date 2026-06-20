@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -35,9 +36,12 @@ export function LoginForm() {
     },
   });
 
-  const { setUser, setProfile, setLoading } = useAuthStore();
+  const { setUser, setProfile, setLoading, loading } = useAuthStore();
   const router = useRouter();
   const log = useLogger();
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   const handleAuthUser = async (user: import("@supabase/supabase-js").User) => {
     setUser(user);
@@ -195,8 +199,8 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit">
-          Login
+        <Button className="w-full" type="submit" disabled={!mounted || loading}>
+          {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
 
