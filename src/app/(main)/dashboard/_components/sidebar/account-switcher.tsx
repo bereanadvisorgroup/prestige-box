@@ -26,7 +26,7 @@ export function AccountSwitcher() {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      log.info("User logged out", { userId: profile.uid, email: profile.email });
+      log.info("User logged out", { userId: profile?.uid, email: profile?.email });
       logout();
       router.push("/auth/v1/login");
     } catch (error) {
