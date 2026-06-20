@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ interface DeleteUserAlertProps {
 
 export function DeleteUserAlert({ open, onOpenChange, uid, userName }: DeleteUserAlertProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   async function onDelete() {
     try {
@@ -33,6 +35,7 @@ export function DeleteUserAlert({ open, onOpenChange, uid, userName }: DeleteUse
       if (result.success) {
         toast.success("User deleted successfully");
         onOpenChange(false);
+        router.refresh();
       } else {
         toast.error(result.error || "Failed to delete user");
       }

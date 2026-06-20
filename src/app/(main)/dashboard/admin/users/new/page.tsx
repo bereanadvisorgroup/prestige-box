@@ -2,11 +2,26 @@ import Link from "next/link";
 
 import { ChevronLeft } from "lucide-react";
 
+import { getClients } from "@/actions/clients";
+import { getUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 
 import { AddUserForm } from "../_components/add-user-form";
 
-export default function NewUserPage() {
+export default async function NewUserPage() {
+  const [clientsRes, usersRes] = await Promise.all([getClients(), getUsers()]);
+
+  const clients = clientsRes.success && clientsRes.clients ? clientsRes.clients : [];
+  const users = usersRes.success && usersRes.users ? usersRes.users : [];
+
+  const userEmails = new Set(users.map((u) => u.email.toLowerCase()));
+
+  const unlinkedClients = clients.filter((client) => {
+    const emails = client.person?.emails || [];
+    // Client must have at least one email, and none of their emails should match an existing user
+    return emails.length > 0 && !emails.some((e: any) => userEmails.has(e.address.toLowerCase()));
+  });
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex flex-col gap-4">
@@ -23,7 +38,7 @@ export default function NewUserPage() {
       </div>
 
       <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-        <AddUserForm />
+        <AddUserForm unlinkedClients={unlinkedClients} />
       </div>
     </div>
   );

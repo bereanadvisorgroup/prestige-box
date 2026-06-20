@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase.client";
-import { useLogger } from 'next-axiom';
+import { useLogger } from "next-axiom";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
 
 import { GoogleButton } from "./social-auth/google-button";

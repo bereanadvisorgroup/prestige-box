@@ -9,11 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+import { PasswordRequirements } from "./password-requirements";
+
+const passwordValidation = z
+  .string()
+  .min(8, { message: "Password must be at least 8 characters." })
+  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
+  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
+  .regex(/[0-9]/, { message: "Password must contain at least one number." })
+  .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character." });
+
 const FormSchema = z
   .object({
     email: z.string().email({ message: "Please enter a valid email address." }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-    confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
+    password: passwordValidation,
+    confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
@@ -65,6 +75,7 @@ export function RegisterForm() {
               <FormControl>
                 <Input id="password" type="password" placeholder="••••••••" autoComplete="new-password" {...field} />
               </FormControl>
+              <PasswordRequirements password={form.watch("password")} />
               <FormMessage />
             </FormItem>
           )}

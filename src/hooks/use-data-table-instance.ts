@@ -38,10 +38,6 @@ export function useDataTableInstance<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>(defaultSorting ?? []);
-  const [pagination, setPagination] = React.useState({
-    pageIndex: defaultPageIndex ?? 0,
-    pageSize: defaultPageSize ?? 10,
-  });
 
   const table = useReactTable({
     data,
@@ -51,7 +47,12 @@ export function useDataTableInstance<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
-      pagination,
+    },
+    initialState: {
+      pagination: {
+        pageIndex: defaultPageIndex ?? 0,
+        pageSize: defaultPageSize ?? 10,
+      },
     },
     enableRowSelection,
     getRowId: getRowId ?? ((row) => String((row as Record<string, unknown>).id)),
@@ -59,7 +60,6 @@ export function useDataTableInstance<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

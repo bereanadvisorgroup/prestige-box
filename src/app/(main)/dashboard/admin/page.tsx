@@ -51,9 +51,6 @@ export default async function AdminDashboardPage() {
                   Manage Users
                   <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
                 </CardTitle>
-                <CardDescription className="text-muted-foreground text-sm leading-relaxed">
-                  Add new users, edit security permissions, and oversee system access levels.
-                </CardDescription>
               </div>
               <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
                 <Users className="h-6 w-6" />
