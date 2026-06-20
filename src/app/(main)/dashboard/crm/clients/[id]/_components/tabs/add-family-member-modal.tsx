@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { createPerson } from "@/actions/people";
 import { updateClient } from "@/actions/clients";
+import { createPerson } from "@/actions/people";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,7 +75,7 @@ export function AddFamilyMemberModal({
     try {
       setIsLoading(true);
       let personId = selectedPersonId;
-      let newPersonObj: Person | undefined = undefined;
+      let newPersonObj: Person | undefined;
 
       // Handle New Person Creation
       if (mode === "new") {
@@ -145,7 +146,9 @@ export function AddFamilyMemberModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add Family Member</DialogTitle>
-          <DialogDescription>Link an existing person or create a new profile to add to the family tree.</DialogDescription>
+          <DialogDescription>
+            Link an existing person or create a new profile to add to the family tree.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6 py-4">

@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 
-import { CreditCard, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Building2,
+  CalendarRange,
+  CreditCard,
+  FileText,
+  Layers,
+  Loader2,
+  Plus,
+  Receipt,
+  Trash2,
+  TrendingDown,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,30 +32,61 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase.client";
-import type { Bank, Client, LoanInfo } from "@/types/crm";
+import type { Asset, Bank, Client, LoanInfo } from "@/types/crm";
 
-export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Client; associatedBanks?: Bank[] }) {
+const LOAN_TYPES = ["Auto", "Boat", "Business", "Credit Card", "Mortgage", "Student"] as const;
+
+const LOAN_TYPE_COLORS: Record<string, string> = {
+  Auto: "bg-blue-500/10 text-blue-600 border-blue-200",
+  Boat: "bg-cyan-500/10 text-cyan-600 border-cyan-200",
+  Business: "bg-amber-500/10 text-amber-600 border-amber-200",
+  "Credit Card": "bg-rose-500/10 text-rose-600 border-rose-200",
+  Mortgage: "bg-violet-500/10 text-violet-600 border-violet-200",
+  Student: "bg-green-500/10 text-green-600 border-green-200",
+};
+
+function fmt(n: number | undefined) {
+  if (n === undefined) return "—";
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+interface LiabilitiesTabProps {
+  client: Client;
+  associatedBanks?: Bank[];
+  clientAssets?: Asset[];
+}
+
+export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = [] }: LiabilitiesTabProps) {
   const [liabilities, setLiabilities] = useState<LoanInfo[]>(client.liabilities || []);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Form State
-  const [loanType, setLoanType] = useState<LoanInfo["loanType"] | "">("");
+  // Form state
+  const [loanType, setLoanType] = useState<string>("");
+  const [assetId, setAssetId] = useState("");
   const [bankId, setBankId] = useState("");
   const [currentBalance, setCurrentBalance] = useState("");
+  const [monthlyPayment, setMonthlyPayment] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [statementFile, setStatementFile] = useState<File | null>(null);
 
   const resetForm = () => {
     setLoanType("");
+    setAssetId("");
     setBankId("");
     setCurrentBalance("");
+    setMonthlyPayment("");
+    setStartDate("");
+    setEndDate("");
     setStatementFile(null);
   };
 
   const handleAdd = async () => {
-    if (!loanType || !bankId || !currentBalance) {
-      toast.error("Loan Type, Bank, and Balance are required");
+    if (!loanType || !currentBalance) {
+      toast.error("Loan Type and Balance are required");
       return;
     }
     try {
@@ -65,8 +108,12 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
       const newLoan: LoanInfo = {
         id: crypto.randomUUID(),
         loanType: loanType as LoanInfo["loanType"],
-        bankId,
+        assetId: assetId || null,
+        bankId: bankId || null,
         currentBalance: parseFloat(currentBalance),
+        monthlyPayment: monthlyPayment ? parseFloat(monthlyPayment) : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         statementPath,
       };
 
@@ -101,12 +148,15 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
     }
   };
 
+  const totalBalance = liabilities.reduce((sum, l) => sum + (l.currentBalance ?? 0), 0);
+  const totalMonthly = liabilities.reduce((sum, l) => sum + (l.monthlyPayment ?? 0), 0);
+
   return (
     <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       <CardHeader className="flex flex-row items-center justify-between bg-muted/10 pb-4">
         <div>
-          <CardTitle>Liabilities & Loans</CardTitle>
-          <CardDescription>Manage financial liabilities for this client.</CardDescription>
+          <CardTitle>Liabilities</CardTitle>
+          <CardDescription>All loans, mortgages, and credit obligations for this client.</CardDescription>
         </div>
         <Dialog
           open={isDialogOpen}
@@ -120,20 +170,23 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
               <Plus className="mr-2 h-4 w-4" /> Add Liability
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Liability</DialogTitle>
-              <DialogDescription>Add a new liability or loan associated with a bank.</DialogDescription>
+              <DialogDescription>Enter the details of the loan, mortgage, or credit obligation.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Loan Type */}
               <div className="grid gap-2">
-                <Label>Loan Type</Label>
-                <Select value={loanType} onValueChange={(val) => setLoanType(val as LoanInfo["loanType"])}>
+                <Label>
+                  Loan Type <span className="text-destructive">*</span>
+                </Label>
+                <Select value={loanType} onValueChange={setLoanType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {["Auto", "Boat", "Business", "Student", "Credit Card"].map((t) => (
+                    {LOAN_TYPES.map((t) => (
                       <SelectItem key={t} value={t}>
                         {t}
                       </SelectItem>
@@ -141,44 +194,91 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Associated Asset */}
               <div className="grid gap-2">
-                <Label>Bank</Label>
+                <Label>Associated Asset (Optional)</Label>
+                <Select value={assetId} onValueChange={setAssetId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Link to an asset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {clientAssets.map((a) => (
+                      <SelectItem key={a.id} value={a.id!}>
+                        {a.name} — {a.subType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Bank */}
+              <div className="grid gap-2">
+                <Label>Bank (Optional)</Label>
                 <Select value={bankId} onValueChange={setBankId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select associated bank" />
                   </SelectTrigger>
                   <SelectContent>
-                    {associatedBanks.length > 0 ? (
-                      associatedBanks.map((b) => (
-                        <SelectItem key={b.id} value={b.id!}>
-                          {b.firmName}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>
-                        No associated banks
+                    <SelectItem value="none">None</SelectItem>
+                    {associatedBanks.map((b) => (
+                      <SelectItem key={b.id} value={b.id!}>
+                        {b.firmName}
                       </SelectItem>
-                    )}
+                    ))}
                   </SelectContent>
                 </Select>
                 {associatedBanks.length === 0 && (
                   <p className="text-[10px] text-muted-foreground">
-                    You must associate a bank with this client to add a liability.
+                    Associate a bank with this client first to link one here.
                   </p>
                 )}
               </div>
-              <div className="grid gap-2">
-                <Label>Current Balance ($)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={currentBalance}
-                  onChange={(e) => setCurrentBalance(e.target.value)}
-                  placeholder="0.00"
-                />
+
+              <Separator />
+
+              {/* Balance + Monthly Payment */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>
+                    Current Balance ($) <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={currentBalance}
+                    onChange={(e) => setCurrentBalance(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Monthly Payment ($)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={monthlyPayment}
+                    onChange={(e) => setMonthlyPayment(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Start Date</Label>
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>End / Payoff Date</Label>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+
+              {/* Statement Upload */}
               <div className="grid gap-2">
-                <Label>Statement</Label>
+                <Label>Statement (Optional)</Label>
                 <input
                   id="liability-file-upload"
                   type="file"
@@ -188,7 +288,7 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleAdd} disabled={isLoading || !loanType || !bankId || !currentBalance}>
+              <Button onClick={handleAdd} disabled={isLoading || !loanType || !currentBalance}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Liability
               </Button>
@@ -196,44 +296,112 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
           </DialogContent>
         </Dialog>
       </CardHeader>
+
       <CardContent className="space-y-6 pt-6">
+        {/* Summary Row */}
+        {liabilities.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 rounded-lg border bg-muted/10 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-md border border-destructive/20 bg-destructive/10 p-2 text-destructive">
+                <TrendingDown className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Balance</p>
+                <p className="font-bold text-lg">{fmt(totalBalance)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="rounded-md border border-primary/20 bg-primary/10 p-2 text-primary">
+                <Receipt className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Monthly</p>
+                <p className="font-bold text-lg">{fmt(totalMonthly)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Liability Cards */}
         <div className="space-y-3">
           {liabilities.length > 0 ? (
             liabilities.map((loan, index) => {
               const bank = associatedBanks.find((b) => b.id === loan.bankId);
+              const asset = clientAssets.find((a) => a.id === loan.assetId);
+              const colorClass = LOAN_TYPE_COLORS[loan.loanType] ?? "bg-muted text-muted-foreground border-border";
+
               return (
                 <div
                   key={loan.id || `loan-${index}`}
-                  className="flex flex-col justify-between gap-4 rounded-md border bg-background p-4 shadow-sm transition-all hover:shadow-md md:flex-row md:items-center"
+                  className="flex flex-col justify-between gap-4 rounded-xl border bg-background p-5 shadow-sm transition-all hover:shadow-md md:flex-row md:items-start"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="shrink-0 rounded border border-primary/20 bg-primary/10 p-2 text-primary">
-                      <CreditCard className="h-6 w-6" />
+                  {/* Left: Icon + Info */}
+                  <div className="flex flex-1 items-start gap-4">
+                    <div className="shrink-0 rounded-lg border border-primary/20 bg-primary/10 p-2.5 text-primary">
+                      <CreditCard className="h-5 w-5" />
                     </div>
-                    <div className="space-y-1">
-                      <p className="flex items-center gap-2 font-semibold text-foreground">
-                        {bank?.firmName || (loan as any).creditorName || "Unknown Bank"}
-                        <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-xs uppercase">
-                          {loan.loanType || (loan as unknown as { type?: string }).type || "Unknown"}
-                        </span>
-                      </p>
-                      <p className="font-bold text-foreground/90 text-xl tracking-tight">
-                        $
-                        {(loan.currentBalance ?? (loan as unknown as { amount?: number }).amount ?? 0).toLocaleString(
-                          undefined,
-                          {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          },
+                    <div className="flex-1 space-y-2">
+                      {/* Header row */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className={`font-medium text-xs uppercase ${colorClass}`}>
+                          {loan.loanType}
+                        </Badge>
+                        {bank && (
+                          <span className="flex items-center gap-1 text-muted-foreground text-sm">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {bank.firmName}
+                          </span>
                         )}
-                      </p>
+                        {asset && (
+                          <span className="flex items-center gap-1 text-muted-foreground text-sm">
+                            <Layers className="h-3.5 w-3.5" />
+                            {asset.name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Amounts row */}
+                      <div className="flex flex-wrap gap-6 pt-1">
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Balance
+                          </p>
+                          <p className="font-bold text-foreground text-lg">
+                            {fmt(loan.currentBalance)}
+                          </p>
+                        </div>
+                        {loan.monthlyPayment !== undefined && (
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              / Month
+                            </p>
+                            <p className="font-semibold text-foreground/80">
+                              {fmt(loan.monthlyPayment)}
+                            </p>
+                          </div>
+                        )}
+                        {(loan.startDate || loan.endDate) && (
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                              <CalendarRange className="h-3 w-3" /> Term
+                            </p>
+                            <p className="text-sm text-foreground/80">
+                              {loan.startDate ? new Date(loan.startDate).toLocaleDateString() : "—"}
+                              {" → "}
+                              {loan.endDate ? new Date(loan.endDate).toLocaleDateString() : "Open"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-4 self-end md:self-center">
+
+                  {/* Right: Actions */}
+                  <div className="flex shrink-0 items-center gap-2 self-start">
                     {loan.statementPath && (
-                      <Button variant="outline" size="sm" asChild className="gap-2">
+                      <Button variant="outline" size="sm" asChild className="gap-1.5">
                         <a href={loan.statementPath} target="_blank" rel="noopener noreferrer">
-                          <FileText className="h-3 w-3" /> View Statement
+                          <FileText className="h-3.5 w-3.5" /> Statement
                         </a>
                       </Button>
                     )}
@@ -250,9 +418,10 @@ export function LiabilitiesTab({ client, associatedBanks = [] }: { client: Clien
               );
             })
           ) : (
-            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
-              <CreditCard className="mx-auto mb-3 h-8 w-8 opacity-20" />
+            <div className="rounded-lg border-2 border-dashed bg-muted/10 p-12 text-center text-muted-foreground">
+              <CreditCard className="mx-auto mb-3 h-10 w-10 opacity-20" />
               <p className="text-sm">No liabilities recorded yet.</p>
+              <p className="mt-1 text-xs opacity-70">Click "Add Liability" to get started.</p>
             </div>
           )}
         </div>

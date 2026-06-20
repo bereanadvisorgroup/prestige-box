@@ -165,6 +165,36 @@ export async function updateRecordKeeper(id: string, data: Partial<RecordKeeper>
   }
 }
 
+export async function linkClientToRecordKeeper(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "Record Keeper not found" };
+
+    const currentIds = firmRes.recordKeeper.clientIds || [];
+    if (currentIds.includes(clientId)) return { success: true }; // already linked
+
+    return updateRecordKeeper(firmId, { clientIds: [...currentIds, clientId] });
+  } catch (error) {
+    console.error(`[linkClientToRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkClientFromRecordKeeper(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "Record Keeper not found" };
+
+    const currentIds = firmRes.recordKeeper.clientIds || [];
+    if (!currentIds.includes(clientId)) return { success: true }; // already unlinked
+
+    return updateRecordKeeper(firmId, { clientIds: currentIds.filter((id) => id !== clientId) });
+  } catch (error) {
+    console.error(`[unlinkClientFromRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
 export async function deleteRecordKeeper(id: string) {
   try {
     const { data: recordKeeper, error: getError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();

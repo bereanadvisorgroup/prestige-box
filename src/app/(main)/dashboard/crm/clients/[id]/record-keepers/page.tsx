@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 
-import { Building2, Database } from "lucide-react";
+import { Database } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
-import { getRecordKeepers } from "@/actions/record-keepers";
+import { getRecordKeepers, linkClientToRecordKeeper, unlinkClientFromRecordKeeper } from "@/actions/record-keepers";
 import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
+import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,31 +21,40 @@ export default async function RecordKeepersPage({ params }: Props) {
 
   const client = clientResult.client;
   const recordRes = await getRecordKeepers();
-  const associatedRecordKeepers = ((recordRes.success && recordRes.recordKeepers) || []).filter((rk) =>
-    rk.clientIds?.includes(client.id || ""),
-  );
+  const allKeepers = (recordRes.success && recordRes.recordKeepers) || [];
+
+  const associatedRecordKeepers = allKeepers.filter((rk) => rk.clientIds?.includes(client.id || ""));
+
+  const availableFirms = allKeepers
+    .filter((rk) => !rk.clientIds?.includes(client.id || ""))
+    .map((rk) => ({ id: rk.id || "", name: rk.firmName }));
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
-      {associatedRecordKeepers.length > 0 ? (
-        <AssociationCardList
-          title="Associated Record Keepers"
-          description="Record keepers this client is associated with"
-          items={associatedRecordKeepers.map((c) => ({
-            id: c.id || "",
-            name: c.firmName,
-            website: c.website,
-            phone: c.phone,
-          }))}
-          linkPrefix="/dashboard/admin/record-keepers"
-          icon={Database}
-        />
-      ) : (
-        <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm italic">No associated record keepers found.</p>
-        </Card>
-      )}
+      <AssociationCardList
+        clientId={client.id || ""}
+        title="Associated Record Keepers"
+        description="Record keepers this client is associated with"
+        items={associatedRecordKeepers.map((rk) => ({
+          id: rk.id || "",
+          name: rk.firmName,
+          website: rk.website,
+          phone: rk.phone,
+          isLinked: false,
+        }))}
+        linkPrefix="/dashboard/admin/record-keepers"
+        icon={Database}
+        onUnlinkAction={unlinkClientFromRecordKeeper}
+        actionNode={
+          <LinkFirmDialog
+            clientId={client.id || ""}
+            firmTypeLabel="Record Keeper"
+            availableFirms={availableFirms}
+            newFirmLink={`/dashboard/admin/record-keepers/new?clientId=${client.id}`}
+            onLinkAction={linkClientToRecordKeeper}
+          />
+        }
+      />
     </div>
   );
 }

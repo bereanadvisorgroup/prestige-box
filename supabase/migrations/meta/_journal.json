@@ -134,6 +134,13 @@
       "when": 1781274234036,
       "tag": "0018_green_ikaris",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781994600338,
+      "tag": "0022_create_assets_tables",
+      "breakpoints": true
     }
   ]
 }

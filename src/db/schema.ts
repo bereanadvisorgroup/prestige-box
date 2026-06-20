@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 // 1. Users Table
 export const users = pgTable("users", {
@@ -243,4 +243,29 @@ export const recordKeepers = pgTable("record_keepers", {
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 16. Assets Table
+export const assets = pgTable("assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("clientId").notNull(),
+  name: text("name").notNull(),
+  category: text("category").notNull().default("Real Estate and Fixed Physical Assets"),
+  subType: text("subType").notNull(),
+  currentValue: numeric("currentValue").notNull().default("0.00"),
+  currency: text("currency").notNull().default("USD"),
+  isAutomated: boolean("isAutomated").notNull().default(false),
+  institutionName: text("institutionName").notNull().default("Manual"),
+  addressId: uuid("addressId"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 17. Asset History Table
+export const assetHistory = pgTable("asset_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  assetId: uuid("assetId").notNull(),
+  value: numeric("value").notNull().default("0.00"),
+  recordedAt: timestamp("recordedAt", { withTimezone: true }).defaultNow(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
 });

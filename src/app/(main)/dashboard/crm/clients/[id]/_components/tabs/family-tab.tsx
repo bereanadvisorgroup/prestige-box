@@ -56,7 +56,8 @@ function getGenderedRelationshipLabel(person?: Person, member?: FamilyMember, la
   if (rel === "Spouse") return gender === "Female" ? "Wife" : gender === "Male" ? "Husband" : rel;
   if (rel === "Child") return gender === "Female" ? "Daughter" : gender === "Male" ? "Son" : rel;
   if (rel === "Grandchild") return gender === "Female" ? "Granddaughter" : gender === "Male" ? "Grandson" : rel;
-  if (rel === "Great Grandchild") return gender === "Female" ? "Great Granddaughter" : gender === "Male" ? "Great Grandson" : rel;
+  if (rel === "Great Grandchild")
+    return gender === "Female" ? "Great Granddaughter" : gender === "Male" ? "Great Grandson" : rel;
 
   return rel;
 }
@@ -201,7 +202,9 @@ export function FamilyTab({ client }: { client: Client }) {
         <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4 pt-4">
           <div>
             <CardTitle>Family Tree</CardTitle>
-            <CardDescription className="mt-1">Visual representation of the client's family configuration.</CardDescription>
+            <CardDescription className="mt-1">
+              Visual representation of the client's family configuration.
+            </CardDescription>
           </div>
           <Button onClick={() => setIsModalOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />

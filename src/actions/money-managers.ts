@@ -165,6 +165,36 @@ export async function updateMoneyManager(id: string, data: Partial<MoneyManager>
   }
 }
 
+export async function linkClientToMoneyManager(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getMoneyManager(firmId);
+    if (!firmRes.success || !firmRes.moneyManager) return { success: false, error: "Money Manager not found" };
+
+    const currentIds = firmRes.moneyManager.clientIds || [];
+    if (currentIds.includes(clientId)) return { success: true }; // already linked
+
+    return updateMoneyManager(firmId, { clientIds: [...currentIds, clientId] });
+  } catch (error) {
+    console.error(`[linkClientToMoneyManager] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkClientFromMoneyManager(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getMoneyManager(firmId);
+    if (!firmRes.success || !firmRes.moneyManager) return { success: false, error: "Money Manager not found" };
+
+    const currentIds = firmRes.moneyManager.clientIds || [];
+    if (!currentIds.includes(clientId)) return { success: true }; // already unlinked
+
+    return updateMoneyManager(firmId, { clientIds: currentIds.filter((id) => id !== clientId) });
+  } catch (error) {
+    console.error(`[unlinkClientFromMoneyManager] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
 export async function deleteMoneyManager(id: string) {
   try {
     const { data: moneyManager, error: getError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();

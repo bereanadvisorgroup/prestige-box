@@ -242,12 +242,16 @@ export const DocumentSchema = z.object({
   firmId: z.string().optional(),
 });
 
-export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card"]);
+export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card", "Mortgage"]);
 export const LoanSchema = z.object({
   id: z.string().optional(),
   loanType: LoanTypeSelection,
-  bankId: z.string().min(1, "Bank is required"),
+  assetId: z.string().optional().nullable(),
+  bankId: z.string().optional().nullable(),
   currentBalance: z.number().default(0),
+  monthlyPayment: z.number().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   statementPath: z.string().optional(),
 });
 
@@ -275,6 +279,31 @@ export const ClientSchema = z.object({
   mortgages: z.array(MortgageSchema).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+});
+
+export const AssetSubTypeSchema = z.enum(["Primary Residence", "Investment Properties", "Vehicles", "Valuables"]);
+
+export const AssetSchema = z.object({
+  id: z.string().optional(),
+  clientId: z.string(),
+  name: z.string().min(1, "Asset name/label is required"),
+  category: z.string().default("Real Estate and Fixed Physical Assets"),
+  subType: AssetSubTypeSchema,
+  currentValue: z.number().min(0, "Current value must be positive"),
+  currency: z.string().default("USD"),
+  isAutomated: z.boolean().default(false),
+  institutionName: z.string().default("Manual"),
+  addressId: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const AssetHistorySchema = z.object({
+  id: z.string().optional(),
+  assetId: z.string(),
+  value: z.number().min(0, "Value must be positive"),
+  recordedAt: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export const PaymentSchedule = z.enum(["monthly", "quarterly", "semi-annually", "annually"]);
@@ -412,6 +441,9 @@ export type PropertyAndCasualtyFirm = z.infer<typeof PropertyAndCasualtyFirmSche
 export type MoneyManager = z.infer<typeof MoneyManagerSchema>;
 export type RecordKeeper = z.infer<typeof RecordKeeperSchema>;
 export type ClientPolicy = z.infer<typeof ClientPolicySchema>;
+export type AssetSubType = z.infer<typeof AssetSubTypeSchema>;
+export type Asset = z.infer<typeof AssetSchema>;
+export type AssetHistory = z.infer<typeof AssetHistorySchema>;
 
 export type PaymentSchedule = z.infer<typeof PaymentSchedule>;
 export type FamilyMember = z.infer<typeof FamilyMemberSchema>;
@@ -444,6 +476,7 @@ export const PropertyAndCasualtyFirmFormSchema = PropertyAndCasualtyFirmSchema.o
 export const MoneyManagerFormSchema = MoneyManagerSchema.omit({ createdAt: true, updatedAt: true });
 export const RecordKeeperFormSchema = RecordKeeperSchema.omit({ createdAt: true, updatedAt: true });
 export const ClientPolicyFormSchema = ClientPolicySchema.omit({ createdAt: true, updatedAt: true });
+export const AssetFormSchema = AssetSchema.omit({ createdAt: true, updatedAt: true });
 
 export type AddressFormValues = z.infer<typeof AddressFormSchema>;
 export type PersonFormValues = z.infer<typeof PersonFormSchema>;
@@ -461,6 +494,7 @@ export type PropertyAndCasualtyFirmFormValues = z.infer<typeof PropertyAndCasual
 export type MoneyManagerFormValues = z.infer<typeof MoneyManagerFormSchema>;
 export type RecordKeeperFormValues = z.infer<typeof RecordKeeperFormSchema>;
 export type ClientPolicyFormValues = z.infer<typeof ClientPolicyFormSchema>;
+export type AssetFormValues = z.infer<typeof AssetFormSchema>;
 
 export type AddressFormInput = z.input<typeof AddressFormSchema>;
 export type PersonFormInput = z.input<typeof PersonFormSchema>;
@@ -478,6 +512,7 @@ export type PropertyAndCasualtyFirmFormInput = z.input<typeof PropertyAndCasualt
 export type MoneyManagerFormInput = z.input<typeof MoneyManagerFormSchema>;
 export type RecordKeeperFormInput = z.input<typeof RecordKeeperFormSchema>;
 export type ClientPolicyFormInput = z.input<typeof ClientPolicyFormSchema>;
+export type AssetFormInput = z.input<typeof AssetFormSchema>;
 
 // --- Dashboard Types ---
 

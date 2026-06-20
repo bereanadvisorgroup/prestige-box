@@ -15,6 +15,7 @@ import {
   FileText,
   HeartHandshake,
   HeartPulse,
+  Home,
   Landmark,
   LayoutDashboard,
   ReceiptText,
@@ -85,6 +86,11 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         title: "Estate Planning",
         url: `/dashboard/crm/clients/${clientId}/estate-planning`,
         icon: FileText,
+      },
+      {
+        title: "Assets",
+        url: `/dashboard/crm/clients/${clientId}/assets`,
+        icon: Home,
       },
       {
         title: "Liabilities",
