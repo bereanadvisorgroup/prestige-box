@@ -22,7 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SsnInput } from "@/components/ui/ssn-input";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
-import { type Address, type Person, PersonSchema } from "@/types/crm";
+import { type Address, type Person, type PersonFormValues,
+  type PersonFormInput, PersonFormSchema } from "@/types/crm";
 
 interface PersonFormProps {
   person?: Person;
@@ -148,9 +149,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     };
   };
 
-  const form = useForm<Person>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(PersonSchema) as any,
+  const form = useForm<PersonFormInput, any, PersonFormValues>({
+    resolver: zodResolver(PersonFormSchema),
     mode: "onChange",
     defaultValues: sanitizePerson(person) || {
       prefix: "",
@@ -238,8 +238,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       }
     }
 
-    if (!form.getValues("addresses").some((a) => a.id === addressId)) {
-      const isFirst = form.getValues("addresses").length === 0;
+    if (!(form.getValues("addresses") || []).some((a) => a.id === addressId)) {
+      const isFirst = (form.getValues("addresses") || []).length === 0;
       appendAddress({
         id: addressId!,
         type: "Home",
@@ -249,7 +249,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     setAddressSearchQuery("");
   };
 
-  async function onSubmit(values: Person) {
+  async function onSubmit(values: PersonFormValues) {
     try {
       setIsLoading(true);
 
@@ -520,7 +520,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               checked={checkField.value}
                               onChange={() => {
                                 // Set all to false, then this to true
-                                const currentEmails = form.getValues("emails");
+                                const currentEmails = form.getValues("emails") || [];
                                 currentEmails.forEach((_, i) => {
                                   form.setValue(`emails.${i}.isPrimary`, false);
                                 });
@@ -616,7 +616,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                               name="primaryPhone"
                               checked={checkField.value}
                               onChange={() => {
-                                const currentPhones = form.getValues("phones");
+                                const currentPhones = form.getValues("phones") || [];
                                 currentPhones.forEach((_, i) => {
                                   form.setValue(`phones.${i}.isPrimary`, false);
                                 });
@@ -784,7 +784,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               {addressFields.length > 0 && (
                 <div className="space-y-3">
                   {addressFields.map((field, index) => {
-                    const addressId = form.watch("addresses")[index]?.id;
+                    const addressId = (form.watch("addresses") || [])[index]?.id;
                     const addrDetails = availableAddresses.find((a) => a.id === addressId);
                     return (
                       <div
@@ -848,7 +848,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                   name="primaryAddress"
                                   checked={checkField.value}
                                   onChange={() => {
-                                    const currentAddresses = form.getValues("addresses");
+                                    const currentAddresses = form.getValues("addresses") || [];
                                     currentAddresses.forEach((_, i) => {
                                       form.setValue(`addresses.${i}.isPrimary`, false);
                                     });

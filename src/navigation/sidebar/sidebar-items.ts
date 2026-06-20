@@ -60,9 +60,9 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Benefit Payments",
-        url: "/dashboard/crm/payments",
-        icon: DollarSign,
+        title: "Overview",
+        url: "/dashboard/crm",
+        icon: LayoutDashboard,
       },
     ],
   },
@@ -71,11 +71,6 @@ export const sidebarItems: NavGroup[] = [
     label: "General Info",
     allowedRoles: ["admin", "advisor"],
     items: [
-      {
-        title: "Overview",
-        url: "/dashboard/crm",
-        icon: LayoutDashboard,
-      },
       {
         title: "People",
         url: "/dashboard/crm/people",
@@ -177,6 +172,11 @@ export const sidebarItems: NavGroup[] = [
     label: "Reports",
     allowedRoles: ["admin"],
     items: [
+      {
+        title: "Benefit Payments",
+        url: "/dashboard/crm/payments",
+        icon: DollarSign,
+      },
       {
         title: "Relationship Graph",
         url: "/dashboard/reports/relationship-graph",

@@ -55,11 +55,6 @@ export default async function CRMOverviewPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 md:px-6">
-      <div>
-        <h1 className="font-bold text-3xl tracking-tight">CRM Intelligence Overview</h1>
-        <p className="mt-2 text-muted-foreground">Real-time insights across your client base and policy portfolio.</p>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-2">

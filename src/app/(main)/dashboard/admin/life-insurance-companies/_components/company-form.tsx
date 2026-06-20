@@ -21,7 +21,14 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Company, type LifeInsuranceCompany, LifeInsuranceCompanySchema, type Person } from "@/types/crm";
+import {
+  type Company,
+  type LifeInsuranceCompany,
+  type LifeInsuranceCompanyFormValues,
+  type LifeInsuranceCompanyFormInput,
+  LifeInsuranceCompanyFormSchema,
+  type Person,
+} from "@/types/crm";
 
 interface CompanyFormProps {
   company?: LifeInsuranceCompany;
@@ -36,17 +43,26 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<LifeInsuranceCompany>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(LifeInsuranceCompanySchema) as any,
-    defaultValues: company || {
-      name: "",
-      websiteUrl: "",
-      policyNames: [],
-      phone: "",
-      personIds: [],
-      companyIds: [],
-    },
+  const form = useForm<LifeInsuranceCompanyFormInput, any, LifeInsuranceCompanyFormValues>({
+    resolver: zodResolver(LifeInsuranceCompanyFormSchema),
+    defaultValues: company
+      ? {
+          id: company.id,
+          name: company.name,
+          websiteUrl: company.websiteUrl,
+          policyNames: company.policyNames,
+          phone: company.phone,
+          personIds: company.personIds,
+          companyIds: company.companyIds,
+        }
+      : {
+          name: "",
+          websiteUrl: "",
+          policyNames: [],
+          phone: "",
+          personIds: [],
+          companyIds: [],
+        },
   });
 
   useEffect(() => {
@@ -93,7 +109,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     form.trigger("personIds");
   };
 
-  async function onSubmit(values: LifeInsuranceCompany) {
+  async function onSubmit(values: LifeInsuranceCompanyFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!company?.id;

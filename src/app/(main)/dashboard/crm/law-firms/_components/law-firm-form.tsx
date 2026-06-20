@@ -24,7 +24,8 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Address, type Client, type Company, type LawFirm, LawFirmSchema, type Person } from "@/types/crm";
+import { type Address, type Client, type Company, type LawFirm, type LawFirmFormValues,
+  type LawFirmFormInput, LawFirmFormSchema, type Person } from "@/types/crm";
 
 interface LawFirmFormProps {
   lawFirm?: LawFirm;
@@ -41,18 +42,28 @@ export function LawFirmForm({ lawFirm }: LawFirmFormProps) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<LawFirm>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(LawFirmSchema) as any,
-    defaultValues: {
-      personIds: lawFirm?.personIds || [],
-      firmName: lawFirm?.firmName || "",
-      firmAddressId: lawFirm?.firmAddressId || "",
-      website: lawFirm?.website || "",
-      phone: lawFirm?.phone || "",
-      clientIds: lawFirm?.clientIds || [],
-      companyIds: lawFirm?.companyIds || [],
-    },
+  const form = useForm<LawFirmFormInput, any, LawFirmFormValues>({
+    resolver: zodResolver(LawFirmFormSchema),
+    defaultValues: lawFirm
+      ? {
+          id: lawFirm.id,
+          personIds: lawFirm.personIds,
+          firmName: lawFirm.firmName,
+          firmAddressId: lawFirm.firmAddressId,
+          website: lawFirm.website,
+          phone: lawFirm.phone,
+          clientIds: lawFirm.clientIds,
+          companyIds: lawFirm.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -140,7 +151,7 @@ export function LawFirmForm({ lawFirm }: LawFirmFormProps) {
     }
   };
 
-  async function onSubmit(values: LawFirm) {
+  async function onSubmit(values: LawFirmFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!lawFirm?.id;

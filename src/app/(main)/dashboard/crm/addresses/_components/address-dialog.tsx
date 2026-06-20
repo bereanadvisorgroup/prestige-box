@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type Address, AddressSchema } from "@/types/crm";
+import { type Address, type AddressFormValues,
+  type AddressFormInput, AddressFormSchema } from "@/types/crm";
 
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;
@@ -25,9 +26,8 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<Address>({
-    // biome-ignore lint/suspicious/noExplicitAny: zodResolver return type mismatch with useForm generic Address type
-    resolver: zodResolver(AddressSchema) as any,
+  const form = useForm<AddressFormInput, any, AddressFormValues>({
+    resolver: zodResolver(AddressFormSchema),
     defaultValues: {
       street1: "",
       street2: "",
@@ -52,7 +52,7 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
     }
   }, [open, form.reset]);
 
-  async function onSubmit(values: Address) {
+  async function onSubmit(values: AddressFormValues) {
     try {
       setIsLoading(true);
       const result = await createAddress(values);

@@ -22,7 +22,8 @@ import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } fr
 import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
 import { formatPhoneNumber } from "@/lib/utils";
-import { type Client, ClientSchema, type PaymentAccount, type Person } from "@/types/crm";
+import { type Client, type ClientFormValues,
+  type ClientFormInput, ClientFormSchema, type PaymentAccount, type Person } from "@/types/crm";
 
 interface ClientFormProps {
   client?: Client;
@@ -36,15 +37,22 @@ export function ClientForm({ client }: ClientFormProps) {
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
 
-  const form = useForm<Client>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(ClientSchema) as any,
-    defaultValues: client || {
-      personId: "",
-      hobbies: [],
-      favoriteSportsTeams: [],
-      paymentAccounts: [],
-    },
+  const form = useForm<ClientFormInput, any, ClientFormValues>({
+    resolver: zodResolver(ClientFormSchema),
+    defaultValues: client
+      ? {
+          id: client.id,
+          personId: client.personId,
+          hobbies: client.hobbies,
+          favoriteSportsTeams: client.favoriteSportsTeams,
+          paymentAccounts: client.paymentAccounts,
+        }
+      : {
+          personId: "",
+          hobbies: [],
+          favoriteSportsTeams: [],
+          paymentAccounts: [],
+        },
   });
 
   const watchedTeams = form.watch("favoriteSportsTeams") || [];
@@ -71,14 +79,14 @@ export function ClientForm({ client }: ClientFormProps) {
 
   const handleAddHobby = () => {
     if (!hobbyInput.trim()) return;
-    const current = form.getValues("hobbies");
+    const current = form.getValues("hobbies") || [];
     if (current.includes(hobbyInput.trim())) return;
     form.setValue("hobbies", [...current, hobbyInput.trim()]);
     setHobbyInput("");
   };
 
   const handleRemoveHobby = (hobby: string) => {
-    const current = form.getValues("hobbies");
+    const current = form.getValues("hobbies") || [];
     form.setValue(
       "hobbies",
       current.filter((h) => h !== hobby),
@@ -86,7 +94,7 @@ export function ClientForm({ client }: ClientFormProps) {
   };
 
   const handleToggleSportsTeam = (teamId: string) => {
-    const current = form.getValues("favoriteSportsTeams");
+    const current = form.getValues("favoriteSportsTeams") || [];
     if (current.includes(teamId)) {
       form.setValue(
         "favoriteSportsTeams",
@@ -128,7 +136,7 @@ export function ClientForm({ client }: ClientFormProps) {
     );
   };
 
-  async function onSubmit(values: Client) {
+  async function onSubmit(values: ClientFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!client?.id;
@@ -243,10 +251,10 @@ export function ClientForm({ client }: ClientFormProps) {
               </div>
 
               <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
-                {form.watch("hobbies").length === 0 && (
+                {(form.watch("hobbies") || []).length === 0 && (
                   <p className="p-1 text-muted-foreground text-xs italic">No hobbies listed yet.</p>
                 )}
-                {form.watch("hobbies").map((hobby, index) => (
+                {(form.watch("hobbies") || []).map((hobby, index) => (
                   <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
                     {hobby}
                     <button
@@ -294,10 +302,10 @@ export function ClientForm({ client }: ClientFormProps) {
               </div>
 
               <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
-                {form.watch("favoriteSportsTeams").length === 0 && (
+                {(form.watch("favoriteSportsTeams") || []).length === 0 && (
                   <p className="p-1 text-muted-foreground text-xs italic">No sports teams linked yet.</p>
                 )}
-                {form.watch("favoriteSportsTeams").map((teamName, index) => (
+                {(form.watch("favoriteSportsTeams") || []).map((teamName, index) => (
                   <Badge
                     key={index}
                     variant="default"

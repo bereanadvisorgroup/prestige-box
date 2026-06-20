@@ -30,7 +30,9 @@ import {
   type Company,
   type Person,
   type PropertyAndCasualtyFirm,
-  PropertyAndCasualtyFirmSchema,
+  type PropertyAndCasualtyFirmFormValues,
+  type PropertyAndCasualtyFirmFormInput,
+  PropertyAndCasualtyFirmFormSchema,
 } from "@/types/crm";
 
 interface PropertyAndCasualtyFormProps {
@@ -48,18 +50,28 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<PropertyAndCasualtyFirm>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(PropertyAndCasualtyFirmSchema) as any,
-    defaultValues: {
-      personIds: propertyAndCasualtyFirm?.personIds || [],
-      firmName: propertyAndCasualtyFirm?.firmName || "",
-      firmAddressId: propertyAndCasualtyFirm?.firmAddressId || "",
-      website: propertyAndCasualtyFirm?.website || "",
-      phone: propertyAndCasualtyFirm?.phone || "",
-      clientIds: propertyAndCasualtyFirm?.clientIds || [],
-      companyIds: propertyAndCasualtyFirm?.companyIds || [],
-    },
+  const form = useForm<PropertyAndCasualtyFirmFormInput, any, PropertyAndCasualtyFirmFormValues>({
+    resolver: zodResolver(PropertyAndCasualtyFirmFormSchema),
+    defaultValues: propertyAndCasualtyFirm
+      ? {
+          id: propertyAndCasualtyFirm.id,
+          personIds: propertyAndCasualtyFirm.personIds,
+          firmName: propertyAndCasualtyFirm.firmName,
+          firmAddressId: propertyAndCasualtyFirm.firmAddressId,
+          website: propertyAndCasualtyFirm.website,
+          phone: propertyAndCasualtyFirm.phone,
+          clientIds: propertyAndCasualtyFirm.clientIds,
+          companyIds: propertyAndCasualtyFirm.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -147,7 +159,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
     }
   };
 
-  async function onSubmit(values: PropertyAndCasualtyFirm) {
+  async function onSubmit(values: PropertyAndCasualtyFirmFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!propertyAndCasualtyFirm?.id;

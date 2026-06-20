@@ -26,7 +26,9 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import {
   type ActuarialFirm,
-  ActuarialFirmSchema,
+  type ActuarialFirmFormValues,
+  type ActuarialFirmFormInput,
+  ActuarialFirmFormSchema,
   type Address,
   type Client,
   type Company,
@@ -48,18 +50,28 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<ActuarialFirm>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(ActuarialFirmSchema) as any,
-    defaultValues: {
-      personIds: actuarialFirm?.personIds || [],
-      firmName: actuarialFirm?.firmName || "",
-      firmAddressId: actuarialFirm?.firmAddressId || "",
-      website: actuarialFirm?.website || "",
-      phone: actuarialFirm?.phone || "",
-      clientIds: actuarialFirm?.clientIds || [],
-      companyIds: actuarialFirm?.companyIds || [],
-    },
+  const form = useForm<ActuarialFirmFormInput, any, ActuarialFirmFormValues>({
+    resolver: zodResolver(ActuarialFirmFormSchema),
+    defaultValues: actuarialFirm
+      ? {
+          id: actuarialFirm.id,
+          personIds: actuarialFirm.personIds,
+          firmName: actuarialFirm.firmName,
+          firmAddressId: actuarialFirm.firmAddressId,
+          website: actuarialFirm.website,
+          phone: actuarialFirm.phone,
+          clientIds: actuarialFirm.clientIds,
+          companyIds: actuarialFirm.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -147,7 +159,7 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
     }
   };
 
-  async function onSubmit(values: ActuarialFirm) {
+  async function onSubmit(values: ActuarialFirmFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!actuarialFirm?.id;

@@ -24,7 +24,8 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Address, type Bank, BankSchema, type Client, type Company, type Person } from "@/types/crm";
+import { type Address, type Bank, type BankFormValues,
+  type BankFormInput, BankFormSchema, type Client, type Company, type Person } from "@/types/crm";
 
 interface BankFormProps {
   bank?: Bank;
@@ -41,18 +42,28 @@ export function BankForm({ bank }: BankFormProps) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<Bank>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(BankSchema) as any,
-    defaultValues: {
-      personIds: bank?.personIds || [],
-      firmName: bank?.firmName || "",
-      firmAddressId: bank?.firmAddressId || "",
-      website: bank?.website || "",
-      phone: bank?.phone || "",
-      clientIds: bank?.clientIds || [],
-      companyIds: bank?.companyIds || [],
-    },
+  const form = useForm<BankFormInput, any, BankFormValues>({
+    resolver: zodResolver(BankFormSchema),
+    defaultValues: bank
+      ? {
+          id: bank.id,
+          personIds: bank.personIds,
+          firmName: bank.firmName,
+          firmAddressId: bank.firmAddressId,
+          website: bank.website,
+          phone: bank.phone,
+          clientIds: bank.clientIds,
+          companyIds: bank.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -140,7 +151,7 @@ export function BankForm({ bank }: BankFormProps) {
     }
   };
 
-  async function onSubmit(values: Bank) {
+  async function onSubmit(values: BankFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!bank?.id;

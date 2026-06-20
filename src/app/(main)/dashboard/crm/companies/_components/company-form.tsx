@@ -21,7 +21,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Address, type Client, type Company, CompanySchema, type Person, US_STATES } from "@/types/crm";
+import { type Address, type Client, type Company, type CompanyFormValues,
+  type CompanyFormInput, CompanyFormSchema, type Person, US_STATES } from "@/types/crm";
 
 interface CompanyFormProps {
   company?: Company;
@@ -35,20 +36,32 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
   const [clientSearchQuery, setClientSearchQuery] = useState("");
 
-  const form = useForm<Company>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(CompanySchema) as any,
-    defaultValues: company || {
-      name: "",
-      dba: "",
-      ein: "",
-      addressId: "",
-      website: "",
-      phone: "",
-      clientIds: [],
-      situsRecords: [],
-      nexusRecords: [],
-    },
+  const form = useForm<CompanyFormInput, any, CompanyFormValues>({
+    resolver: zodResolver(CompanyFormSchema),
+    defaultValues: company
+      ? {
+          id: company.id,
+          name: company.name,
+          dba: company.dba,
+          ein: company.ein,
+          addressId: company.addressId,
+          website: company.website,
+          phone: company.phone,
+          clientIds: company.clientIds,
+          situsRecords: company.situsRecords,
+          nexusRecords: company.nexusRecords,
+        }
+      : {
+          name: "",
+          dba: "",
+          ein: "",
+          addressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          situsRecords: [],
+          nexusRecords: [],
+        },
   });
 
   const {
@@ -105,7 +118,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     }
   };
 
-  async function onSubmit(values: Company) {
+  async function onSubmit(values: CompanyFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!company?.id;

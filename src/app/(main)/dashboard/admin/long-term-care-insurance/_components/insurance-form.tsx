@@ -21,7 +21,14 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Company, type LongTermCareInsurance, LongTermCareInsuranceSchema, type Person } from "@/types/crm";
+import {
+  type Company,
+  type LongTermCareInsurance,
+  type LongTermCareInsuranceFormValues,
+  type LongTermCareInsuranceFormInput,
+  LongTermCareInsuranceFormSchema,
+  type Person,
+} from "@/types/crm";
 
 interface InsuranceFormProps {
   company?: LongTermCareInsurance;
@@ -35,17 +42,26 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
   const [availableCompanies, setAvailableCompanies] = useState<Company[]>([]);
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<LongTermCareInsurance>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(LongTermCareInsuranceSchema) as any,
-    defaultValues: company || {
-      name: "",
-      websiteUrl: "",
-      policyNames: ["Long Term Care"],
-      phone: "",
-      personIds: [],
-      companyIds: [],
-    },
+  const form = useForm<LongTermCareInsuranceFormInput, any, LongTermCareInsuranceFormValues>({
+    resolver: zodResolver(LongTermCareInsuranceFormSchema),
+    defaultValues: company
+      ? {
+          id: company.id,
+          name: company.name,
+          websiteUrl: company.websiteUrl,
+          policyNames: company.policyNames,
+          phone: company.phone,
+          personIds: company.personIds,
+          companyIds: company.companyIds,
+        }
+      : {
+          name: "",
+          websiteUrl: "",
+          policyNames: ["Long Term Care"],
+          phone: "",
+          personIds: [],
+          companyIds: [],
+        },
   });
 
   const watchedCompanyIds = form.watch("companyIds") || [];
@@ -100,7 +116,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
     form.trigger("personIds");
   };
 
-  async function onSubmit(values: LongTermCareInsurance) {
+  async function onSubmit(values: LongTermCareInsuranceFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!company?.id;

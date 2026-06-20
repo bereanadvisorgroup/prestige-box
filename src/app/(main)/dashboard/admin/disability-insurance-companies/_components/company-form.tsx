@@ -27,7 +27,9 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import {
   type Company,
   type DisabilityInsuranceCompany,
-  DisabilityInsuranceCompanySchema,
+  type DisabilityInsuranceCompanyFormValues,
+  type DisabilityInsuranceCompanyFormInput,
+  DisabilityInsuranceCompanyFormSchema,
   type Person,
 } from "@/types/crm";
 
@@ -44,17 +46,26 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<DisabilityInsuranceCompany>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(DisabilityInsuranceCompanySchema) as any,
-    defaultValues: company || {
-      name: "",
-      websiteUrl: "",
-      policyNames: ["Short Term Disability", "Long Term Disability"],
-      phone: "",
-      personIds: [],
-      companyIds: [],
-    },
+  const form = useForm<DisabilityInsuranceCompanyFormInput, any, DisabilityInsuranceCompanyFormValues>({
+    resolver: zodResolver(DisabilityInsuranceCompanyFormSchema),
+    defaultValues: company
+      ? {
+          id: company.id,
+          name: company.name,
+          websiteUrl: company.websiteUrl,
+          policyNames: company.policyNames,
+          phone: company.phone,
+          personIds: company.personIds,
+          companyIds: company.companyIds,
+        }
+      : {
+          name: "",
+          websiteUrl: "",
+          policyNames: ["Short Term Disability", "Long Term Disability"],
+          phone: "",
+          personIds: [],
+          companyIds: [],
+        },
   });
 
   useEffect(() => {
@@ -109,7 +120,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     form.trigger("personIds");
   };
 
-  async function onSubmit(values: DisabilityInsuranceCompany) {
+  async function onSubmit(values: DisabilityInsuranceCompanyFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!company?.id;

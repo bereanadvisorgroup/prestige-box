@@ -23,7 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   type Client,
   type ClientPolicy,
-  ClientPolicySchema,
+  type ClientPolicyFormValues,
+  type ClientPolicyFormInput,
+  ClientPolicyFormSchema,
   type DisabilityInsuranceCompany,
   type LifeInsuranceCompany,
   type LongTermCareInsurance,
@@ -48,23 +50,36 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [carrierSearchQuery, setCarrierSearchQuery] = useState("");
 
-  const form = useForm<ClientPolicy>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(ClientPolicySchema) as any,
-    defaultValues: (policy as Record<string, unknown>) || {
-      clientId: "",
-      lifeInsuranceCompanyId:
-        policy?.lifeInsuranceCompanyId || policy?.disabilityInsuranceCompanyId || policy?.longTermCareInsuranceId || "",
-      disabilityInsuranceCompanyId: policy?.disabilityInsuranceCompanyId || null,
-      longTermCareInsuranceId: policy?.longTermCareInsuranceId || null,
-      policyName: "",
-      policyNumber: "",
-      premiumAmount: 0,
-      effectiveDate: new Date().toISOString().split("T")[0],
-      renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
-      paymentSchedule: "monthly",
-      paymentAccountId: "",
-    },
+  const form = useForm<ClientPolicyFormInput, any, ClientPolicyFormValues>({
+    resolver: zodResolver(ClientPolicyFormSchema),
+    defaultValues: policy
+      ? {
+          id: policy.id,
+          clientId: policy.clientId,
+          lifeInsuranceCompanyId: policy.lifeInsuranceCompanyId,
+          disabilityInsuranceCompanyId: policy.disabilityInsuranceCompanyId,
+          longTermCareInsuranceId: policy.longTermCareInsuranceId,
+          policyName: policy.policyName,
+          policyNumber: policy.policyNumber,
+          premiumAmount: policy.premiumAmount,
+          effectiveDate: policy.effectiveDate,
+          renewalDate: policy.renewalDate,
+          paymentSchedule: policy.paymentSchedule,
+          paymentAccountId: policy.paymentAccountId,
+        }
+      : {
+          clientId: "",
+          lifeInsuranceCompanyId: "",
+          disabilityInsuranceCompanyId: null,
+          longTermCareInsuranceId: null,
+          policyName: "",
+          policyNumber: "",
+          premiumAmount: 0,
+          effectiveDate: new Date().toISOString().split("T")[0],
+          renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
+          paymentSchedule: "monthly",
+          paymentAccountId: "",
+        },
   });
 
   useEffect(() => {
@@ -146,7 +161,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
     return availableCompanies.filter((c) => c.name.toLowerCase().includes(carrierSearchQuery.toLowerCase()));
   }, [availableCompanies, carrierSearchQuery, selectedCarrierName]);
 
-  async function onSubmit(values: ClientPolicy) {
+  async function onSubmit(values: ClientPolicyFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!policy?.id;

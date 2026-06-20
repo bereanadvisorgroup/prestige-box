@@ -26,7 +26,9 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import {
   type AccountingFirm,
-  AccountingFirmSchema,
+  type AccountingFirmFormValues,
+  type AccountingFirmFormInput,
+  AccountingFirmFormSchema,
   type Address,
   type Client,
   type Company,
@@ -48,18 +50,28 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<AccountingFirm>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(AccountingFirmSchema) as any,
-    defaultValues: {
-      personIds: accountingFirm?.personIds || [],
-      firmName: accountingFirm?.firmName || "",
-      firmAddressId: accountingFirm?.firmAddressId || "",
-      website: accountingFirm?.website || "",
-      phone: accountingFirm?.phone || "",
-      clientIds: accountingFirm?.clientIds || [],
-      companyIds: accountingFirm?.companyIds || [],
-    },
+  const form = useForm<AccountingFirmFormInput, any, AccountingFirmFormValues>({
+    resolver: zodResolver(AccountingFirmFormSchema),
+    defaultValues: accountingFirm
+      ? {
+          id: accountingFirm.id,
+          personIds: accountingFirm.personIds,
+          firmName: accountingFirm.firmName,
+          firmAddressId: accountingFirm.firmAddressId,
+          website: accountingFirm.website,
+          phone: accountingFirm.phone,
+          clientIds: accountingFirm.clientIds,
+          companyIds: accountingFirm.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -147,7 +159,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
     }
   };
 
-  async function onSubmit(values: AccountingFirm) {
+  async function onSubmit(values: AccountingFirmFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!accountingFirm?.id;

@@ -30,7 +30,9 @@ import {
   type Company,
   type Person,
   type RecordKeeper,
-  RecordKeeperSchema,
+  type RecordKeeperFormValues,
+  type RecordKeeperFormInput,
+  RecordKeeperFormSchema,
 } from "@/types/crm";
 
 interface RecordKeeperFormProps {
@@ -48,18 +50,28 @@ export function RecordKeeperForm({ recordKeeper }: RecordKeeperFormProps) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<RecordKeeper>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(RecordKeeperSchema) as any,
-    defaultValues: {
-      personIds: recordKeeper?.personIds || [],
-      firmName: recordKeeper?.firmName || "",
-      firmAddressId: recordKeeper?.firmAddressId || "",
-      website: recordKeeper?.website || "",
-      phone: recordKeeper?.phone || "",
-      clientIds: recordKeeper?.clientIds || [],
-      companyIds: recordKeeper?.companyIds || [],
-    },
+  const form = useForm<RecordKeeperFormInput, any, RecordKeeperFormValues>({
+    resolver: zodResolver(RecordKeeperFormSchema),
+    defaultValues: recordKeeper
+      ? {
+          id: recordKeeper.id,
+          personIds: recordKeeper.personIds,
+          firmName: recordKeeper.firmName,
+          firmAddressId: recordKeeper.firmAddressId,
+          website: recordKeeper.website,
+          phone: recordKeeper.phone,
+          clientIds: recordKeeper.clientIds,
+          companyIds: recordKeeper.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -147,7 +159,7 @@ export function RecordKeeperForm({ recordKeeper }: RecordKeeperFormProps) {
     }
   };
 
-  async function onSubmit(values: RecordKeeper) {
+  async function onSubmit(values: RecordKeeperFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!recordKeeper?.id;

@@ -29,7 +29,9 @@ import {
   type Client,
   type Company,
   type MoneyManager,
-  MoneyManagerSchema,
+  type MoneyManagerFormValues,
+  type MoneyManagerFormInput,
+  MoneyManagerFormSchema,
   type Person,
 } from "@/types/crm";
 
@@ -48,18 +50,28 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [companySearchQuery, setCompanySearchQuery] = useState("");
 
-  const form = useForm<MoneyManager>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(MoneyManagerSchema) as any,
-    defaultValues: {
-      personIds: moneyManager?.personIds || [],
-      firmName: moneyManager?.firmName || "",
-      firmAddressId: moneyManager?.firmAddressId || "",
-      website: moneyManager?.website || "",
-      phone: moneyManager?.phone || "",
-      clientIds: moneyManager?.clientIds || [],
-      companyIds: moneyManager?.companyIds || [],
-    },
+  const form = useForm<MoneyManagerFormInput, any, MoneyManagerFormValues>({
+    resolver: zodResolver(MoneyManagerFormSchema),
+    defaultValues: moneyManager
+      ? {
+          id: moneyManager.id,
+          personIds: moneyManager.personIds,
+          firmName: moneyManager.firmName,
+          firmAddressId: moneyManager.firmAddressId,
+          website: moneyManager.website,
+          phone: moneyManager.phone,
+          clientIds: moneyManager.clientIds,
+          companyIds: moneyManager.companyIds,
+        }
+      : {
+          personIds: [],
+          firmName: "",
+          firmAddressId: "",
+          website: "",
+          phone: "",
+          clientIds: [],
+          companyIds: [],
+        },
   });
 
   const handleAddPerson = (personId: string) => {
@@ -147,7 +159,7 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
     }
   };
 
-  async function onSubmit(values: MoneyManager) {
+  async function onSubmit(values: MoneyManagerFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!moneyManager?.id;

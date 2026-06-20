@@ -4,7 +4,7 @@ VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Ensure RLS is enabled on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- (Removed because ALTER TABLE on storage.objects is not permitted and RLS is already managed)
 
 -- Drop existing policies if they exist to prevent conflicts
 DROP POLICY IF EXISTS "Allow public read-only access to avatars" ON storage.objects;

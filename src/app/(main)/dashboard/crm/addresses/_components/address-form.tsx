@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type Address, AddressSchema } from "@/types/crm";
+import { type Address, type AddressFormValues,
+  type AddressFormInput, AddressFormSchema } from "@/types/crm";
 
 interface AddressFormProps {
   address?: Address;
@@ -24,20 +25,29 @@ export function AddressForm({ address }: AddressFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<Address>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(AddressSchema) as any,
-    defaultValues: address || {
-      street1: "",
-      street2: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "USA",
-    },
+  const form = useForm<AddressFormInput, any, AddressFormValues>({
+    resolver: zodResolver(AddressFormSchema),
+    defaultValues: address
+      ? {
+          id: address.id,
+          street1: address.street1,
+          street2: address.street2,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+          country: address.country,
+        }
+      : {
+          street1: "",
+          street2: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "USA",
+        },
   });
 
-  async function onSubmit(values: Address) {
+  async function onSubmit(values: AddressFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!address?.id;

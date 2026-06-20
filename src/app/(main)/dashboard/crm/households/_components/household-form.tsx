@@ -20,7 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Address, type Household, HouseholdSchema, type Person } from "@/types/crm";
+import { type Address, type Household, type HouseholdFormValues,
+  type HouseholdFormInput, HouseholdFormSchema, type Person } from "@/types/crm";
 
 interface HouseholdFormProps {
   household?: Household;
@@ -32,14 +33,20 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
 
-  const form = useForm<Household>({
-    // biome-ignore lint/suspicious/noExplicitAny: zod resolver type mismatch
-    resolver: zodResolver(HouseholdSchema) as any,
-    defaultValues: household || {
-      name: "",
-      addressId: "",
-      memberIds: [],
-    },
+  const form = useForm<HouseholdFormInput, any, HouseholdFormValues>({
+    resolver: zodResolver(HouseholdFormSchema),
+    defaultValues: household
+      ? {
+          id: household.id,
+          name: household.name,
+          addressId: household.addressId,
+          memberIds: household.memberIds,
+        }
+      : {
+          name: "",
+          addressId: "",
+          memberIds: [],
+        },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -69,7 +76,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
     }
   };
 
-  async function onSubmit(values: Household) {
+  async function onSubmit(values: HouseholdFormValues) {
     try {
       setIsLoading(true);
       const isEditing = !!household?.id;

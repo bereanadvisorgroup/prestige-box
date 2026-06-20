@@ -2,7 +2,7 @@
   "name": "@bereanadivsorgroup/prestige-box",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=24"
   },
@@ -19,7 +19,9 @@
     "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx}": ["biome check --write --no-errors-on-unmatched"]
+    "*.{js,ts,jsx,tsx}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

@@ -417,6 +417,59 @@ export type LoanInfo = z.infer<typeof LoanSchema>;
 export type MortgageInfo = z.infer<typeof MortgageSchema>;
 export type ClientDocument = z.infer<typeof DocumentSchema>;
 
+// --- Form Schemas (omit server-generated fields) ---
+
+export const AddressFormSchema = AddressSchema.omit({ createdAt: true });
+export const PersonFormSchema = PersonSchema.omit({ createdAt: true, updatedAt: true });
+export const HouseholdFormSchema = HouseholdSchema.omit({ createdAt: true, updatedAt: true });
+export const LifeInsuranceCompanyFormSchema = LifeInsuranceCompanySchema.omit({ createdAt: true, updatedAt: true });
+export const DisabilityInsuranceCompanyFormSchema = DisabilityInsuranceCompanySchema.omit({ createdAt: true, updatedAt: true });
+export const LongTermCareInsuranceFormSchema = LongTermCareInsuranceSchema.omit({ createdAt: true, updatedAt: true });
+export const ClientFormSchema = ClientSchema.omit({ createdAt: true, updatedAt: true });
+export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true });
+export const LawFirmFormSchema = LawFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const AccountingFirmFormSchema = AccountingFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const ActuarialFirmFormSchema = ActuarialFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const BankFormSchema = BankSchema.omit({ createdAt: true, updatedAt: true });
+export const PropertyAndCasualtyFirmFormSchema = PropertyAndCasualtyFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const MoneyManagerFormSchema = MoneyManagerSchema.omit({ createdAt: true, updatedAt: true });
+export const RecordKeeperFormSchema = RecordKeeperSchema.omit({ createdAt: true, updatedAt: true });
+export const ClientPolicyFormSchema = ClientPolicySchema.omit({ createdAt: true, updatedAt: true });
+
+export type AddressFormValues = z.infer<typeof AddressFormSchema>;
+export type PersonFormValues = z.infer<typeof PersonFormSchema>;
+export type HouseholdFormValues = z.infer<typeof HouseholdFormSchema>;
+export type LifeInsuranceCompanyFormValues = z.infer<typeof LifeInsuranceCompanyFormSchema>;
+export type DisabilityInsuranceCompanyFormValues = z.infer<typeof DisabilityInsuranceCompanyFormSchema>;
+export type LongTermCareInsuranceFormValues = z.infer<typeof LongTermCareInsuranceFormSchema>;
+export type ClientFormValues = z.infer<typeof ClientFormSchema>;
+export type CompanyFormValues = z.infer<typeof CompanyFormSchema>;
+export type LawFirmFormValues = z.infer<typeof LawFirmFormSchema>;
+export type AccountingFirmFormValues = z.infer<typeof AccountingFirmFormSchema>;
+export type ActuarialFirmFormValues = z.infer<typeof ActuarialFirmFormSchema>;
+export type BankFormValues = z.infer<typeof BankFormSchema>;
+export type PropertyAndCasualtyFirmFormValues = z.infer<typeof PropertyAndCasualtyFirmFormSchema>;
+export type MoneyManagerFormValues = z.infer<typeof MoneyManagerFormSchema>;
+export type RecordKeeperFormValues = z.infer<typeof RecordKeeperFormSchema>;
+export type ClientPolicyFormValues = z.infer<typeof ClientPolicyFormSchema>;
+
+export type AddressFormInput = z.input<typeof AddressFormSchema>;
+export type PersonFormInput = z.input<typeof PersonFormSchema>;
+export type HouseholdFormInput = z.input<typeof HouseholdFormSchema>;
+export type LifeInsuranceCompanyFormInput = z.input<typeof LifeInsuranceCompanyFormSchema>;
+export type DisabilityInsuranceCompanyFormInput = z.input<typeof DisabilityInsuranceCompanyFormSchema>;
+export type LongTermCareInsuranceFormInput = z.input<typeof LongTermCareInsuranceFormSchema>;
+export type ClientFormInput = z.input<typeof ClientFormSchema>;
+export type CompanyFormInput = z.input<typeof CompanyFormSchema>;
+export type LawFirmFormInput = z.input<typeof LawFirmFormSchema>;
+export type AccountingFirmFormInput = z.input<typeof AccountingFirmFormSchema>;
+export type ActuarialFirmFormInput = z.input<typeof ActuarialFirmFormSchema>;
+export type BankFormInput = z.input<typeof BankFormSchema>;
+export type PropertyAndCasualtyFirmFormInput = z.input<typeof PropertyAndCasualtyFirmFormSchema>;
+export type MoneyManagerFormInput = z.input<typeof MoneyManagerFormSchema>;
+export type RecordKeeperFormInput = z.input<typeof RecordKeeperFormSchema>;
+export type ClientPolicyFormInput = z.input<typeof ClientPolicyFormSchema>;
+
 // --- Dashboard Types ---
 
 export interface UpcomingPayment {
