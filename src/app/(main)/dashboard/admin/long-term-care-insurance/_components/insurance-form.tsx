@@ -24,9 +24,9 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import {
   type Company,
   type LongTermCareInsurance,
-  type LongTermCareInsuranceFormValues,
   type LongTermCareInsuranceFormInput,
   LongTermCareInsuranceFormSchema,
+  type LongTermCareInsuranceFormValues,
   type Person,
 } from "@/types/crm";
 

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase.client";
+import { useAuthStore } from "@/stores/auth.store";
 
 const FormSchema = z
   .object({
@@ -32,6 +33,7 @@ export function ResetPasswordForm() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasSession, setHasSession] = useState(false);
   const router = useRouter();
+  const { profile } = useAuthStore();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -62,7 +64,9 @@ export function ResetPasswordForm() {
       });
       if (error) throw error;
       toast.success("Password has been reset successfully!");
-      router.push("/dashboard/default");
+      const defaultRoute =
+        profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+      router.push(defaultRoute);
     } catch (error) {
       console.error("Reset Password Error:", error);
       toast.error((error as { message: string }).message || "Failed to reset password.");

@@ -2,7 +2,6 @@ import {
   BarChart3,
   Briefcase,
   Building2,
-  DollarSign,
   FileText,
   Home,
   LayoutDashboard,
@@ -169,29 +168,22 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 6,
-    label: "Reports",
-    allowedRoles: ["admin"],
+    allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Benefit Payments",
-        url: "/dashboard/crm/payments",
-        icon: DollarSign,
-      },
-      {
-        title: "Relationship Graph",
-        url: "/dashboard/reports/relationship-graph",
+        title: "Report Center",
+        url: "/dashboard/reports",
         icon: BarChart3,
       },
     ],
   },
   {
     id: 7,
-    label: "Admin Settings",
     allowedRoles: ["admin"],
     items: [
       {
-        title: "Manage Users",
-        url: "/dashboard/admin/users",
+        title: "Admin Settings",
+        url: "/dashboard/admin",
         icon: Lock,
       },
     ],

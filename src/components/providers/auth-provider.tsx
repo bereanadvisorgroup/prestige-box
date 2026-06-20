@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { user, isLoading, setUser, setProfile, setLoading } = useAuthStore();
+  const { user, profile, isLoading, setUser, setProfile, setLoading } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -91,9 +91,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isDashboardRoute && !user) {
       router.replace("/auth/v1/login");
     } else if (isAuthRoute && user) {
-      router.replace("/dashboard/default");
+      const defaultRoute =
+        profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+      router.replace(defaultRoute);
+    } else if (user && profile) {
+      const role = profile.role;
+      const isAdminOrAdvisor = role === "admin" || role === "advisor";
+
+      if (isAdminOrAdvisor) {
+        if (pathname === "/dashboard" || pathname === "/dashboard/default") {
+          router.replace("/dashboard/crm");
+        }
+      } else if (role === "client") {
+        if (
+          pathname === "/dashboard" ||
+          pathname.startsWith("/dashboard/crm") ||
+          pathname.startsWith("/dashboard/admin") ||
+          pathname.startsWith("/dashboard/reports") ||
+          pathname.startsWith("/dashboard/finance") ||
+          pathname.startsWith("/dashboard/crm-pipeline")
+        ) {
+          router.replace("/dashboard/default");
+        }
+      }
     }
-  }, [user, isLoading, pathname, router]);
+  }, [user, profile, isLoading, pathname, router]);
 
   return <>{children}</>;
 }

@@ -73,7 +73,9 @@ export function LoginForm() {
 
     setProfile(profile);
     toast.success("Login successful!");
-    router.push("/dashboard/default");
+    const defaultRoute =
+      profile.role === "admin" || profile.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+    router.push(defaultRoute);
   };
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {

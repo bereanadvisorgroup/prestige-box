@@ -22,8 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SsnInput } from "@/components/ui/ssn-input";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
-import { type Address, type Person, type PersonFormValues,
-  type PersonFormInput, PersonFormSchema } from "@/types/crm";
+import { type Address, type Person, type PersonFormInput, PersonFormSchema, type PersonFormValues } from "@/types/crm";
 
 interface PersonFormProps {
   person?: Person;

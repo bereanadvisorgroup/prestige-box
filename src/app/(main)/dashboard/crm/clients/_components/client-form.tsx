@@ -22,8 +22,14 @@ import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } fr
 import { Input } from "@/components/ui/input";
 import { sportsTeams } from "@/data/sports-teams";
 import { formatPhoneNumber } from "@/lib/utils";
-import { type Client, type ClientFormValues,
-  type ClientFormInput, ClientFormSchema, type PaymentAccount, type Person } from "@/types/crm";
+import {
+  type Client,
+  type ClientFormInput,
+  ClientFormSchema,
+  type ClientFormValues,
+  type PaymentAccount,
+  type Person,
+} from "@/types/crm";
 
 interface ClientFormProps {
   client?: Client;

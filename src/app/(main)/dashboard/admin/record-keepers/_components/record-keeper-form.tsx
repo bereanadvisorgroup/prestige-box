@@ -30,9 +30,9 @@ import {
   type Company,
   type Person,
   type RecordKeeper,
-  type RecordKeeperFormValues,
   type RecordKeeperFormInput,
   RecordKeeperFormSchema,
+  type RecordKeeperFormValues,
 } from "@/types/crm";
 
 interface RecordKeeperFormProps {

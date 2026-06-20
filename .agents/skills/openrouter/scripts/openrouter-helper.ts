@@ -1,9 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import http from "node:http";
-import https from "node:https";
 import dotenv from "dotenv";
 
+import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Resolve paths and load .env.local
@@ -77,7 +77,9 @@ async function listModels() {
         // Sort by context length descending
         const sortedModels = json.data.sort((a: any, b: any) => b.context_length - a.context_length);
 
-        console.log(`\n\x1b[1m${"Model ID".padEnd(50)} ${"Context Window".padEnd(20)} ${"Prompt / Completion Cost (per 1M tokens)"}\x1b[0m`);
+        console.log(
+          `\n\x1b[1m${"Model ID".padEnd(50)} ${"Context Window".padEnd(20)} ${"Prompt / Completion Cost (per 1M tokens)"}\x1b[0m`,
+        );
         console.log("-".repeat(110));
 
         // Display top 30 models
@@ -179,7 +181,9 @@ function startProxyServer(portStr?: string) {
 
     if (!isChatRoute && !isModelsRoute) {
       clientRes.writeHead(404, { "Content-Type": "application/json" });
-      clientRes.end(JSON.stringify({ error: "Route not found. This proxy supports /v1/chat/completions and /v1/models" }));
+      clientRes.end(
+        JSON.stringify({ error: "Route not found. This proxy supports /v1/chat/completions and /v1/models" }),
+      );
       return;
     }
 
@@ -281,7 +285,7 @@ switch (command.toLowerCase()) {
   case "list":
     listModels();
     break;
-  case "query":
+  case "query": {
     const model = args[1];
     const prompt = args[2];
     if (!model || !prompt) {
@@ -291,6 +295,7 @@ switch (command.toLowerCase()) {
     }
     queryModel(model, prompt);
     break;
+  }
   case "proxy":
     startProxyServer(args[1]);
     break;

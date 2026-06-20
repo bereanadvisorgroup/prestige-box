@@ -24,8 +24,16 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Address, type Bank, type BankFormValues,
-  type BankFormInput, BankFormSchema, type Client, type Company, type Person } from "@/types/crm";
+import {
+  type Address,
+  type Bank,
+  type BankFormInput,
+  BankFormSchema,
+  type BankFormValues,
+  type Client,
+  type Company,
+  type Person,
+} from "@/types/crm";
 
 interface BankFormProps {
   bank?: Bank;

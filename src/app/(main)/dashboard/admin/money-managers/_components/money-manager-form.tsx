@@ -29,9 +29,9 @@ import {
   type Client,
   type Company,
   type MoneyManager,
-  type MoneyManagerFormValues,
   type MoneyManagerFormInput,
   MoneyManagerFormSchema,
+  type MoneyManagerFormValues,
   type Person,
 } from "@/types/crm";
 

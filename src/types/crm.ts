@@ -423,7 +423,10 @@ export const AddressFormSchema = AddressSchema.omit({ createdAt: true });
 export const PersonFormSchema = PersonSchema.omit({ createdAt: true, updatedAt: true });
 export const HouseholdFormSchema = HouseholdSchema.omit({ createdAt: true, updatedAt: true });
 export const LifeInsuranceCompanyFormSchema = LifeInsuranceCompanySchema.omit({ createdAt: true, updatedAt: true });
-export const DisabilityInsuranceCompanyFormSchema = DisabilityInsuranceCompanySchema.omit({ createdAt: true, updatedAt: true });
+export const DisabilityInsuranceCompanyFormSchema = DisabilityInsuranceCompanySchema.omit({
+  createdAt: true,
+  updatedAt: true,
+});
 export const LongTermCareInsuranceFormSchema = LongTermCareInsuranceSchema.omit({ createdAt: true, updatedAt: true });
 export const ClientFormSchema = ClientSchema.omit({ createdAt: true, updatedAt: true });
 export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true });
@@ -431,7 +434,10 @@ export const LawFirmFormSchema = LawFirmSchema.omit({ createdAt: true, updatedAt
 export const AccountingFirmFormSchema = AccountingFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const ActuarialFirmFormSchema = ActuarialFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const BankFormSchema = BankSchema.omit({ createdAt: true, updatedAt: true });
-export const PropertyAndCasualtyFirmFormSchema = PropertyAndCasualtyFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const PropertyAndCasualtyFirmFormSchema = PropertyAndCasualtyFirmSchema.omit({
+  createdAt: true,
+  updatedAt: true,
+});
 export const MoneyManagerFormSchema = MoneyManagerSchema.omit({ createdAt: true, updatedAt: true });
 export const RecordKeeperFormSchema = RecordKeeperSchema.omit({ createdAt: true, updatedAt: true });
 export const ClientPolicyFormSchema = ClientPolicySchema.omit({ createdAt: true, updatedAt: true });

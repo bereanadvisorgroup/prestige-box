@@ -24,8 +24,16 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { type Address, type Client, type Company, type LawFirm, type LawFirmFormValues,
-  type LawFirmFormInput, LawFirmFormSchema, type Person } from "@/types/crm";
+import {
+  type Address,
+  type Client,
+  type Company,
+  type LawFirm,
+  type LawFirmFormInput,
+  LawFirmFormSchema,
+  type LawFirmFormValues,
+  type Person,
+} from "@/types/crm";
 
 interface LawFirmFormProps {
   lawFirm?: LawFirm;

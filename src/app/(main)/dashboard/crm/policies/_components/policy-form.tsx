@@ -23,9 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   type Client,
   type ClientPolicy,
-  type ClientPolicyFormValues,
   type ClientPolicyFormInput,
   ClientPolicyFormSchema,
+  type ClientPolicyFormValues,
   type DisabilityInsuranceCompany,
   type LifeInsuranceCompany,
   type LongTermCareInsurance,

@@ -21,8 +21,16 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Address, type Client, type Company, type CompanyFormValues,
-  type CompanyFormInput, CompanyFormSchema, type Person, US_STATES } from "@/types/crm";
+import {
+  type Address,
+  type Client,
+  type Company,
+  type CompanyFormInput,
+  CompanyFormSchema,
+  type CompanyFormValues,
+  type Person,
+  US_STATES,
+} from "@/types/crm";
 
 interface CompanyFormProps {
   company?: Company;

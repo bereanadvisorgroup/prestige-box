@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type Address, type AddressFormValues,
-  type AddressFormInput, AddressFormSchema } from "@/types/crm";
+import { type Address, type AddressFormInput, AddressFormSchema, type AddressFormValues } from "@/types/crm";
 
 interface AddressFormProps {
   address?: Address;

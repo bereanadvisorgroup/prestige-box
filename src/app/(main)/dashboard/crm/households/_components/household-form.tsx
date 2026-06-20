@@ -20,8 +20,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type Address, type Household, type HouseholdFormValues,
-  type HouseholdFormInput, HouseholdFormSchema, type Person } from "@/types/crm";
+import {
+  type Address,
+  type Household,
+  type HouseholdFormInput,
+  HouseholdFormSchema,
+  type HouseholdFormValues,
+  type Person,
+} from "@/types/crm";
 
 interface HouseholdFormProps {
   household?: Household;

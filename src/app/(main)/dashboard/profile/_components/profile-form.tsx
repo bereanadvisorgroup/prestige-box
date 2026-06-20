@@ -379,7 +379,11 @@ export function ProfileForm() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/dashboard/default")}
+            onClick={() => {
+              const defaultPage =
+                profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+              router.push(defaultPage);
+            }}
             disabled={isSaving || isUploading}
           >
             Cancel

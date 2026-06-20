@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type Address, type AddressFormValues,
-  type AddressFormInput, AddressFormSchema } from "@/types/crm";
+import { type Address, type AddressFormInput, AddressFormSchema, type AddressFormValues } from "@/types/crm";
 
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;
