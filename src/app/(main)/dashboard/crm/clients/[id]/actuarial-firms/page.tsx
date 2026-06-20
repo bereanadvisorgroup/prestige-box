@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 
 import { Building2, Calculator } from "lucide-react";
 
-import { getActuarialFirms } from "@/actions/actuarial-firms";
+import { getActuarialFirms, linkClientToActuarialFirm, unlinkClientFromActuarialFirm } from "@/actions/actuarial-firms";
 import { getClient } from "@/actions/clients";
 import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
+import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,31 +21,40 @@ export default async function ActuarialFirmsPage({ params }: Props) {
 
   const client = clientResult.client;
   const actuarialFirmsRes = await getActuarialFirms();
-  const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
-    (act) => act.clientIds?.includes(client.id || ""),
-  );
+  const allFirms = (actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || [];
+
+  const associatedActuarialFirms = allFirms.filter((act) => act.clientIds?.includes(client.id || ""));
+
+  const availableFirms = allFirms
+    .filter((act) => !act.clientIds?.includes(client.id || ""))
+    .map((act) => ({ id: act.id || "", name: act.firmName }));
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
-      {associatedActuarialFirms.length > 0 ? (
-        <AssociationCardList
-          title="Associated Actuarial Firms"
-          description="Actuarial firms this client is associated with"
-          items={associatedActuarialFirms.map((f) => ({
-            id: f.id || "",
-            name: f.firmName,
-            website: f.website,
-            phone: f.phone,
-          }))}
-          linkPrefix="/dashboard/crm/actuarial-firms"
-          icon={Calculator}
-        />
-      ) : (
-        <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm italic">No associated actuarial firms found.</p>
-        </Card>
-      )}
+      <AssociationCardList
+        clientId={client.id || ""}
+        title="Associated Actuarial Firms"
+        description="Actuarial firms this client is associated with"
+        items={associatedActuarialFirms.map((f) => ({
+          id: f.id || "",
+          name: f.firmName,
+          website: f.website,
+          phone: f.phone,
+          isLinked: false,
+        }))}
+        linkPrefix="/dashboard/crm/actuarial-firms"
+        icon={Calculator}
+        onUnlinkAction={unlinkClientFromActuarialFirm}
+        actionNode={
+          <LinkFirmDialog
+            clientId={client.id || ""}
+            firmTypeLabel="Actuarial Firm"
+            availableFirms={availableFirms}
+            newFirmLink={`/dashboard/crm/actuarial-firms/new?clientId=${client.id}`}
+            onLinkAction={linkClientToActuarialFirm}
+          />
+        }
+      />
     </div>
   );
 }

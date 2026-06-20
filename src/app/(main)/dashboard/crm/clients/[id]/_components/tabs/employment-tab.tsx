@@ -10,6 +10,15 @@ import { updateClient } from "@/actions/clients";
 import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -18,6 +27,7 @@ import type { Address, Client, Employment } from "@/types/crm";
 export function EmploymentTab({ client }: { client: Client }) {
   const [employments, setEmployments] = useState<Employment[]>(client.employments || []);
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Form State
   const [occupation, setOccupation] = useState("");
@@ -70,6 +80,7 @@ export function EmploymentTab({ client }: { client: Client }) {
         setEmployerAddressId("");
         setAddressSearchQuery("");
         toast.success("Employment added");
+        setOpen(false);
       } else {
         throw new Error();
       }
@@ -95,65 +106,83 @@ export function EmploymentTab({ client }: { client: Client }) {
 
   return (
     <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
-      <CardHeader className="bg-muted/10 pb-4">
-        <CardTitle>Employment History</CardTitle>
-        <CardDescription>Add employment records for this client.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-6">
-        <div className="space-y-4 rounded-lg border bg-background p-4 shadow-sm">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Occupation</Label>
-              <Input
-                value={occupation}
-                onChange={(e) => setOccupation(e.target.value)}
-                placeholder="e.g. Software Engineer"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Employer Name</Label>
-              <Input
-                value={employerName}
-                onChange={(e) => setEmployerName(e.target.value)}
-                placeholder="e.g. Acme Corp"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Employer Phone</Label>
-              <PhoneInput
-                value={employerPhone}
-                onChange={(e) => setEmployerPhone(e.target.value)}
-                placeholder="555-555-5555"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-3">
-              <Label>Employer Address</Label>
-              <AddressAutocomplete
-                value={addressSearchQuery}
-                onValueChange={setAddressSearchQuery}
-                onAddressSelect={handleAddressSelect}
-                placeholder="Search for employer address..."
-              />
-              {employerAddressId && <p className="font-medium text-green-600 text-xs">✓ Address linked</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Start Date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>End Date</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <Button onClick={handleAdd} disabled={isLoading || !occupation || !employerName}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+      <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between space-y-0">
+        <div className="space-y-1">
+          <CardTitle>Employment History</CardTitle>
+          <CardDescription>View and manage employment records for this client.</CardDescription>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" />
               Add Employment
             </Button>
-          </div>
-        </div>
-
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Add Employment</DialogTitle>
+              <DialogDescription>Add a new employment record for this client.</DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input
+                  id="occupation"
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  placeholder="e.g. Software Engineer"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="employerName">Employer Name</Label>
+                <Input
+                  id="employerName"
+                  value={employerName}
+                  onChange={(e) => setEmployerName(e.target.value)}
+                  placeholder="e.g. Acme Corp"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="employerPhone">Employer Phone</Label>
+                <PhoneInput
+                  id="employerPhone"
+                  value={employerPhone}
+                  onChange={(e) => setEmployerPhone(e.target.value)}
+                  placeholder="555-555-5555"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">End Date</Label>
+                <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="employerAddress">Employer Address</Label>
+                <AddressAutocomplete
+                  value={addressSearchQuery}
+                  onValueChange={setAddressSearchQuery}
+                  onAddressSelect={handleAddressSelect}
+                  placeholder="Search for employer address..."
+                />
+                {employerAddressId && <p className="font-medium text-green-600 text-xs">✓ Address linked</p>}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAdd} disabled={isLoading || !occupation || !employerName}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                Add Employment
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent className="space-y-6 pt-6">
         <div className="mt-6 space-y-3">
           {employments.length > 0 ? (
             employments.map((emp, index) => {

@@ -42,7 +42,6 @@ export function ClientForm({ client }: ClientFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
-  const [paymentAccountInput, setPaymentAccountInput] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [createPortalAccount, setCreatePortalAccount] = useState(true);
 
@@ -114,37 +113,6 @@ export function ClientForm({ client }: ClientFormProps) {
     }
   };
 
-  const handleAddPaymentAccount = () => {
-    if (!paymentAccountInput.trim()) return;
-    const current = form.getValues("paymentAccounts") || [];
-    const newAccount: PaymentAccount = {
-      id: crypto.randomUUID(),
-      name: paymentAccountInput.trim(),
-    };
-    form.setValue("paymentAccounts", [...current, newAccount]);
-    setPaymentAccountInput("");
-  };
-
-  const handleRemovePaymentAccount = async (accountId: string) => {
-    if (client?.id) {
-      // Check if this account is used by any policy
-      const result = await getClientPoliciesByClient(client.id);
-      if (result.success && result.policies) {
-        const isInUse = result.policies.some((p) => p.paymentAccountId === accountId);
-        if (isInUse) {
-          toast.error("Cannot delete payment account because it is currently associated with a policy.");
-          return;
-        }
-      }
-    }
-
-    const current = form.getValues("paymentAccounts") || [];
-    form.setValue(
-      "paymentAccounts",
-      current.filter((a) => a.id !== accountId),
-    );
-  };
-
   async function onSubmit(values: ClientFormValues) {
     try {
       setIsLoading(true);
@@ -154,7 +122,7 @@ export function ClientForm({ client }: ClientFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Client record updated" : "Client record created");
-        
+
         if (!isEditing && createPortalAccount && selectedPerson) {
           const email = selectedPerson.emails?.find((e) => e.isPrimary)?.address || selectedPerson.emails?.[0]?.address;
           if (email) {
@@ -163,7 +131,7 @@ export function ClientForm({ client }: ClientFormProps) {
               firstName: selectedPerson.firstName,
               lastName: selectedPerson.lastName,
               role: "client",
-              origin: window.location.origin
+              origin: window.location.origin,
             });
             if (userResult.success) {
               toast.success("Client portal account created successfully.");
@@ -224,7 +192,7 @@ export function ClientForm({ client }: ClientFormProps) {
                 />
                 {selectedPerson && (
                   <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <Checkbox 
+                    <Checkbox
                       id="createPortalAccount"
                       checked={createPortalAccount}
                       onCheckedChange={(checked) => setCreatePortalAccount(checked === true)}
@@ -234,7 +202,8 @@ export function ClientForm({ client }: ClientFormProps) {
                         Create Client Portal Account
                       </label>
                       <p className="text-muted-foreground text-sm">
-                        Automatically create a user account for this client. An email with a password setup link will be sent to their primary email address.
+                        Automatically create a user account for this client. An email with a password setup link will be
+                        sent to their primary email address.
                       </p>
                     </div>
                   </div>
@@ -278,151 +247,102 @@ export function ClientForm({ client }: ClientFormProps) {
               <>
                 <div className="space-y-4 pt-2">
                   <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
-                <Heart className="h-4 w-4 text-primary" />
-                Interests & Hobbies
-              </h3>
+                    <Heart className="h-4 w-4 text-primary" />
+                    Interests & Hobbies
+                  </h3>
 
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. Golfing"
-                  value={hobbyInput}
-                  onChange={(e) => setHobbyInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddHobby();
-                    }
-                  }}
-                />
-                <Button type="button" variant="secondary" onClick={handleAddHobby}>
-                  Add
-                </Button>
-              </div>
-
-              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
-                {(form.watch("hobbies") || []).length === 0 && (
-                  <p className="p-1 text-muted-foreground text-xs italic">No hobbies listed yet.</p>
-                )}
-                {(form.watch("hobbies") || []).map((hobby, index) => (
-                  <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
-                    {hobby}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveHobby(hobby)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-2">
-              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
-                <Trophy className="h-4 w-4 text-primary" />
-                Favorite Sports Teams
-              </h3>
-
-              <div className="space-y-2">
-                <FormLabel>Search and Link Teams</FormLabel>
-                <Combobox
-                  onValueChange={(val) => {
-                    if (typeof val === "string") {
-                      handleToggleSportsTeam(val);
-                      setTeamSearchQuery("");
-                    }
-                  }}
-                  inputValue={teamSearchQuery}
-                  onInputValueChange={setTeamSearchQuery}
-                >
-                  <ComboboxInput placeholder="Search NFL, MLB, NBA, NHL..." />
-                  <ComboboxContent>
-                    <ComboboxList>
-                      {filteredSportsTeams.map((team) => (
-                        <ComboboxItem key={team.id} value={team.name}>
-                          <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
-                          {team.name}
-                        </ComboboxItem>
-                      ))}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </div>
-
-              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
-                {(form.watch("favoriteSportsTeams") || []).length === 0 && (
-                  <p className="p-1 text-muted-foreground text-xs italic">No sports teams linked yet.</p>
-                )}
-                {(form.watch("favoriteSportsTeams") || []).map((teamName, index) => (
-                  <Badge
-                    key={index}
-                    variant="default"
-                    className="gap-1 bg-primary px-3 py-1 font-bold text-primary-foreground shadow-sm"
-                  >
-                    {teamName}
-                    <button
-                      type="button"
-                      onClick={() => handleToggleSportsTeam(teamName)}
-                      className="ml-1 hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-4 pt-2">
-              <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
-                <CreditCard className="h-4 w-4 text-primary" />
-                Payment Accounts
-              </h3>
-
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. Personal Checking"
-                  value={paymentAccountInput}
-                  onChange={(e) => setPaymentAccountInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddPaymentAccount();
-                    }
-                  }}
-                />
-                <Button type="button" variant="secondary" onClick={handleAddPaymentAccount}>
-                  Add
-                </Button>
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 gap-2">
-                {(form.watch("paymentAccounts") || []).length === 0 && (
-                  <p className="rounded-md border bg-muted/20 p-2 text-muted-foreground text-xs italic">
-                    No payment accounts added yet.
-                  </p>
-                )}
-                {(form.watch("paymentAccounts") || []).map((account) => (
-                  <div
-                    key={account.id}
-                    className="group flex items-center justify-between rounded-md border bg-muted/20 p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">{account.name}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePaymentAccount(account.id)}
-                      className="text-muted-foreground opacity-0 transition-colors hover:text-destructive group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. Golfing"
+                      value={hobbyInput}
+                      onChange={(e) => setHobbyInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddHobby();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="secondary" onClick={handleAddHobby}>
+                      Add
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+
+                  <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+                    {(form.watch("hobbies") || []).length === 0 && (
+                      <p className="p-1 text-muted-foreground text-xs italic">No hobbies listed yet.</p>
+                    )}
+                    {(form.watch("hobbies") || []).map((hobby, index) => (
+                      <Badge key={index} variant="secondary" className="gap-1 px-3 py-1">
+                        {hobby}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveHobby(hobby)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <h3 className="flex items-center gap-2 border-b pb-2 font-medium text-sm">
+                    <Trophy className="h-4 w-4 text-primary" />
+                    Favorite Sports Teams
+                  </h3>
+
+                  <div className="space-y-2">
+                    <FormLabel>Search and Link Teams</FormLabel>
+                    <Combobox
+                      onValueChange={(val) => {
+                        if (typeof val === "string") {
+                          handleToggleSportsTeam(val);
+                          setTeamSearchQuery("");
+                        }
+                      }}
+                      inputValue={teamSearchQuery}
+                      onInputValueChange={setTeamSearchQuery}
+                    >
+                      <ComboboxInput placeholder="Search NFL, MLB, NBA, NHL..." />
+                      <ComboboxContent>
+                        <ComboboxList>
+                          {filteredSportsTeams.map((team) => (
+                            <ComboboxItem key={team.id} value={team.name}>
+                              <span className="mr-2 font-bold text-muted-foreground text-xs">[{team.league}]</span>
+                              {team.name}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  </div>
+
+                  <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
+                    {(form.watch("favoriteSportsTeams") || []).length === 0 && (
+                      <p className="p-1 text-muted-foreground text-xs italic">No sports teams linked yet.</p>
+                    )}
+                    {(form.watch("favoriteSportsTeams") || []).map((teamName, index) => (
+                      <Badge
+                        key={index}
+                        variant="default"
+                        className="gap-1 bg-primary px-3 py-1 font-bold text-primary-foreground shadow-sm"
+                      >
+                        {teamName}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSportsTeam(teamName)}
+                          className="ml-1 hover:text-destructive-foreground"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>

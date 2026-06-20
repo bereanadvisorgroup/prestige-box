@@ -2,35 +2,22 @@
   "mcpServers": {
     "axiom": {
       "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://mcp.axiom.co/mcp"
-      ]
+      "args": ["-y", "mcp-remote", "https://mcp.axiom.co/mcp"]
     },
     "drizzle-mcp": {
       "command": "npx",
-      "args": [
-        "-y",
-        "drizzle-orm-mcp"
-      ],
+      "args": ["-y", "drizzle-orm-mcp"],
       "env": {
         "DRIZZLE_CONFIG_PATH": "./drizzle.config.ts"
       }
     },
     "playwright": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest"
-      ]
+      "args": ["-y", "@playwright/mcp@latest"]
     },
     "shadcn-mcp": {
       "command": "npx",
-      "args": [
-        "-y",
-        "shadcn-ui-mcp"
-      ]
+      "args": ["-y", "shadcn-ui-mcp"]
     },
     "vercel-mcp": {
       "url": "https://mcp.vercel.com",

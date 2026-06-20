@@ -13,7 +13,7 @@ import type { UserProfile } from "@/stores/auth.store";
 
 export const columns = (
   onDelete: (user: UserProfile & { isLinked?: boolean }) => void,
-  onReset: (user: UserProfile & { isLinked?: boolean }) => void
+  onReset: (user: UserProfile & { isLinked?: boolean }) => void,
 ): ColumnDef<UserProfile & { isLinked?: boolean; userName?: string }>[] => [
   {
     accessorKey: "userName",

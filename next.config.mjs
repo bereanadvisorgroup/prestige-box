@@ -1,4 +1,4 @@
-import { withAxiom } from 'next-axiom';
+import { withAxiom } from "next-axiom";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

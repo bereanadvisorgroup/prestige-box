@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { ArrowRight, BarChart3, DollarSign } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

@@ -194,3 +194,33 @@ export async function deleteBank(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkClientToBank(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.clientIds || [];
+    if (currentIds.includes(clientId)) return { success: true }; // already linked
+
+    return updateBank(firmId, { clientIds: [...currentIds, clientId] });
+  } catch (error) {
+    console.error(`[linkClientToBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkClientFromBank(firmId: string, clientId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.clientIds || [];
+    if (!currentIds.includes(clientId)) return { success: true }; // already unlinked
+
+    return updateBank(firmId, { clientIds: currentIds.filter((id) => id !== clientId) });
+  } catch (error) {
+    console.error(`[unlinkClientFromBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

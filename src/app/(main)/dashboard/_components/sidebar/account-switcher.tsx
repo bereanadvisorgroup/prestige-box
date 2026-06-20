@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { Bell, LogOut, User } from "lucide-react";
+import { useLogger } from "next-axiom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -15,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
-import { useLogger } from 'next-axiom';
 import { useAuthStore } from "@/stores/auth.store";
 
 export function AccountSwitcher() {

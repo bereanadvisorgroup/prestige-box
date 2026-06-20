@@ -482,7 +482,7 @@ async function main() {
           {
             id: faker.string.uuid(),
             loanType: "Auto",
-            creditorName: "Ally Auto",
+            bankId: faker.string.uuid(),
             currentBalance: faker.number.int({ min: 15000, max: 50000 }),
           },
         ],

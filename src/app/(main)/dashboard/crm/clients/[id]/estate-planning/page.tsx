@@ -25,6 +25,7 @@ export default async function EstatePlanningPage({ params }: Props) {
         category="estateDocuments"
         title="Estate Planning Documents"
         types={["Will", "Revocable Trust", "Irrevocable Trust", "Other"]}
+        uploadViaDialog={true}
       />
     </div>
   );

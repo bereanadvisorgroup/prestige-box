@@ -19,10 +19,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
+import { PasswordRequirements } from "./password-requirements";
 import { GoogleButton } from "./social-auth/google-button";
 import { MicrosoftButton } from "./social-auth/microsoft-button";
-
-import { PasswordRequirements } from "./password-requirements";
 
 const passwordValidation = z
   .string()

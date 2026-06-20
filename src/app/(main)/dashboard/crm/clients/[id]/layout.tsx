@@ -1,11 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { Pencil } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import type { Person } from "@/types/crm";
 
 interface LayoutProps {
@@ -46,14 +42,6 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
               {person ? `${person.firstName} ${person.lastName}` : "Client Profile"}
             </h1>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/crm/clients/${id}/personal`}>
-            <Button>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Client
-            </Button>
-          </Link>
         </div>
       </div>
 

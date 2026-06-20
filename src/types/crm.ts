@@ -124,6 +124,7 @@ export const LongTermCareInsuranceSchema = z.object({
 export const PaymentAccountSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Account name is required"),
+  bankId: z.string().min(1, "Bank association is required"),
 });
 
 export const US_STATES = [
@@ -219,6 +220,7 @@ export const FamilyMemberSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
   relationship: FamilyRelationType,
+  parentId: z.string().optional(),
 });
 
 export const EmploymentSchema = z.object({
@@ -237,13 +239,14 @@ export const DocumentSchema = z.object({
   url: z.string(),
   type: z.string(), // PC / Life / Estate / etc specific types
   uploadedAt: z.string().optional(),
+  firmId: z.string().optional(),
 });
 
 export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card"]);
 export const LoanSchema = z.object({
   id: z.string().optional(),
   loanType: LoanTypeSelection,
-  creditorName: z.string().min(1, "Creditor name is required"),
+  bankId: z.string().min(1, "Bank is required"),
   currentBalance: z.number().default(0),
   statementPath: z.string().optional(),
 });

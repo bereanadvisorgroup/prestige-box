@@ -93,32 +93,6 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
     handleUpdate({ favoriteSportsTeams: next });
   };
 
-  const handleAddPaymentAccount = () => {
-    if (!paymentAccountInput.trim()) return;
-    const newAccount: PaymentAccount = {
-      id: crypto.randomUUID(),
-      name: paymentAccountInput.trim(),
-    };
-    const next = [...paymentAccounts, newAccount];
-    setPaymentAccounts(next);
-    handleUpdate({ paymentAccounts: next });
-    setPaymentAccountInput("");
-  };
-
-  const handleRemovePaymentAccount = async (accountId: string) => {
-    const result = await getClientPoliciesByClient(client.id!);
-    if (result.success && result.policies) {
-      const isInUse = result.policies.some((p) => p.paymentAccountId === accountId);
-      if (isInUse) {
-        toast.error("Cannot delete payment account because it is currently associated with a policy.");
-        return;
-      }
-    }
-    const next = paymentAccounts.filter((a) => a.id !== accountId);
-    setPaymentAccounts(next);
-    handleUpdate({ paymentAccounts: next });
-  };
-
   const handleSetReferrer = (val: string) => {
     // val can be the ID or "none"
     const newId = val === "none" ? null : val;
@@ -289,59 +263,6 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
                   <Trash2 className="h-3 w-3" />
                 </button>
               </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
-        <CardHeader className="bg-muted/10">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CreditCard className="h-5 w-5 text-primary" /> Payment Accounts
-          </CardTitle>
-          <CardDescription>Manage multiple bank or financial accounts for billing.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex gap-2">
-            <Input
-              placeholder="e.g. Personal Checking"
-              value={paymentAccountInput}
-              onChange={(e) => setPaymentAccountInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddPaymentAccount();
-                }
-              }}
-            />
-            <Button type="button" variant="secondary" onClick={handleAddPaymentAccount} disabled={isLoading}>
-              Add
-            </Button>
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-2">
-            {paymentAccounts.length === 0 && (
-              <p className="rounded-md border bg-muted/20 p-2 text-center text-muted-foreground text-xs italic">
-                No payment accounts added yet.
-              </p>
-            )}
-            {paymentAccounts.map((account) => (
-              <div
-                key={account.id}
-                className="group flex items-center justify-between rounded-md border bg-background p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">{account.name}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemovePaymentAccount(account.id)}
-                  className="text-muted-foreground opacity-0 transition-colors hover:text-destructive group-hover:opacity-100"
-                  disabled={isLoading}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
             ))}
           </div>
         </CardContent>

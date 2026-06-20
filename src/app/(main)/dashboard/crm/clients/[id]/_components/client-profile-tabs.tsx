@@ -415,12 +415,13 @@ export function ClientProfileTabs({
               category="estateDocuments"
               title="Estate Planning Documents"
               types={["Will", "Revocable Trust", "Irrevocable Trust", "Other"]}
+              uploadViaDialog={true}
             />
           </TabsContent>
 
           {/* Liabilities Tab */}
           <TabsContent value="liabilities" className="m-0 space-y-8 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8">
-            <LiabilitiesTab client={client} />
+            <LiabilitiesTab client={client} associatedBanks={associatedBanks} />
             {person && <MortgageTab client={client} person={person} />}
           </TabsContent>
 

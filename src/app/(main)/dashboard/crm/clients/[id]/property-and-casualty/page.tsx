@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 import { Building2, Shield } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
-import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
+import {
+  getPropertyAndCasualtyFirms,
+  linkClientToPropertyAndCasualtyFirm,
+  unlinkClientFromPropertyAndCasualtyFirm,
+} from "@/actions/property-and-casualty";
 import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
+import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
 import { DocumentsTab } from "../_components/tabs/documents-tab";
 
@@ -23,34 +27,42 @@ export default async function PropertyAndCasualtyPage({ params }: Props) {
 
   const client = clientResult.client;
   const propertyAndCasualtyFirmsRes = await getPropertyAndCasualtyFirms();
-  const associatedPropertyAndCasualties = (
-    (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) ||
-    []
-  ).filter((pc) => pc.clientIds?.includes(client.id || ""));
+  const allFirms = (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) || [];
+
+  const associatedPropertyAndCasualties = allFirms.filter((pc) => pc.clientIds?.includes(client.id || ""));
+
+  const availableFirms = allFirms
+    .filter((pc) => !pc.clientIds?.includes(client.id || ""))
+    .map((pc) => ({ id: pc.id || "", name: pc.firmName }));
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          {associatedPropertyAndCasualties.length > 0 ? (
-            <AssociationCardList
-              title="Associated Property & Casualty Firms"
-              description="Property and Casualty firms this client is associated with"
-              items={associatedPropertyAndCasualties.map((f) => ({
-                id: f.id || "",
-                name: f.firmName,
-                website: f.website,
-                phone: f.phone,
-              }))}
-              linkPrefix="/dashboard/crm/property-and-casualty"
-              icon={Shield}
-            />
-          ) : (
-            <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-              <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-              <p className="text-sm italic">No associated property & casualty firms found.</p>
-            </Card>
-          )}
+          <AssociationCardList
+            clientId={client.id || ""}
+            title="Associated Property & Casualty Firms"
+            description="Property and Casualty firms this client is associated with"
+            items={associatedPropertyAndCasualties.map((f) => ({
+              id: f.id || "",
+              name: f.firmName,
+              website: f.website,
+              phone: f.phone,
+              isLinked: client.pcDocuments?.some((d) => d.firmId === f.id) || false,
+            }))}
+            linkPrefix="/dashboard/crm/property-and-casualty"
+            icon={Shield}
+            onUnlinkAction={unlinkClientFromPropertyAndCasualtyFirm}
+            actionNode={
+              <LinkFirmDialog
+                clientId={client.id || ""}
+                firmTypeLabel="Property & Casualty Firm"
+                availableFirms={availableFirms}
+                newFirmLink={`/dashboard/crm/property-and-casualty/new?clientId=${client.id}`}
+                onLinkAction={linkClientToPropertyAndCasualtyFirm}
+              />
+            }
+          />
         </div>
 
         <div className="lg:col-span-1">
@@ -58,6 +70,8 @@ export default async function PropertyAndCasualtyPage({ params }: Props) {
             client={client}
             category="pcDocuments"
             title="Property & Casualty Documents"
+            firms={associatedPropertyAndCasualties.map((f) => ({ id: f.id!, name: f.firmName }))}
+            firmLabel="P&C Firm"
             types={[
               "Home Declaration Page",
               "Automobile Declaration Page",

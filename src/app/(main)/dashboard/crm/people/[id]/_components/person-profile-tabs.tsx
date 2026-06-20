@@ -541,7 +541,7 @@ export function PersonProfileTabs({
                           <div className="space-y-2">
                             {associatedClient.liabilities.map((l: any, idx: number) => (
                               <div key={idx} className="space-y-1 rounded-lg border bg-card p-3 text-xs shadow-sm">
-                                <p className="font-bold">{l.creditorName}</p>
+                                <p className="font-bold">{associatedBanks?.find((b) => b.id === l.bankId)?.firmName || "Unknown Bank"}</p>
                                 <p className="font-semibold text-muted-foreground">
                                   Type: <span className="text-foreground">{l.loanType}</span>
                                 </p>
