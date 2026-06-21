@@ -170,6 +170,7 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Actuarial Firm record updated" : "Actuarial Firm record created");
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.push("/dashboard/crm/actuarial-firms");
         router.refresh();
       } else {

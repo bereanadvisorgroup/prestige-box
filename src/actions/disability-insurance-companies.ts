@@ -120,6 +120,12 @@ export async function updateDisabilityInsuranceCompany(id: string, data: Partial
       });
     }
 
+    if (data.clientIds?.length) {
+      data.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[updateDisabilityInsuranceCompany] Error:`, error);
@@ -131,7 +137,7 @@ export async function deleteDisabilityInsuranceCompany(id: string) {
   try {
     const { data: company, error: getError } = await supabaseServer
       .from(TABLE)
-      .select("companyIds")
+      .select("companyIds, clientIds")
       .eq("id", id)
       .single();
 
@@ -147,9 +153,45 @@ export async function deleteDisabilityInsuranceCompany(id: string) {
       });
     }
 
+    if (!getError && company?.clientIds?.length) {
+      (company.clientIds as string[]).forEach((clientId: string) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[deleteDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkClientToDisabilityInsuranceCompany(companyId: string, clientId: string) {
+  try {
+    const companyRes = await getDisabilityInsuranceCompany(companyId);
+    if (!companyRes.success || !companyRes.company) return { success: false, error: "Company not found" };
+
+    const currentIds = companyRes.company.clientIds || [];
+    if (currentIds.includes(clientId)) return { success: true };
+
+    return updateDisabilityInsuranceCompany(companyId, { clientIds: [...currentIds, clientId] });
+  } catch (error) {
+    console.error(`[linkClientToDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkClientFromDisabilityInsuranceCompany(companyId: string, clientId: string) {
+  try {
+    const companyRes = await getDisabilityInsuranceCompany(companyId);
+    if (!companyRes.success || !companyRes.company) return { success: false, error: "Company not found" };
+
+    const currentIds = companyRes.company.clientIds || [];
+    if (!currentIds.includes(clientId)) return { success: true };
+
+    return updateDisabilityInsuranceCompany(companyId, { clientIds: currentIds.filter((id) => id !== clientId) });
+  } catch (error) {
+    console.error(`[unlinkClientFromDisabilityInsuranceCompany] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

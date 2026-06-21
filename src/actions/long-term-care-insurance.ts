@@ -120,6 +120,12 @@ export async function updateLongTermCareInsurance(id: string, data: Partial<Long
       });
     }
 
+    if (data.clientIds?.length) {
+      data.clientIds.forEach((clientId) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[updateLongTermCareInsurance] Error:`, error);
@@ -131,7 +137,7 @@ export async function deleteLongTermCareInsurance(id: string) {
   try {
     const { data: company, error: getError } = await supabaseServer
       .from(TABLE)
-      .select("companyIds")
+      .select("companyIds, clientIds")
       .eq("id", id)
       .single();
 
@@ -147,9 +153,45 @@ export async function deleteLongTermCareInsurance(id: string) {
       });
     }
 
+    if (!getError && company?.clientIds?.length) {
+      (company.clientIds as string[]).forEach((clientId: string) => {
+        revalidatePath(`/dashboard/crm/clients/${clientId}`);
+      });
+    }
+
     return { success: true };
   } catch (error) {
     console.error(`[deleteLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkClientToLongTermCareInsurance(companyId: string, clientId: string) {
+  try {
+    const companyRes = await getLongTermCareInsurance(companyId);
+    if (!companyRes.success || !companyRes.company) return { success: false, error: "Company not found" };
+
+    const currentIds = companyRes.company.clientIds || [];
+    if (currentIds.includes(clientId)) return { success: true };
+
+    return updateLongTermCareInsurance(companyId, { clientIds: [...currentIds, clientId] });
+  } catch (error) {
+    console.error(`[linkClientToLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkClientFromLongTermCareInsurance(companyId: string, clientId: string) {
+  try {
+    const companyRes = await getLongTermCareInsurance(companyId);
+    if (!companyRes.success || !companyRes.company) return { success: false, error: "Company not found" };
+
+    const currentIds = companyRes.company.clientIds || [];
+    if (!currentIds.includes(clientId)) return { success: true };
+
+    return updateLongTermCareInsurance(companyId, { clientIds: currentIds.filter((id) => id !== clientId) });
+  } catch (error) {
+    console.error(`[unlinkClientFromLongTermCareInsurance] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

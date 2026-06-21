@@ -168,6 +168,7 @@ export function LawFirmForm({ lawFirm }: LawFirmFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Law Firm record updated" : "Law Firm record created");
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.push("/dashboard/crm/law-firms");
         router.refresh();
       } else {

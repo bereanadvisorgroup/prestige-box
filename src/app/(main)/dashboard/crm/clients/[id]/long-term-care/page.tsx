@@ -1,13 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { Building2, HeartPulse } from "lucide-react";
-
 import { getClient } from "@/actions/clients";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
-import { getClientPoliciesByClient } from "@/actions/policies";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
-import type { ClientPolicy } from "@/types/crm";
+
+import { LongTermCareManager } from "./_components/long-term-care-manager";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,35 +17,13 @@ export default async function LongTermCarePage({ params }: Props) {
     notFound();
   }
 
-  const _client = clientResult.client;
-
-  const [policiesResult, ltcRes] = await Promise.all([getClientPoliciesByClient(id), getLongTermCareInsurances()]);
-
-  const policies = (policiesResult.success ? policiesResult.policies : []) as (ClientPolicy & { id: string })[];
-  const policyLtcIds = new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean));
-  const associatedLtc = ((ltcRes.success && ltcRes.companies) || []).filter((c) => policyLtcIds.has(c.id || ""));
+  const client = clientResult.client;
+  const companiesRes = await getLongTermCareInsurances();
+  const allCompanies = (companiesRes.success && companiesRes.companies) || [];
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
-      {associatedLtc.length > 0 ? (
-        <AssociationCardList
-          title="Associated Long Term Care Insurance"
-          description="Long term care insurance companies this client is associated with via policies"
-          items={associatedLtc.map((c) => ({
-            id: c.id || "",
-            name: c.name,
-            website: c.websiteUrl,
-            phone: c.phone,
-          }))}
-          linkPrefix="/dashboard/admin/long-term-care-insurance"
-          icon={HeartPulse}
-        />
-      ) : (
-        <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm italic">No associated long term care insurance companies found.</p>
-        </Card>
-      )}
+      <LongTermCareManager client={client} allCompanies={allCompanies} />
     </div>
   );
 }

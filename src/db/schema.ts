@@ -64,6 +64,7 @@ export const lifeInsuranceCompanies = pgTable("life_insurance_companies", {
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -77,6 +78,7 @@ export const disabilityInsuranceCompanies = pgTable("disability_insurance_compan
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -90,6 +92,7 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -106,6 +109,7 @@ export const clients = pgTable("clients", {
   employments: jsonb("employments").default(sql`'[]'::jsonb`),
   pcDocuments: jsonb("pcDocuments").default(sql`'[]'::jsonb`),
   lifeDocuments: jsonb("lifeDocuments").default(sql`'[]'::jsonb`),
+  ltcDocuments: jsonb("ltcDocuments").default(sql`'[]'::jsonb`),
   estateDocuments: jsonb("estateDocuments").default(sql`'[]'::jsonb`),
   liabilities: jsonb("liabilities").default(sql`'[]'::jsonb`),
   mortgages: jsonb("mortgages").default(sql`'[]'::jsonb`),

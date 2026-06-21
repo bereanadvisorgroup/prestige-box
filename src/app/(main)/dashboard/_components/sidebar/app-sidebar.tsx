@@ -60,17 +60,22 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
   },
   {
     id: 11,
+    items: [
+      {
+        title: "Internal",
+        url: `/dashboard/crm/clients/${clientId}/internal`,
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    id: 12,
     label: "General Info",
     items: [
       {
-        title: "General",
+        title: "Overview",
         url: `/dashboard/crm/clients/${clientId}`,
         icon: LayoutDashboard,
-      },
-      {
-        title: "Personal",
-        url: `/dashboard/crm/clients/${clientId}/personal`,
-        icon: User,
       },
       {
         title: "Family",
@@ -100,7 +105,7 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
     ],
   },
   {
-    id: 12,
+    id: 13,
     label: "Professional Services",
     items: [
       {
@@ -136,7 +141,7 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
     ],
   },
   {
-    id: 13,
+    id: 14,
     label: "Vendors",
     items: [
       {
@@ -299,20 +304,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (clientId) {
-      getClientAssociationCounts(clientId).then((res) => {
-        if (res.success && res.counts) {
-          setCounts(res.counts);
-        }
-      });
-    } else if (companyId) {
-      getCompanyAssociationCounts(companyId).then((res) => {
-        if (res.success && res.counts) {
-          setCounts(res.counts);
-        }
-      });
-    }
-  }, [clientId, companyId]);
+    const _path = pathname;
+    const fetchCounts = () => {
+      if (clientId) {
+        getClientAssociationCounts(clientId).then((res) => {
+          if (res.success && res.counts) {
+            setCounts(res.counts);
+          }
+        });
+      } else if (companyId) {
+        getCompanyAssociationCounts(companyId).then((res) => {
+          if (res.success && res.counts) {
+            setCounts(res.counts);
+          }
+        });
+      }
+    };
+
+    fetchCounts();
+
+    window.addEventListener("association-change", fetchCounts);
+    return () => {
+      window.removeEventListener("association-change", fetchCounts);
+    };
+  }, [clientId, companyId, pathname]);
 
   // Filter sidebar items based on user role or client/company context
   const filteredSidebarItems = isClientView

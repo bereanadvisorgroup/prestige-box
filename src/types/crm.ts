@@ -93,6 +93,7 @@ export const LifeInsuranceCompanySchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
+  clientIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -105,6 +106,7 @@ export const DisabilityInsuranceCompanySchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
+  clientIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -117,6 +119,7 @@ export const LongTermCareInsuranceSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
+  clientIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -274,6 +277,7 @@ export const ClientSchema = z.object({
   employments: z.array(EmploymentSchema).default([]),
   pcDocuments: z.array(DocumentSchema).default([]),
   lifeDocuments: z.array(DocumentSchema).default([]),
+  ltcDocuments: z.array(DocumentSchema).default([]),
   estateDocuments: z.array(DocumentSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),

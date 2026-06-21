@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ export function LinkFirmDialog({
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [selectedFirmId, setSelectedFirmId] = useState<string>("");
   const [isLinking, setIsLinking] = useState(false);
+  const router = useRouter();
 
   const selectedFirm = useMemo(
     () => availableFirms.find((firm) => firm.id === selectedFirmId),
@@ -52,6 +54,8 @@ export function LinkFirmDialog({
       const result = await onLinkAction(selectedFirmId, clientId);
       if (result.success) {
         toast.success(`${firmTypeLabel} linked successfully.`);
+        window.dispatchEvent(new CustomEvent("association-change"));
+        router.refresh();
         setOpen(false);
         setSelectedFirmId("");
       } else {

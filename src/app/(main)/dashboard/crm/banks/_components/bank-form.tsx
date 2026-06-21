@@ -168,6 +168,7 @@ export function BankForm({ bank }: BankFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Bank record updated" : "Bank record created");
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.push("/dashboard/crm/banks");
         router.refresh();
       } else {

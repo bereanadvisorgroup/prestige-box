@@ -170,8 +170,9 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
 
       if (result.success) {
         toast.success(
-          isEditing ? "Property And Casualty Firm record updated" : "Property And Casualty Firm record created",
+          isEditing ? "Property & Casualty Firm record updated" : "Property & Casualty Firm record created",
         );
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.push("/dashboard/crm/property-and-casualty");
         router.refresh();
       } else {

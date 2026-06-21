@@ -26,6 +26,7 @@ export function UnlinkFirmButton({ firmId, clientId, isLinked, onUnlinkAction }:
       const result = await onUnlinkAction(firmId, clientId);
       if (result.success) {
         toast.success("Firm unlinked successfully.");
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.refresh();
       } else {
         toast.error(result.error || "Failed to unlink firm.");

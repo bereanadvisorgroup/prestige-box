@@ -366,18 +366,14 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
                           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                             Balance
                           </p>
-                          <p className="font-bold text-foreground text-lg">
-                            {fmt(loan.currentBalance)}
-                          </p>
+                          <p className="font-bold text-foreground text-lg">{fmt(loan.currentBalance)}</p>
                         </div>
                         {loan.monthlyPayment !== undefined && (
                           <div>
                             <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                               / Month
                             </p>
-                            <p className="font-semibold text-foreground/80">
-                              {fmt(loan.monthlyPayment)}
-                            </p>
+                            <p className="font-semibold text-foreground/80">{fmt(loan.monthlyPayment)}</p>
                           </div>
                         )}
                         {(loan.startDate || loan.endDate) && (

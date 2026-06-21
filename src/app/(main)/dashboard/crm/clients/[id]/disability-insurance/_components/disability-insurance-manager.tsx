@@ -15,7 +15,7 @@ import {
   Loader2,
   Phone,
   Plus,
-  Shield,
+  ShieldAlert,
   Trash2,
   UploadCloud,
 } from "lucide-react";
@@ -23,9 +23,9 @@ import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
 import {
-  linkClientToPropertyAndCasualtyFirm,
-  unlinkClientFromPropertyAndCasualtyFirm,
-} from "@/actions/property-and-casualty";
+  linkClientToDisabilityInsuranceCompany,
+  unlinkClientFromDisabilityInsuranceCompany,
+} from "@/actions/disability-insurance-companies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -42,74 +42,55 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase.client";
 import { cn, formatPhoneNumber } from "@/lib/utils";
-import type { Client, ClientDocument } from "@/types/crm";
+import type { Client, ClientDocument, DisabilityInsuranceCompany } from "@/types/crm";
 
-interface PropertyAndCasualtyFirm {
-  id?: string;
-  firmName: string;
-  website?: string | null;
-  phone?: string | null;
-  clientIds?: string[] | null;
-}
-
-interface PropertyAndCasualtyManagerProps {
+interface DisabilityInsuranceManagerProps {
   client: Client;
-  allFirms: PropertyAndCasualtyFirm[];
+  allCompanies: DisabilityInsuranceCompany[];
 }
 
-const DOCUMENT_TYPES = [
-  "Home Declaration Page",
-  "Automobile Declaration Page",
-  "Umbrella Declaration Page",
-  "Flood Declaration Page",
-  "Collections Declaration Page",
-  "Boat/RV Declaration Page",
-  "Elevation Certificate",
-  "Wind Mitigation",
-  "4 Point Inspection",
-  "Other",
-];
+const DOCUMENT_TYPES = ["Short-Term Disability Policy", "Long-Term Disability Policy", "Policy Statement", "Other"];
 
-export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasualtyManagerProps) {
+export function DisabilityInsuranceManager({ client, allCompanies }: DisabilityInsuranceManagerProps) {
   const router = useRouter();
   const [_isPending, startTransition] = useTransition();
 
-  // Local document state
-  const [documents, setDocuments] = useState<ClientDocument[]>(client.pcDocuments || []);
+  // Local document state (shared with life insurance documents field 'lifeDocuments')
+  const [documents, setDocuments] = useState<ClientDocument[]>(client.lifeDocuments || []);
 
   // Upload dialog states
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [addingDocType, setAddingDocType] = useState<string>("");
-  const [addingFirmId, setAddingFirmId] = useState<string>("");
+  const [addingCompanyId, setAddingCompanyId] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
 
-  // Link firm dialog states
+  // Link company dialog states
   const [isLinkOpen, setIsLinkOpen] = useState(false);
-  const [linkFirmId, setLinkFirmId] = useState<string>("");
+  const [linkCompanyId, setLinkCompanyId] = useState<string>("");
   const [linkComboboxOpen, setLinkComboboxOpen] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
   // Grouping computation
-  const associatedFirms = useMemo(() => {
-    return allFirms.filter((f) => f.clientIds?.includes(client.id || ""));
-  }, [allFirms, client.id]);
+  const associatedCompanies = useMemo(() => {
+    return allCompanies.filter((c) => c.clientIds?.includes(client.id || ""));
+  }, [allCompanies, client.id]);
 
-  const availableFirmsToLink = useMemo(() => {
-    return allFirms.filter((f) => !f.clientIds?.includes(client.id || ""));
-  }, [allFirms, client.id]);
+  const availableCompaniesToLink = useMemo(() => {
+    return allCompanies.filter((c) => !c.clientIds?.includes(client.id || ""));
+  }, [allCompanies, client.id]);
 
-  const firmNameMap = useMemo(() => {
+  const companyNameMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const f of allFirms) {
-      if (f.id) map.set(f.id, f.firmName);
+    for (const c of allCompanies) {
+      if (c.id) map.set(c.id, c.name);
     }
     return map;
-  }, [allFirms]);
+  }, [allCompanies]);
 
-  // Documents grouped by firmId
-  const documentsByFirm = useMemo(() => {
+  // Documents grouped by companyId (firmId field is used inside ClientDocument)
+  const documentsByCompany = useMemo(() => {
     const map = new Map<string, ClientDocument[]>();
     for (const doc of documents) {
       if (doc.firmId) {
@@ -121,13 +102,13 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
     return map;
   }, [documents]);
 
-  // Documents with no associated firm, or associated with a firm that is not linked
+  // Documents with no associated company, or associated with a company that is not linked
   const generalDocuments = useMemo(() => {
     return documents.filter((doc) => {
       if (!doc.firmId) return true;
-      return !associatedFirms.some((f) => f.id === doc.firmId);
+      return !associatedCompanies.some((c) => c.id === doc.firmId);
     });
-  }, [documents, associatedFirms]);
+  }, [documents, associatedCompanies]);
 
   const handleUpload = async () => {
     if (!file || !addingDocType) {
@@ -139,7 +120,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
     try {
       const fileExt = file.name.split(".").pop();
       const randomStr = Math.random().toString(36).substring(7);
-      const filePath = `clients/${client.id}/pcDocuments/${randomStr}_${Date.now()}.${fileExt}`;
+      const filePath = `clients/${client.id}/lifeDocuments/${randomStr}_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file);
       if (uploadError) throw uploadError;
@@ -154,22 +135,22 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         url,
         type: addingDocType,
         uploadedAt: new Date().toISOString(),
-        firmId: addingFirmId || undefined,
+        firmId: addingCompanyId || undefined,
       };
 
       const updatedDocs = [...documents, newDoc];
 
       // Update client documents
-      const res = await updateClient(client.id!, { pcDocuments: updatedDocs });
+      const res = await updateClient(client.id!, { lifeDocuments: updatedDocs });
       if (!res.success) throw new Error(res.error || "Failed to save client documents");
 
-      // Auto-associate the firm if a firm was selected and is not already associated
-      if (addingFirmId && !associatedFirms.some((f) => f.id === addingFirmId)) {
-        const linkRes = await linkClientToPropertyAndCasualtyFirm(addingFirmId, client.id!);
+      // Auto-associate the company if a company was selected and is not already associated
+      if (addingCompanyId && !associatedCompanies.some((c) => c.id === addingCompanyId)) {
+        const linkRes = await linkClientToDisabilityInsuranceCompany(addingCompanyId, client.id!);
         if (linkRes.success) {
           window.dispatchEvent(new CustomEvent("association-change"));
         } else {
-          toast.warning("Document uploaded, but failed to link the firm automatically.");
+          toast.warning("Document uploaded, but failed to link the company automatically.");
         }
       }
 
@@ -179,7 +160,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
       // Reset states
       setFile(null);
       setAddingDocType("");
-      setAddingFirmId("");
+      setAddingCompanyId("");
       setIsUploadOpen(false);
 
       startTransition(() => {
@@ -193,21 +174,21 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
     }
   };
 
-  const handleLinkFirm = async () => {
-    if (!linkFirmId) return;
+  const handleLinkCompany = async () => {
+    if (!linkCompanyId) return;
     setIsLinking(true);
     try {
-      const result = await linkClientToPropertyAndCasualtyFirm(linkFirmId, client.id!);
+      const result = await linkClientToDisabilityInsuranceCompany(linkCompanyId, client.id!);
       if (result.success) {
-        toast.success("P&C Firm linked successfully");
+        toast.success("Disability Insurance Company linked successfully");
         window.dispatchEvent(new CustomEvent("association-change"));
         setIsLinkOpen(false);
-        setLinkFirmId("");
+        setLinkCompanyId("");
         startTransition(() => {
           router.refresh();
         });
       } else {
-        toast.error(result.error || "Failed to link P&C Firm");
+        toast.error(result.error || "Failed to link company");
       }
     } catch (_error) {
       toast.error("An unexpected error occurred");
@@ -216,14 +197,16 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
     }
   };
 
-  const handleUnlinkFirm = async (firmId: string) => {
-    const confirmUnlink = window.confirm("Are you sure you want to remove association with this P&C firm?");
+  const handleUnlinkCompany = async (companyId: string) => {
+    const confirmUnlink = window.confirm(
+      "Are you sure you want to remove association with this disability insurance company?",
+    );
     if (!confirmUnlink) return;
 
     try {
-      const result = await unlinkClientFromPropertyAndCasualtyFirm(firmId, client.id!);
+      const result = await unlinkClientFromDisabilityInsuranceCompany(companyId, client.id!);
       if (result.success) {
-        toast.success("Firm association removed");
+        toast.success("Company association removed");
         window.dispatchEvent(new CustomEvent("association-change"));
         startTransition(() => {
           router.refresh();
@@ -242,7 +225,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
 
     try {
       const updated = documents.filter((d) => d.id !== docId);
-      const res = await updateClient(client.id!, { pcDocuments: updated });
+      const res = await updateClient(client.id!, { lifeDocuments: updated });
       if (res.success) {
         setDocuments(updated);
         toast.success("Document deleted");
@@ -257,8 +240,8 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
     }
   };
 
-  const selectedFirmName = addingFirmId ? firmNameMap.get(addingFirmId) : "";
-  const selectedLinkFirmName = linkFirmId ? allFirms.find((f) => f.id === linkFirmId)?.firmName : "";
+  const selectedCompanyName = addingCompanyId ? companyNameMap.get(addingCompanyId) : "";
+  const selectedLinkCompanyName = linkCompanyId ? allCompanies.find((c) => c.id === linkCompanyId)?.name : "";
 
   return (
     <div className="space-y-8">
@@ -267,10 +250,10 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <h1 className="flex items-center gap-2 font-bold text-foreground text-xl tracking-tight">
-              <Shield className="h-5 w-5 text-primary" /> Property & Casualty Insurance
+              <ShieldAlert className="h-5 w-5 text-primary" /> Disability Insurance
             </h1>
             <p className="text-muted-foreground text-sm">
-              Manage client's P&C firm connections and insurance documents in one consolidated place.
+              Manage client's disability insurance company connections and documents in one consolidated place.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -280,12 +263,12 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
               onClick={() => setIsLinkOpen(true)}
               className="bg-background/50 backdrop-blur-sm"
             >
-              <Plus className="mr-1.5 h-4 w-4" /> Link Firm
+              <Plus className="mr-1.5 h-4 w-4" /> Link Company
             </Button>
             <Button
               size="sm"
               onClick={() => {
-                setAddingFirmId("");
+                setAddingCompanyId("");
                 setIsUploadOpen(true);
               }}
               className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
@@ -298,47 +281,53 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
 
       {/* Main Grid View */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Associated Firms and Their Documents */}
+        {/* Associated Companies and Their Documents */}
         <div className="space-y-6 lg:col-span-2">
-          <h2 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">Associated P&C Firms</h2>
+          <h2 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
+            Associated Disability Insurance Companies
+          </h2>
 
-          {associatedFirms.length > 0 ? (
-            associatedFirms.map((firm) => {
-              const firmDocs = documentsByFirm.get(firm.id!) || [];
+          {associatedCompanies.length > 0 ? (
+            associatedCompanies.map((company) => {
+              const companyDocs = documentsByCompany.get(company.id!) || [];
 
               return (
                 <Card
-                  key={firm.id ?? firm.firmName}
+                  key={company.id ?? company.name}
                   className="overflow-hidden border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm transition-all duration-300 hover:shadow-md"
                 >
                   <CardHeader className="border-muted/10 border-b bg-muted/10 px-6 py-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-base text-foreground">{firm.firmName}</h3>
+                          <h3 className="font-bold text-base text-foreground">{company.name}</h3>
                           <Link
-                            href={`/dashboard/crm/property-and-casualty/${firm.id}`}
+                            href={`/dashboard/admin/disability-insurance-companies/${company.id}`}
                             className="text-muted-foreground transition-colors hover:text-primary"
                           >
                             <ArrowUpRight className="h-4 w-4" />
                           </Link>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-xs">
-                          {firm.website && (
+                          {company.websiteUrl && (
                             <a
-                              href={firm.website.startsWith("http") ? firm.website : `https://${firm.website}`}
+                              href={
+                                company.websiteUrl.startsWith("http")
+                                  ? company.websiteUrl
+                                  : `https://${company.websiteUrl}`
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 hover:text-primary hover:underline"
                             >
                               <Globe className="h-3 w-3" />
-                              {firm.website.replace(/^https?:\/\//, "")}
+                              {company.websiteUrl.replace(/^https?:\/\//, "")}
                             </a>
                           )}
-                          {firm.phone && (
+                          {company.phone && (
                             <span className="flex items-center gap-1">
                               <Phone className="h-3 w-3" />
-                              {formatPhoneNumber(firm.phone)}
+                              {formatPhoneNumber(company.phone)}
                             </span>
                           )}
                         </div>
@@ -346,7 +335,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleUnlinkFirm(firm.id!)}
+                        onClick={() => handleUnlinkCompany(company.id!)}
                         className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         title="Remove Association"
                       >
@@ -364,18 +353,18 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setAddingFirmId(firm.id!);
+                            setAddingCompanyId(company.id!);
                             setIsUploadOpen(true);
                           }}
                           className="h-7 text-primary text-xs hover:bg-primary/5 hover:text-primary/80"
                         >
-                          <Plus className="mr-1 h-3 w-3" /> Upload for this firm
+                          <Plus className="mr-1 h-3 w-3" /> Upload for this company
                         </Button>
                       </div>
 
-                      {firmDocs.length > 0 ? (
+                      {companyDocs.length > 0 ? (
                         <div className="divide-y divide-muted/10 overflow-hidden rounded-lg border border-muted/20 bg-background">
-                          {firmDocs.map((doc, idx) => (
+                          {companyDocs.map((doc, idx) => (
                             <div
                               key={doc.id ?? idx}
                               className="flex items-center justify-between p-3.5 transition-colors hover:bg-muted/5"
@@ -418,7 +407,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                       ) : (
                         <div className="flex flex-col items-center justify-center rounded-lg border border-muted/30 border-dashed bg-muted/5 p-6 text-center text-muted-foreground">
                           <FileText className="mb-2 h-6 w-6 opacity-30" />
-                          <p className="text-xs">No documents uploaded for this firm.</p>
+                          <p className="text-xs">No documents uploaded for this company.</p>
                         </div>
                       )}
                     </div>
@@ -429,18 +418,18 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
           ) : (
             <Card className="flex flex-col items-center justify-center border-2 border-muted/30 border-dashed bg-muted/5 px-6 py-12 text-center text-muted-foreground">
               <Building2 className="mb-4 h-12 w-12 opacity-20" />
-              <h3 className="font-bold text-foreground text-sm">No P&C Firms Linked</h3>
+              <h3 className="font-bold text-foreground text-sm">No Companies Linked</h3>
               <p className="mt-1 max-w-sm text-xs">
-                Connect this client to a property and casualty firm to manage documents and associations.
+                Connect this client to a disability insurance company to manage documents and associations.
               </p>
               <div className="mt-6 flex gap-3">
                 <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" /> Link a Firm
+                  <Plus className="mr-1.5 h-4 w-4" /> Link a Company
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => {
-                    setAddingFirmId("");
+                    setAddingCompanyId("");
                     setIsUploadOpen(true);
                   }}
                 >
@@ -461,7 +450,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
             <Card className="border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm">
               <CardHeader className="py-4">
                 <CardTitle className="font-bold text-sm">General Files</CardTitle>
-                <CardDescription className="text-xs">Documents not associated with linked firms.</CardDescription>
+                <CardDescription className="text-xs">Documents not associated with linked companies.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {generalDocuments.length > 0 ? (
@@ -478,7 +467,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                               {doc.name}
                             </p>
                             <p className="truncate text-[10px] text-muted-foreground">
-                              {doc.type} {doc.firmId && `(${firmNameMap.get(doc.firmId) || "Unknown Firm"})`}
+                              {doc.type} {doc.firmId && `(${companyNameMap.get(doc.firmId) || "Unknown Company"})`}
                             </p>
                           </div>
                         </div>
@@ -511,21 +500,23 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
           </div>
 
           {/* Quick Associations Panel */}
-          {availableFirmsToLink.length > 0 && (
+          {availableCompaniesToLink.length > 0 && (
             <div>
               <h2 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wider">Quick Links</h2>
               <Card className="border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm">
                 <CardHeader className="py-4">
-                  <CardTitle className="font-bold text-sm">Available P&C Firms</CardTitle>
-                  <CardDescription className="text-xs">Firms you can associate with this client.</CardDescription>
+                  <CardTitle className="font-bold text-sm">Available Companies</CardTitle>
+                  <CardDescription className="text-xs">Companies you can associate with this client.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="max-h-60 divide-y divide-muted/10 overflow-y-auto">
-                    {availableFirmsToLink.map((firm) => (
-                      <div key={firm.id ?? firm.firmName} className="flex items-center justify-between p-3.5 text-xs">
+                    {availableCompaniesToLink.map((company) => (
+                      <div key={company.id ?? company.name} className="flex items-center justify-between p-3.5 text-xs">
                         <div className="min-w-0 pr-2">
-                          <p className="truncate font-semibold text-foreground">{firm.firmName}</p>
-                          {firm.website && <p className="truncate text-[10px] text-muted-foreground">{firm.website}</p>}
+                          <p className="truncate font-semibold text-foreground">{company.name}</p>
+                          {company.websiteUrl && (
+                            <p className="truncate text-[10px] text-muted-foreground">{company.websiteUrl}</p>
+                          )}
                         </div>
                         <Button
                           variant="outline"
@@ -533,15 +524,15 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                           onClick={async () => {
                             setIsLinking(true);
                             try {
-                              const res = await linkClientToPropertyAndCasualtyFirm(firm.id!, client.id!);
+                              const res = await linkClientToDisabilityInsuranceCompany(company.id!, client.id!);
                               if (res.success) {
-                                toast.success("Firm associated successfully");
+                                toast.success("Company associated successfully");
                                 window.dispatchEvent(new CustomEvent("association-change"));
                                 startTransition(() => {
                                   router.refresh();
                                 });
                               } else {
-                                toast.error(res.error || "Failed to associate firm");
+                                toast.error(res.error || "Failed to associate company");
                               }
                             } catch (_e) {
                               toast.error("Error occurred");
@@ -569,10 +560,10 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         <DialogContent className="border border-muted/20 bg-background sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UploadCloud className="h-5 w-5 text-primary" /> Add P&C Document
+              <UploadCloud className="h-5 w-5 text-primary" /> Add Disability Insurance Document
             </DialogTitle>
             <DialogDescription>
-              Select the document type, the firm it belongs to, and upload the file.
+              Select the document type, the company it belongs to, and upload the file.
             </DialogDescription>
           </DialogHeader>
 
@@ -599,57 +590,57 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
               </Select>
             </div>
 
-            {/* P&C Firm Select (from all existing firms) */}
+            {/* Company Select */}
             <div className="flex flex-col space-y-2">
               <label
-                htmlFor="upload-doc-firm"
+                htmlFor="upload-doc-company"
                 className="font-semibold text-foreground text-xs uppercase tracking-wider"
               >
-                P&C Firm
+                Insurance Company
               </label>
               <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
                 <PopoverTrigger asChild>
                   <Button
-                    id="upload-doc-firm"
+                    id="upload-doc-company"
                     variant="outline"
                     role="combobox"
                     aria-expanded={comboboxOpen}
                     className="w-full justify-between text-left font-normal text-sm"
                   >
-                    {selectedFirmName || "Select P&C firm (optional)"}
+                    {selectedCompanyName || "Select company (optional)"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[380px] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search P&C firms..." />
+                    <CommandInput placeholder="Search companies..." />
                     <CommandList>
-                      <CommandEmpty>No P&C firms found.</CommandEmpty>
+                      <CommandEmpty>No companies found.</CommandEmpty>
                       <CommandGroup>
                         <CommandItem
                           value=""
                           onSelect={() => {
-                            setAddingFirmId("");
+                            setAddingCompanyId("");
                             setComboboxOpen(false);
                           }}
                           className="text-muted-foreground italic"
                         >
-                          <Check className={cn("mr-2 h-4 w-4 opacity-0", !addingFirmId && "opacity-100")} />
-                          No Firm / General Document
+                          <Check className={cn("mr-2 h-4 w-4 opacity-0", !addingCompanyId && "opacity-100")} />
+                          No Company / General Document
                         </CommandItem>
-                        {allFirms.map((firm) => (
+                        {allCompanies.map((company) => (
                           <CommandItem
-                            key={firm.id}
-                            value={firm.firmName}
+                            key={company.id}
+                            value={company.name}
                             onSelect={() => {
-                              setAddingFirmId(firm.id || "");
+                              setAddingCompanyId(company.id || "");
                               setComboboxOpen(false);
                             }}
                           >
                             <Check
-                              className={cn("mr-2 h-4 w-4 opacity-0", addingFirmId === firm.id && "opacity-100")}
+                              className={cn("mr-2 h-4 w-4 opacity-0", addingCompanyId === company.id && "opacity-100")}
                             />
-                            {firm.firmName}
+                            {company.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -696,54 +687,56 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         </DialogContent>
       </Dialog>
 
-      {/* Link Firm Dialog */}
+      {/* Link Company Dialog */}
       <Dialog open={isLinkOpen} onOpenChange={setIsLinkOpen}>
         <DialogContent className="border border-muted/20 bg-background sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" /> Link P&C Firm
+              <Building2 className="h-5 w-5 text-primary" /> Link Disability Insurance Company
             </DialogTitle>
-            <DialogDescription>Link an existing P&C firm to this client.</DialogDescription>
+            <DialogDescription>Link an existing disability insurance company to this client.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="flex flex-col space-y-2">
               <label
-                htmlFor="link-firm-select"
+                htmlFor="link-company-select"
                 className="font-semibold text-foreground text-xs uppercase tracking-wider"
               >
-                P&C Firm
+                Insurance Company
               </label>
               <Popover open={linkComboboxOpen} onOpenChange={setLinkComboboxOpen}>
                 <PopoverTrigger asChild>
                   <Button
-                    id="link-firm-select"
+                    id="link-company-select"
                     variant="outline"
                     role="combobox"
                     aria-expanded={linkComboboxOpen}
                     className="w-full justify-between text-left font-normal text-sm"
                   >
-                    {selectedLinkFirmName || "Select P&C firm..."}
+                    {selectedLinkCompanyName || "Select company..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[380px] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search P&C firms..." />
+                    <CommandInput placeholder="Search companies..." />
                     <CommandList>
-                      <CommandEmpty>No P&C firms found.</CommandEmpty>
+                      <CommandEmpty>No companies found.</CommandEmpty>
                       <CommandGroup>
-                        {availableFirmsToLink.map((firm) => (
+                        {availableCompaniesToLink.map((company) => (
                           <CommandItem
-                            key={firm.id}
-                            value={firm.firmName}
+                            key={company.id}
+                            value={company.name}
                             onSelect={() => {
-                              setLinkFirmId(firm.id || "");
+                              setLinkCompanyId(company.id || "");
                               setLinkComboboxOpen(false);
                             }}
                           >
-                            <Check className={cn("mr-2 h-4 w-4 opacity-0", linkFirmId === firm.id && "opacity-100")} />
-                            {firm.firmName}
+                            <Check
+                              className={cn("mr-2 h-4 w-4 opacity-0", linkCompanyId === company.id && "opacity-100")}
+                            />
+                            {company.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -763,7 +756,9 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
             </div>
 
             <Button variant="outline" asChild className="w-full">
-              <Link href={`/dashboard/crm/property-and-casualty/new?clientId=${client.id}`}>Create New P&C Firm</Link>
+              <Link href={`/dashboard/admin/disability-insurance-companies/new?clientId=${client.id}`}>
+                Create New Company
+              </Link>
             </Button>
           </div>
 
@@ -773,7 +768,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                 Cancel
               </Button>
             </DialogClose>
-            <Button onClick={handleLinkFirm} disabled={isLinking || !linkFirmId}>
+            <Button onClick={handleLinkCompany} disabled={isLinking || !linkCompanyId}>
               {isLinking ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -782,7 +777,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4" />
-                  Link Firm
+                  Link Company
                 </>
               )}
             </Button>

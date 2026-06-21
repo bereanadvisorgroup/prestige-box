@@ -170,6 +170,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
 
       if (result.success) {
         toast.success(isEditing ? "Accounting Firm record updated" : "Accounting Firm record created");
+        window.dispatchEvent(new CustomEvent("association-change"));
         router.push("/dashboard/crm/accounting-firms");
         router.refresh();
       } else {
