@@ -20,6 +20,8 @@ import {
   accountingFirms,
   actuarialFirms,
   addresses,
+  assetHistory,
+  assets,
   banks,
   clientPolicies,
   clients,
@@ -78,6 +80,8 @@ async function main() {
     await db.delete(banks);
     await db.delete(propertyAndCasualtyFirms);
     await db.delete(companies);
+    await db.delete(assetHistory);
+    await db.delete(assets);
     await db.delete(clients);
     await db.delete(households);
     await db.delete(people);
@@ -392,6 +396,9 @@ async function main() {
     // 7. Seed Clients
     console.log("💼 Seeding clients...");
     const clientIds: string[] = [];
+    const bankIds: string[] = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
+    const assetData: (typeof assets.$inferInsert)[] = [];
+    const assetHistoryData: (typeof assetHistory.$inferInsert)[] = [];
     const clientData: (typeof clients.$inferInsert)[] = [];
     // Map the first 30 people to clients
     for (let i = 0; i < 30; i++) {
@@ -467,6 +474,28 @@ async function main() {
       const cId = faker.string.uuid();
       clientIds.push(cId);
 
+      const autoAssetId = faker.string.uuid();
+      const currentAutoValue = faker.number.int({ min: 30000, max: 60000 });
+
+      assetData.push({
+        id: autoAssetId,
+        clientId: cId,
+        name: "2023 Tesla Model 3",
+        category: "Real Estate and Fixed Physical Assets",
+        subType: "Vehicles",
+        currentValue: currentAutoValue.toString(),
+        currency: "USD",
+        isAutomated: false,
+        institutionName: "Tesla",
+      });
+
+      assetHistoryData.push({
+        id: faker.string.uuid(),
+        assetId: autoAssetId,
+        value: currentAutoValue.toString(),
+        recordedAt: new Date(),
+      });
+
       clientData.push({
         id: cId,
         personId: personId,
@@ -475,15 +504,21 @@ async function main() {
         paymentAccounts: paymentAccounts,
         familyMembers: familyMembers,
         employments: employments,
-        pcDocuments: [{ name: "Homeowners Declarations", type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        lifeDocuments: [{ name: "Term Life Policy Doc", type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        estateDocuments: [{ name: "Last Will & Testament", type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        pcDocuments: [{ name: "Homeowners Declarations", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        lifeDocuments: [{ name: "Term Life Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        ltcDocuments: [{ name: "Long Term Care Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        estateDocuments: [{ name: "Last Will & Testament", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
         liabilities: [
           {
             id: faker.string.uuid(),
             loanType: "Auto",
-            bankId: faker.string.uuid(),
+            bankId: faker.helpers.arrayElement(bankIds),
+            assetId: autoAssetId,
             currentBalance: faker.number.int({ min: 15000, max: 50000 }),
+            monthlyPayment: faker.number.int({ min: 300, max: 900 }),
+            startDate: faker.date.past({ years: 2 }).toISOString().split("T")[0],
+            endDate: faker.date.future({ years: 3 }).toISOString().split("T")[0],
+            statementPath: faker.internet.url(),
           },
         ],
         mortgages: [
@@ -497,6 +532,11 @@ async function main() {
       });
     }
     await db.insert(clients).values(clientData);
+
+    if (assetData.length > 0) {
+      await db.insert(assets).values(assetData);
+      await db.insert(assetHistory).values(assetHistoryData);
+    }
 
     // 8. Seed Companies
     console.log("🏢 Seeding companies...");
@@ -666,7 +706,7 @@ async function main() {
       }
 
       bankData.push({
-        id: faker.string.uuid(),
+        id: bankIds[i],
         personIds: associatedPersonIds,
         firmName: `${faker.company.name()} Bank`,
         firmAddressId: randomAddressId,
