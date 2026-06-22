@@ -15,6 +15,9 @@ erDiagram
     COMPANIES ||--o{ CLIENTS : "employs/associated"
     CLIENTS ||--o{ CLIENT_POLICIES : "holds"
     LIFE_INSURANCE_COMPANIES ||--o{ CLIENT_POLICIES : "issues"
+    CLIENTS ||--o{ ASSETS : "owns"
+    ADDRESSES ||--o{ ASSETS : "located at"
+    ASSETS ||--o{ ASSET_HISTORY : "tracks value changes in"
     
     USERS {
         uuid uid PK "References auth.users"
@@ -33,6 +36,10 @@ erDiagram
         uuid personId FK
         jsonb employments
         jsonb liabilities
+        jsonb pcDocuments
+        jsonb lifeDocuments
+        jsonb ltcDocuments
+        jsonb estateDocuments
     }
     COMPANIES {
         uuid id PK
@@ -45,6 +52,24 @@ erDiagram
         uuid clientId FK
         string policyName
         numeric premiumAmount
+    }
+    ASSETS {
+        uuid id PK
+        uuid clientId FK
+        string name
+        string category
+        string subType
+        numeric currentValue
+        string currency
+        boolean isAutomated
+        string institutionName
+        uuid addressId FK
+    }
+    ASSET_HISTORY {
+        uuid id PK
+        uuid assetId FK
+        numeric value
+        timestamp recordedAt
     }
 ```
 
@@ -59,11 +84,18 @@ erDiagram
 
 ### `clients`
 - Represents a customer relationship. Every `client` maps to exactly one `person` (`personId`), but a `person` is not necessarily a `client` (e.g., they could be an associate or family member).
-- Stores deep financial data such as employments, liabilities, mortgages, and specialized documents (PC, Life, Estate).
+- Stores deep financial data such as employments, liabilities (loans/mortgages), and specialized documents (PC, Life, LTC, Estate) stored as JSONB arrays.
 
 ### `companies` & `insurance_companies`
 - Separates general companies (employers, owned businesses) from specialized insurance providers (Life, Disability, Long Term Care).
 - Many-to-Many relationships to clients are primarily handled via `uuid` arrays (e.g., `clientIds`).
+
+### `assets`
+- Tracks physical assets owned by clients (e.g., primary residences, investment properties, vehicles, and valuables).
+- Supports manual updates or automated integration (e.g., via financial institution linking). Can optionally link to `addresses` for real estate properties.
+
+### `asset_history`
+- Logs historical value snapshots for client assets. Used to build chronological timelines for net worth tracking and visualization.
 
 ## Drizzle ORM
 

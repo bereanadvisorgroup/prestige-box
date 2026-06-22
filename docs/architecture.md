@@ -61,7 +61,22 @@ Prestige Box employs a dual-tier state management strategy:
    - Used for complex client-side data fetching, pagination, and caching.
    - React Query handles loading states, background refetching, and caching synchronization when navigating between client pages.
 
+## Observability & Logging (Axiom)
+
+Prestige Box integrates **Axiom** for telemetry, performance tracing, and secure application logging.
+- **Request Wrapping**: Next.js configurations (`next.config.mjs`) wrap settings with `withAxiom` to capture server-side runtimes, request paths, and API latencies.
+- **WebVitals Tracking**: Root layouts mount `<AxiomWebVitals />` to capture real user monitoring (RUM) metrics like LCP, FID, CLS, and TTFB.
+- **Client & Server Logging**: Telemetry hooks (`useLogger` from `next-axiom`) are integrated within critical client components (such as `LoginForm` and `ClientSetupForm`) to securely stream application events (successful sign-ins, onboarding completions, and unhandled errors) to Axiom without exposing sensitive details.
+
+## Asset History & Net Worth Visualization
+
+To support advisor insights and client financial planning, the application tracks historical asset values:
+- **Snapshots**: Every time an asset is created or its value is updated, a historical record is automatically appended to `asset_history` via backend Server Actions.
+- **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for each client by merging overlapping asset values on shared dates.
+- **Rendering**: Recharts is used on the client-side to render an interactive, beautiful area chart showing net worth growth and individual asset category distributions over time.
+
 ## Tooling & Quality Assurance
 
 - **Biome**: Chosen over ESLint/Prettier for extremely fast, opinionated formatting and linting.
 - **TypeScript**: Strict typing is enforced across the stack, bridging database schemas (Drizzle) with UI props.
+- **Playwright**: Comprehensive E2E testing suite (`e2e/`) is used to test critical auth flows, responsive layout designs, and client dashboard features across desktop and mobile viewpoints.

@@ -24,6 +24,9 @@ Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesth
 ### 3. Lucide React
 All iconography is sourced exclusively from the `lucide-react` library.
 
+### 4. Recharts
+The responsive charting library used for data visualizations (e.g., net worth graphs). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
+
 ## Strict Data Tables Standard
 
 All Data Tables across the application (`/dashboard/crm`, `/dashboard/finance`, etc.) must strictly adhere to the following UI constraints:
