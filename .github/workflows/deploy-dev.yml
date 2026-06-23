@@ -9,7 +9,7 @@ env:
   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 jobs:
-  database-migration:
+  secret-scan:
     runs-on: ubuntu-latest
     environment: Dev
     steps:
@@ -29,7 +29,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Scan for Leaked Secrets
-        uses: secret-scanner/action@v1
+        uses: secret-scanner/action@0.0.2
         with:
           exclude-files: '.*\.test\.js'
 
