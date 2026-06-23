@@ -90,6 +90,21 @@ erDiagram
 - Separates general companies (employers, owned businesses) from specialized insurance providers (Life, Disability, Long Term Care).
 - Many-to-Many relationships to clients are primarily handled via `uuid` arrays (e.g., `clientIds`).
 
+### `addresses`
+- Tracks physical and mailing addresses associated with people, households, companies, and assets.
+
+### `households`
+- Groups multiple individuals (people) together into households to represent family groups for financial advisory and net worth aggregation.
+
+### `client_policies`
+- Stores individual client policy records for Life, Disability, and Long Term Care insurance, detailing premium amounts, renewal dates, and payment schedules.
+
+### `law_firms`, `accounting_firms`, `actuarial_firms`, `banks`, `property_and_casualty_firms`
+- Represent professional service provider firms associated with both clients and companies. Track contact info and arrays of associated client/company IDs.
+
+### `money_managers`, `record_keepers`
+- Represent specialized financial vendors managing client accounts and policy allocations, connected via client and company reference arrays.
+
 ### `assets`
 - Tracks physical assets owned by clients (e.g., primary residences, investment properties, vehicles, and valuables).
 - Supports manual updates or automated integration (e.g., via financial institution linking). Can optionally link to `addresses` for real estate properties.

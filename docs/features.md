@@ -28,7 +28,17 @@ Reserved for system administrators.
 
 ### 2. CRM Module (`/dashboard/crm`)
 The core relationship management suite.
-- **Client List**: High-level table of managed clients with search, creation, and navigation links.
+
+- **General CRM Directories**:
+  - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
+  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
+  - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
+  - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
+  - **Clients (`/dashboard/crm/clients`)**: Advisor-focused portfolio view of all active clients.
+  - **Companies (`/dashboard/crm/companies`)**: Tracks general corporate entities, employers, and client business associations.
+  - **Policies (`/dashboard/crm/policies`)**: Central registry for all Life, Disability, and Long-Term Care insurance policies, detailing premiums, effective dates, and payment schedules.
+  - **Payments Dashboard (`/dashboard/crm/payments`)**: Tracks expected premium payments, collections, and average payment values by month/year.
+
 - **Client Profile & Contextual Navigation**: Selecting a client dynamically switches the sidebar to a tailored client-centric navigation menu containing:
   - **Overview & Profile (`/dashboard/crm/clients/[id]`)**: Contact details card, personal info (hobbies, sports teams), and interactive Net Worth timeline graph.
   - **Internal Notes (`/dashboard/crm/clients/[id]/internal`)**: Private logging of staff notes and client briefs.
@@ -49,6 +59,11 @@ The core relationship management suite.
     - Long-Term Care (`/[id]/long-term-care`)
     - Money Managers (`/[id]/money-managers`)
     - Record Keepers (`/[id]/record-keepers`)
+
+- **Company Profile & Contextual Navigation**: Selecting a company dynamically switches the sidebar to a tailored company-centric navigation menu containing:
+  - **General Overview (`/dashboard/crm/companies/[id]`)**: Details company info, including EIN, website, phone, situs/nexus records, and associated client list.
+  - **Professional Services**: Link and manage associated service firms specific to that company (Accounting, Actuarial, Banks, Law, Property & Casualty).
+  - **Vendors**: Manage company-linked vendors (Life, Disability, LTC insurance companies, Money Managers, Record Keepers).
 
 ### 3. CRM Pipeline (`/dashboard/crm-pipeline`)
 A visual management tool for tracking sales, onboarding, or policy lifecycles.
