@@ -28,10 +28,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Scan for Leaked Secrets
-        uses: secret-scanner/action@0.0.2
+      - name: Run detect-secrets
+        uses: reviewdog/action-detect-secrets@v1
         with:
-          exclude-files: '.*\.test\.js'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          detect-secret-additional-args: ""
 
       - name: Run Snyk Open Source Vulnerability Scan
         uses: snyk/actions/node@master
