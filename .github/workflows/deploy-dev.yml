@@ -1,0 +1,41 @@
+name: CI/CD Development Environment
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+jobs:
+  database-migration:
+    runs-on: ubuntu-latest
+    environment: Dev
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Scan for Leaked Secrets
+        uses: secret-scanner/action@v1
+        with:
+          exclude-files: '.*\.test\.js'
+
+      - name: Run Snyk Open Source Vulnerability Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
