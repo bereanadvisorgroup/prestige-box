@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
@@ -35,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
                 createdAt: userData.createdAt,
               });
+            } else {
+              supabase.auth.signOut().then(() => {
+                setUser(null);
+                setProfile(null);
+                toast.error("Access Denied. Please contact an administrator.");
+                router.replace("/auth/v1/login");
+              });
             }
             setLoading(false);
           });
@@ -65,6 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
               createdAt: userData.createdAt,
             });
+          } else {
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+            toast.error("Access Denied. Please contact an administrator.");
+            router.replace("/auth/v1/login");
           }
         } catch (error) {
           console.error("Error fetching user profile in AuthProvider:", error);

@@ -62,28 +62,21 @@ export function LoginForm() {
         phone: userData.phone || "",
         photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
       };
+      setProfile(profile);
+      log.info("User logged in", { userId: user.id, email: user.email, role: profile.role });
+      toast.success("Login successful!");
+      const defaultRoute =
+        profile.role === "admin" || profile.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+      router.push(defaultRoute);
     } else {
-      // Auto-create user profile as a client
-      const fullName = user.user_metadata?.full_name || "";
-      profile = {
-        uid: user.id,
-        email: user.email ?? null,
-        role: "client",
-        firstName: user.user_metadata?.firstName || fullName.split(" ")[0] || "",
-        lastName: user.user_metadata?.lastName || fullName.split(" ").slice(1).join(" ") || "",
-        phone: user.phone || "",
-        photoURL: user.user_metadata?.avatar_url || "",
-        createdAt: new Date().toISOString(),
-      };
-      await supabase.from("users").insert(profile);
+      // User is not in public.users - deny access
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      log.warn("Unauthorized login attempt", { userId: user.id, email: user.email });
+      toast.error("Access Denied. Your account has not been created by an administrator.");
+      router.push("/auth/v1/login");
     }
-
-    setProfile(profile);
-    log.info("User logged in", { userId: user.id, email: user.email, role: profile.role });
-    toast.success("Login successful!");
-    const defaultRoute =
-      profile.role === "admin" || profile.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
-    router.push(defaultRoute);
   };
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
