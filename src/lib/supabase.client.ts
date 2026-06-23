@@ -14,7 +14,52 @@ function getClient() {
     );
   }
 
-  client = createClient(supabaseUrl, supabaseAnonKey);
+  client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: {
+        getItem: (key) => {
+          if (typeof document !== "undefined") {
+            const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
+            if (cookie) {
+              try {
+                return decodeURIComponent(cookie.split("=")[1]);
+              } catch (e) {
+                console.error("Error decoding auth cookie:", e);
+              }
+            }
+          }
+          if (typeof window !== "undefined") {
+            return localStorage.getItem(key);
+          }
+          return null;
+        },
+        setItem: (key, value) => {
+          if (typeof document !== "undefined") {
+            // biome-ignore lint/suspicious/noDocumentCookie: Shared with server via cookies
+            document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
+          }
+          if (typeof window !== "undefined") {
+            localStorage.setItem(key, value);
+          }
+        },
+        removeItem: (key) => {
+          if (typeof document !== "undefined") {
+            // biome-ignore lint/suspicious/noDocumentCookie: Clear cookie on sign out
+            document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          }
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(key);
+          }
+        },
+      },
+      experimental: {
+        passkey: true,
+      },
+    },
+  });
   return client;
 }
 

@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
+
 import { toast } from "sonner";
 
 import { supabase } from "@/lib/supabase.client";
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
                 setProfile(null);
                 toast.error("Access Denied. Please contact an administrator.");
-                router.replace("/auth/v1/login");
+                router.replace("/login");
               });
             }
             setLoading(false);
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setProfile(null);
             toast.error("Access Denied. Please contact an administrator.");
-            router.replace("/auth/v1/login");
+            router.replace("/login");
           }
         } catch (error) {
           console.error("Error fetching user profile in AuthProvider:", error);
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, setProfile, setLoading]);
+  }, [setUser, setProfile, setLoading, router]);
 
   // Client-side route guarding
   useEffect(() => {
@@ -104,11 +105,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pathname.startsWith("/auth") && !pathname.includes("/reset-password") && !pathname.includes("/client-setup");
 
     if (isDashboardRoute && !user) {
-      router.replace("/auth/v1/login");
+      router.replace("/login");
+    } else if (isDashboardRoute && user) {
+      // Verify AAL level client-side
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
+          router.replace("/auth/mfa-verify");
+        }
+      });
     } else if (isAuthRoute && user) {
-      const defaultRoute =
-        profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
-      router.replace(defaultRoute);
+      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
+          router.replace("/auth/mfa-verify");
+        } else {
+          const defaultRoute =
+            profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+          router.replace(defaultRoute);
+        }
+      });
     } else if (user && profile) {
       const role = profile.role;
       const isAdminOrAdvisor = role === "admin" || role === "advisor";

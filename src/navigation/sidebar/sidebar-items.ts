@@ -71,16 +71,6 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "People",
-        url: "/dashboard/crm/people",
-        icon: Users,
-      },
-      {
-        title: "Addresses",
-        url: "/dashboard/crm/addresses",
-        icon: MapPin,
-      },
-      {
         title: "Households",
         url: "/dashboard/crm/households",
         icon: Home,
@@ -94,6 +84,16 @@ export const sidebarItems: NavGroup[] = [
         title: "Companies",
         url: "/dashboard/crm/companies",
         icon: Building2,
+      },
+      {
+        title: "People",
+        url: "/dashboard/crm/people",
+        icon: Users,
+      },
+      {
+        title: "Addresses",
+        url: "/dashboard/crm/addresses",
+        icon: MapPin,
       },
       {
         title: "Policies",

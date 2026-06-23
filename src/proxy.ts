@@ -2,47 +2,98 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
-  // Check if trying to access a protected route (dashboard)
-  if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    // Note: In a real app with Supabase, we would verify the session cookie here.
-    // For now, allow navigation but log the access request.
-    // To strictly enforce without valid Supabase setup right this second, we could
-    // either mock it or just allow it. The implementation plan said to protect it
-    // but without an active auth provider set up (like Supabase cookies or next-auth)
-    // we'll simulate the check using a dummy cookie for demonstration, or leave unprotected
-    // and rely on client-side protect loops. Let's add the basic structure.
+  const pathname = request.nextUrl.pathname;
 
-    const _isAuthenticated = request.cookies.has("auth-session"); // Sample check
+  // Intercept all requests under /dashboard/* and /api/*
+  const isDashboardRoute = pathname.startsWith("/dashboard");
+  const isApiRoute = pathname.startsWith("/api");
 
-    /*
-        // Uncomment this when authentication cookie flow is ready
-        if (!isAuthenticated) {
-          return NextResponse.redirect(new URL('/auth/v1/login', request.url));
-        }
-        */
+  // Allow auth callbacks or public api routes if they are needed
+  const isPublicApiRoute = pathname.startsWith("/api/auth") || pathname.includes("/public");
+
+  if (!isDashboardRoute && (!isApiRoute || isPublicApiRoute)) {
+    return NextResponse.next();
   }
 
-  // Prevent authenticated users from going back to login if already logged in
-  if (request.nextUrl.pathname.startsWith("/auth/v1/login")) {
-    const _isAuthenticated = request.cookies.has("auth-session");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const projectRef = supabaseUrl ? new URL(supabaseUrl).hostname.split(".")[0] : "";
+  const cookieKey = projectRef ? `sb-${projectRef}-auth-token` : "";
 
-    // if (isAuthenticated) {
-    //  return NextResponse.redirect(new URL('/dashboard/default', request.url));
-    // }
+  let sessionCookieValue = "";
+  if (cookieKey) {
+    sessionCookieValue = request.cookies.get(cookieKey)?.value || "";
+  }
+
+  if (!sessionCookieValue) {
+    // Try to find any supabase auth token cookie in case projectRef doesn't match perfectly
+    const allCookies = request.cookies.getAll();
+    const sbCookie = allCookies.find((c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token"));
+    if (sbCookie) {
+      sessionCookieValue = sbCookie.value;
+    }
+  }
+
+  if (!sessionCookieValue) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  let sessionData: { access_token?: string } | null = null;
+  try {
+    sessionData = JSON.parse(decodeURIComponent(sessionCookieValue));
+  } catch {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  const accessToken = sessionData?.access_token;
+  if (!accessToken) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Base64url decode JWT payload to read roles and authenticator level (aal)
+  let payload: { exp?: number; aal?: string; role?: string } | null = null;
+  try {
+    const payloadPart = accessToken.split(".")[1];
+    if (!payloadPart) throw new Error("Invalid JWT token format");
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = atob(base64);
+    payload = JSON.parse(jsonPayload);
+  } catch {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Check expiration
+  const exp = payload?.exp;
+  if (!exp || Date.now() >= exp * 1000) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Token expired" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Check AAL
+  const aal = payload?.aal || "aal1";
+  if (aal === "aal1") {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "MFA required" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/auth/mfa-verify", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/api/:path*"],
 };
