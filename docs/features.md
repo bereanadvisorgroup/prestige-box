@@ -4,7 +4,10 @@ This document outlines the primary features and modules available within the Pre
 
 ```mermaid
 flowchart LR
-    Login[Login Page] --> Dashboard{Dashboard / Main}
+    Login[Login Page] --> MFA{MFA Enrolled?}
+    MFA -->|Yes| MFAVerify[MFA Verification]
+    MFA -->|No| Dashboard{Dashboard / Main}
+    MFAVerify --> Dashboard
     Dashboard --> Admin[Admin Panel]
     Dashboard --> CRM[CRM Module]
     Dashboard --> Pipeline[Pipeline Module]
@@ -81,12 +84,17 @@ Dynamic reporting and analytical views.
 - **Relationship Graph**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
 - **Benefit Payments**: Detailed breakdowns of expected or historical benefit payouts from managed policies.
 
-### 6. User Profile (`/dashboard/profile`)
-Personal settings page for the currently authenticated user.
-- Photo and demographic updates.
-- Account security settings.
+### 6. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
+Personal configuration pages for the authenticated user.
+- **Profile (`/dashboard/profile`)**: Updates for photos, name, and demographic info.
+- **Security Settings (`/dashboard/settings`)**: View active authentication factors, enroll in Two-Factor Authentication (TOTP), and register native WebAuthn Passkeys for secure passwordless login.
 
-### 7. Client Onboarding Setup Flow (`/auth/v1/client-setup`)
+### 7. Multi-Factor Authentication (MFA) Flows
+Strict authentication gates using Supabase MFA.
+- **Enrollment (`/auth/mfa-enroll`)**: Screen for generating and enrolling a TOTP factor. Displays a dynamic QR code and manual setup key, demanding a 6-digit confirmation code from the authenticator app to activate the factor.
+- **Verification (`/auth/mfa-verify`)**: Mandatory challenge page for users with verified factors who are at the single-factor level (`aal1`), requiring a 6-digit TOTP code to elevate their session to `aal2`.
+
+### 8. Client Onboarding Setup Flow (`/auth/v1/client-setup`)
 Secure client-specific onboarding pathway.
 - Custom setup page to welcome new clients and verify identity.
 - Enforces strict application password requirements (length, special characters).

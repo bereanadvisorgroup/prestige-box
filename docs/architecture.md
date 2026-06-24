@@ -8,8 +8,10 @@ Prestige Box is built using a modern, serverless architecture that separates the
 
 ```mermaid
 graph TD
-    Client[Browser / Client] -->|HTTP Requests| NextJS[Next.js App Router]
-    NextJS -->|Middleware| SupabaseAuth[Supabase Auth]
+    Client[Browser / Client] -->|HTTP Requests| Middleware{Next.js Middleware}
+    Middleware -->|No Session| Login[Login Page]
+    Middleware -->|aal == aal1 & MFA Enrolled| MFAVerify[MFA Verification Page]
+    Middleware -->|aal == aal2 / No MFA| NextJS[Next.js App Router]
     NextJS -->|Server Components / Actions| Drizzle[Drizzle ORM]
     Drizzle -->|Postgres Connection| SupabaseDB[(Supabase PostgreSQL)]
     Client -->|React Query| API[Next.js API Routes / Server Actions]
@@ -18,10 +20,12 @@ graph TD
     subgraph Frontend
     Client
     Zustand[Zustand Store]
+    Login
+    MFAVerify
     end
     
     subgraph Backend Services
-    SupabaseAuth
+    SupabaseAuth[Supabase Auth]
     SupabaseDB
     end
 ```
@@ -34,17 +38,19 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 - **Server Actions**: Mutations (e.g., submitting forms, updating database records) are executed via Next.js Server Actions rather than traditional API routes, streamlining the developer experience.
 
 ### Route Structure
-- `src/app/(external)`: Public-facing pages (e.g., Login, Password Reset).
-- `src/app/(main)`: Authenticated routes containing the core application dashboard and features.
+- `src/app/(external)`: Root landing page.
+- `src/app/(main)`: Authentication flow routes (Login, Password Reset, MFA enrollment/verification) and the core application dashboard and features.
 
 ## Backend: Supabase
 
 **Supabase** acts as the primary Backend-as-a-Service (BaaS) for Prestige Box.
 
-### Authentication
-Authentication is handled entirely by Supabase Auth.
-- Next.js **Middleware** intercepts requests to ensure unauthenticated users cannot access `(main)` routes and are redirected to the login page.
+### Authentication & Multi-Factor Authentication (MFA)
+Authentication and MFA are handled by Supabase Auth.
+- Next.js **Middleware** (`src/proxy.ts`) intercepts requests to `/dashboard` and `/api` to ensure security. It parses the Supabase authentication cookie (`sb-*-auth-token`), decodes the JWT, and inspects the `aal` (Authenticator Assurance Level) claim.
+- **Strict MFA Gate**: If the user is unauthenticated, they are redirected to `/login`. If the session is active but the current level is `aal1` (single factor authenticated) and the user has a verified MFA factor enrolled, the middleware redirects them to the `/auth/mfa-verify` page to enter their TOTP token. Access to dashboard routes and protected APIs is only granted once `aal2` (multi-factor authenticated) is achieved.
 - Sessions are managed via cookies, allowing server components to safely read the user's authentication state on initial load.
+- Users can enroll, verify, and view their authentication factors (TOTP and native WebAuthn Passkeys) on the Security Settings page (`/dashboard/settings`).
 
 ### Database Connection
 Instead of using the Supabase Javascript Client to execute database queries directly against the PostgREST API, Prestige Box connects to the Supabase Postgres database directly using **Drizzle ORM** via standard connection pooling.

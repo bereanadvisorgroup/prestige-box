@@ -9,6 +9,7 @@ The database is built on **PostgreSQL** hosted by Supabase. Schema definitions a
 ```mermaid
 erDiagram
     USERS ||--o{ CLIENTS : "is managed by (role)"
+    USERS ||--o{ FINANCIAL_DATA : "has security restricted"
     PEOPLE ||--o{ CLIENTS : "is a"
     PEOPLE ||--o{ HOUSEHOLDS : "belongs to"
     ADDRESSES ||--o{ PEOPLE : "lives at"
@@ -71,6 +72,12 @@ erDiagram
         numeric value
         timestamp recordedAt
     }
+    FINANCIAL_DATA {
+        uuid id PK
+        uuid userId FK
+        numeric amount
+        string description
+    }
 ```
 
 ## Core Entities
@@ -112,6 +119,9 @@ erDiagram
 ### `asset_history`
 - Logs historical value snapshots for client assets. Used to build chronological timelines for net worth tracking and visualization.
 
+### `financial_data`
+- Template/example financial data records for users, strictly protected by AAL2 RLS policies.
+
 ## Drizzle ORM
 
 The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used to generate SQL migrations from this file.
@@ -129,6 +139,7 @@ The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used t
 
 All database access from the client side requires explicit Row Level Security policies.
 
+- **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets`, `asset_history`, and `financial_data`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
 - **Supabase Dashboards:** When testing queries in the Supabase Dashboard SQL Editor, RLS is bypassed. Always test via the client application or a dedicated authenticated service role.
 - **Subquery Cache Optimization:** For performance, RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
 - **Service Role:** The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.

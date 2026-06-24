@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { Bell, LogOut, User } from "lucide-react";
+import { Bell, LogOut, Settings, User } from "lucide-react";
 import { useLogger } from "next-axiom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,6 +74,10 @@ export function AccountSwitcher() {
           <DropdownMenuItem onClick={() => router.push("/dashboard/profile")} className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/dashboard/settings")} className="cursor-pointer">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Bell className="mr-2 h-4 w-4" />

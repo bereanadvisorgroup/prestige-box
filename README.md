@@ -4,10 +4,11 @@ Customer Relationship Management (CRM) for prestigious Financial Advisors.
 
 Prestige Box is a comprehensive, modern web application designed to manage complex client relationships, financial tracking, sales pipelines, and specialized policies (Life, Disability, Long Term Care) for high-end financial advisory firms.
 
-## Tech Stack
+## Tech Stack & Features
 
 - **Framework**: Next.js 16 (App Router) & React 19
 - **Backend & Auth**: Supabase (PostgreSQL)
+- **Strict MFA & Passkeys**: Multi-Factor Authentication (TOTP) and WebAuthn Passkeys integrated via Supabase Auth, strictly enforced at the Next.js Middleware/Proxy layer and PostgreSQL Row Level Security (RLS) policies for financial data.
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand (Client) & TanStack React Query (Server)
