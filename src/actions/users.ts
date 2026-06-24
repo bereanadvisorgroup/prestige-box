@@ -15,10 +15,28 @@ export async function createUser(data: {
   origin: string;
 }) {
   try {
-    // 1. Create User in Supabase Auth via Admin API
-    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+    const cleanEmail = data.email.trim().toLowerCase();
+
+    // 1. Pre-insert the profile in public.users with a temporary random UUID
+    // This allows the handle_new_user BEFORE INSERT trigger to pass when the auth account is created.
+    const tempUid = crypto.randomUUID();
+    const tempProfile = {
+      uid: tempUid,
+      email: cleanEmail,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { error: preDbError } = await supabaseServer.from("users").insert(tempProfile);
+    if (preDbError) throw new Error("Failed to pre-create user profile: " + preDbError.message);
+
+    // 2. Create User in Supabase Auth via Admin API
+    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10) + "A1!";
     const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
-      email: data.email,
+      email: cleanEmail,
       password: data.password || randomPassword,
       email_confirm: true,
       user_metadata: {
@@ -31,32 +49,32 @@ export async function createUser(data: {
       },
     });
 
-    if (authError) throw new Error(authError.message);
-    if (!authRecord.user) throw new Error("Failed to create user auth record.");
+    if (authError) {
+      // Clean up the temp profile if auth creation fails
+      await supabaseServer.from("users").delete().eq("email", cleanEmail);
+      throw new Error(authError.message);
+    }
 
-    // 2. Create User Profile Document in public.users table
+    if (!authRecord.user) {
+      await supabaseServer.from("users").delete().eq("email", cleanEmail);
+      throw new Error("Failed to create user auth record.");
+    }
+
     const userProfile = {
       uid: authRecord.user.id,
-      email: data.email,
+      email: cleanEmail,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: tempProfile.createdAt,
     };
-
-    const { error: dbError } = await supabaseServer.from("users").upsert(userProfile);
-
-    if (dbError) {
-      console.error("[createUser] Warning: Database profile insert failed, trigger may handle this:", dbError.message);
-    }
 
     // 3. Send initial password reset email or client setup email
     try {
       if (data.role === "client") {
-        await sendClientSetupEmail(authRecord.user.id, data.email, data.origin);
+        await sendClientSetupEmail(authRecord.user.id, cleanEmail, data.origin);
       } else {
-        await resetUserPassword(authRecord.user.id, data.email, data.origin);
+        await resetUserPassword(authRecord.user.id, cleanEmail, data.origin);
       }
     } catch (emailErr) {
       console.error("[createUser] Warning: Failed to send initial welcome email:", emailErr);

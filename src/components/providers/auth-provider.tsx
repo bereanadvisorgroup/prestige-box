@@ -107,22 +107,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isDashboardRoute && !user) {
       router.replace("/login");
     } else if (isDashboardRoute && user) {
-      // Verify AAL level client-side
-      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
-        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
-          router.replace("/auth/mfa-verify");
-        }
-      });
+      // Verify AAL level client-side, bypassing if user has a registered Passkey
+      Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.passkey.list()]).then(
+        ([{ data: aalData, error: aalError }, { data: passkeys, error: passkeyError }]) => {
+          const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
+          if (hasPasskey) return; // Passkey satisfies secure login factor
+
+          if (!aalError && aalData && aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+            router.replace("/auth/mfa-verify");
+          }
+        },
+      );
     } else if (isAuthRoute && user) {
-      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
-        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
-          router.replace("/auth/mfa-verify");
-        } else {
+      Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.passkey.list()]).then(
+        ([{ data: aalData, error: aalError }, { data: passkeys, error: passkeyError }]) => {
+          const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
           const defaultRoute =
             profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
-          router.replace(defaultRoute);
-        }
-      });
+
+          if (hasPasskey) {
+            router.replace(defaultRoute);
+            return;
+          }
+
+          if (!aalError && aalData && aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+            router.replace("/auth/mfa-verify");
+          } else {
+            router.replace(defaultRoute);
+          }
+        },
+      );
     } else if (user && profile) {
       const role = profile.role;
       const isAdminOrAdvisor = role === "admin" || role === "advisor";

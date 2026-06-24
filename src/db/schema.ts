@@ -273,3 +273,11 @@ export const assetHistory = pgTable("asset_history", {
   recordedAt: timestamp("recordedAt", { withTimezone: true }).defaultNow(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
 });
+
+// 18. Key-Value Settings Table
+export const keyvals = pgTable("keyvals", {
+  id: text("id").primaryKey(),
+  value: text("value").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});

@@ -137,6 +137,16 @@ async function main() {
         const userId = faker.string.uuid();
         console.log(`Creating default mock user: ${u.email}`);
 
+        // Pre-insert into public.users first so the trigger handle_new_user succeeds
+        await db.insert(users).values({
+          uid: userId,
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          role: u.role,
+          photoURL: faker.image.avatar(),
+        });
+
         await db.insert(authUsers).values({
           id: userId,
           email: u.email,
@@ -151,9 +161,6 @@ async function main() {
             role: u.role,
           },
         });
-
-        // The insert trigger handles public.users creation. Let's make sure photoURL is set.
-        await db.update(users).set({ photoURL: faker.image.avatar() }).where(eq(users.uid, userId));
       }
     }
 
@@ -504,10 +511,38 @@ async function main() {
         paymentAccounts: paymentAccounts,
         familyMembers: familyMembers,
         employments: employments,
-        pcDocuments: [{ name: "Homeowners Declarations", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        lifeDocuments: [{ name: "Term Life Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        ltcDocuments: [{ name: "Long Term Care Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        estateDocuments: [{ name: "Last Will & Testament", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        pcDocuments: [
+          {
+            name: "Homeowners Declarations",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        lifeDocuments: [
+          {
+            name: "Term Life Policy Doc",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        ltcDocuments: [
+          {
+            name: "Long Term Care Policy Doc",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        estateDocuments: [
+          {
+            name: "Last Will & Testament",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
         liabilities: [
           {
             id: faker.string.uuid(),
