@@ -22,10 +22,11 @@ export async function getBusinessContact() {
       phone: phoneObj?.value || "941-799-3300",
     };
   } catch (error) {
-    console.error("Failed to fetch business contact details:", error);
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error) || String(error);
+    console.error("Failed to fetch business contact details:", errorMsg, error);
     return {
       success: false,
-      error: (error as Error).message,
+      error: errorMsg,
       email: "info@prestigeadvisors360.com",
       phone: "941-799-3300",
     };

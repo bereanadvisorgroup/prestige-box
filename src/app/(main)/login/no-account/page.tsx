@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 
 export const revalidate = 0; // Dynamic rendering
 
-export default async function NoAccountPage() {
+export default async function NoAccountPage({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
+  const { email: queryEmail } = await searchParams;
   const result = await getBusinessContact();
   const email = result.success ? result.email : "info@prestigeadvisors360.com";
   const phone = result.success ? result.phone : "941-799-3300";
@@ -23,7 +24,15 @@ export default async function NoAccountPage() {
           </div>
           <h1 className="font-extrabold text-2xl tracking-tight">Access Denied</h1>
           <p className="mt-2 text-muted-foreground text-sm">
-            We couldn't find a whitelisted portal account matching your email address.
+            {queryEmail ? (
+              <>
+                We could not find an account for email address:
+                <br />
+                <span className="font-semibold text-foreground">{queryEmail}</span>
+              </>
+            ) : (
+              "We could not find a portal account matching your email address."
+            )}
           </p>
         </div>
 
@@ -52,10 +61,6 @@ export default async function NoAccountPage() {
               Back to Login
             </Link>
           </Button>
-        </div>
-
-        <div className="mt-6 text-center text-muted-foreground text-xs">
-          Automatic registration is disabled for safety and security.
         </div>
       </div>
     </div>

@@ -34,33 +34,61 @@ export default function MFAEnrollPage() {
       return;
     }
 
-    // Call Supabase enroll API
-    supabase.auth.mfa
-      .enroll({
-        factorType: "totp",
-        issuer: "Prestige Box",
-        friendlyName: user.email || "Prestige Box User",
-      })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Enrollment error:", error);
-          toast.error("Failed to generate MFA setup keys. Try again.");
-          setIsEnrolling(false);
+    // Call Supabase listFactors first
+    supabase.auth.mfa.listFactors().then(async ({ data, error }) => {
+      if (error) {
+        console.error("List factors error:", error);
+      }
+
+      if (data?.all) {
+        const verifiedFactors = data.all.filter((f) => f.status === "verified" && f.factor_type === "totp");
+        if (verifiedFactors.length > 0) {
+          // Already has verified MFA, redirect to dashboard
+          const defaultRoute =
+            profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
+          router.replace(defaultRoute);
           return;
         }
 
-        setFactorId(data.id);
-        if (data.totp) {
-          let qrCodeSrc = data.totp.qr_code;
-          if (qrCodeSrc?.startsWith("<svg")) {
-            qrCodeSrc = `data:image/svg+xml;utf8,${encodeURIComponent(qrCodeSrc)}`;
+        // Unenroll any existing unverified totp factors to prevent duplicate friendlyName errors
+        const unverifiedFactors = data.all.filter((f) => f.status === "unverified" && f.factor_type === "totp");
+        for (const factor of unverifiedFactors) {
+          try {
+            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+          } catch (e) {
+            console.error("Failed to unenroll unverified factor:", e);
           }
-          setQrCode(qrCodeSrc);
-          setSecret(data.totp.secret);
         }
-        setIsEnrolling(false);
-      });
-  }, [user, isAuthLoading, router]);
+      }
+
+      // Call Supabase enroll API
+      supabase.auth.mfa
+        .enroll({
+          factorType: "totp",
+          issuer: "Prestige Box",
+          friendlyName: user.email || "Prestige Box User",
+        })
+        .then(({ data: enrollData, error: enrollError }) => {
+          if (enrollError) {
+            console.error("Enrollment error:", enrollError);
+            toast.error("Failed to generate MFA setup keys. Try again.");
+            setIsEnrolling(false);
+            return;
+          }
+
+          setFactorId(enrollData.id);
+          if (enrollData.totp) {
+            let qrCodeSrc = enrollData.totp.qr_code;
+            if (qrCodeSrc?.startsWith("<svg")) {
+              qrCodeSrc = `data:image/svg+xml;utf8,${encodeURIComponent(qrCodeSrc)}`;
+            }
+            setQrCode(qrCodeSrc);
+            setSecret(enrollData.totp.secret);
+          }
+          setIsEnrolling(false);
+        });
+    });
+  }, [user, profile, isAuthLoading, router]);
 
   const copyToClipboard = () => {
     if (!secret) return;

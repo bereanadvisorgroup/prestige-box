@@ -18,9 +18,6 @@ BEGIN
       role = COALESCE(NEW.raw_user_meta_data->>'role', role, 'client'),
       "updatedAt" = now()
     WHERE email = NEW.email;
-  ELSE
-    -- Block signup if email is not in public.users
-    RAISE EXCEPTION 'You do not have an account, please contact our office for assistance.';
   END IF;
   RETURN NEW;
 END;
@@ -31,6 +28,9 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_new_user();
+
+-- Drop users_uid_fkey foreign key constraint to prevent registration deadlock
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_uid_fkey;
 
 -- Create keyvals table
 CREATE TABLE IF NOT EXISTS "keyvals" (

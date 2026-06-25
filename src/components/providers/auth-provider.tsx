@@ -4,8 +4,7 @@ import { type ReactNode, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
-import { toast } from "sonner";
-
+import { deleteUser } from "@/actions/users";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -38,11 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 createdAt: userData.createdAt,
               });
             } else {
+              deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
               supabase.auth.signOut().then(() => {
                 setUser(null);
                 setProfile(null);
-                toast.error("Access Denied. Please contact an administrator.");
-                router.replace("/login");
+                router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
               });
             }
             setLoading(false);
@@ -75,11 +74,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               createdAt: userData.createdAt,
             });
           } else {
+            deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
             await supabase.auth.signOut();
             setUser(null);
             setProfile(null);
-            toast.error("Access Denied. Please contact an administrator.");
-            router.replace("/login");
+            router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
           }
         } catch (error) {
           console.error("Error fetching user profile in AuthProvider:", error);
@@ -102,7 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const isDashboardRoute = pathname.startsWith("/dashboard");
     const isAuthRoute =
-      pathname.startsWith("/auth") && !pathname.includes("/reset-password") && !pathname.includes("/client-setup");
+      pathname.startsWith("/auth") &&
+      !pathname.includes("/reset-password") &&
+      !pathname.includes("/client-setup") &&
+      // The MFA enroll/verify pages manage their own redirects. Excluding them here
+      // prevents the guard's else-branch from bouncing a user who is mid-enrollment
+      // (nextLevel is still "aal1" until a factor is verified) back to the dashboard.
+      !pathname.includes("/mfa-");
 
     if (isDashboardRoute && !user) {
       router.replace("/login");
@@ -113,8 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
           if (hasPasskey) return; // Passkey satisfies secure login factor
 
-          if (!aalError && aalData && aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+          if (aalError || !aalData) return;
+
+          if (aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+            // Has a verified factor but hasn't satisfied it this session: verify.
             router.replace("/auth/mfa-verify");
+          } else if (aalData.nextLevel === "aal1") {
+            // No passkey and no verified factor (e.g. OAuth sign-in): force MFA enrollment.
+            router.replace("/auth/mfa-enroll");
           }
         },
       );
