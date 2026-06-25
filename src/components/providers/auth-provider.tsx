@@ -23,9 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("users")
           .select("*")
           .eq("uid", user.id)
-          .single()
+          .maybeSingle()
           .then(({ data: userData, error }) => {
-            if (userData && !error) {
+            if (userData) {
               setProfile({
                 uid: user.id,
                 email: user.email ?? null,
@@ -36,13 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
                 createdAt: userData.createdAt,
               });
-            } else {
+            } else if (!error) {
+              // Confirmed: this authenticated user has no whitelisted profile row.
               deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
               supabase.auth.signOut().then(() => {
                 setUser(null);
                 setProfile(null);
                 router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
               });
+            } else {
+              // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
+              // Do NOT sign out or delete — that would bounce a valid session to /login.
+              console.error("Profile fetch error (non-fatal), keeping session:", error);
             }
             setLoading(false);
           });
@@ -60,9 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         try {
-          const { data: userData, error } = await supabase.from("users").select("*").eq("uid", user.id).single();
+          const { data: userData, error } = await supabase.from("users").select("*").eq("uid", user.id).maybeSingle();
 
-          if (userData && !error) {
+          if (userData) {
             setProfile({
               uid: user.id,
               email: user.email ?? null,
@@ -73,12 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
               createdAt: userData.createdAt,
             });
-          } else {
+          } else if (!error) {
+            // Confirmed: this authenticated user has no whitelisted profile row.
             deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
             await supabase.auth.signOut();
             setUser(null);
             setProfile(null);
             router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
+          } else {
+            // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
+            // Do NOT sign out or delete — that would bounce a valid session to /login.
+            console.error("Profile fetch error (non-fatal), keeping session:", error);
           }
         } catch (error) {
           console.error("Error fetching user profile in AuthProvider:", error);
@@ -107,7 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The MFA enroll/verify pages manage their own redirects. Excluding them here
       // prevents the guard's else-branch from bouncing a user who is mid-enrollment
       // (nextLevel is still "aal1" until a factor is verified) back to the dashboard.
-      !pathname.includes("/mfa-");
+      !pathname.includes("/mfa-") &&
+      // The OAuth callback resolves the role-based destination itself; excluding it
+      // avoids racing with this guard during the post-OAuth redirect.
+      !pathname.includes("/callback");
 
     if (isDashboardRoute && !user) {
       router.replace("/login");

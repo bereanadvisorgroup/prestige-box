@@ -219,7 +219,11 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard/default`,
+          redirectTo: `${window.location.origin}/auth/callback`,
+          // Azure/Microsoft does not return the user's email unless it is explicitly
+          // requested. Without it, Supabase cannot match the sign-in to the whitelisted
+          // public.users row and the login silently bounces back to /login.
+          scopes: provider === "azure" ? "openid profile email" : undefined,
           queryParams: provider === "google" ? { prompt: "select_account" } : undefined,
         },
       });
