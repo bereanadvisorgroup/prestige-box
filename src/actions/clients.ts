@@ -7,6 +7,8 @@ import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Client, ClientSchema } from "@/types/crm";
 
+import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
+
 const TABLE = "clients";
 
 export async function getClients() {
@@ -106,6 +108,10 @@ export async function createClient(data: Partial<Client>) {
       summary: "Client created",
     });
 
+    // Seed auto-generated tasks now that this person is a client.
+    await syncBirthdayForPerson(inserted.personId);
+    await syncAnniversaryForClient(inserted.id);
+
     revalidatePath("/dashboard/crm/clients");
 
     return { success: true, id: inserted.id };
@@ -138,6 +144,10 @@ export async function updateClient(id: string, data: Partial<Client>) {
       fields: CLIENT_PROFILE_FIELDS,
     });
 
+    // Re-sync auto tasks: advisor reassignment, marriageDate edits, etc.
+    if (current?.personId) await syncBirthdayForPerson(current.personId);
+    await syncAnniversaryForClient(id);
+
     revalidatePath("/dashboard/crm/clients");
     revalidatePath(`/dashboard/crm/clients/${id}`);
 
@@ -150,9 +160,16 @@ export async function updateClient(id: string, data: Partial<Client>) {
 
 export async function deleteClient(id: string) {
   try {
+    // Capture personId before deletion so we can clean up the birthday auto task.
+    const { data: existing } = await supabaseServer.from(TABLE).select("personId").eq("id", id).single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    // Remove auto tasks anchored to this client.
+    if (existing?.personId) await removeAutoTask("birthday", existing.personId);
+    await removeAutoTask("anniversary", id);
 
     await recordEvent({
       entityType: "client",

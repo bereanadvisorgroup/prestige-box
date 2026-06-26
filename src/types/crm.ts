@@ -272,6 +272,7 @@ export const FamilyMemberSchema = z.object({
   personId: z.string(),
   relationship: FamilyRelationType,
   parentId: z.string().optional(),
+  marriageDate: z.string().optional(), // YYYY-MM-DD; meaningful on the Spouse entry, drives anniversary tasks
 });
 
 export const EmploymentSchema = z.object({
@@ -317,6 +318,7 @@ export const MortgageSchema = z.object({
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
+  advisorId: z.string().optional().nullable(),
   referredById: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
@@ -376,7 +378,7 @@ export const CompanyValuationHistorySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company"]);
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task"]);
 export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
 
 export const ChangeHistorySchema = z.object({
@@ -646,3 +648,90 @@ export interface UpcomingPayment {
   dueDate: string;
   paymentSchedule: PaymentSchedule;
 }
+
+// --- Task Management ---
+
+export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "Complete"]);
+export const TaskCategorySchema = z.enum(["Other", "Birthday", "Wedding Anniversary", "Policy Renewal"]);
+export const TaskPrioritySchema = z.enum(["Low", "Medium", "High"]);
+export const TaskSourceSchema = z.enum(["manual", "auto"]);
+export const TaskSourceTypeSchema = z.enum(["birthday", "anniversary", "renewal"]);
+export const TaskAssociationEntitySchema = z.enum(["client", "company"]);
+
+export const TaskStatuses = TaskStatusSchema.options;
+export const TaskCategories = TaskCategorySchema.options;
+export const TaskPriorities = TaskPrioritySchema.options;
+
+export type TaskStatus = z.infer<typeof TaskStatusSchema>;
+export type TaskCategory = z.infer<typeof TaskCategorySchema>;
+export type TaskPriority = z.infer<typeof TaskPrioritySchema>;
+export type TaskSource = z.infer<typeof TaskSourceSchema>;
+export type TaskSourceType = z.infer<typeof TaskSourceTypeSchema>;
+export type TaskAssociationEntity = z.infer<typeof TaskAssociationEntitySchema>;
+
+export const TaskAttachmentSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  url: z.string(),
+  type: z.string(),
+  uploadedAt: z.string().optional(),
+  uploadedBy: z.string().optional(),
+});
+export type TaskAttachment = z.infer<typeof TaskAttachmentSchema>;
+
+export const TaskAssociationSchema = z.object({
+  entityType: TaskAssociationEntitySchema,
+  entityId: z.string(),
+});
+export type TaskAssociation = z.infer<typeof TaskAssociationSchema>;
+
+export const TaskSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Task name is required"),
+  status: TaskStatusSchema.default("New"),
+  category: TaskCategorySchema.default("Other"),
+  priority: TaskPrioritySchema.default("Low"),
+  description: z.string().nullable().optional(),
+  attachments: z.array(TaskAttachmentSchema).default([]),
+  dueDate: z.string().min(1, "Due date is required"), // ISO date-time
+  completeDate: z.string().nullable().optional(), // system-managed
+  source: TaskSourceSchema.default("manual"),
+  sourceType: TaskSourceTypeSchema.nullable().optional(),
+  sourceRefId: z.string().nullable().optional(),
+  createdBy: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Task = z.infer<typeof TaskSchema>;
+
+// Task enriched with its assignees and associations for list/board views.
+export interface TaskAssigneeRef {
+  userId: string;
+  name: string;
+  role?: string;
+}
+export interface TaskAssociationRef {
+  entityType: TaskAssociationEntity;
+  entityId: string;
+  name: string;
+}
+export type TaskWithRelations = Task & {
+  assignees: TaskAssigneeRef[];
+  associations: TaskAssociationRef[];
+};
+
+// Form payload: assignees & associations are edited inline and persisted to junction tables.
+export const TaskFormSchema = TaskSchema.omit({
+  completeDate: true,
+  source: true,
+  sourceType: true,
+  sourceRefId: true,
+  createdBy: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  assigneeIds: z.array(z.string()).min(1, "At least one assignee is required"),
+  associations: z.array(TaskAssociationSchema).default([]),
+});
+export type TaskFormValues = z.infer<typeof TaskFormSchema>;
+export type TaskFormInput = z.input<typeof TaskFormSchema>;

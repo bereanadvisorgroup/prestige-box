@@ -1,22 +1,13 @@
 import Link from "next/link";
 
-import {
-  ArrowUpRight,
-  Briefcase,
-  Calendar,
-  DollarSign,
-  FileText,
-  Home,
-  ShieldCheck,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Briefcase, Calendar, FileText, Home, ShieldCheck, TrendingUp, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getHouseholds } from "@/actions/households";
 import { getPaymentsForMonth } from "@/actions/payments";
 import { getPeople } from "@/actions/people";
 import { getClientPolicies } from "@/actions/policies";
+import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,15 +34,6 @@ export default async function CRMOverviewPage() {
       : 0,
     totalPolicies: policiesResult.success ? policiesResult.policies?.length || 0 : 0,
   };
-
-  const navCards = [
-    { title: "Manage People", href: "/dashboard/crm/people", icon: Users, color: "bg-blue-500" },
-    { title: "Addresses", href: "/dashboard/crm/addresses", icon: Home, color: "bg-green-500" },
-    { title: "Households", href: "/dashboard/crm/households", icon: Home, color: "bg-purple-500" },
-    { title: "Client Portfolios", href: "/dashboard/crm/clients", icon: Briefcase, color: "bg-amber-500" },
-    { title: "Policy Manager", href: "/dashboard/crm/policies", icon: FileText, color: "bg-indigo-500" },
-    { title: "Payments Dashboard", href: "/dashboard/crm/payments", icon: DollarSign, color: "bg-emerald-500" },
-  ];
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 md:px-6">
@@ -131,28 +113,7 @@ export default async function CRMOverviewPage() {
             <ShieldCheck className="h-5 w-5 text-primary" />
             Quick Navigation
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {navCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <Link key={card.href} href={card.href}>
-                  <Card className="group cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`${card.color} rounded-xl p-3 text-white shadow-sm`}>
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <span className="font-bold">{card.title}</span>
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+          <DashboardTasksCard />
         </div>
 
         <div>

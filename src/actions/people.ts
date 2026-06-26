@@ -7,6 +7,8 @@ import { recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
+import { syncBirthdayForPerson } from "./task-sync";
+
 const TABLE = "people";
 
 export async function getPeople() {
@@ -85,6 +87,9 @@ export async function updatePerson(id: string, data: Partial<Person>) {
         });
       }
     }
+
+    // Keep the auto-generated birthday task in sync with this person's birthDate.
+    await syncBirthdayForPerson(id);
 
     revalidatePath("/dashboard/crm/people");
     revalidatePath(`/dashboard/crm/people/${id}`);

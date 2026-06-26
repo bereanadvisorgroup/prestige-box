@@ -9,6 +9,8 @@ import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
+import { removeAutoTask, syncRenewalForPolicy } from "./task-sync";
+
 const TABLE = "client_policies";
 
 /** Derives the history subtype from which insurance carrier a policy references. */
@@ -153,6 +155,9 @@ export async function createClientPolicy(data: Partial<ClientPolicy>) {
       summary: `${subType} policy added for client`,
     });
 
+    // Create the auto-generated renewal task for this policy.
+    await syncRenewalForPolicy(inserted.id);
+
     revalidatePath("/dashboard/crm/policies");
 
     return { success: true, id: inserted.id };
@@ -186,6 +191,9 @@ export async function updateClientPolicy(id: string, data: Partial<ClientPolicy>
       });
     }
 
+    // Keep the renewal task aligned with the (possibly changed) renewalDate.
+    await syncRenewalForPolicy(id);
+
     revalidatePath("/dashboard/crm/policies");
     revalidatePath(`/dashboard/crm/policies/${id}`);
 
@@ -217,6 +225,9 @@ export async function deleteClientPolicy(id: string) {
         summary: `${subType} policy removed from client`,
       });
     }
+
+    // Remove the policy's auto-generated renewal task.
+    await removeAutoTask("renewal", id);
 
     revalidatePath("/dashboard/crm/policies");
 

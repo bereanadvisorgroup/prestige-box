@@ -101,6 +101,7 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().defaultRandom(),
   personId: uuid("personId").notNull(),
+  advisorId: uuid("advisorId"), // users.uid of the advisor/admin who services this client
   referredById: uuid("referredById"), // Self-referencing ID for referrals
   hobbies: text("hobbies").array().default(sql`'{}'::text[]`),
   favoriteSportsTeams: text("favoriteSportsTeams").array().default(sql`'{}'::text[]`),
@@ -328,4 +329,44 @@ export const companyValuationHistory = pgTable("company_valuation_history", {
   valuationDate: timestamp("valuationDate", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 21. Tasks Table (task management for admins & advisors)
+export const tasks = pgTable("tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  status: text("status").notNull().default("New"), // New | In Process | Waiting Input | Complete
+  category: text("category").notNull().default("Other"), // Other | Birthday | Wedding Anniversary | Policy Renewal
+  priority: text("priority").notNull().default("Low"), // Low | Medium | High
+  description: text("description"), // Tiptap HTML
+  attachments: jsonb("attachments").default(sql`'[]'::jsonb`),
+  dueDate: timestamp("dueDate", { withTimezone: true }).notNull(),
+  completeDate: timestamp("completeDate", { withTimezone: true }), // set on Complete, cleared otherwise
+  source: text("source").notNull().default("manual"), // manual | auto
+  sourceType: text("sourceType"), // birthday | anniversary | renewal (auto tasks only)
+  sourceRefId: text("sourceRefId"), // anchor id (personId / familyMember id / policyId)
+  createdBy: uuid("createdBy"), // users.uid of creator (null for system/auto)
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 22. Task Assignees (many-to-many: tasks ↔ admin/advisor users)
+export const taskAssignees = pgTable("task_assignees", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  taskId: uuid("taskId")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  userId: uuid("userId").notNull(), // users.uid
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 23. Task Associations (many-to-many: tasks ↔ clients/companies)
+export const taskAssociations = pgTable("task_associations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  taskId: uuid("taskId")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  entityType: text("entityType").notNull(), // client | company
+  entityId: uuid("entityId").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
 });

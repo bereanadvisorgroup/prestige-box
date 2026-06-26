@@ -19,6 +19,7 @@ import {
   Home,
   Landmark,
   LayoutDashboard,
+  ListTodo,
   ReceiptText,
   Scale,
   Shield,
@@ -67,6 +68,11 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         title: "Overview",
         url: `/dashboard/crm/clients/${clientId}/internal`,
         icon: LayoutDashboard,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/clients/${clientId}/internal/tasks`,
+        icon: ListTodo,
       },
       {
         title: "History",
@@ -204,6 +210,11 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         title: "Overview",
         url: `/dashboard/crm/companies/${companyId}/internal`,
         icon: LayoutDashboard,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/companies/${companyId}/internal/tasks`,
+        icon: ListTodo,
       },
       {
         title: "History",
