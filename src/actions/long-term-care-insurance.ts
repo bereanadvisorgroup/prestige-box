@@ -195,3 +195,33 @@ export async function unlinkClientFromLongTermCareInsurance(companyId: string, c
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToLongTermCareInsurance(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLongTermCareInsurance(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "LongTermCareInsurance not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateLongTermCareInsurance(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromLongTermCareInsurance(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLongTermCareInsurance(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "LongTermCareInsurance not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateLongTermCareInsurance(firmId, { companyIds: currentIds.filter((id: string) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

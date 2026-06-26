@@ -36,7 +36,7 @@ export default async function BanksPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <AssociationCardList
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             title="Associated Banks"
             description="Banks this client is associated with"
             items={associatedBanks.map((f) => ({
@@ -54,7 +54,7 @@ export default async function BanksPage({ params }: Props) {
             onUnlinkAction={unlinkClientFromBank}
             actionNode={
               <LinkFirmDialog
-                clientId={client.id || ""}
+                entityId={client.id || ""}
                 firmTypeLabel="Bank"
                 availableFirms={availableFirms}
                 newFirmLink={`/dashboard/crm/banks/new?clientId=${client.id}`}

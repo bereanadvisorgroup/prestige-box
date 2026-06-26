@@ -224,3 +224,33 @@ export async function deleteMoneyManager(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToMoneyManager(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getMoneyManager(firmId);
+    if (!firmRes.success || !firmRes.moneyManager) return { success: false, error: "MoneyManager not found" };
+
+    const currentIds = firmRes.moneyManager.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateMoneyManager(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToMoneyManager] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromMoneyManager(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getMoneyManager(firmId);
+    if (!firmRes.success || !firmRes.moneyManager) return { success: false, error: "MoneyManager not found" };
+
+    const currentIds = firmRes.moneyManager.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateMoneyManager(firmId, { companyIds: currentIds.filter((id: string) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromMoneyManager] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

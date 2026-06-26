@@ -1,17 +1,17 @@
 import { notFound } from "next/navigation";
 
-import { Building2, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 import { getCompany } from "@/actions/companies";
-import { getMoneyManagers } from "@/actions/money-managers";
+import { getMoneyManagers, linkCompanyToMoneyManager, unlinkCompanyFromMoneyManager } from "@/actions/money-managers";
 import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
+import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function MoneyManagersPage({ params }: Props) {
+export default async function MoneyManagerPage({ params }: Props) {
   const { id } = await params;
   const companyResult = await getCompany(id);
 
@@ -20,32 +20,41 @@ export default async function MoneyManagersPage({ params }: Props) {
   }
 
   const company = companyResult.company;
-  const mmRes = await getMoneyManagers();
-  const associatedMM = ((mmRes.success && mmRes.moneyManagers) || []).filter((m) =>
-    m.companyIds?.includes(company.id || ""),
-  );
+  const res = await getMoneyManagers();
+  const allFirms = (res.success && res.moneyManagers) || [];
+
+  const associatedFirms = allFirms.filter((f: any) => f.companyIds?.includes(company.id || ""));
+
+  const availableFirms = allFirms
+    .filter((f: any) => !f.companyIds?.includes(company.id || ""))
+    .map((f: any) => ({ id: f.id || "", name: f.name || f.firmName }));
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
-      {associatedMM.length > 0 ? (
-        <AssociationCardList
-          title="Associated Money Managers"
-          description="Money managers this company is associated with"
-          items={associatedMM.map((m) => ({
-            id: m.id || "",
-            name: m.firmName,
-            website: m.website,
-            phone: m.phone,
-          }))}
-          linkPrefix="/dashboard/admin/money-managers"
-          icon={TrendingUp}
-        />
-      ) : (
-        <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm italic">No associated money managers found.</p>
-        </Card>
-      )}
+      <AssociationCardList
+        entityId={company.id || ""}
+        title="Associated Money Managers"
+        description="Money managers this company is associated with"
+        items={associatedFirms.map((f: any) => ({
+          id: f.id || "",
+          name: f.name || f.firmName,
+          website: f.website || f.websiteUrl,
+          phone: f.phone,
+          isLinked: false,
+        }))}
+        linkPrefix="/dashboard/admin/money-managers"
+        icon={TrendingUp}
+        onUnlinkAction={unlinkCompanyFromMoneyManager}
+        actionNode={
+          <LinkFirmDialog
+            entityId={company.id || ""}
+            firmTypeLabel="Money Manager"
+            availableFirms={availableFirms}
+            newFirmLink={`/dashboard/admin/money-managers/new?companyId=${company.id}`}
+            onLinkAction={linkCompanyToMoneyManager}
+          />
+        }
+      />
     </div>
   );
 }

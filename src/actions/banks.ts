@@ -224,3 +224,33 @@ export async function unlinkClientFromBank(firmId: string, clientId: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToBank(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateBank(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromBank(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateBank(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

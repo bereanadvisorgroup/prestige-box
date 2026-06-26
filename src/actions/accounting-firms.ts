@@ -232,3 +232,33 @@ export async function unlinkClientFromAccountingFirm(firmId: string, clientId: s
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToAccountingFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getAccountingFirm(firmId);
+    if (!firmRes.success || !firmRes.accountingFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.accountingFirm.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateAccountingFirm(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToAccountingFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromAccountingFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getAccountingFirm(firmId);
+    if (!firmRes.success || !firmRes.accountingFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.accountingFirm.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateAccountingFirm(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromAccountingFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

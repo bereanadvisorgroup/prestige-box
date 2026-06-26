@@ -228,3 +228,33 @@ export async function unlinkClientFromActuarialFirm(firmId: string, clientId: st
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToActuarialFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getActuarialFirm(firmId);
+    if (!firmRes.success || !firmRes.actuarialFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.actuarialFirm.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateActuarialFirm(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToActuarialFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromActuarialFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getActuarialFirm(firmId);
+    if (!firmRes.success || !firmRes.actuarialFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.actuarialFirm.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateActuarialFirm(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromActuarialFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

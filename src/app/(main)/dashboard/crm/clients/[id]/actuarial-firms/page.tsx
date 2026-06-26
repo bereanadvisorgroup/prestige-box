@@ -32,7 +32,7 @@ export default async function ActuarialFirmsPage({ params }: Props) {
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <AssociationCardList
-        clientId={client.id || ""}
+        entityId={client.id || ""}
         title="Associated Actuarial Firms"
         description="Actuarial firms this client is associated with"
         items={associatedActuarialFirms.map((f) => ({
@@ -47,7 +47,7 @@ export default async function ActuarialFirmsPage({ params }: Props) {
         onUnlinkAction={unlinkClientFromActuarialFirm}
         actionNode={
           <LinkFirmDialog
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             firmTypeLabel="Actuarial Firm"
             availableFirms={availableFirms}
             newFirmLink={`/dashboard/crm/actuarial-firms/new?clientId=${client.id}`}

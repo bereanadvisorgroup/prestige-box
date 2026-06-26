@@ -1,12 +1,12 @@
 import { AlertCircle } from "lucide-react";
 
-import { getCompanies } from "@/actions/companies";
+import { getCompanies, getCompaniesLinkStatus } from "@/actions/companies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { CompaniesTable } from "./_components/companies-table";
 
 export default async function CompaniesPage() {
-  const result = await getCompanies();
+  const [result, linkResult] = await Promise.all([getCompanies(), getCompaniesLinkStatus()]);
 
   if (!result.success) {
     return (
@@ -27,9 +27,11 @@ export default async function CompaniesPage() {
   }
 
   const rawCompanies = result.companies || [];
+  const linkedCompanyIds = linkResult.success ? linkResult.linkedCompanyIds || new Set() : new Set();
+
   const companies = rawCompanies.map((company) => ({
     ...company,
-    isLinked: company.clientIds && company.clientIds.length > 0,
+    isLinked: linkedCompanyIds.has(company.id),
   }));
 
   return (

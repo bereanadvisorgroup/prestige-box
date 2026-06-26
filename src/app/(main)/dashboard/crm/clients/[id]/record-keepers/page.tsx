@@ -32,7 +32,7 @@ export default async function RecordKeepersPage({ params }: Props) {
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <AssociationCardList
-        clientId={client.id || ""}
+        entityId={client.id || ""}
         title="Associated Record Keepers"
         description="Record keepers this client is associated with"
         items={associatedRecordKeepers.map((rk) => ({
@@ -47,7 +47,7 @@ export default async function RecordKeepersPage({ params }: Props) {
         onUnlinkAction={unlinkClientFromRecordKeeper}
         actionNode={
           <LinkFirmDialog
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             firmTypeLabel="Record Keeper"
             availableFirms={availableFirms}
             newFirmLink={`/dashboard/admin/record-keepers/new?clientId=${client.id}`}

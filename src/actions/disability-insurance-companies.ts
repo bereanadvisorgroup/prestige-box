@@ -195,3 +195,35 @@ export async function unlinkClientFromDisabilityInsuranceCompany(companyId: stri
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToDisabilityInsuranceCompany(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getDisabilityInsuranceCompany(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "DisabilityInsuranceCompany not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateDisabilityInsuranceCompany(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromDisabilityInsuranceCompany(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getDisabilityInsuranceCompany(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "DisabilityInsuranceCompany not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateDisabilityInsuranceCompany(firmId, {
+      companyIds: currentIds.filter((id: string) => id !== companyId),
+    });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

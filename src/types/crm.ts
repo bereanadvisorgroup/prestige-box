@@ -211,12 +211,60 @@ export const CompanySchema = z.object({
   addressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional(),
-  clientIds: z.array(z.string()).default([]), // A company can be associated with multiple clients, and a client with multiple companies
   situsRecords: z.array(SitusSchema).default([]),
   nexusRecords: z.array(NexusSchema).default([]),
+  paymentAccounts: z.array(PaymentAccountSchema).default([]),
+  lifeDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  disabilityDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  ltcDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
+
+export const CompanyOwnerSchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  personId: z.string(),
+  ownershipPercentage: z.number().min(0, "Ownership must be at least 0%").max(100, "Ownership cannot exceed 100%"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type CompanyOwner = z.infer<typeof CompanyOwnerSchema>;
 
 export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild", "Great Grandchild"]);
 export const FamilyMemberSchema = z.object({
@@ -285,7 +333,13 @@ export const ClientSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const AssetSubTypeSchema = z.enum(["Primary Residence", "Investment Properties", "Vehicles", "Valuables"]);
+export const AssetSubTypeSchema = z.enum([
+  "Primary Residence",
+  "Investment Properties",
+  "Vehicles",
+  "Valuables",
+  "Business Ownership",
+]);
 
 export const AssetSchema = z.object({
   id: z.string().optional(),
@@ -298,6 +352,9 @@ export const AssetSchema = z.object({
   isAutomated: z.boolean().default(false),
   institutionName: z.string().default("Manual"),
   addressId: z.string().optional().nullable(),
+  isCompanyAsset: z.boolean().optional(),
+  companyId: z.string().optional().nullable(),
+  isLinked: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -308,6 +365,15 @@ export const AssetHistorySchema = z.object({
   value: z.number().min(0, "Value must be positive"),
   recordedAt: z.string().optional(),
   createdAt: z.string().optional(),
+});
+
+export const CompanyValuationHistorySchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  value: z.number().min(0, "Value must be positive"),
+  valuationDate: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export const PaymentSchedule = z.enum(["monthly", "quarterly", "semi-annually", "annually"]);
@@ -437,6 +503,7 @@ export type Situs = z.infer<typeof SitusSchema>;
 export type Nexus = z.infer<typeof NexusSchema>;
 export type Client = z.infer<typeof ClientSchema>;
 export type Company = z.infer<typeof CompanySchema>;
+export type CompanyValuationHistory = z.infer<typeof CompanyValuationHistorySchema>;
 export type LawFirm = z.infer<typeof LawFirmSchema>;
 export type AccountingFirm = z.infer<typeof AccountingFirmSchema>;
 export type ActuarialFirm = z.infer<typeof ActuarialFirmSchema>;
@@ -468,7 +535,30 @@ export const DisabilityInsuranceCompanyFormSchema = DisabilityInsuranceCompanySc
 });
 export const LongTermCareInsuranceFormSchema = LongTermCareInsuranceSchema.omit({ createdAt: true, updatedAt: true });
 export const ClientFormSchema = ClientSchema.omit({ createdAt: true, updatedAt: true });
-export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true });
+export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true })
+  .extend({
+    owners: z
+      .array(
+        z.object({
+          personId: z.string().min(1, "Person is required"),
+          ownershipPercentage: z
+            .number()
+            .min(0, "Ownership must be at least 0%")
+            .max(100, "Ownership cannot exceed 100%"),
+        }),
+      )
+      .default([]),
+  })
+  .refine(
+    (data) => {
+      const sum = (data.owners || []).reduce((acc, curr) => acc + curr.ownershipPercentage, 0);
+      return sum <= 100;
+    },
+    {
+      message: "Total ownership percentage cannot exceed 100%",
+      path: ["owners"],
+    },
+  );
 export const LawFirmFormSchema = LawFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const AccountingFirmFormSchema = AccountingFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const ActuarialFirmFormSchema = ActuarialFirmSchema.omit({ createdAt: true, updatedAt: true });

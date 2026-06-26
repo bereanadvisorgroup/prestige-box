@@ -7,11 +7,12 @@ import { ArrowUpRight, Building2, ExternalLink, Pencil, Phone, Trash2 } from "lu
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatCurrency, formatPhoneNumber } from "@/lib/utils";
 import type { Company } from "@/types/crm";
 
 export type EnrichedCompany = Company & {
   isLinked?: boolean;
+  owners?: { id: string }[];
 };
 
 export const columns = (onDelete: (company: Company) => void): ColumnDef<EnrichedCompany>[] => [
@@ -69,13 +70,21 @@ export const columns = (onDelete: (company: Company) => void): ColumnDef<Enriche
     },
   },
   {
-    id: "clientsCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Associated Clients" />,
-    cell: ({ row }: { row: Row<Company> }) => {
-      const count = row.original.clientIds?.length || 0;
+    accessorKey: "estimatedValue",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Estimated Value" />,
+    cell: ({ row }: { row: Row<EnrichedCompany> }) => {
+      const value = row.original.estimatedValue;
+      return <span className="font-semibold text-sm">{formatCurrency(Number(value) || 0)}</span>;
+    },
+  },
+  {
+    id: "ownersCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Owners" />,
+    cell: ({ row }: { row: Row<EnrichedCompany> }) => {
+      const count = row.original.owners?.length || 0;
       return (
         <span className="text-sm">
-          {count} {count === 1 ? "Client" : "Clients"}
+          {count} {count === 1 ? "Owner" : "Owners"}
         </span>
       );
     },

@@ -26,6 +26,7 @@ import {
   clientPolicies,
   clients,
   companies,
+  companyOwners,
   disabilityInsuranceCompanies,
   households,
   lawFirms,
@@ -79,6 +80,7 @@ async function main() {
     await db.delete(actuarialFirms);
     await db.delete(banks);
     await db.delete(propertyAndCasualtyFirms);
+    await db.delete(companyOwners);
     await db.delete(companies);
     await db.delete(assetHistory);
     await db.delete(assets);
@@ -576,25 +578,62 @@ async function main() {
     // 8. Seed Companies
     console.log("🏢 Seeding companies...");
     const companyData: (typeof companies.$inferInsert)[] = [];
+    const companyOwnersData: (typeof companyOwners.$inferInsert)[] = [];
+
     for (let i = 0; i < 10; i++) {
       const randomAddressId = faker.helpers.arrayElement(addressIds);
-      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 1, max: 4 }));
-      const companyClientIds = randomClients.map((c) => c.id ?? "");
+      const companyId = faker.string.uuid();
 
       companyData.push({
-        id: faker.string.uuid(),
+        id: companyId,
         name: faker.company.name(),
         dba: `${faker.company.name()} DBA`,
         ein: faker.helpers.fromRegExp(/[0-9]{2}-[0-9]{7}/),
         addressId: randomAddressId,
         website: faker.internet.url(),
         phone: faker.phone.number(),
-        clientIds: companyClientIds,
-        situsRecords: [{ state: faker.location.state({ abbreviated: true }), description: "Primary operational site" }],
-        nexusRecords: [{ state: faker.location.state({ abbreviated: true }), type: "Sales Tax Nexus" }],
+        situsRecords: [
+          {
+            jurisdiction: faker.location.state({ abbreviated: true }),
+            type: "Physical",
+            effectiveDate: new Date().toISOString().split("T")[0],
+          },
+        ],
+        nexusRecords: [
+          {
+            jurisdiction: faker.location.state({ abbreviated: true }),
+            type: "Sales Tax",
+          },
+        ],
       });
+
+      // Seed 1-3 owners for each company
+      const randomPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 3 }));
+      let remainingPercent = 100.0;
+      for (let j = 0; j < randomPeopleIds.length; j++) {
+        const isLast = j === randomPeopleIds.length - 1;
+        let percent = 0;
+        if (isLast) {
+          percent = remainingPercent;
+        } else {
+          const min = 10;
+          const max = remainingPercent - (randomPeopleIds.length - 1 - j) * 10;
+          percent = max > min ? faker.number.float({ min, max, fractionDigits: 2 }) : min;
+        }
+        remainingPercent -= percent;
+
+        companyOwnersData.push({
+          id: faker.string.uuid(),
+          companyId,
+          personId: randomPeopleIds[j],
+          ownershipPercentage: percent.toFixed(2),
+        });
+      }
     }
     await db.insert(companies).values(companyData);
+    if (companyOwnersData.length > 0) {
+      await db.insert(companyOwners).values(companyOwnersData);
+    }
 
     // 9. Seed Client Policies
     console.log("📄 Seeding client policies...");

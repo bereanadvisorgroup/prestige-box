@@ -5,15 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Briefcase, Building2, Fingerprint, Globe, MapPin, Phone, Plus, Trash2, Users } from "lucide-react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Briefcase, Building2, Fingerprint, Globe, MapPin, Phone, Plus, Trash2, TrendingUp, Users } from "lucide-react";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
-import { getClients } from "@/actions/clients";
 import { createCompany, updateCompany } from "@/actions/companies";
+import { getPeople } from "@/actions/people";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
@@ -21,9 +20,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import {
   type Address,
-  type Client,
   type Company,
   type CompanyFormInput,
   CompanyFormSchema,
@@ -34,15 +33,16 @@ import {
 
 interface CompanyFormProps {
   company?: Company;
+  initialOwners?: any[];
 }
 
-export function CompanyForm({ company }: CompanyFormProps) {
+export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [availableClients, setAvailableClients] = useState<(Client & { person: Person | null })[]>([]);
+  const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
 
-  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [personSearchQuery, setPersonSearchQuery] = useState("");
 
   const form = useForm<CompanyFormInput, any, CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
@@ -55,9 +55,22 @@ export function CompanyForm({ company }: CompanyFormProps) {
           addressId: company.addressId,
           website: company.website,
           phone: company.phone,
-          clientIds: company.clientIds,
-          situsRecords: company.situsRecords,
-          nexusRecords: company.nexusRecords,
+          owners: initialOwners.map((o) => ({
+            personId: o.personId,
+            ownershipPercentage: Number(o.ownershipPercentage) || 0,
+          })),
+          situsRecords: (Array.isArray(company.situsRecords) ? company.situsRecords : []).map((s: any) => ({
+            id: s.id,
+            jurisdiction: s.jurisdiction || s.state || "DE",
+            type: s.type || "Physical",
+            effectiveDate: s.effectiveDate || new Date().toISOString().split("T")[0],
+          })),
+          nexusRecords: (Array.isArray(company.nexusRecords) ? company.nexusRecords : []).map((n: any) => ({
+            id: n.id,
+            jurisdiction: n.jurisdiction || n.state || "DE",
+            type: n.type === "Sales Tax Nexus" ? "Sales Tax" : n.type || "Sales Tax",
+          })),
+          estimatedValue: company.estimatedValue ? Number(company.estimatedValue) : 0,
         }
       : {
           name: "",
@@ -66,9 +79,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
           addressId: "",
           website: "",
           phone: "",
-          clientIds: [],
+          owners: [],
           situsRecords: [],
           nexusRecords: [],
+          estimatedValue: 0,
         },
   });
 
@@ -90,11 +104,20 @@ export function CompanyForm({ company }: CompanyFormProps) {
     name: "nexusRecords",
   });
 
+  const {
+    fields: ownerFields,
+    append: appendOwner,
+    remove: removeOwner,
+  } = useFieldArray({
+    control: form.control,
+    name: "owners",
+  });
+
   useEffect(() => {
     async function fetchData() {
-      const [clientsResult, addressesResult] = await Promise.all([getClients(), getAddresses()]);
-      if (clientsResult.success && clientsResult.clients) {
-        setAvailableClients(clientsResult.clients);
+      const [peopleResult, addressesResult] = await Promise.all([getPeople(), getAddresses()]);
+      if (peopleResult.success && peopleResult.people) {
+        setAvailablePeople(peopleResult.people);
       }
       if (addressesResult.success && addressesResult.addresses) {
         setAvailableAddresses(addressesResult.addresses);
@@ -103,28 +126,24 @@ export function CompanyForm({ company }: CompanyFormProps) {
     fetchData();
   }, []);
 
-  const watchedClientIds = form.watch("clientIds") || [];
+  const watchedOwners =
+    useWatch({
+      control: form.control,
+      name: "owners",
+    }) || [];
+  const totalPercentage = useMemo(() => {
+    return watchedOwners.reduce((sum, owner) => sum + (Number(owner.ownershipPercentage) || 0), 0);
+  }, [watchedOwners]);
+  const watchedPersonIds = watchedOwners.map((o) => o.personId);
 
-  const filteredClients = useMemo(() => {
-    const base = availableClients.filter((client) => !watchedClientIds.includes(client.id!));
-    if (!clientSearchQuery) return base;
-    return base.filter((c) => {
-      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
-      return name.toLowerCase().includes(clientSearchQuery.toLowerCase());
+  const filteredPeople = useMemo(() => {
+    const base = availablePeople.filter((p) => !watchedPersonIds.includes(p.id!));
+    if (!personSearchQuery) return base;
+    return base.filter((p) => {
+      const name = `${p.firstName || ""} ${p.lastName || ""}`;
+      return name.toLowerCase().includes(personSearchQuery.toLowerCase());
     });
-  }, [availableClients, clientSearchQuery, watchedClientIds]);
-
-  const handleToggleClient = (clientId: string) => {
-    const current = form.getValues("clientIds") || [];
-    if (current.includes(clientId)) {
-      form.setValue(
-        "clientIds",
-        current.filter((id) => id !== clientId),
-      );
-    } else {
-      form.setValue("clientIds", [...current, clientId]);
-    }
-  };
+  }, [availablePeople, personSearchQuery, watchedPersonIds]);
 
   async function onSubmit(values: CompanyFormValues) {
     try {
@@ -228,7 +247,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
                 control={form.control}
                 name="ein"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Fingerprint className="h-4 w-4" />
                       EIN / Federal Tax ID
@@ -237,6 +256,31 @@ export function CompanyForm({ company }: CompanyFormProps) {
                       <Input placeholder="12-3456789" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormDescription>Format: XX-XXXXXXX</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="estimatedValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Current Estimated Value
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                        value={field.value ?? 0}
+                      />
+                    </FormControl>
+                    <FormDescription>Estimated valuation of the company.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -467,67 +511,113 @@ export function CompanyForm({ company }: CompanyFormProps) {
             </div>
 
             <div className="space-y-4 border-t pt-4">
-              <h3 className="flex items-center gap-2 font-medium text-sm">
-                <Users className="h-4 w-4 text-primary" />
-                Associated Clients
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-medium text-sm">
+                  <Users className="h-4 w-4 text-primary" />
+                  Company Owners
+                </h3>
+                <span
+                  className={cn(
+                    "rounded-full border px-2.5 py-0.5 font-semibold text-xs shadow-sm transition-all duration-300",
+                    totalPercentage > 100
+                      ? "animate-pulse border-destructive/20 bg-destructive/10 text-destructive"
+                      : totalPercentage === 100
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "border-muted-foreground/20 bg-muted text-muted-foreground",
+                  )}
+                >
+                  Total Ownership: {totalPercentage.toFixed(2)}% / 100%
+                </span>
+              </div>
 
               <div className="space-y-2">
                 <Combobox
                   onValueChange={(val) => {
                     if (typeof val === "string") {
-                      handleToggleClient(val);
-                      setClientSearchQuery("");
+                      appendOwner({ personId: val, ownershipPercentage: 0 });
+                      setPersonSearchQuery("");
                     }
                   }}
-                  inputValue={clientSearchQuery}
-                  onInputValueChange={setClientSearchQuery}
+                  inputValue={personSearchQuery}
+                  onInputValueChange={setPersonSearchQuery}
                 >
-                  <ComboboxInput placeholder="Search to link clients..." />
+                  <ComboboxInput placeholder="Search to add owner..." />
                   <ComboboxContent>
                     <ComboboxList>
-                      {filteredClients.map((client) => {
-                        const person = (client as { person?: { firstName: string; lastName: string } }).person;
-                        if (!person) return null;
-                        return (
-                          <ComboboxItem
-                            key={client.id}
-                            value={client.id!}
-                            label={`${person.firstName} ${person.lastName}`}
-                          >
-                            {person.firstName} {person.lastName}
-                          </ComboboxItem>
-                        );
-                      })}
+                      {filteredPeople.map((person) => (
+                        <ComboboxItem
+                          key={person.id}
+                          value={person.id!}
+                          label={`${person.firstName} ${person.lastName}`}
+                        >
+                          {person.firstName} {person.lastName}
+                        </ComboboxItem>
+                      ))}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>
+                {(form.formState.errors.owners?.message || form.formState.errors.owners?.root?.message) && (
+                  <p className="mt-1 font-semibold text-destructive text-xs">
+                    {(form.formState.errors.owners.message || form.formState.errors.owners.root?.message) as string}
+                  </p>
+                )}
               </div>
 
-              <div className="mt-4 flex min-h-[40px] flex-wrap gap-2 rounded-md border bg-muted/20 p-2">
-                {(form.watch("clientIds") || []).length === 0 && (
-                  <p className="p-1 text-muted-foreground text-xs italic">No clients linked yet.</p>
-                )}
-                {(form.watch("clientIds") || []).map((clientId) => {
-                  const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
+              <div className="space-y-4">
+                {ownerFields.map((field, index) => {
+                  const person = availablePeople.find((p) => p.id === field.personId);
+                  const name = person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
                   return (
-                    <Badge
-                      key={clientId}
-                      variant="secondary"
-                      className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
+                    <div
+                      key={field.id}
+                      className="relative grid grid-cols-[2fr_1fr_auto] items-end gap-4 rounded-md border bg-muted/10 p-4"
                     >
-                      {person ? `${person.firstName} ${person.lastName}` : "Unknown Client"}
-                      <button
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-medium text-muted-foreground text-xs">Owner Name</span>
+                        <div className="flex h-10 items-center rounded-md border bg-background px-3 py-2 text-sm">
+                          {name}
+                        </div>
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name={`owners.${index}.ownershipPercentage`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Ownership Percentage (%)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                placeholder="e.g. 50"
+                                {...formField}
+                                onChange={(e) => formField.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button
                         type="button"
-                        onClick={() => handleToggleClient(clientId)}
-                        className="ml-1 transition-colors hover:text-destructive"
+                        variant="ghost"
+                        size="icon"
+                        className="mb-0.5 self-end text-muted-foreground hover:text-destructive"
+                        onClick={() => removeOwner(index)}
                       >
-                        ×
-                      </button>
-                    </Badge>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   );
                 })}
+                {ownerFields.length === 0 && (
+                  <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
+                    No owners added.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -535,7 +625,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
               <Button variant="outline" type="button" onClick={() => router.back()} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="font-bold">
+              <Button type="submit" disabled={isLoading || totalPercentage > 100} className="font-bold">
                 {isLoading ? "Saving..." : company ? "Update Company" : "Create Company"}
               </Button>
             </div>

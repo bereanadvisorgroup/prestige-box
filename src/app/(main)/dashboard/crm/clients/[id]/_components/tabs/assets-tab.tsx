@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 
+import Link from "next/link";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowUpRight,
+  Briefcase,
   Building2,
   Calendar,
   Car,
@@ -53,7 +57,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
   type Address,
   type Asset,
@@ -77,7 +82,7 @@ interface AssetsTabProps {
 
 export function AssetsTab({ client, initialAssets, initialHistoryData, initialAddresses }: AssetsTabProps) {
   const [assets, setAssets] = useState<Asset[]>(initialAssets);
-  const [historyData, setHistoryData] = useState<Record<string, string | number>[]>(initialHistoryData);
+  const [, setHistoryData] = useState<Record<string, string | number>[]>(initialHistoryData);
   const [addresses] = useState<Address[]>(initialAddresses);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -362,6 +367,9 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
   const vehiclesValuablesValue = assets
     .filter((a) => a.subType === "Vehicles" || a.subType === "Valuables")
     .reduce((sum, a) => sum + Number(a.currentValue), 0);
+  const businessValue = assets
+    .filter((a) => a.subType === "Business Ownership")
+    .reduce((sum, a) => sum + Number(a.currentValue), 0);
   const automatedCount = assets.filter((a) => a.isAutomated).length;
   const automatedPercent = assets.length > 0 ? Math.round((automatedCount / assets.length) * 100) : 0;
 
@@ -384,6 +392,8 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
         return <Car className="h-4 w-4 text-amber-500" />;
       case "Valuables":
         return <Gem className="h-4 w-4 text-purple-500" />;
+      case "Business Ownership":
+        return <Briefcase className="h-4 w-4 text-teal-500" />;
       default:
         return <Coins className="h-4 w-4 text-primary" />;
     }
@@ -405,7 +415,7 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
       </div>
 
       {/* 2. Key Performance Indicators */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card className="border-none bg-linear-to-b from-card to-muted/20 shadow-md">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wider">
@@ -416,7 +426,7 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-xs">Sum of all tracked physical assets</p>
+            <p className="text-muted-foreground text-xs">Sum of all tracked assets</p>
           </CardContent>
         </Card>
 
@@ -445,6 +455,20 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-xs">Automobiles, collectibles & art</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none bg-linear-to-b from-card to-muted/20 shadow-md">
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+              <Briefcase className="h-3.5 w-3.5 text-teal-500" /> Business Ownership
+            </CardDescription>
+            <CardTitle className="font-bold text-2xl tracking-tight">
+              {formatCurrency(businessValue, { noDecimals: true })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-xs">Equity in owned business entities</p>
           </CardContent>
         </Card>
 
@@ -494,7 +518,17 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                             <span className="grid size-7 place-content-center rounded bg-muted/50">
                               {getSubtypeIcon(asset.subType)}
                             </span>
-                            {asset.name}
+                            {asset.isCompanyAsset ? (
+                              <Link
+                                href={`/dashboard/crm/companies/${asset.companyId}`}
+                                className="flex items-center gap-1 text-primary hover:underline"
+                              >
+                                <span className="truncate">{asset.name}</span>
+                                <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+                              </Link>
+                            ) : (
+                              asset.name
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">{asset.subType}</TableCell>
@@ -528,33 +562,97 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-primary"
-                              onClick={() => handleOpenHistory(asset)}
-                              title="Valuation History"
-                            >
-                              <TrendingUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                              onClick={() => handleOpenEdit(asset)}
-                              title="Edit Asset"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => handleDelete(asset.id!)}
-                              title="Delete Asset"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {asset.isCompanyAsset ? (
+                              <>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+                                          disabled
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </Button>
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Edit company estimated value on the company details page.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+                                          disabled
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Manage company ownership on the company details page.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                  onClick={() => handleOpenHistory(asset)}
+                                  title="Valuation History"
+                                >
+                                  <TrendingUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  onClick={() => handleOpenEdit(asset)}
+                                  title="Edit Asset"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className={cn(
+                                            "h-8 w-8",
+                                            asset.isLinked
+                                              ? "text-muted-foreground/40 cursor-not-allowed"
+                                              : "text-muted-foreground hover:text-destructive",
+                                          )}
+                                          onClick={() => !asset.isLinked && handleDelete(asset.id!)}
+                                          disabled={asset.isLinked}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </span>
+                                    </TooltipTrigger>
+                                    {asset.isLinked && (
+                                      <TooltipContent>
+                                        <p>Cannot delete: asset is linked to one or more liabilities.</p>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

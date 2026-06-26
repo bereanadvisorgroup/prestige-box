@@ -11,19 +11,19 @@ import { Button } from "@/components/ui/button";
 
 interface UnlinkFirmButtonProps {
   firmId: string;
-  clientId: string;
+  entityId: string;
   isLinked?: boolean;
-  onUnlinkAction: (firmId: string, clientId: string) => Promise<{ success: boolean; error?: string }>;
+  onUnlinkAction: (firmId: string, entityId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function UnlinkFirmButton({ firmId, clientId, isLinked, onUnlinkAction }: UnlinkFirmButtonProps) {
+export function UnlinkFirmButton({ firmId, entityId, isLinked, onUnlinkAction }: UnlinkFirmButtonProps) {
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
   const handleUnlink = async () => {
     setIsPending(true);
     try {
-      const result = await onUnlinkAction(firmId, clientId);
+      const result = await onUnlinkAction(firmId, entityId);
       if (result.success) {
         toast.success("Firm unlinked successfully.");
         window.dispatchEvent(new CustomEvent("association-change"));

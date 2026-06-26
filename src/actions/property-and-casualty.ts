@@ -244,3 +244,33 @@ export async function unlinkClientFromPropertyAndCasualtyFirm(firmId: string, cl
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToPropertyAndCasualtyFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getPropertyAndCasualtyFirm(firmId);
+    if (!firmRes.success || !firmRes.propertyAndCasualtyFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.propertyAndCasualtyFirm.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updatePropertyAndCasualtyFirm(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToPropertyAndCasualtyFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromPropertyAndCasualtyFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getPropertyAndCasualtyFirm(firmId);
+    if (!firmRes.success || !firmRes.propertyAndCasualtyFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.propertyAndCasualtyFirm.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updatePropertyAndCasualtyFirm(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromPropertyAndCasualtyFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

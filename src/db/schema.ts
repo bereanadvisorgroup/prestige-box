@@ -126,9 +126,27 @@ export const companies = pgTable("companies", {
   addressId: uuid("addressId"),
   website: text("website"),
   phone: text("phone"),
-  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   situsRecords: jsonb("situsRecords").default(sql`'[]'::jsonb`),
   nexusRecords: jsonb("nexusRecords").default(sql`'[]'::jsonb`),
+  paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
+  lifeDocuments: jsonb("lifeDocuments").default(sql`'[]'::jsonb`),
+  disabilityDocuments: jsonb("disabilityDocuments").default(sql`'[]'::jsonb`),
+  ltcDocuments: jsonb("ltcDocuments").default(sql`'[]'::jsonb`),
+  estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 7b. Company Owners Table
+export const companyOwners = pgTable("company_owners", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("companyId")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  personId: uuid("personId")
+    .notNull()
+    .references(() => people.id, { onDelete: "cascade" }),
+  ownershipPercentage: numeric("ownershipPercentage").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -278,6 +296,18 @@ export const assetHistory = pgTable("asset_history", {
 export const keyvals = pgTable("keyvals", {
   id: text("id").primaryKey(),
   value: text("value").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 19. Company Valuation History Table
+export const companyValuationHistory = pgTable("company_valuation_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("companyId")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  value: numeric("value").notNull().default("0.00"),
+  valuationDate: timestamp("valuationDate", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 
-import { Building2, ReceiptText } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 
-import { getAccountingFirms } from "@/actions/accounting-firms";
+import {
+  getAccountingFirms,
+  linkCompanyToAccountingFirm,
+  unlinkCompanyFromAccountingFirm,
+} from "@/actions/accounting-firms";
 import { getCompany } from "@/actions/companies";
 import { AssociationCardList } from "@/components/crm/association-card-list";
-import { Card } from "@/components/ui/card";
+import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,31 +25,40 @@ export default async function AccountingFirmsPage({ params }: Props) {
 
   const company = companyResult.company;
   const accountingFirmsRes = await getAccountingFirms();
-  const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
-    (a) => a.companyIds?.includes(company.id || ""),
-  );
+  const allFirms = (accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || [];
+
+  const associatedAccountingFirms = allFirms.filter((a) => a.companyIds?.includes(company.id || ""));
+
+  const availableFirms = allFirms
+    .filter((a) => !a.companyIds?.includes(company.id || ""))
+    .map((a) => ({ id: a.id || "", name: a.firmName }));
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
-      {associatedAccountingFirms.length > 0 ? (
-        <AssociationCardList
-          title="Associated Accounting Firms"
-          description="Accounting firms this company is associated with"
-          items={associatedAccountingFirms.map((f) => ({
-            id: f.id || "",
-            name: f.firmName,
-            website: f.website,
-            phone: f.phone,
-          }))}
-          linkPrefix="/dashboard/crm/accounting-firms"
-          icon={ReceiptText}
-        />
-      ) : (
-        <Card className="border-none bg-muted/10 p-8 text-center text-muted-foreground shadow-sm">
-          <Building2 className="mx-auto mb-3 h-10 w-10 opacity-20" />
-          <p className="text-sm italic">No associated accounting firms found.</p>
-        </Card>
-      )}
+      <AssociationCardList
+        entityId={company.id || ""}
+        title="Associated Accounting Firms"
+        description="Accounting firms this company is associated with"
+        items={associatedAccountingFirms.map((f) => ({
+          id: f.id || "",
+          name: f.firmName,
+          website: f.website,
+          phone: f.phone,
+          isLinked: false,
+        }))}
+        linkPrefix="/dashboard/crm/accounting-firms"
+        icon={ReceiptText}
+        onUnlinkAction={unlinkCompanyFromAccountingFirm}
+        actionNode={
+          <LinkFirmDialog
+            entityId={company.id || ""}
+            firmTypeLabel="Accounting Firm"
+            availableFirms={availableFirms}
+            newFirmLink={`/dashboard/crm/accounting-firms/new?companyId=${company.id}`}
+            onLinkAction={linkCompanyToAccountingFirm}
+          />
+        }
+      />
     </div>
   );
 }

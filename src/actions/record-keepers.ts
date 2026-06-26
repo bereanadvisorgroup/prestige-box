@@ -224,3 +224,33 @@ export async function deleteRecordKeeper(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToRecordKeeper(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "RecordKeeper not found" };
+
+    const currentIds = firmRes.recordKeeper.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateRecordKeeper(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromRecordKeeper(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "RecordKeeper not found" };
+
+    const currentIds = firmRes.recordKeeper.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateRecordKeeper(firmId, { companyIds: currentIds.filter((id: string) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

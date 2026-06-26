@@ -1,6 +1,6 @@
 {
-  "id": "c9862950-e7ef-44a0-a582-e6abd0b11d53",
-  "prevId": "574a67b7-156b-47d9-9ecf-01df6a9e85c2",
+  "id": "3a4ef4d5-de4d-48bc-89d3-e885e4c78837",
+  "prevId": "36ac6809-971a-4753-abb0-6d1f36e40c5b",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -344,6 +344,12 @@
           "notNull": true,
           "default": "'Manual'"
         },
+        "addressId": {
+          "name": "addressId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
@@ -619,6 +625,13 @@
           "notNull": false,
           "default": "'[]'::jsonb"
         },
+        "ltcDocuments": {
+          "name": "ltcDocuments",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
         "estateDocuments": {
           "name": "estateDocuments",
           "type": "jsonb",
@@ -731,6 +744,13 @@
           "notNull": false,
           "default": "'[]'::jsonb"
         },
+        "estimatedValue": {
+          "name": "estimatedValue",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0.00'"
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
@@ -748,6 +768,70 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.company_valuation_history": {
+      "name": "company_valuation_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0.00'"
+        },
+        "valuationDate": {
+          "name": "valuationDate",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "company_valuation_history_companyId_companies_id_fk": {
+          "name": "company_valuation_history_companyId_companies_id_fk",
+          "tableFrom": "company_valuation_history",
+          "tableTo": "companies",
+          "columnsFrom": ["companyId"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -799,6 +883,13 @@
         },
         "companyIds": {
           "name": "companyIds",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::uuid[]"
+        },
+        "clientIds": {
+          "name": "clientIds",
           "type": "uuid[]",
           "primaryKey": false,
           "notNull": false,
@@ -856,6 +947,45 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'[]'::jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.keyvals": {
+      "name": "keyvals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
@@ -1009,6 +1139,13 @@
           "notNull": false,
           "default": "'{}'::uuid[]"
         },
+        "clientIds": {
+          "name": "clientIds",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::uuid[]"
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
@@ -1077,6 +1214,13 @@
         },
         "companyIds": {
           "name": "companyIds",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::uuid[]"
+        },
+        "clientIds": {
+          "name": "clientIds",
           "type": "uuid[]",
           "primaryKey": false,
           "notNull": false,
@@ -1516,8 +1660,8 @@
       "uniqueConstraints": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": ["email"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1527,10 +1671,10 @@
   },
   "enums": {},
   "schemas": {},
-  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

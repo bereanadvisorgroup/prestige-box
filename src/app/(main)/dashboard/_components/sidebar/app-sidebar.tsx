@@ -198,6 +198,11 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         url: `/dashboard/crm/companies/${companyId}`,
         icon: LayoutDashboard,
       },
+      {
+        title: "Valuation",
+        url: `/dashboard/crm/companies/${companyId}/valuation`,
+        icon: DollarSign,
+      },
     ],
   },
   {

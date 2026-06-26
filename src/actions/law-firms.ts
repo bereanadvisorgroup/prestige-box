@@ -224,3 +224,33 @@ export async function unlinkClientFromLawFirm(firmId: string, clientId: string) 
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function linkCompanyToLawFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLawFirm(firmId);
+    if (!firmRes.success || !firmRes.lawFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.lawFirm.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateLawFirm(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToLawFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromLawFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLawFirm(firmId);
+    if (!firmRes.success || !firmRes.lawFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.lawFirm.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateLawFirm(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromLawFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

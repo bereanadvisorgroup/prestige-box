@@ -22,15 +22,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 interface LinkFirmDialogProps {
-  clientId: string;
+  entityId: string;
   firmTypeLabel: string;
   availableFirms: { id: string; name: string }[];
   newFirmLink: string;
-  onLinkAction: (firmId: string, clientId: string) => Promise<{ success: boolean; error?: string }>;
+  onLinkAction: (firmId: string, entityId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function LinkFirmDialog({
-  clientId,
+  entityId,
   firmTypeLabel,
   availableFirms,
   newFirmLink,
@@ -51,7 +51,7 @@ export function LinkFirmDialog({
     if (!selectedFirmId) return;
     setIsLinking(true);
     try {
-      const result = await onLinkAction(selectedFirmId, clientId);
+      const result = await onLinkAction(selectedFirmId, entityId);
       if (result.success) {
         toast.success(`${firmTypeLabel} linked successfully.`);
         window.dispatchEvent(new CustomEvent("association-change"));
@@ -83,7 +83,7 @@ export function LinkFirmDialog({
         <DialogHeader>
           <DialogTitle>Link {firmTypeLabel}</DialogTitle>
           <DialogDescription>
-            Search for an existing {firmTypeLabel.toLowerCase()} to link to this client, or create a new one.
+            Search for an existing {firmTypeLabel.toLowerCase()} to link, or create a new one.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
