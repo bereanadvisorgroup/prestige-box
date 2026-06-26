@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowRight, BarChart3, DollarSign } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, DollarSign } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,7 +13,7 @@ export default function ReportCenterPage() {
     {
       title: "Benefit Payments",
       description: "Track monthly benefit premium collections, scheduling, and collection forecasts.",
-      href: "/dashboard/crm/payments",
+      href: "/dashboard/reports/payments",
       icon: DollarSign,
       color: "bg-emerald-500",
     },
@@ -23,6 +23,13 @@ export default function ReportCenterPage() {
       href: "/dashboard/reports/relationship-graph",
       icon: BarChart3,
       color: "bg-blue-500",
+    },
+    {
+      title: "History",
+      description: "Review History of Clients and Companies",
+      href: "/dashboard/reports/history",
+      icon: Clock,
+      color: "bg-cyan-500",
     },
   ];
 

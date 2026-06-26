@@ -154,7 +154,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Company record updated" : "Company record created");
-        router.push("/dashboard/crm/companies");
+        router.push(isEditing ? `/dashboard/crm/companies/${company.id}` : "/dashboard/crm/companies");
         router.refresh();
       } else {
         toast.error(result.error || `Failed to ${isEditing ? "update" : "create"} company record`);

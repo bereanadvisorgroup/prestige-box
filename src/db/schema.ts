@@ -300,6 +300,24 @@ export const keyvals = pgTable("keyvals", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 20. Change History Table (audit log for clients & companies)
+export const changeHistory = pgTable("change_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  entityType: text("entityType").notNull(), // 'client' | 'company'
+  entityId: uuid("entityId").notNull(), // the client or company the change belongs to
+  subType: text("subType").notNull(), // semantic area, e.g. 'Profile', 'Life Insurance', 'Valuation'
+  action: text("action").notNull(), // 'created' | 'updated' | 'added' | 'removed' | 'deleted'
+  fieldName: text("fieldName"), // machine field name (null for add/remove events)
+  fieldLabel: text("fieldLabel"), // human-readable field name
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  summary: text("summary"), // e.g. 'Life Insurance policy added for client'
+  actorId: uuid("actorId"), // users.uid of the acting user (nullable for system writes)
+  actorName: text("actorName"), // snapshot of the actor's display name; 'System' fallback
+  changedAt: timestamp("changedAt", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
 // 19. Company Valuation History Table
 export const companyValuationHistory = pgTable("company_valuation_history", {
   id: uuid("id").primaryKey().defaultRandom(),

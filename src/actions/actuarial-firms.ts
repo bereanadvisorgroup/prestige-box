@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type ActuarialFirm, ActuarialFirmSchema, type Person } from "@/types/crm";
 
@@ -117,6 +118,14 @@ export async function createActuarialFirm(data: Partial<ActuarialFirm>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/crm/actuarial-firms");
 
     if (data.clientIds?.length) {
@@ -139,6 +148,8 @@ export async function createActuarialFirm(data: Partial<ActuarialFirm>) {
 
 export async function updateActuarialFirm(id: string, data: Partial<ActuarialFirm>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -147,6 +158,21 @@ export async function updateActuarialFirm(id: string, data: Partial<ActuarialFir
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/crm/actuarial-firms");
     revalidatePath(`/dashboard/crm/actuarial-firms/${id}`);
@@ -175,9 +201,21 @@ export async function deleteActuarialFirm(id: string) {
 
     if (getError) throw new Error((getError as { message: string }).message);
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (deleteError) throw new Error((deleteError as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/crm/actuarial-firms");
 

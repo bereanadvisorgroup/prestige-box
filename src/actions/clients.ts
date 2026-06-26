@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { CLIENT_PROFILE_FIELDS } from "@/lib/history/fields";
+import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Client, ClientSchema } from "@/types/crm";
 
@@ -96,6 +98,14 @@ export async function createClient(data: Partial<Client>) {
 
     if (insertError) throw new Error((insertError as { message: string }).message);
 
+    await recordEvent({
+      entityType: "client",
+      entityId: inserted.id,
+      subType: "Profile",
+      action: "created",
+      summary: "Client created",
+    });
+
     revalidatePath("/dashboard/crm/clients");
 
     return { success: true, id: inserted.id };
@@ -107,6 +117,9 @@ export async function createClient(data: Partial<Client>) {
 
 export async function updateClient(id: string, data: Partial<Client>) {
   try {
+    // Fetch the current record so we can diff changed fields into history.
+    const { data: current } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -115,6 +128,15 @@ export async function updateClient(id: string, data: Partial<Client>) {
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordFieldDiffs({
+      entityType: "client",
+      entityId: id,
+      subType: "Profile",
+      before: current,
+      after: { ...current, ...data },
+      fields: CLIENT_PROFILE_FIELDS,
+    });
 
     revalidatePath("/dashboard/crm/clients");
     revalidatePath(`/dashboard/crm/clients/${id}`);
@@ -131,6 +153,14 @@ export async function deleteClient(id: string) {
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordEvent({
+      entityType: "client",
+      entityId: id,
+      subType: "Profile",
+      action: "deleted",
+      summary: "Client deleted",
+    });
 
     revalidatePath("/dashboard/crm/clients");
 

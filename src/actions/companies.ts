@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { COMPANY_PROFILE_FIELDS } from "@/lib/history/fields";
+import { resolvePersonNames } from "@/lib/history/person-names";
+import { formatValue, getCurrentActor, recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Company, CompanyFormSchema, type CompanyValuationHistory } from "@/types/crm";
 
@@ -164,6 +167,14 @@ export async function createCompany(data: any) {
       console.error("[createCompany] Warning: Failed to insert initial valuation history:", historyError.message);
     }
 
+    await recordEvent({
+      entityType: "company",
+      entityId: inserted.id,
+      subType: "Profile",
+      action: "created",
+      summary: `Company "${inserted.name}" created`,
+    });
+
     revalidatePath("/dashboard/crm/companies");
 
     // Revalidate paths for owners who are clients
@@ -215,6 +226,18 @@ export async function updateCompany(id: string, data: any) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    // Record change history (best-effort). Resolve the actor once for all entries.
+    const actor = await getCurrentActor();
+    await recordFieldDiffs({
+      entityType: "company",
+      entityId: id,
+      subType: "Profile",
+      before: currentCompany,
+      after: companyData,
+      fields: COMPANY_PROFILE_FIELDS,
+      actor,
+    });
+
     // If the value changed, append to history!
     if (data.estimatedValue !== undefined && data.estimatedValue !== Number(currentCompany.estimatedValue)) {
       const snapshot = {
@@ -225,6 +248,21 @@ export async function updateCompany(id: string, data: any) {
         updatedAt: new Date().toISOString(),
       };
       await supabaseServer.from("company_valuation_history").insert(snapshot);
+
+      await recordEvent(
+        {
+          entityType: "company",
+          entityId: id,
+          subType: "Valuation",
+          action: "updated",
+          fieldName: "estimatedValue",
+          fieldLabel: "Estimated Value",
+          oldValue: formatValue(currentCompany.estimatedValue),
+          newValue: formatValue(data.estimatedValue),
+          summary: "Estimated Value updated",
+        },
+        actor,
+      );
     }
 
     // Update owners if provided
@@ -249,6 +287,45 @@ export async function updateCompany(id: string, data: any) {
 
         const { error: insertOwnersError } = await supabaseServer.from("company_owners").insert(ownersToInsert);
         if (insertOwnersError) throw new Error(insertOwnersError.message);
+      }
+
+      // Record owner additions/removals in change history (resolve person names).
+      const oldOwnerIds = new Set((oldOwners || []).map((o) => o.personId));
+      const newOwnerIds = new Set(owners.map((o) => o.personId));
+      const ownerNames = await resolvePersonNames([...oldOwnerIds, ...newOwnerIds]);
+      for (const owner of owners) {
+        if (!oldOwnerIds.has(owner.personId)) {
+          await recordEvent(
+            {
+              entityType: "company",
+              entityId: id,
+              subType: "Owner",
+              action: "added",
+              fieldName: "owner",
+              fieldLabel: "Owner",
+              newValue: ownerNames.get(owner.personId) ?? owner.personId,
+              summary: "Owner added",
+            },
+            actor,
+          );
+        }
+      }
+      for (const old of oldOwners || []) {
+        if (!newOwnerIds.has(old.personId)) {
+          await recordEvent(
+            {
+              entityType: "company",
+              entityId: id,
+              subType: "Owner",
+              action: "removed",
+              fieldName: "owner",
+              fieldLabel: "Owner",
+              oldValue: ownerNames.get(old.personId) ?? old.personId,
+              summary: "Owner removed",
+            },
+            actor,
+          );
+        }
       }
 
       // Revalidate client pages for both old owners and new owners
@@ -284,9 +361,20 @@ export async function deleteCompany(id: string) {
     // Fetch owners before deleting to revalidate paths
     const { data: owners } = await supabaseServer.from("company_owners").select("personId").eq("companyId", id);
 
+    // Capture the company name before deletion for the history summary.
+    const { data: doomed } = await supabaseServer.from(TABLE).select("name").eq("id", id).single();
+
     const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (deleteError) throw new Error((deleteError as { message: string }).message);
+
+    await recordEvent({
+      entityType: "company",
+      entityId: id,
+      subType: "Profile",
+      action: "deleted",
+      summary: `Company "${doomed?.name ?? id}" deleted`,
+    });
 
     revalidatePath("/dashboard/crm/companies");
 

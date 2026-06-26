@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Building2, Pencil } from "lucide-react";
+import { Building2, Clock, Pencil } from "lucide-react";
 
 import { getCompany } from "@/actions/companies";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

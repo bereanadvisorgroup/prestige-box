@@ -376,6 +376,32 @@ export const CompanyValuationHistorySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company"]);
+export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
+
+export const ChangeHistorySchema = z.object({
+  id: z.string().optional(),
+  entityType: ChangeHistoryEntityTypeSchema,
+  entityId: z.string(),
+  subType: z.string(),
+  action: ChangeHistoryActionSchema,
+  fieldName: z.string().nullable().optional(),
+  fieldLabel: z.string().nullable().optional(),
+  oldValue: z.string().nullable().optional(),
+  newValue: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  actorId: z.string().nullable().optional(),
+  actorName: z.string().nullable().optional(),
+  changedAt: z.string().optional(),
+  createdAt: z.string().optional(),
+});
+
+export type ChangeHistoryEntityType = z.infer<typeof ChangeHistoryEntityTypeSchema>;
+export type ChangeHistoryAction = z.infer<typeof ChangeHistoryActionSchema>;
+export type ChangeHistory = z.infer<typeof ChangeHistorySchema>;
+// History record enriched with the resolved entity (client/company) display name for the report view.
+export type ChangeHistoryWithEntity = ChangeHistory & { entityName: string | null };
+
 export const PaymentSchedule = z.enum(["monthly", "quarterly", "semi-annually", "annually"]);
 
 export const ClientPolicySchema = z.object({
