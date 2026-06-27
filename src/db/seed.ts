@@ -504,10 +504,38 @@ async function main() {
         paymentAccounts: paymentAccounts,
         familyMembers: familyMembers,
         employments: employments,
-        pcDocuments: [{ name: "Homeowners Declarations", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        lifeDocuments: [{ name: "Term Life Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        ltcDocuments: [{ name: "Long Term Care Policy Doc", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
-        estateDocuments: [{ name: "Last Will & Testament", url: faker.internet.url(), type: "PDF", uploadedAt: faker.date.past().toISOString() }],
+        pcDocuments: [
+          {
+            name: "Homeowners Declarations",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        lifeDocuments: [
+          {
+            name: "Term Life Policy Doc",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        ltcDocuments: [
+          {
+            name: "Long Term Care Policy Doc",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
+        estateDocuments: [
+          {
+            name: "Last Will & Testament",
+            url: faker.internet.url(),
+            type: "PDF",
+            uploadedAt: faker.date.past().toISOString(),
+          },
+        ],
         liabilities: [
           {
             id: faker.string.uuid(),

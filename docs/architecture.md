@@ -47,7 +47,7 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 
 ### Authentication & Multi-Factor Authentication (MFA)
 Authentication and MFA are handled by Supabase Auth.
-- Next.js **Middleware** (`src/proxy.ts`) intercepts requests to `/dashboard` and `/api` to ensure security. It parses the Supabase authentication cookie (`sb-*-auth-token`), decodes the JWT, and inspects the `aal` (Authenticator Assurance Level) claim.
+- Next.js **Middleware** (`src/middleware.ts`) intercepts requests to `/dashboard` and `/api` to ensure security. It parses the Supabase authentication cookie (`sb-*-auth-token`), decodes the JWT, and inspects the `aal` (Authenticator Assurance Level) claim.
 - **Strict MFA Gate**: If the user is unauthenticated, they are redirected to `/login`. If the session is active but the current level is `aal1` (single factor authenticated) and the user has a verified MFA factor enrolled, the middleware redirects them to the `/auth/mfa-verify` page to enter their TOTP token. Access to dashboard routes and protected APIs is only granted once `aal2` (multi-factor authenticated) is achieved.
 - Sessions are managed via cookies, allowing server components to safely read the user's authentication state on initial load.
 - Users can enroll, verify, and view their authentication factors (TOTP and native WebAuthn Passkeys) on the Security Settings page (`/dashboard/settings`).
