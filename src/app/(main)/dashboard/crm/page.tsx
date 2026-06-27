@@ -7,6 +7,7 @@ import { getHouseholds } from "@/actions/households";
 import { getPaymentsForMonth } from "@/actions/payments";
 import { getPeople } from "@/actions/people";
 import { getClientPolicies } from "@/actions/policies";
+import { RecentNotesCard } from "@/components/notes/recent-notes-card";
 import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,57 +108,12 @@ export default async function CRMOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        <div className="space-y-6 md:col-span-2">
-          <h2 className="flex items-center gap-2 font-bold text-lg">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Quick Navigation
-          </h2>
-          <DashboardTasksCard />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="space-y-6">
+          <RecentNotesCard />
         </div>
-
-        <div>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="font-bold text-lg">Policy Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between rounded-xl border border-dashed bg-muted/20 p-4">
-                <div className="flex flex-col">
-                  <span className="font-bold text-muted-foreground text-xs uppercase">Total Policies</span>
-                  <span className="font-black text-2xl">{stats.policies}</span>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-muted-foreground">Active Coverage</span>
-                  <Badge
-                    variant="outline"
-                    className="border-green-200 bg-green-50 font-bold text-[10px] text-green-600 uppercase"
-                  >
-                    HEALTHY
-                  </Badge>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-[85%] bg-emerald-500" />
-                </div>
-                <div className="flex justify-between font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
-                  <span>85% Utilized</span>
-                  <span>15% Gaps</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button variant="outline" className="w-full font-bold text-xs" asChild>
-                  <Link href="/dashboard/crm/policies">View All Policies</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          <DashboardTasksCard />
         </div>
       </div>
     </div>

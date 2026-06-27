@@ -12,6 +12,7 @@ import {
   MapPin,
   ReceiptText,
   Shield,
+  StickyNote,
   Users,
 } from "lucide-react";
 
@@ -64,6 +65,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Overview",
         url: "/dashboard/crm",
         icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: "/dashboard/crm/notes",
+        icon: StickyNote,
       },
       {
         title: "Tasks",

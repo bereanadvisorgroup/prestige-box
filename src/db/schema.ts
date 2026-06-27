@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 // 1. Users Table
 export const users = pgTable("users", {
@@ -369,4 +369,92 @@ export const taskAssociations = pgTable("task_associations", {
   entityType: text("entityType").notNull(), // client | company
   entityId: uuid("entityId").notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 24. Notes Table (Reddit-style threaded notes for admins & advisors)
+// A top-level note (depth 0) carries a `title`; replies (depth 1) and
+// sub-replies (depth 2) reference their parent and share the same `rootId`
+// so an entire thread can be fetched in a single query.
+export const notes = pgTable("notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  parentId: uuid("parentId"), // null for top-level notes; references notes.id otherwise
+  rootId: uuid("rootId"), // the top-level note this belongs to (equals id for depth 0)
+  depth: integer("depth").notNull().default(0), // 0 = note, 1 = reply, 2 = sub-reply
+  title: text("title"), // present on top-level notes only
+  body: text("body").notNull().default(""), // Tiptap HTML (text + emojis)
+  authorId: uuid("authorId"), // users.uid of the author (null for system)
+  score: integer("score").notNull().default(0), // denormalized sum of votes
+  isDeleted: boolean("isDeleted").notNull().default(false), // soft delete
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 25. Note Associations (many-to-many: notes ↔ clients/companies).
+// A note with no association rows is a standalone note.
+export const noteAssociations = pgTable("note_associations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("noteId")
+    .notNull()
+    .references(() => notes.id, { onDelete: "cascade" }),
+  entityType: text("entityType").notNull(), // client | company
+  entityId: uuid("entityId").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 26. Note Attachments (uploaded files and pasted link previews)
+export const noteAttachments = pgTable("note_attachments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("noteId")
+    .notNull()
+    .references(() => notes.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull().default("file"), // file | link
+  // file fields (Supabase Storage `documents` bucket)
+  fileUrl: text("fileUrl"),
+  fileName: text("fileName"),
+  fileSize: integer("fileSize"),
+  mimeType: text("mimeType"),
+  // link fields (pasted URL / Google Drive preview)
+  linkUrl: text("linkUrl"),
+  linkTitle: text("linkTitle"),
+  linkFavicon: text("linkFavicon"),
+  linkProvider: text("linkProvider"), // google-drive | web
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 27. Note Reactions (one row per user+emoji on a note/reply)
+export const noteReactions = pgTable("note_reactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("noteId")
+    .notNull()
+    .references(() => notes.id, { onDelete: "cascade" }),
+  userId: uuid("userId").notNull(), // users.uid
+  emoji: text("emoji").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 28. Note Votes (Reddit-style up/down; one row per user+note)
+export const noteVotes = pgTable("note_votes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("noteId")
+    .notNull()
+    .references(() => notes.id, { onDelete: "cascade" }),
+  userId: uuid("userId").notNull(), // users.uid
+  value: integer("value").notNull().default(0), // -1 | 1
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 29. Note Notifications (@mentions and replies to your notes)
+export const noteNotifications = pgTable("note_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("noteId")
+    .notNull()
+    .references(() => notes.id, { onDelete: "cascade" }),
+  rootId: uuid("rootId"), // thread to deep-link to
+  recipientId: uuid("recipientId").notNull(), // users.uid being notified
+  actorId: uuid("actorId"), // users.uid who triggered the notification
+  actorName: text("actorName"), // snapshot of actor display name
+  type: text("type").notNull(), // mention | reply
+  preview: text("preview"), // short plain-text snippet
+  isRead: boolean("isRead").notNull().default(false),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 });

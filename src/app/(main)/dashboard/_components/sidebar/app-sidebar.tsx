@@ -24,6 +24,7 @@ import {
   Scale,
   Shield,
   ShieldAlert,
+  StickyNote,
   TrendingUp,
   User,
   Users,
@@ -68,6 +69,11 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         title: "Overview",
         url: `/dashboard/crm/clients/${clientId}/internal`,
         icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: `/dashboard/crm/clients/${clientId}/internal/notes`,
+        icon: StickyNote,
       },
       {
         title: "Tasks",
@@ -210,6 +216,11 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         title: "Overview",
         url: `/dashboard/crm/companies/${companyId}/internal`,
         icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: `/dashboard/crm/companies/${companyId}/internal/notes`,
+        icon: StickyNote,
       },
       {
         title: "Tasks",
