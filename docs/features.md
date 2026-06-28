@@ -51,17 +51,17 @@ The core relationship management suite.
   - **Assets (`/dashboard/crm/clients/[id]/assets`)**: Custom tracking of client assets (Real Estate, Vehicles, Valuables, etc.) including current market value, address linking, and value history snapshots.
   - **Liabilities (`/dashboard/crm/clients/[id]/liabilities`)**: Manage client debts (Auto loans, mortgages, business lines of credit) with banking associations, balances, and statement uploads.
   - **Professional Associations**: Associate/unlink external service providers:
-    - Accounting Firms (`/[id]/accounting-firms`)
-    - Actuarial Firms (`/[id]/actuarial-firms`)
-    - Banks (`/[id]/banks`)
-    - Law Firms (`/[id]/law-firms`)
-    - Property & Casualty (`/[id]/property-and-casualty`)
+    - Accounting Firms (`/dashboard/crm/clients/[id]/accounting-firms`)
+    - Actuarial Firms (`/dashboard/crm/clients/[id]/actuarial-firms`)
+    - Banks (`/dashboard/crm/clients/[id]/banks`)
+    - Law Firms (`/dashboard/crm/clients/[id]/law-firms`)
+    - Property & Casualty (`/dashboard/crm/clients/[id]/property-and-casualty`)
   - **Policies & Managed Accounts**: Track insurance policies and asset management accounts:
-    - Life Insurance (`/[id]/life-insurance`)
-    - Disability Insurance (`/[id]/disability-insurance`)
-    - Long-Term Care (`/[id]/long-term-care`)
-    - Money Managers (`/[id]/money-managers`)
-    - Record Keepers (`/[id]/record-keepers`)
+    - Life Insurance (`/dashboard/crm/clients/[id]/life-insurance`)
+    - Disability Insurance (`/dashboard/crm/clients/[id]/disability-insurance`)
+    - Long-Term Care (`/dashboard/crm/clients/[id]/long-term-care`)
+    - Money Managers (`/dashboard/crm/clients/[id]/money-managers`)
+    - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`)
 
 - **Company Profile & Contextual Navigation**: Selecting a company dynamically switches the sidebar to a tailored company-centric navigation menu containing:
   - **General Overview (`/dashboard/crm/companies/[id]`)**: Details company info, including EIN, website, phone, situs/nexus records, and associated client list.
@@ -82,7 +82,7 @@ Dedicated space for managing overall corporate numbers and client insurance poli
 ### 5. Reports Center (`/dashboard/reports`)
 Dynamic reporting and analytical views.
 - **Relationship Graph**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
-- **Benefit Payments**: Detailed breakdowns of expected or historical benefit payouts from managed policies.
+- **Benefit Payments**: Tracks expected premium payments, collections, and forecasts, linking directly to the Payments Dashboard under CRM (`/dashboard/crm/payments`).
 
 ### 6. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
 Personal configuration pages for the authenticated user.

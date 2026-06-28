@@ -16,6 +16,8 @@ erDiagram
     COMPANIES ||--o{ CLIENTS : "employs/associated"
     CLIENTS ||--o{ CLIENT_POLICIES : "holds"
     LIFE_INSURANCE_COMPANIES ||--o{ CLIENT_POLICIES : "issues"
+    DISABILITY_INSURANCE_COMPANIES ||--o{ CLIENT_POLICIES : "issues"
+    LONG_TERM_CARE_INSURANCE ||--o{ CLIENT_POLICIES : "issues"
     CLIENTS ||--o{ ASSETS : "owns"
     ADDRESSES ||--o{ ASSETS : "located at"
     ASSETS ||--o{ ASSET_HISTORY : "tracks value changes in"
@@ -93,7 +95,7 @@ erDiagram
 - Represents a customer relationship. Every `client` maps to exactly one `person` (`personId`), but a `person` is not necessarily a `client` (e.g., they could be an associate or family member).
 - Stores deep financial data such as employments, liabilities (loans/mortgages), and specialized documents (PC, Life, LTC, Estate) stored as JSONB arrays.
 
-### `companies` & `insurance_companies`
+### `companies`, `life_insurance_companies`, `disability_insurance_companies`, & `long_term_care_insurance`
 - Separates general companies (employers, owned businesses) from specialized insurance providers (Life, Disability, Long Term Care).
 - Many-to-Many relationships to clients are primarily handled via `uuid` arrays (e.g., `clientIds`).
 
@@ -127,7 +129,7 @@ erDiagram
 The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used to generate SQL migrations from this file.
 
 ### Migrations & Pushing
-- Schema updates are applied via `pnpm run drizzle-kit push` or `pnpm run drizzle-kit generate` depending on the environment.
+- Schema updates are applied via `pnpm drizzle-kit push` or `pnpm drizzle-kit generate` depending on the environment.
 - The `src/db/migrate.ts` file handles automated migration execution.
 
 ### Local Seeding

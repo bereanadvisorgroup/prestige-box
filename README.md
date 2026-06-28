@@ -41,7 +41,7 @@ Comprehensive documentation covering the architecture, database schema, applicat
 3. **Database Setup**
    Push the Drizzle schema to your Supabase database and run the seeder to generate realistic dummy data:
    ```bash
-   pnpm run drizzle-kit push
+   pnpm drizzle-kit push
    pnpm run db:seed
    ```
 
