@@ -9,3 +9,6 @@ minimumReleaseAgeExclude:
   - '@supabase/realtime-js@2.108.1'
   - '@supabase/storage-js@2.108.1'
   - '@supabase/supabase-js@2.108.1'
+
+overrides:
+  esbuild: 0.28.1
