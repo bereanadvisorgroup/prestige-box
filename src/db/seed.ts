@@ -26,6 +26,7 @@ import {
   clientPolicies,
   clients,
   companies,
+  companyOwners,
   disabilityInsuranceCompanies,
   households,
   lawFirms,
@@ -35,6 +36,9 @@ import {
   people,
   propertyAndCasualtyFirms,
   recordKeepers,
+  taskAssignees,
+  taskAssociations,
+  tasks,
   users,
 } from "./schema";
 
@@ -61,6 +65,27 @@ interface PaymentAccount {
   routingNumber: string;
 }
 
+/** Next upcoming occurrence (this year or next) of an annually recurring date. Mirrors task-sync. */
+function nextAnnualOccurrence(dateStr: string): Date {
+  const [, mm, dd] = dateStr.slice(0, 10).split("-").map(Number);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisYear = new Date(now.getFullYear(), mm - 1, dd);
+  return thisYear < today ? new Date(now.getFullYear() + 1, mm - 1, dd) : thisYear;
+}
+
+/** Renewal label from which insurance carrier a policy references. Mirrors task-sync. */
+function policyKindLabel(policy: {
+  lifeInsuranceCompanyId?: string | null;
+  disabilityInsuranceCompanyId?: string | null;
+  longTermCareInsuranceId?: string | null;
+}): string {
+  if (policy.lifeInsuranceCompanyId) return "Life Insurance";
+  if (policy.disabilityInsuranceCompanyId) return "Disability Insurance";
+  if (policy.longTermCareInsuranceId) return "Long Term Care";
+  return "Policy";
+}
+
 async function main() {
   console.log("🚀 Starting database seeding...");
 
@@ -68,6 +93,9 @@ async function main() {
     // 1. Clean up existing data in correct order
     console.log("🧹 Cleaning up existing CRM records...");
 
+    await db.delete(taskAssignees);
+    await db.delete(taskAssociations);
+    await db.delete(tasks);
     await db.delete(clientPolicies);
     await db.delete(lifeInsuranceCompanies);
     await db.delete(disabilityInsuranceCompanies);
@@ -79,6 +107,7 @@ async function main() {
     await db.delete(actuarialFirms);
     await db.delete(banks);
     await db.delete(propertyAndCasualtyFirms);
+    await db.delete(companyOwners);
     await db.delete(companies);
     await db.delete(assetHistory);
     await db.delete(assets);
@@ -106,16 +135,16 @@ async function main() {
         role: "admin",
       },
       {
-        email: "staff1@prestigebox.dev",
+        email: "advisor1@prestigebox.dev",
         firstName: "Sarah",
-        lastName: "Staff",
-        role: "staff",
+        lastName: "Advisor",
+        role: "advisor",
       },
       {
-        email: "staff2@prestigebox.dev",
+        email: "advisor2@prestigebox.dev",
         firstName: "Michael",
-        lastName: "Manager",
-        role: "staff",
+        lastName: "Advisor",
+        role: "advisor",
       },
       {
         email: "client1@prestigebox.dev",
@@ -137,6 +166,16 @@ async function main() {
         const userId = faker.string.uuid();
         console.log(`Creating default mock user: ${u.email}`);
 
+        // Pre-insert into public.users first so the trigger handle_new_user succeeds
+        await db.insert(users).values({
+          uid: userId,
+          email: u.email,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          role: u.role,
+          photoURL: faker.image.avatar(),
+        });
+
         await db.insert(authUsers).values({
           id: userId,
           email: u.email,
@@ -151,9 +190,6 @@ async function main() {
             role: u.role,
           },
         });
-
-        // The insert trigger handles public.users creation. Let's make sure photoURL is set.
-        await db.update(users).set({ photoURL: faker.image.avatar() }).where(eq(users.uid, userId));
       }
     }
 
@@ -196,6 +232,18 @@ async function main() {
     }
 
     console.log("✨ User synchronization and seeding completed.");
+
+    // Pool of users tasks can be assigned to / clients can be owned by: admins and advisors.
+    // Fall back to any non-client, then to all users, so seeding never produces an empty pool.
+    const refreshedPublicUsers = await db.select().from(users);
+    let assignableUserIds = refreshedPublicUsers.filter((u) => u.role === "admin" || u.role === "advisor").map((u) => u.uid);
+    if (assignableUserIds.length === 0) {
+      assignableUserIds = refreshedPublicUsers.filter((u) => u.role !== "client").map((u) => u.uid);
+    }
+    if (assignableUserIds.length === 0) {
+      assignableUserIds = refreshedPublicUsers.map((u) => u.uid);
+    }
+    console.log(`📌 ${assignableUserIds.length} admin/advisor users available for task assignment.`);
 
     // 3. Seed Addresses
     console.log("📍 Seeding addresses...");
@@ -453,6 +501,8 @@ async function main() {
           id: faker.string.uuid(),
           personId: randomFamilyPeople[0],
           relationship: "Spouse" as const,
+          // Drives the auto-generated wedding-anniversary task.
+          marriageDate: faker.date.past({ years: 25 }).toISOString().split("T")[0],
         },
         {
           id: faker.string.uuid(),
@@ -499,6 +549,7 @@ async function main() {
       clientData.push({
         id: cId,
         personId: personId,
+        advisorId: faker.helpers.arrayElement(assignableUserIds),
         hobbies: hobbiesList,
         favoriteSportsTeams: sportsTeams,
         paymentAccounts: paymentAccounts,
@@ -569,25 +620,62 @@ async function main() {
     // 8. Seed Companies
     console.log("🏢 Seeding companies...");
     const companyData: (typeof companies.$inferInsert)[] = [];
+    const companyOwnersData: (typeof companyOwners.$inferInsert)[] = [];
+
     for (let i = 0; i < 10; i++) {
       const randomAddressId = faker.helpers.arrayElement(addressIds);
-      const randomClients = faker.helpers.arrayElements(clientData, faker.number.int({ min: 1, max: 4 }));
-      const companyClientIds = randomClients.map((c) => c.id ?? "");
+      const companyId = faker.string.uuid();
 
       companyData.push({
-        id: faker.string.uuid(),
+        id: companyId,
         name: faker.company.name(),
         dba: `${faker.company.name()} DBA`,
         ein: faker.helpers.fromRegExp(/[0-9]{2}-[0-9]{7}/),
         addressId: randomAddressId,
         website: faker.internet.url(),
         phone: faker.phone.number(),
-        clientIds: companyClientIds,
-        situsRecords: [{ state: faker.location.state({ abbreviated: true }), description: "Primary operational site" }],
-        nexusRecords: [{ state: faker.location.state({ abbreviated: true }), type: "Sales Tax Nexus" }],
+        situsRecords: [
+          {
+            jurisdiction: faker.location.state({ abbreviated: true }),
+            type: "Physical",
+            effectiveDate: new Date().toISOString().split("T")[0],
+          },
+        ],
+        nexusRecords: [
+          {
+            jurisdiction: faker.location.state({ abbreviated: true }),
+            type: "Sales Tax",
+          },
+        ],
       });
+
+      // Seed 1-3 owners for each company
+      const randomPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 3 }));
+      let remainingPercent = 100.0;
+      for (let j = 0; j < randomPeopleIds.length; j++) {
+        const isLast = j === randomPeopleIds.length - 1;
+        let percent = 0;
+        if (isLast) {
+          percent = remainingPercent;
+        } else {
+          const min = 10;
+          const max = remainingPercent - (randomPeopleIds.length - 1 - j) * 10;
+          percent = max > min ? faker.number.float({ min, max, fractionDigits: 2 }) : min;
+        }
+        remainingPercent -= percent;
+
+        companyOwnersData.push({
+          id: faker.string.uuid(),
+          companyId,
+          personId: randomPeopleIds[j],
+          ownershipPercentage: percent.toFixed(2),
+        });
+      }
     }
     await db.insert(companies).values(companyData);
+    if (companyOwnersData.length > 0) {
+      await db.insert(companyOwners).values(companyOwnersData);
+    }
 
     // 9. Seed Client Policies
     console.log("📄 Seeding client policies...");
@@ -825,6 +913,158 @@ async function main() {
       });
     }
     await db.insert(recordKeepers).values(recordKeeperData);
+
+    // 17. Seed Tasks (assigned to random admins/advisors, associated to random clients/companies)
+    console.log("✅ Seeding tasks...");
+    const taskStatuses = ["New", "In Process", "Waiting Input", "Complete"] as const;
+    const taskCategories = ["Other", "Birthday", "Wedding Anniversary", "Policy Renewal"] as const;
+    const taskPriorities = ["Low", "Medium", "High"] as const;
+    const taskVerbs = [
+      "Follow up with",
+      "Review portfolio for",
+      "Prepare documents for",
+      "Call",
+      "Send renewal notice to",
+      "Schedule annual review with",
+      "Confirm beneficiary details for",
+      "Reconcile statements for",
+    ];
+
+    // Pool of entities a task can be associated with.
+    const associationPool = [
+      ...clientData.map((c) => ({ entityType: "client" as const, entityId: c.id ?? "" })),
+      ...companyData.map((co) => ({ entityType: "company" as const, entityId: co.id ?? "" })),
+    ];
+
+    const taskData: (typeof tasks.$inferInsert)[] = [];
+    const taskAssigneeData: (typeof taskAssignees.$inferInsert)[] = [];
+    const taskAssociationData: (typeof taskAssociations.$inferInsert)[] = [];
+
+    for (let i = 0; i < 40; i++) {
+      const taskId = faker.string.uuid();
+      const status = faker.helpers.arrayElement(taskStatuses);
+      // Mix of upcoming and overdue due dates.
+      const dueDate = faker.helpers.arrayElement([
+        faker.date.soon({ days: 45 }),
+        faker.date.future({ years: 1 }),
+        faker.date.recent({ days: 20 }),
+      ]);
+      const completeDate = status === "Complete" ? faker.date.recent({ days: 10 }) : null;
+
+      taskData.push({
+        id: taskId,
+        name: `${faker.helpers.arrayElement(taskVerbs)} ${faker.person.lastName()}`,
+        status,
+        category: faker.helpers.arrayElement(taskCategories),
+        priority: faker.helpers.arrayElement(taskPriorities),
+        description: `<p>${faker.lorem.sentences(2)}</p>`,
+        attachments: [],
+        dueDate,
+        completeDate,
+        source: "manual",
+        createdBy: faker.helpers.arrayElement(assignableUserIds),
+        createdAt: faker.date.recent({ days: 30 }),
+      });
+
+      // 1–3 unique assignees (admins/advisors).
+      const assigneeCount = Math.min(faker.number.int({ min: 1, max: 3 }), assignableUserIds.length);
+      for (const userId of faker.helpers.arrayElements(assignableUserIds, assigneeCount)) {
+        taskAssigneeData.push({ taskId, userId });
+      }
+
+      // 0–2 unique associations (clients/companies).
+      for (const assoc of faker.helpers.arrayElements(associationPool, faker.number.int({ min: 0, max: 2 }))) {
+        taskAssociationData.push({ taskId, entityType: assoc.entityType, entityId: assoc.entityId });
+      }
+    }
+
+    // 17b. Pre-generate auto tasks (birthday / anniversary / renewal) so they appear immediately,
+    // mirroring the runtime engine in src/actions/task-sync.ts.
+    console.log("🤖 Pre-generating auto tasks (birthday / anniversary / renewal)...");
+    const personById = new Map(peopleData.map((p) => [p.id, p]));
+
+    const pushAutoTask = (params: {
+      sourceType: "birthday" | "anniversary" | "renewal";
+      sourceRefId: string;
+      name: string;
+      dueDate: Date;
+      category: (typeof taskCategories)[number];
+      advisorId?: string | null;
+      clientId: string;
+    }) => {
+      const taskId = faker.string.uuid();
+      taskData.push({
+        id: taskId,
+        name: params.name,
+        status: "New",
+        category: params.category,
+        priority: "Low",
+        attachments: [],
+        dueDate: params.dueDate,
+        source: "auto",
+        sourceType: params.sourceType,
+        sourceRefId: params.sourceRefId,
+        createdAt: new Date(),
+      });
+      if (params.advisorId) taskAssigneeData.push({ taskId, userId: params.advisorId });
+      taskAssociationData.push({ taskId, entityType: "client", entityId: params.clientId });
+    };
+
+    for (const client of clientData) {
+      const clientId = client.id ?? "";
+      const person = personById.get(client.personId);
+      const clientName = `${person?.firstName ?? ""} ${person?.lastName ?? ""}`.trim() || "Client";
+
+      // Birthday — anchored on the person.
+      const birthDate = (person?.pii as { birthDate?: string } | undefined)?.birthDate;
+      if (birthDate) {
+        pushAutoTask({
+          sourceType: "birthday",
+          sourceRefId: client.personId,
+          name: `${person?.firstName ?? "Client"}'s Birthday`,
+          dueDate: nextAnnualOccurrence(birthDate),
+          category: "Birthday",
+          advisorId: client.advisorId,
+          clientId,
+        });
+      }
+
+      // Wedding anniversary — anchored on the client, from the Spouse's marriageDate.
+      const family = (client.familyMembers as { relationship?: string; marriageDate?: string }[] | undefined) ?? [];
+      const spouse = family.find((m) => m.relationship === "Spouse" && m.marriageDate);
+      if (spouse?.marriageDate) {
+        pushAutoTask({
+          sourceType: "anniversary",
+          sourceRefId: clientId,
+          name: `Wedding Anniversary — ${clientName}`,
+          dueDate: nextAnnualOccurrence(spouse.marriageDate),
+          category: "Wedding Anniversary",
+          advisorId: client.advisorId,
+          clientId,
+        });
+      }
+    }
+
+    // Renewals — anchored on each policy, assigned to the owning client's advisor.
+    const clientAdvisorById = new Map(clientData.map((c) => [c.id ?? "", c.advisorId]));
+    for (const policy of clientPolicyData) {
+      const clientId = policy.clientId ?? "";
+      pushAutoTask({
+        sourceType: "renewal",
+        sourceRefId: policy.id ?? "",
+        name: `${policyKindLabel(policy)} renewal — ${policy.policyName}`,
+        dueDate: policy.renewalDate instanceof Date ? policy.renewalDate : new Date(policy.renewalDate as string),
+        category: "Policy Renewal",
+        advisorId: clientAdvisorById.get(clientId),
+        clientId,
+      });
+    }
+
+    await db.insert(tasks).values(taskData);
+    if (taskAssigneeData.length > 0) await db.insert(taskAssignees).values(taskAssigneeData);
+    if (taskAssociationData.length > 0) await db.insert(taskAssociations).values(taskAssociationData);
+
+    console.log(`✅ Inserted ${taskData.length} tasks (manual + auto).`);
 
     console.log("🎉 Seeding completed successfully!");
   } catch (error) {

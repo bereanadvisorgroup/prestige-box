@@ -211,12 +211,60 @@ export const CompanySchema = z.object({
   addressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional(),
-  clientIds: z.array(z.string()).default([]), // A company can be associated with multiple clients, and a client with multiple companies
   situsRecords: z.array(SitusSchema).default([]),
   nexusRecords: z.array(NexusSchema).default([]),
+  paymentAccounts: z.array(PaymentAccountSchema).default([]),
+  lifeDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  disabilityDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  ltcDocuments: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        name: z.string(),
+        url: z.string(),
+        type: z.string(),
+        uploadedAt: z.string().optional(),
+        firmId: z.string().optional(),
+      }),
+    )
+    .default([]),
+  estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
+
+export const CompanyOwnerSchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  personId: z.string(),
+  ownershipPercentage: z.number().min(0, "Ownership must be at least 0%").max(100, "Ownership cannot exceed 100%"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type CompanyOwner = z.infer<typeof CompanyOwnerSchema>;
 
 export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild", "Great Grandchild"]);
 export const FamilyMemberSchema = z.object({
@@ -224,6 +272,7 @@ export const FamilyMemberSchema = z.object({
   personId: z.string(),
   relationship: FamilyRelationType,
   parentId: z.string().optional(),
+  marriageDate: z.string().optional(), // YYYY-MM-DD; meaningful on the Spouse entry, drives anniversary tasks
 });
 
 export const EmploymentSchema = z.object({
@@ -269,6 +318,7 @@ export const MortgageSchema = z.object({
 export const ClientSchema = z.object({
   id: z.string().optional(),
   personId: z.string(),
+  advisorId: z.string().optional().nullable(),
   referredById: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
@@ -285,7 +335,13 @@ export const ClientSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const AssetSubTypeSchema = z.enum(["Primary Residence", "Investment Properties", "Vehicles", "Valuables"]);
+export const AssetSubTypeSchema = z.enum([
+  "Primary Residence",
+  "Investment Properties",
+  "Vehicles",
+  "Valuables",
+  "Business Ownership",
+]);
 
 export const AssetSchema = z.object({
   id: z.string().optional(),
@@ -298,6 +354,9 @@ export const AssetSchema = z.object({
   isAutomated: z.boolean().default(false),
   institutionName: z.string().default("Manual"),
   addressId: z.string().optional().nullable(),
+  isCompanyAsset: z.boolean().optional(),
+  companyId: z.string().optional().nullable(),
+  isLinked: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -309,6 +368,41 @@ export const AssetHistorySchema = z.object({
   recordedAt: z.string().optional(),
   createdAt: z.string().optional(),
 });
+
+export const CompanyValuationHistorySchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  value: z.number().min(0, "Value must be positive"),
+  valuationDate: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task"]);
+export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
+
+export const ChangeHistorySchema = z.object({
+  id: z.string().optional(),
+  entityType: ChangeHistoryEntityTypeSchema,
+  entityId: z.string(),
+  subType: z.string(),
+  action: ChangeHistoryActionSchema,
+  fieldName: z.string().nullable().optional(),
+  fieldLabel: z.string().nullable().optional(),
+  oldValue: z.string().nullable().optional(),
+  newValue: z.string().nullable().optional(),
+  summary: z.string().nullable().optional(),
+  actorId: z.string().nullable().optional(),
+  actorName: z.string().nullable().optional(),
+  changedAt: z.string().optional(),
+  createdAt: z.string().optional(),
+});
+
+export type ChangeHistoryEntityType = z.infer<typeof ChangeHistoryEntityTypeSchema>;
+export type ChangeHistoryAction = z.infer<typeof ChangeHistoryActionSchema>;
+export type ChangeHistory = z.infer<typeof ChangeHistorySchema>;
+// History record enriched with the resolved entity (client/company) display name for the report view.
+export type ChangeHistoryWithEntity = ChangeHistory & { entityName: string | null };
 
 export const PaymentSchedule = z.enum(["monthly", "quarterly", "semi-annually", "annually"]);
 
@@ -437,6 +531,7 @@ export type Situs = z.infer<typeof SitusSchema>;
 export type Nexus = z.infer<typeof NexusSchema>;
 export type Client = z.infer<typeof ClientSchema>;
 export type Company = z.infer<typeof CompanySchema>;
+export type CompanyValuationHistory = z.infer<typeof CompanyValuationHistorySchema>;
 export type LawFirm = z.infer<typeof LawFirmSchema>;
 export type AccountingFirm = z.infer<typeof AccountingFirmSchema>;
 export type ActuarialFirm = z.infer<typeof ActuarialFirmSchema>;
@@ -468,7 +563,30 @@ export const DisabilityInsuranceCompanyFormSchema = DisabilityInsuranceCompanySc
 });
 export const LongTermCareInsuranceFormSchema = LongTermCareInsuranceSchema.omit({ createdAt: true, updatedAt: true });
 export const ClientFormSchema = ClientSchema.omit({ createdAt: true, updatedAt: true });
-export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true });
+export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt: true })
+  .extend({
+    owners: z
+      .array(
+        z.object({
+          personId: z.string().min(1, "Person is required"),
+          ownershipPercentage: z
+            .number()
+            .min(0, "Ownership must be at least 0%")
+            .max(100, "Ownership cannot exceed 100%"),
+        }),
+      )
+      .default([]),
+  })
+  .refine(
+    (data) => {
+      const sum = (data.owners || []).reduce((acc, curr) => acc + curr.ownershipPercentage, 0);
+      return sum <= 100;
+    },
+    {
+      message: "Total ownership percentage cannot exceed 100%",
+      path: ["owners"],
+    },
+  );
 export const LawFirmFormSchema = LawFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const AccountingFirmFormSchema = AccountingFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const ActuarialFirmFormSchema = ActuarialFirmSchema.omit({ createdAt: true, updatedAt: true });
@@ -530,3 +648,90 @@ export interface UpcomingPayment {
   dueDate: string;
   paymentSchedule: PaymentSchedule;
 }
+
+// --- Task Management ---
+
+export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "Complete"]);
+export const TaskCategorySchema = z.enum(["Other", "Birthday", "Wedding Anniversary", "Policy Renewal"]);
+export const TaskPrioritySchema = z.enum(["Low", "Medium", "High"]);
+export const TaskSourceSchema = z.enum(["manual", "auto"]);
+export const TaskSourceTypeSchema = z.enum(["birthday", "anniversary", "renewal"]);
+export const TaskAssociationEntitySchema = z.enum(["client", "company"]);
+
+export const TaskStatuses = TaskStatusSchema.options;
+export const TaskCategories = TaskCategorySchema.options;
+export const TaskPriorities = TaskPrioritySchema.options;
+
+export type TaskStatus = z.infer<typeof TaskStatusSchema>;
+export type TaskCategory = z.infer<typeof TaskCategorySchema>;
+export type TaskPriority = z.infer<typeof TaskPrioritySchema>;
+export type TaskSource = z.infer<typeof TaskSourceSchema>;
+export type TaskSourceType = z.infer<typeof TaskSourceTypeSchema>;
+export type TaskAssociationEntity = z.infer<typeof TaskAssociationEntitySchema>;
+
+export const TaskAttachmentSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  url: z.string(),
+  type: z.string(),
+  uploadedAt: z.string().optional(),
+  uploadedBy: z.string().optional(),
+});
+export type TaskAttachment = z.infer<typeof TaskAttachmentSchema>;
+
+export const TaskAssociationSchema = z.object({
+  entityType: TaskAssociationEntitySchema,
+  entityId: z.string(),
+});
+export type TaskAssociation = z.infer<typeof TaskAssociationSchema>;
+
+export const TaskSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Task name is required"),
+  status: TaskStatusSchema.default("New"),
+  category: TaskCategorySchema.default("Other"),
+  priority: TaskPrioritySchema.default("Low"),
+  description: z.string().nullable().optional(),
+  attachments: z.array(TaskAttachmentSchema).default([]),
+  dueDate: z.string().min(1, "Due date is required"), // ISO date-time
+  completeDate: z.string().nullable().optional(), // system-managed
+  source: TaskSourceSchema.default("manual"),
+  sourceType: TaskSourceTypeSchema.nullable().optional(),
+  sourceRefId: z.string().nullable().optional(),
+  createdBy: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Task = z.infer<typeof TaskSchema>;
+
+// Task enriched with its assignees and associations for list/board views.
+export interface TaskAssigneeRef {
+  userId: string;
+  name: string;
+  role?: string;
+}
+export interface TaskAssociationRef {
+  entityType: TaskAssociationEntity;
+  entityId: string;
+  name: string;
+}
+export type TaskWithRelations = Task & {
+  assignees: TaskAssigneeRef[];
+  associations: TaskAssociationRef[];
+};
+
+// Form payload: assignees & associations are edited inline and persisted to junction tables.
+export const TaskFormSchema = TaskSchema.omit({
+  completeDate: true,
+  source: true,
+  sourceType: true,
+  sourceRefId: true,
+  createdBy: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  assigneeIds: z.array(z.string()).min(1, "At least one assignee is required"),
+  associations: z.array(TaskAssociationSchema).default([]),
+});
+export type TaskFormValues = z.infer<typeof TaskFormSchema>;
+export type TaskFormInput = z.input<typeof TaskFormSchema>;

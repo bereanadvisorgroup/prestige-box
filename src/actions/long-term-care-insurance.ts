@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type LongTermCareInsurance, LongTermCareInsuranceSchema, type Person } from "@/types/crm";
 
@@ -85,6 +86,14 @@ export async function createLongTermCareInsurance(data: Partial<LongTermCareInsu
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/admin/long-term-care-insurance");
 
     if (data.companyIds?.length) {
@@ -102,6 +111,8 @@ export async function createLongTermCareInsurance(data: Partial<LongTermCareInsu
 
 export async function updateLongTermCareInsurance(id: string, data: Partial<LongTermCareInsurance>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -110,6 +121,21 @@ export async function updateLongTermCareInsurance(id: string, data: Partial<Long
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/admin/long-term-care-insurance");
     revalidatePath(`/dashboard/admin/long-term-care-insurance/${id}`);
@@ -141,9 +167,21 @@ export async function deleteLongTermCareInsurance(id: string) {
       .eq("id", id)
       .single();
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/admin/long-term-care-insurance");
 
@@ -192,6 +230,36 @@ export async function unlinkClientFromLongTermCareInsurance(companyId: string, c
     return updateLongTermCareInsurance(companyId, { clientIds: currentIds.filter((id) => id !== clientId) });
   } catch (error) {
     console.error(`[unlinkClientFromLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkCompanyToLongTermCareInsurance(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLongTermCareInsurance(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "LongTermCareInsurance not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateLongTermCareInsurance(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToLongTermCareInsurance] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromLongTermCareInsurance(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLongTermCareInsurance(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "LongTermCareInsurance not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateLongTermCareInsurance(firmId, { companyIds: currentIds.filter((id: string) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromLongTermCareInsurance] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

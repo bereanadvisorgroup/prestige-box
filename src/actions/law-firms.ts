@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type LawFirm, LawFirmSchema, type Person } from "@/types/crm";
 
@@ -113,6 +114,14 @@ export async function createLawFirm(data: Partial<LawFirm>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/crm/law-firms");
 
     if (data.clientIds?.length) {
@@ -135,6 +144,8 @@ export async function createLawFirm(data: Partial<LawFirm>) {
 
 export async function updateLawFirm(id: string, data: Partial<LawFirm>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -143,6 +154,21 @@ export async function updateLawFirm(id: string, data: Partial<LawFirm>) {
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/crm/law-firms");
     revalidatePath(`/dashboard/crm/law-firms/${id}`);
@@ -171,9 +197,21 @@ export async function deleteLawFirm(id: string) {
 
     if (getError) throw new Error((getError as { message: string }).message);
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (deleteError) throw new Error((deleteError as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/crm/law-firms");
 
@@ -221,6 +259,36 @@ export async function unlinkClientFromLawFirm(firmId: string, clientId: string) 
     return updateLawFirm(firmId, { clientIds: currentIds.filter((id) => id !== clientId) });
   } catch (error) {
     console.error(`[unlinkClientFromLawFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkCompanyToLawFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLawFirm(firmId);
+    if (!firmRes.success || !firmRes.lawFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.lawFirm.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateLawFirm(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToLawFirm] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromLawFirm(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getLawFirm(firmId);
+    if (!firmRes.success || !firmRes.lawFirm) return { success: false, error: "Firm not found" };
+
+    const currentIds = firmRes.lawFirm.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateLawFirm(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromLawFirm] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

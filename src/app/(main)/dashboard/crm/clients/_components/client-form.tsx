@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { createClient, updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
 import { getClientPoliciesByClient } from "@/actions/policies";
-import { createUser } from "@/actions/users";
+import { createUser, getUsers } from "@/actions/users";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sportsTeams } from "@/data/sports-teams";
 import { formatPhoneNumber } from "@/lib/utils";
 import {
@@ -41,6 +42,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
+  const [advisors, setAdvisors] = useState<{ uid: string; name: string }[]>([]);
   const [hobbyInput, setHobbyInput] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [createPortalAccount, setCreatePortalAccount] = useState(true);
@@ -51,12 +53,14 @@ export function ClientForm({ client }: ClientFormProps) {
       ? {
           id: client.id,
           personId: client.personId,
+          advisorId: client.advisorId ?? null,
           hobbies: client.hobbies,
           favoriteSportsTeams: client.favoriteSportsTeams,
           paymentAccounts: client.paymentAccounts,
         }
       : {
           personId: "",
+          advisorId: null,
           hobbies: [],
           favoriteSportsTeams: [],
           paymentAccounts: [],
@@ -82,7 +86,18 @@ export function ClientForm({ client }: ClientFormProps) {
         setAvailablePeople(result.people);
       }
     }
+    async function fetchAdvisors() {
+      const result = await getUsers();
+      if (result.success && result.users) {
+        setAdvisors(
+          result.users
+            .filter((u) => u.role === "admin" || u.role === "advisor")
+            .map((u) => ({ uid: u.uid, name: `${u.firstName} ${u.lastName}`.trim() || u.email })),
+        );
+      }
+    }
     fetchPeople();
+    fetchAdvisors();
   }, []);
 
   const handleAddHobby = () => {
@@ -242,6 +257,36 @@ export function ClientForm({ client }: ClientFormProps) {
                 </div>
               </div>
             )}
+
+            <FormField
+              control={form.control}
+              name="advisorId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Owning Advisor</FormLabel>
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select advisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {advisors.map((a) => (
+                        <SelectItem key={a.uid} value={a.uid}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Auto-generated birthday, anniversary, and renewal tasks are assigned to this advisor.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {!!client && (
               <>

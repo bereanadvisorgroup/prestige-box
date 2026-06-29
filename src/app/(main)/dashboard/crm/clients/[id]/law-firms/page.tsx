@@ -32,7 +32,7 @@ export default async function LawFirmsPage({ params }: Props) {
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <AssociationCardList
-        clientId={client.id || ""}
+        entityId={client.id || ""}
         title="Associated Law Firms"
         description="Law firms this client is associated with"
         items={associatedLawFirms.map((f) => ({
@@ -47,7 +47,7 @@ export default async function LawFirmsPage({ params }: Props) {
         onUnlinkAction={unlinkClientFromLawFirm}
         actionNode={
           <LinkFirmDialog
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             firmTypeLabel="Law Firm"
             availableFirms={availableFirms}
             newFirmLink={`/dashboard/crm/law-firms/new?clientId=${client.id}`}

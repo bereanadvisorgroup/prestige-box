@@ -4,10 +4,22 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { CLIENT_POLICY_FIELDS } from "@/lib/history/fields";
+import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
+import { removeAutoTask, syncRenewalForPolicy } from "./task-sync";
+
 const TABLE = "client_policies";
+
+/** Derives the history subtype from which insurance carrier a policy references. */
+function policySubType(policy: Partial<ClientPolicy>): string {
+  if (policy.lifeInsuranceCompanyId) return "Life Insurance";
+  if (policy.disabilityInsuranceCompanyId) return "Disability Insurance";
+  if (policy.longTermCareInsuranceId) return "Long Term Care";
+  return "Policy";
+}
 
 export async function getClientPolicies() {
   try {
@@ -131,6 +143,21 @@ export async function createClientPolicy(data: Partial<ClientPolicy>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    const subType = policySubType(inserted);
+    await recordEvent({
+      entityType: "client",
+      entityId: inserted.clientId,
+      subType,
+      action: "added",
+      fieldName: "policy",
+      fieldLabel: "Policy",
+      newValue: inserted.policyName,
+      summary: `${subType} policy added for client`,
+    });
+
+    // Create the auto-generated renewal task for this policy.
+    await syncRenewalForPolicy(inserted.id);
+
     revalidatePath("/dashboard/crm/policies");
 
     return { success: true, id: inserted.id };
@@ -142,6 +169,8 @@ export async function createClientPolicy(data: Partial<ClientPolicy>) {
 
 export async function updateClientPolicy(id: string, data: Partial<ClientPolicy>) {
   try {
+    const { data: current } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -150,6 +179,20 @@ export async function updateClientPolicy(id: string, data: Partial<ClientPolicy>
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    if (current) {
+      await recordFieldDiffs({
+        entityType: "client",
+        entityId: current.clientId,
+        subType: policySubType(current),
+        before: current,
+        after: { ...current, ...data },
+        fields: CLIENT_POLICY_FIELDS,
+      });
+    }
+
+    // Keep the renewal task aligned with the (possibly changed) renewalDate.
+    await syncRenewalForPolicy(id);
 
     revalidatePath("/dashboard/crm/policies");
     revalidatePath(`/dashboard/crm/policies/${id}`);
@@ -163,9 +206,28 @@ export async function updateClientPolicy(id: string, data: Partial<ClientPolicy>
 
 export async function deleteClientPolicy(id: string) {
   try {
+    const { data: current } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    if (current) {
+      const subType = policySubType(current);
+      await recordEvent({
+        entityType: "client",
+        entityId: current.clientId,
+        subType,
+        action: "removed",
+        fieldName: "policy",
+        fieldLabel: "Policy",
+        oldValue: current.policyName,
+        summary: `${subType} policy removed from client`,
+      });
+    }
+
+    // Remove the policy's auto-generated renewal task.
+    await removeAutoTask("renewal", id);
 
     revalidatePath("/dashboard/crm/policies");
 

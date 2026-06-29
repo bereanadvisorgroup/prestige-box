@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type DisabilityInsuranceCompany, DisabilityInsuranceCompanySchema, type Person } from "@/types/crm";
 
@@ -85,6 +86,14 @@ export async function createDisabilityInsuranceCompany(data: Partial<DisabilityI
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/admin/disability-insurance-companies");
 
     if (data.companyIds?.length) {
@@ -102,6 +111,8 @@ export async function createDisabilityInsuranceCompany(data: Partial<DisabilityI
 
 export async function updateDisabilityInsuranceCompany(id: string, data: Partial<DisabilityInsuranceCompany>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -110,6 +121,21 @@ export async function updateDisabilityInsuranceCompany(id: string, data: Partial
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/admin/disability-insurance-companies");
     revalidatePath(`/dashboard/admin/disability-insurance-companies/${id}`);
@@ -141,9 +167,21 @@ export async function deleteDisabilityInsuranceCompany(id: string) {
       .eq("id", id)
       .single();
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/admin/disability-insurance-companies");
 
@@ -192,6 +230,38 @@ export async function unlinkClientFromDisabilityInsuranceCompany(companyId: stri
     return updateDisabilityInsuranceCompany(companyId, { clientIds: currentIds.filter((id) => id !== clientId) });
   } catch (error) {
     console.error(`[unlinkClientFromDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkCompanyToDisabilityInsuranceCompany(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getDisabilityInsuranceCompany(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "DisabilityInsuranceCompany not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateDisabilityInsuranceCompany(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToDisabilityInsuranceCompany] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromDisabilityInsuranceCompany(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getDisabilityInsuranceCompany(firmId);
+    if (!firmRes.success || !firmRes.company) return { success: false, error: "DisabilityInsuranceCompany not found" };
+
+    const currentIds = firmRes.company.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateDisabilityInsuranceCompany(firmId, {
+      companyIds: currentIds.filter((id: string) => id !== companyId),
+    });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromDisabilityInsuranceCompany] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

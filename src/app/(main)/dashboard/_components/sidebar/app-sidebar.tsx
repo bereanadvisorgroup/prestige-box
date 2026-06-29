@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Briefcase,
   Calculator,
+  Clock,
   Command,
   Database,
   DollarSign,
@@ -18,10 +19,12 @@ import {
   Home,
   Landmark,
   LayoutDashboard,
+  ListTodo,
   ReceiptText,
   Scale,
   Shield,
   ShieldAlert,
+  StickyNote,
   TrendingUp,
   User,
   Users,
@@ -60,11 +63,27 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
   },
   {
     id: 11,
+    label: "Internal",
     items: [
       {
-        title: "Internal",
+        title: "Overview",
         url: `/dashboard/crm/clients/${clientId}/internal`,
         icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: `/dashboard/crm/clients/${clientId}/internal/notes`,
+        icon: StickyNote,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/clients/${clientId}/internal/tasks`,
+        icon: ListTodo,
+      },
+      {
+        title: "History",
+        url: `/dashboard/crm/clients/${clientId}/internal/history`,
+        icon: Clock,
       },
     ],
   },
@@ -191,6 +210,32 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
   },
   {
     id: 21,
+    label: "Internal",
+    items: [
+      {
+        title: "Overview",
+        url: `/dashboard/crm/companies/${companyId}/internal`,
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: `/dashboard/crm/companies/${companyId}/internal/notes`,
+        icon: StickyNote,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/companies/${companyId}/internal/tasks`,
+        icon: ListTodo,
+      },
+      {
+        title: "History",
+        url: `/dashboard/crm/companies/${companyId}/internal/history`,
+        icon: Clock,
+      },
+    ],
+  },
+  {
+    id: 22,
     label: "General Info",
     items: [
       {
@@ -198,10 +243,15 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         url: `/dashboard/crm/companies/${companyId}`,
         icon: LayoutDashboard,
       },
+      {
+        title: "Valuation",
+        url: `/dashboard/crm/companies/${companyId}/valuation`,
+        icon: DollarSign,
+      },
     ],
   },
   {
-    id: 22,
+    id: 23,
     label: "Professional Services",
     items: [
       {
@@ -237,7 +287,7 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
     ],
   },
   {
-    id: 23,
+    id: 24,
     label: "Vendors",
     items: [
       {

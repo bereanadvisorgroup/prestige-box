@@ -2,14 +2,17 @@ import Link from "next/link";
 
 import { AlertCircle, ArrowUpRight, Users } from "lucide-react";
 
+import { getBusinessContact } from "@/actions/settings";
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { PortalSettingsCard } from "./_components/portal-settings-card";
 
 export default async function AdminDashboardPage() {
-  const result = await getUsers();
+  const [usersResult, contactResult] = await Promise.all([getUsers(), getBusinessContact()]);
 
-  if (!result.success) {
+  if (!usersResult.success) {
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
@@ -20,18 +23,21 @@ export default async function AdminDashboardPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {result.error || "Failed to fetch users from the server. Check server logs for details."}
+            {usersResult.error || "Failed to fetch users from the server. Check server logs for details."}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const users = result.users || [];
+  const users = usersResult.users || [];
   const totalUsers = users.length;
   const adminCount = users.filter((u) => u.role === "admin").length;
   const advisorCount = users.filter((u) => u.role === "advisor").length;
   const clientCount = users.filter((u) => u.role === "client").length;
+
+  const initialEmail = contactResult.success ? contactResult.email : "info@prestigeadvisors360.com";
+  const initialPhone = contactResult.success ? contactResult.phone : "941-799-3300";
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
@@ -107,6 +113,8 @@ export default async function AdminDashboardPage() {
             </CardContent>
           </Card>
         </Link>
+
+        <PortalSettingsCard initialEmail={initialEmail} initialPhone={initialPhone} />
       </div>
     </div>
   );

@@ -4,8 +4,7 @@ import { type ReactNode, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
-import { toast } from "sonner";
-
+import { deleteUser } from "@/actions/users";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -24,9 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("users")
           .select("*")
           .eq("uid", user.id)
-          .single()
+          .maybeSingle()
           .then(({ data: userData, error }) => {
-            if (userData && !error) {
+            if (userData) {
               setProfile({
                 uid: user.id,
                 email: user.email ?? null,
@@ -37,13 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
                 createdAt: userData.createdAt,
               });
-            } else {
+            } else if (!error) {
+              // Confirmed: this authenticated user has no whitelisted profile row.
+              deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
               supabase.auth.signOut().then(() => {
                 setUser(null);
                 setProfile(null);
-                toast.error("Access Denied. Please contact an administrator.");
-                router.replace("/login");
+                router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
               });
+            } else {
+              // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
+              // Do NOT sign out or delete — that would bounce a valid session to /login.
+              console.error("Profile fetch error (non-fatal), keeping session:", error);
             }
             setLoading(false);
           });
@@ -61,9 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         try {
-          const { data: userData, error } = await supabase.from("users").select("*").eq("uid", user.id).single();
+          const { data: userData, error } = await supabase.from("users").select("*").eq("uid", user.id).maybeSingle();
 
-          if (userData && !error) {
+          if (userData) {
             setProfile({
               uid: user.id,
               email: user.email ?? null,
@@ -74,12 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
               createdAt: userData.createdAt,
             });
-          } else {
+          } else if (!error) {
+            // Confirmed: this authenticated user has no whitelisted profile row.
+            deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
             await supabase.auth.signOut();
             setUser(null);
             setProfile(null);
-            toast.error("Access Denied. Please contact an administrator.");
-            router.replace("/login");
+            router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
+          } else {
+            // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
+            // Do NOT sign out or delete — that would bounce a valid session to /login.
+            console.error("Profile fetch error (non-fatal), keeping session:", error);
           }
         } catch (error) {
           console.error("Error fetching user profile in AuthProvider:", error);
@@ -102,27 +111,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const isDashboardRoute = pathname.startsWith("/dashboard");
     const isAuthRoute =
-      pathname.startsWith("/auth") && !pathname.includes("/reset-password") && !pathname.includes("/client-setup");
+      pathname.startsWith("/auth") &&
+      !pathname.includes("/reset-password") &&
+      !pathname.includes("/client-setup") &&
+      // The MFA enroll/verify pages manage their own redirects. Excluding them here
+      // prevents the guard's else-branch from bouncing a user who is mid-enrollment
+      // (nextLevel is still "aal1" until a factor is verified) back to the dashboard.
+      !pathname.includes("/mfa-") &&
+      // The OAuth callback resolves the role-based destination itself; excluding it
+      // avoids racing with this guard during the post-OAuth redirect.
+      !pathname.includes("/callback");
 
     if (isDashboardRoute && !user) {
       router.replace("/login");
     } else if (isDashboardRoute && user) {
-      // Verify AAL level client-side
-      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
-        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
-          router.replace("/auth/mfa-verify");
-        }
-      });
+      // Verify AAL level client-side, bypassing if user has a registered Passkey
+      Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.passkey.list()]).then(
+        ([{ data: aalData, error: aalError }, { data: passkeys, error: passkeyError }]) => {
+          const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
+          if (hasPasskey) return; // Passkey satisfies secure login factor
+
+          if (aalError || !aalData) return;
+
+          if (aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+            // Has a verified factor but hasn't satisfied it this session: verify.
+            router.replace("/auth/mfa-verify");
+          } else if (aalData.nextLevel === "aal1") {
+            // No passkey and no verified factor (e.g. OAuth sign-in): force MFA enrollment.
+            router.replace("/auth/mfa-enroll");
+          }
+        },
+      );
     } else if (isAuthRoute && user) {
-      supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
-        if (!error && data && data.currentLevel === "aal1" && data.nextLevel === "aal2") {
-          router.replace("/auth/mfa-verify");
-        } else {
+      Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.passkey.list()]).then(
+        ([{ data: aalData, error: aalError }, { data: passkeys, error: passkeyError }]) => {
+          const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
           const defaultRoute =
             profile?.role === "admin" || profile?.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
-          router.replace(defaultRoute);
-        }
-      });
+
+          if (hasPasskey) {
+            router.replace(defaultRoute);
+            return;
+          }
+
+          if (!aalError && aalData && aalData.currentLevel === "aal1" && aalData.nextLevel === "aal2") {
+            router.replace("/auth/mfa-verify");
+          } else {
+            router.replace(defaultRoute);
+          }
+        },
+      );
     } else if (user && profile) {
       const role = profile.role;
       const isAdminOrAdvisor = role === "admin" || role === "advisor";

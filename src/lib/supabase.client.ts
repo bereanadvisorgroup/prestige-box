@@ -21,6 +21,13 @@ function getClient() {
       detectSessionInUrl: true,
       storage: {
         getItem: (key) => {
+          // localStorage holds the full session and is the source of truth for the
+          // client. The cookie (read below) is only a trimmed copy for the server
+          // proxy, so prefer localStorage to avoid handing the client a partial session.
+          if (typeof window !== "undefined") {
+            const stored = localStorage.getItem(key);
+            if (stored) return stored;
+          }
           if (typeof document !== "undefined") {
             const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
             if (cookie) {
@@ -31,18 +38,31 @@ function getClient() {
               }
             }
           }
-          if (typeof window !== "undefined") {
-            return localStorage.getItem(key);
-          }
           return null;
         },
         setItem: (key, value) => {
-          if (typeof document !== "undefined") {
-            // biome-ignore lint/suspicious/noDocumentCookie: Shared with server via cookies
-            document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
-          }
           if (typeof window !== "undefined") {
             localStorage.setItem(key, value);
+          }
+          if (typeof document !== "undefined") {
+            // The full Supabase session can exceed the browser's ~4KB single-cookie
+            // limit — Azure/Microsoft sign-ins add large provider tokens and a heavy
+            // user object, so the browser silently drops the oversized cookie and the
+            // server proxy (src/proxy.ts) sees no session, bouncing the user to /login.
+            // The proxy only needs the access_token JWT (for exp/aal), so write a
+            // trimmed copy to the cookie and keep the full session in localStorage.
+            let cookieValue = value;
+            try {
+              const parsed = JSON.parse(value);
+              if (parsed && typeof parsed === "object" && parsed.access_token) {
+                const { provider_token, provider_refresh_token, user, ...rest } = parsed;
+                cookieValue = JSON.stringify(rest);
+              }
+            } catch {
+              // Non-session values (e.g. the PKCE code verifier) are small; store as-is.
+            }
+            // biome-ignore lint/suspicious/noDocumentCookie: Shared with server via cookies
+            document.cookie = `${key}=${encodeURIComponent(cookieValue)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
           }
         },
         removeItem: (key) => {

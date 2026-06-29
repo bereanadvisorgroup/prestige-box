@@ -1,22 +1,14 @@
 import Link from "next/link";
 
-import {
-  ArrowUpRight,
-  Briefcase,
-  Calendar,
-  DollarSign,
-  FileText,
-  Home,
-  ShieldCheck,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Briefcase, Calendar, FileText, Home, ShieldCheck, TrendingUp, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getHouseholds } from "@/actions/households";
 import { getPaymentsForMonth } from "@/actions/payments";
 import { getPeople } from "@/actions/people";
 import { getClientPolicies } from "@/actions/policies";
+import { RecentNotesCard } from "@/components/notes/recent-notes-card";
+import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,15 +35,6 @@ export default async function CRMOverviewPage() {
       : 0,
     totalPolicies: policiesResult.success ? policiesResult.policies?.length || 0 : 0,
   };
-
-  const navCards = [
-    { title: "Manage People", href: "/dashboard/crm/people", icon: Users, color: "bg-blue-500" },
-    { title: "Addresses", href: "/dashboard/crm/addresses", icon: Home, color: "bg-green-500" },
-    { title: "Households", href: "/dashboard/crm/households", icon: Home, color: "bg-purple-500" },
-    { title: "Client Portfolios", href: "/dashboard/crm/clients", icon: Briefcase, color: "bg-amber-500" },
-    { title: "Policy Manager", href: "/dashboard/crm/policies", icon: FileText, color: "bg-indigo-500" },
-    { title: "Payments Dashboard", href: "/dashboard/crm/payments", icon: DollarSign, color: "bg-emerald-500" },
-  ];
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 md:px-6">
@@ -125,78 +108,12 @@ export default async function CRMOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        <div className="space-y-6 md:col-span-2">
-          <h2 className="flex items-center gap-2 font-bold text-lg">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            Quick Navigation
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {navCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <Link key={card.href} href={card.href}>
-                  <Card className="group cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`${card.color} rounded-xl p-3 text-white shadow-sm`}>
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <span className="font-bold">{card.title}</span>
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="space-y-6">
+          <RecentNotesCard />
         </div>
-
-        <div>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="font-bold text-lg">Policy Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between rounded-xl border border-dashed bg-muted/20 p-4">
-                <div className="flex flex-col">
-                  <span className="font-bold text-muted-foreground text-xs uppercase">Total Policies</span>
-                  <span className="font-black text-2xl">{stats.policies}</span>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-muted-foreground">Active Coverage</span>
-                  <Badge
-                    variant="outline"
-                    className="border-green-200 bg-green-50 font-bold text-[10px] text-green-600 uppercase"
-                  >
-                    HEALTHY
-                  </Badge>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <div className="h-full w-[85%] bg-emerald-500" />
-                </div>
-                <div className="flex justify-between font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
-                  <span>85% Utilized</span>
-                  <span>15% Gaps</span>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button variant="outline" className="w-full font-bold text-xs" asChild>
-                  <Link href="/dashboard/crm/policies">View All Policies</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          <DashboardTasksCard />
         </div>
       </div>
     </div>

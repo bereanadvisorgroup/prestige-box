@@ -24,6 +24,7 @@ export async function getRelationshipGraphData() {
       { data: households },
       { data: clients },
       { data: companies },
+      { data: companyOwners },
       { data: clientPolicies },
       { data: lifeInsurance },
       { data: disabilityInsurance },
@@ -40,7 +41,8 @@ export async function getRelationshipGraphData() {
       supabaseServer.from("addresses").select("id, street1, city, state"),
       supabaseServer.from("households").select("id, name, addressId, memberIds"),
       supabaseServer.from("clients").select("id, personId"),
-      supabaseServer.from("companies").select("id, name, dba, addressId, clientIds"),
+      supabaseServer.from("companies").select("id, name, dba, addressId"),
+      supabaseServer.from("company_owners").select("companyId, personId, ownershipPercentage"),
       supabaseServer
         .from("client_policies")
         .select("id, clientId, lifeInsuranceCompanyId, disabilityInsuranceCompanyId, longTermCareInsuranceId"),
@@ -133,6 +135,16 @@ export async function getRelationshipGraphData() {
       }
     });
 
+    // Map company owners
+    const ownersMap = new Map<string, { personId: string; ownershipPercentage: number }[]>();
+    if (companyOwners) {
+      for (const o of companyOwners) {
+        const arr = ownersMap.get(o.companyId) || [];
+        arr.push({ personId: o.personId, ownershipPercentage: Number(o.ownershipPercentage) || 0 });
+        ownersMap.set(o.companyId, arr);
+      }
+    }
+
     // Companies
     (companies || []).forEach((c) => {
       nodes.push({
@@ -145,9 +157,14 @@ export async function getRelationshipGraphData() {
       if (c.addressId && addressesMap.has(c.addressId)) {
         links.push({ source: c.id, target: c.addressId, label: "Located At" });
       }
-      (c.clientIds || []).forEach((clientId: string) => {
-        if (clientsMap.has(clientId)) {
-          links.push({ source: c.id, target: clientId, label: "Employs" });
+      const owners = ownersMap.get(c.id) || [];
+      owners.forEach((owner) => {
+        if (peopleMap.has(owner.personId)) {
+          links.push({
+            source: owner.personId,
+            target: c.id,
+            label: `Owns ${owner.ownershipPercentage.toFixed(2)}%`,
+          });
         }
       });
     });

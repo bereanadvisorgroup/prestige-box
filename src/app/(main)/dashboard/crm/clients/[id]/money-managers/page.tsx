@@ -32,7 +32,7 @@ export default async function MoneyManagersPage({ params }: Props) {
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <AssociationCardList
-        clientId={client.id || ""}
+        entityId={client.id || ""}
         title="Associated Money Managers"
         description="Money managers this client is associated with"
         items={associatedMoneyManagers.map((mm) => ({
@@ -47,7 +47,7 @@ export default async function MoneyManagersPage({ params }: Props) {
         onUnlinkAction={unlinkClientFromMoneyManager}
         actionNode={
           <LinkFirmDialog
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             firmTypeLabel="Money Manager"
             availableFirms={availableFirms}
             newFirmLink={`/dashboard/admin/money-managers/new?clientId=${client.id}`}

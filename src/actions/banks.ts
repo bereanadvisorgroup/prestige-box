@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Bank, BankSchema, type Person } from "@/types/crm";
 
@@ -113,6 +114,14 @@ export async function createBank(data: Partial<Bank>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/crm/banks");
 
     if (data.clientIds?.length) {
@@ -135,6 +144,8 @@ export async function createBank(data: Partial<Bank>) {
 
 export async function updateBank(id: string, data: Partial<Bank>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -143,6 +154,21 @@ export async function updateBank(id: string, data: Partial<Bank>) {
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/crm/banks");
     revalidatePath(`/dashboard/crm/banks/${id}`);
@@ -171,9 +197,21 @@ export async function deleteBank(id: string) {
 
     if (getError) throw new Error((getError as { message: string }).message);
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (deleteError) throw new Error((deleteError as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/crm/banks");
 
@@ -221,6 +259,36 @@ export async function unlinkClientFromBank(firmId: string, clientId: string) {
     return updateBank(firmId, { clientIds: currentIds.filter((id) => id !== clientId) });
   } catch (error) {
     console.error(`[unlinkClientFromBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkCompanyToBank(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateBank(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToBank] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromBank(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getBank(firmId);
+    if (!firmRes.success || !firmRes.bank) return { success: false, error: "Bank not found" };
+
+    const currentIds = firmRes.bank.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateBank(firmId, { companyIds: currentIds.filter((id) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromBank] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

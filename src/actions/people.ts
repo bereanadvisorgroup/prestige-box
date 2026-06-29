@@ -2,8 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
+import { PERSON_PROFILE_FIELDS } from "@/lib/history/fields";
+import { recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
+
+import { syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "people";
 
@@ -57,6 +61,9 @@ export async function createPerson(data: Partial<Person>) {
 
 export async function updatePerson(id: string, data: Partial<Person>) {
   try {
+    // Fetch current state to diff into history (attributed to the client, if any).
+    const { data: current } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -65,6 +72,24 @@ export async function updatePerson(id: string, data: Partial<Person>) {
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    // A person's profile change is recorded on the client record that links to them.
+    if (current) {
+      const { data: client } = await supabaseServer.from("clients").select("id").eq("personId", id).maybeSingle();
+      if (client) {
+        await recordFieldDiffs({
+          entityType: "client",
+          entityId: client.id,
+          subType: "Profile",
+          before: current,
+          after: { ...current, ...data },
+          fields: PERSON_PROFILE_FIELDS,
+        });
+      }
+    }
+
+    // Keep the auto-generated birthday task in sync with this person's birthDate.
+    await syncBirthdayForPerson(id);
 
     revalidatePath("/dashboard/crm/people");
     revalidatePath(`/dashboard/crm/people/${id}`);

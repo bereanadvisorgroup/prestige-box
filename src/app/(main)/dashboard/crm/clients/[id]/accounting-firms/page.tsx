@@ -36,7 +36,7 @@ export default async function AccountingFirmsPage({ params }: Props) {
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
       <AssociationCardList
-        clientId={client.id || ""}
+        entityId={client.id || ""}
         title="Associated Accounting Firms"
         description="Accounting firms this client is associated with"
         items={associatedAccountingFirms.map((f) => ({
@@ -51,7 +51,7 @@ export default async function AccountingFirmsPage({ params }: Props) {
         onUnlinkAction={unlinkClientFromAccountingFirm}
         actionNode={
           <LinkFirmDialog
-            clientId={client.id || ""}
+            entityId={client.id || ""}
             firmTypeLabel="Accounting Firm"
             availableFirms={availableFirms}
             newFirmLink={`/dashboard/crm/accounting-firms/new?clientId=${client.id}`}

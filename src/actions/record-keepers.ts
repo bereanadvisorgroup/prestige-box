@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import { recordServiceLinkChanges } from "@/lib/history/service-links";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, type RecordKeeper, RecordKeeperSchema } from "@/types/crm";
 
@@ -113,6 +114,14 @@ export async function createRecordKeeper(data: Partial<RecordKeeper>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName: (inserted as any).name ?? (inserted as any).firmName ?? "",
+      before: null,
+      after: { clientIds: inserted.clientIds, companyIds: inserted.companyIds },
+      mode: "added",
+    });
+
     revalidatePath("/dashboard/admin/record-keepers");
 
     if (data.clientIds?.length) {
@@ -135,6 +144,8 @@ export async function createRecordKeeper(data: Partial<RecordKeeper>) {
 
 export async function updateRecordKeeper(id: string, data: Partial<RecordKeeper>) {
   try {
+    const { data: historyBefore } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
@@ -143,6 +154,21 @@ export async function updateRecordKeeper(id: string, data: Partial<RecordKeeper>
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
+
+    await recordServiceLinkChanges({
+      table: TABLE,
+      firmName:
+        (data as any).name ??
+        (data as any).firmName ??
+        (historyBefore as any)?.name ??
+        (historyBefore as any)?.firmName ??
+        "",
+      before: { clientIds: historyBefore?.clientIds, companyIds: historyBefore?.companyIds },
+      after: {
+        clientIds: data.clientIds !== undefined ? data.clientIds : historyBefore?.clientIds,
+        companyIds: data.companyIds !== undefined ? data.companyIds : historyBefore?.companyIds,
+      },
+    });
 
     revalidatePath("/dashboard/admin/record-keepers");
     revalidatePath(`/dashboard/admin/record-keepers/${id}`);
@@ -201,9 +227,21 @@ export async function deleteRecordKeeper(id: string) {
 
     if (getError) throw new Error((getError as { message: string }).message);
 
+    const { data: historyRemoved } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+
     const { error: deleteError } = await supabaseServer.from(TABLE).delete().eq("id", id);
 
     if (deleteError) throw new Error((deleteError as { message: string }).message);
+
+    if (historyRemoved) {
+      await recordServiceLinkChanges({
+        table: TABLE,
+        firmName: (historyRemoved as any).name ?? (historyRemoved as any).firmName ?? "",
+        before: { clientIds: historyRemoved.clientIds, companyIds: historyRemoved.companyIds },
+        after: {},
+        mode: "removed",
+      });
+    }
 
     revalidatePath("/dashboard/admin/record-keepers");
 
@@ -221,6 +259,36 @@ export async function deleteRecordKeeper(id: string) {
     return { success: true };
   } catch (error) {
     console.error(`[deleteRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function linkCompanyToRecordKeeper(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "RecordKeeper not found" };
+
+    const currentIds = firmRes.recordKeeper.companyIds || [];
+    if (currentIds.includes(companyId)) return { success: true }; // already linked
+
+    return updateRecordKeeper(firmId, { companyIds: [...currentIds, companyId] });
+  } catch (error) {
+    console.error(`[linkCompanyToRecordKeeper] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function unlinkCompanyFromRecordKeeper(firmId: string, companyId: string) {
+  try {
+    const firmRes = await getRecordKeeper(firmId);
+    if (!firmRes.success || !firmRes.recordKeeper) return { success: false, error: "RecordKeeper not found" };
+
+    const currentIds = firmRes.recordKeeper.companyIds || [];
+    if (!currentIds.includes(companyId)) return { success: true }; // already unlinked
+
+    return updateRecordKeeper(firmId, { companyIds: currentIds.filter((id: string) => id !== companyId) });
+  } catch (error) {
+    console.error(`[unlinkCompanyFromRecordKeeper] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
   }
 }

@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Phone, Users } from "lucide-react";
+import { ArrowUpRight, Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Phone, Users } from "lucide-react";
 
 import { getAddress } from "@/actions/addresses";
-import { getClients } from "@/actions/clients";
 import { getCompany } from "@/actions/companies";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatCurrency, formatPhoneNumber } from "@/lib/utils";
 
 interface CompanyPageProps {
   params: {
@@ -29,10 +28,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   const addressResult = company.addressId ? await getAddress(company.addressId) : null;
   const address = addressResult?.success ? addressResult.address : null;
 
-  const allClientsResult = await getClients();
-  const associatedClients = (
-    allClientsResult.success && allClientsResult.clients ? allClientsResult.clients : []
-  ).filter((c) => (company.clientIds || []).includes(c.id!));
+  const owners = company.owners || [];
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
@@ -40,7 +36,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
         <div className="space-y-6">
           <Card className="overflow-hidden border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
             <CardHeader className="bg-muted/30 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">Contact & Details</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">Company Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               {company.dba && (
@@ -128,114 +124,145 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
         <div className="space-y-6">
           <Card className="border-none shadow-md">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-5 w-5 text-primary" /> Situs Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {(company.situsRecords || []).length > 0 ? (
-                <div className="max-h-[300px] divide-y overflow-y-auto">
-                  {(company.situsRecords || []).map((situs, idx) => (
-                    <div key={idx} className="p-4 transition-colors hover:bg-muted/5">
-                      <div className="mb-1 flex items-center justify-between">
-                        <p className="font-semibold text-sm">{situs.jurisdiction}</p>
-                        <Badge variant="outline" className="font-normal text-xs">
-                          {situs.type}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground text-xs">Effective: {situs.effectiveDate}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-                  <MapPin className="mx-auto mb-2 h-8 w-8 opacity-20" />
-                  <p className="text-sm">No situs records available.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Briefcase className="h-5 w-5 text-primary" /> Nexus Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {(company.nexusRecords || []).length > 0 ? (
-                <div className="max-h-[300px] divide-y overflow-y-auto">
-                  {(company.nexusRecords || []).map((nexus, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5">
-                      <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
-                      <Badge variant="outline" className="font-normal text-xs">
-                        {nexus.type}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-                  <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-20" />
-                  <p className="text-sm">No nexus records available.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Users className="h-5 w-5 text-primary" /> Associated Clients
+                  <Users className="h-5 w-5 text-primary" /> Company Owners
                 </CardTitle>
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {associatedClients.length > 0 ? (
-                <div className="divide-y">
-                  {associatedClients.map((client) => {
-                    const person = client.person as any;
-                    return (
-                      <Link
-                        key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
-                        className="group flex items-center justify-between p-4 transition-colors hover:bg-muted/5"
-                      >
-                        <div className="flex items-center gap-3">
-                          <PersonAvatar
-                            photoUrl={person?.photoUrl}
-                            firstName={person?.firstName}
-                            lastName={person?.lastName}
-                            size="sm"
-                          />
-                          <div className="space-y-1">
-                            <p className="font-semibold transition-colors group-hover:text-primary">
-                              {person?.firstName} {person?.lastName}
-                            </p>
-                            <p className="flex items-center gap-2 text-muted-foreground text-xs">
-                              {person?.email && <span>{person.email}</span>}
-                              {person?.mobilePhone && (
-                                <>
-                                  <span>•</span>
-                                  <span>{formatPhoneNumber(person.mobilePhone)}</span>
-                                </>
+              {owners.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30 text-muted-foreground text-xs uppercase">
+                        <th className="p-4 font-semibold">Owner</th>
+                        <th className="p-4 text-right font-semibold">Ownership</th>
+                        <th className="p-4 text-center font-semibold">Status</th>
+                        <th className="p-4 text-right font-semibold">Estimated Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {owners.map((owner: any) => {
+                        const person = owner.person;
+                        const name = person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
+                        const linkHref = owner.isClient
+                          ? `/dashboard/crm/clients/${owner.clientId}`
+                          : `/dashboard/crm/people/${owner.personId}`;
+                        const percentage = Number(owner.ownershipPercentage) || 0;
+                        const ownerValue = (percentage / 100) * (Number(company.estimatedValue) || 0);
+
+                        return (
+                          <tr key={owner.id} className="transition-colors hover:bg-muted/5">
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                <PersonAvatar
+                                  photoUrl={person?.photoUrl}
+                                  firstName={person?.firstName}
+                                  lastName={person?.lastName}
+                                  size="sm"
+                                />
+                                <Link
+                                  href={linkHref}
+                                  className="flex items-center gap-1 font-semibold text-primary hover:underline"
+                                >
+                                  <span>{name}</span>
+                                  <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+                                </Link>
+                              </div>
+                            </td>
+                            <td className="p-4 text-right font-medium">{percentage.toFixed(2)}%</td>
+                            <td className="p-4 text-center">
+                              {owner.isClient ? (
+                                <Badge
+                                  className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                  variant="outline"
+                                >
+                                  Client
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground">
+                                  Non-Client
+                                </Badge>
                               )}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                            </td>
+                            <td className="p-4 text-right font-semibold text-sm">{formatCurrency(ownerValue)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center p-12 text-center text-muted-foreground">
                   <Users className="mx-auto mb-4 h-12 w-12 opacity-20" />
-                  <p>No clients currently associated with this company.</p>
+                  <p>No owners currently associated with this company.</p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <Card className="border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <MapPin className="h-5 w-5 text-primary" /> Situs Records
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {(company.situsRecords || []).length > 0 ? (
+                  <div className="max-h-[300px] divide-y overflow-y-auto">
+                    {((company.situsRecords as any[]) || []).map((situs: any, idx: number) => (
+                      <div key={idx} className="p-4 transition-colors hover:bg-muted/5">
+                        <div className="mb-1 flex items-center justify-between">
+                          <p className="font-semibold text-sm">{situs.jurisdiction}</p>
+                          <Badge variant="outline" className="font-normal text-xs">
+                            {situs.type}
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground text-xs">Effective: {situs.effectiveDate}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                    <MapPin className="mx-auto mb-2 h-8 w-8 opacity-20" />
+                    <p className="text-sm">No situs records available.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Briefcase className="h-5 w-5 text-primary" /> Nexus Records
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {(company.nexusRecords || []).length > 0 ? (
+                  <div className="max-h-[300px] divide-y overflow-y-auto">
+                    {((company.nexusRecords as any[]) || []).map((nexus: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-4 transition-colors hover:bg-muted/5"
+                      >
+                        <p className="font-semibold text-sm">{nexus.jurisdiction}</p>
+                        <Badge variant="outline" className="font-normal text-xs">
+                          {nexus.type}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                    <Briefcase className="mx-auto mb-2 h-8 w-8 opacity-20" />
+                    <p className="text-sm">No nexus records available.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ interface AssociationItem {
 }
 
 interface AssociationCardListProps {
-  clientId?: string;
+  entityId?: string;
   title: string;
   description: string;
   items: AssociationItem[];
@@ -25,11 +25,11 @@ interface AssociationCardListProps {
   icon: LucideIcon;
   addLink?: string;
   actionNode?: React.ReactNode;
-  onUnlinkAction?: (firmId: string, clientId: string) => Promise<{ success: boolean; error?: string }>;
+  onUnlinkAction?: (firmId: string, entityId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function AssociationCardList({
-  clientId,
+  entityId,
   title,
   description,
   items,
@@ -86,10 +86,10 @@ export function AssociationCardList({
                           <ArrowUpRight className="h-4 w-4" />
                         </Button>
                       </Link>
-                      {onUnlinkAction && clientId && (
+                      {onUnlinkAction && entityId && (
                         <UnlinkFirmButton
                           firmId={item.id}
-                          clientId={clientId}
+                          entityId={entityId}
                           isLinked={item.isLinked}
                           onUnlinkAction={onUnlinkAction}
                         />

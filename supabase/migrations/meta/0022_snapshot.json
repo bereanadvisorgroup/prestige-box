@@ -1,6 +1,6 @@
 {
-  "id": "574a67b7-156b-47d9-9ecf-01df6a9e85c2",
-  "prevId": "6cbb465e-eb19-4ccc-af12-180c11738608",
+  "id": "c9862950-e7ef-44a0-a582-e6abd0b11d53",
+  "prevId": "574a67b7-156b-47d9-9ecf-01df6a9e85c2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1516,8 +1516,8 @@
       "uniqueConstraints": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": ["email"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1527,10 +1527,10 @@
   },
   "enums": {},
   "schemas": {},
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
