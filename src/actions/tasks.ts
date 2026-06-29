@@ -29,7 +29,11 @@ export interface TaskFilter {
  * - moving INTO Complete stamps completeDate (if not already set)
  * - moving OUT OF Complete clears it
  */
-function resolveCompleteDate(prevStatus: string | undefined, nextStatus: string, prevComplete: string | null): string | null {
+function resolveCompleteDate(
+  prevStatus: string | undefined,
+  nextStatus: string,
+  prevComplete: string | null,
+): string | null {
   if (nextStatus === "Complete") {
     return prevStatus === "Complete" && prevComplete ? prevComplete : new Date().toISOString();
   }
@@ -37,9 +41,7 @@ function resolveCompleteDate(prevStatus: string | undefined, nextStatus: string,
 }
 
 /** Resolves display names for a set of associations (clients via person, companies directly). */
-async function resolveAssociationNames(
-  rows: { entityType: string; entityId: string }[],
-): Promise<Map<string, string>> {
+async function resolveAssociationNames(rows: { entityType: string; entityId: string }[]): Promise<Map<string, string>> {
   const names = new Map<string, string>(); // key: `${entityType}:${entityId}`
   const clientIds = Array.from(new Set(rows.filter((r) => r.entityType === "client").map((r) => r.entityId)));
   const companyIds = Array.from(new Set(rows.filter((r) => r.entityType === "company").map((r) => r.entityId)));
@@ -80,7 +82,10 @@ async function enrichTasks(taskRows: Task[]): Promise<TaskWithRelations[]> {
     ? await supabaseServer.from("users").select("uid, firstName, lastName, role").in("uid", userIds)
     : { data: [] };
   const userMap = new Map(
-    (users || []).map((u) => [u.uid, { name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || "Unknown", role: u.role }]),
+    (users || []).map((u) => [
+      u.uid,
+      { name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || "Unknown", role: u.role },
+    ]),
   );
 
   const nameMap = await resolveAssociationNames(associationRows || []);
@@ -210,7 +215,13 @@ export async function createTask(values: TaskFormValues) {
     await syncJunctions(inserted.id, parsed);
 
     await recordEvent(
-      { entityType: "task", entityId: inserted.id, subType: "Task", action: "created", summary: `Task "${parsed.name}" created` },
+      {
+        entityType: "task",
+        entityId: inserted.id,
+        subType: "Task",
+        action: "created",
+        summary: `Task "${parsed.name}" created`,
+      },
       actor,
     );
 
@@ -264,7 +275,13 @@ export async function updateTask(id: string, values: TaskFormValues) {
       );
     } else {
       await recordEvent(
-        { entityType: "task", entityId: id, subType: "Task", action: "updated", summary: `Task "${parsed.name}" updated` },
+        {
+          entityType: "task",
+          entityId: id,
+          subType: "Task",
+          action: "updated",
+          summary: `Task "${parsed.name}" updated`,
+        },
         actor,
       );
     }
@@ -280,7 +297,11 @@ export async function updateTask(id: string, values: TaskFormValues) {
 /** Lightweight status-only update used by the Kanban board drag interaction. */
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   try {
-    const { data: current } = await supabaseServer.from(TABLE).select("status, completeDate, name").eq("id", id).single();
+    const { data: current } = await supabaseServer
+      .from(TABLE)
+      .select("status, completeDate, name")
+      .eq("id", id)
+      .single();
     if (!current) return { success: false, error: "Task not found" };
 
     const { error } = await supabaseServer

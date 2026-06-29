@@ -47,8 +47,7 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
             </h1>
           </div>
         </div>
-        <div className="flex gap-2">
-        </div>
+        <div className="flex gap-2"></div>
       </div>
 
       <div className="mt-8 overflow-hidden rounded-xl border bg-background/50 shadow-sm backdrop-blur-sm">

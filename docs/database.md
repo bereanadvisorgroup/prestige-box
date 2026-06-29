@@ -22,10 +22,31 @@ erDiagram
     ADDRESSES ||--o{ ASSETS : "located at"
     ASSETS ||--o{ ASSET_HISTORY : "tracks value changes in"
     
+    COMPANIES ||--o{ COMPANY_VALUATION_HISTORY : "has valuations"
+    COMPANIES ||--o{ COMPANY_OWNERS : "has owners"
+    PEOPLE ||--o{ COMPANY_OWNERS : "owns equity"
+    
+    USERS ||--o{ TASKS : "creates"
+    TASKS ||--o{ TASK_ASSIGNEES : "assigned to"
+    USERS ||--o{ TASK_ASSIGNEES : "gets tasks"
+    TASKS ||--o{ TASK_ASSOCIATIONS : "links entity"
+    
+    USERS ||--o{ NOTES : "writes"
+    NOTES ||--o{ NOTES : "parent/replies"
+    NOTES ||--o{ NOTE_ASSOCIATIONS : "links entity"
+    NOTES ||--o{ NOTE_ATTACHMENTS : "has uploads"
+    NOTES ||--o{ NOTE_REACTIONS : "gets emoji"
+    NOTES ||--o{ NOTE_VOTES : "voted by"
+    NOTES ||--o{ NOTE_NOTIFICATIONS : "alerts user"
+    
+    USERS ||--o{ CHANGE_HISTORY : "acts on (actorId)"
+    
     USERS {
         uuid uid PK "References auth.users"
         string email
-        string role "Admin | Client"
+        string role "Admin | Advisor | Client"
+        string firstName
+        string lastName
     }
     PEOPLE {
         uuid id PK
@@ -37,6 +58,7 @@ erDiagram
     CLIENTS {
         uuid id PK
         uuid personId FK
+        uuid advisorId FK "References users"
         jsonb employments
         jsonb liabilities
         jsonb pcDocuments
@@ -49,36 +71,101 @@ erDiagram
         string name
         string ein
         uuid[] clientIds
+        string website
+        string phone
+        jsonb addressSitus
+        jsonb addressNexus
+        jsonb paymentAccounts
+        jsonb lifeDocuments
+        jsonb disabilityDocuments
+        jsonb ltcDocuments
     }
-    CLIENT_POLICIES {
+    COMPANY_VALUATION_HISTORY {
         uuid id PK
-        uuid clientId FK
-        string policyName
-        numeric premiumAmount
-    }
-    ASSETS {
-        uuid id PK
-        uuid clientId FK
-        string name
-        string category
-        string subType
-        numeric currentValue
-        string currency
-        boolean isAutomated
-        string institutionName
-        uuid addressId FK
-    }
-    ASSET_HISTORY {
-        uuid id PK
-        uuid assetId FK
-        numeric value
+        uuid companyId FK
+        numeric valuation
         timestamp recordedAt
     }
-    FINANCIAL_DATA {
+    COMPANY_OWNERS {
         uuid id PK
-        uuid userId FK
-        numeric amount
+        uuid companyId FK
+        uuid personId FK
+        numeric ownershipPercentage
+    }
+    TASKS {
+        uuid id PK
+        string title
         string description
+        string status "New | In Process | Waiting Input | Complete"
+        string priority "Low | Medium | High | Critical"
+        timestamp dueDate
+        uuid createdBy FK "References users"
+        string sourceType "manual | birthday | anniversary | renewal"
+        string sourceRefId "anchor ID"
+    }
+    TASK_ASSIGNEES {
+        uuid id PK
+        uuid taskId FK
+        uuid userId FK "References users"
+    }
+    TASK_ASSOCIATIONS {
+        uuid id PK
+        uuid taskId FK
+        string entityType "client | company"
+        uuid entityId
+    }
+    NOTES {
+        uuid id PK
+        uuid parentId FK "self-reference"
+        uuid rootId FK "self-reference"
+        uuid authorId FK "References users"
+        string title
+        string body "Rich text content"
+        boolean isDeleted
+        timestamp createdAt
+    }
+    NOTE_ATTACHMENTS {
+        uuid id PK
+        uuid noteId FK
+        string kind "file | link"
+        string fileUrl
+        string fileName
+        numeric fileSize
+        string mimeType
+        string linkUrl
+        string linkTitle
+        string linkFavicon
+        string linkProvider "google-drive | web"
+    }
+    NOTE_REACTIONS {
+        uuid id PK
+        uuid noteId FK
+        uuid userId FK "References users"
+        string emoji
+    }
+    NOTE_VOTES {
+        uuid id PK
+        uuid noteId FK
+        uuid userId FK "References users"
+        integer vote "1 | -1"
+    }
+    NOTE_NOTIFICATIONS {
+        uuid id PK
+        uuid noteId FK
+        uuid recipientId FK "References users"
+        uuid actorId FK "References users"
+        string type "mention | reply"
+        boolean isRead
+    }
+    CHANGE_HISTORY {
+        uuid id PK
+        uuid actorId FK "References users"
+        string entityType "client | company | task | note | etc"
+        uuid entityId
+        string action "insert | update | delete | link"
+        jsonb before
+        jsonb after
+        timestamp createdAt
     }
 ```
 
@@ -86,62 +173,61 @@ erDiagram
 
 ### `users`
 - Maps to Supabase's internal `auth.users` table.
-- Stores custom application-specific roles (`admin`, `client`) and basic profile data.
+- Stores custom application-specific roles (`admin`, `advisor`, `client`) and basic profile details like name, phone, and profile photo URL.
 
 ### `people`
-- A master record of a physical person. This table tracks names, contact information (JSONB arrays), PII, and associated `addresses`.
+- A master record of a physical person. Tracks names, contact information (JSONB arrays), PII, and household associations.
 
 ### `clients`
-- Represents a customer relationship. Every `client` maps to exactly one `person` (`personId`), but a `person` is not necessarily a `client` (e.g., they could be an associate or family member).
-- Stores deep financial data such as employments, liabilities (loans/mortgages), and specialized documents (PC, Life, LTC, Estate) stored as JSONB arrays.
+- Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
+- Stores deep financial profiles (employment, liabilities) and insurance files.
 
-### `companies`, `life_insurance_companies`, `disability_insurance_companies`, & `long_term_care_insurance`
-- Separates general companies (employers, owned businesses) from specialized insurance providers (Life, Disability, Long Term Care).
-- Many-to-Many relationships to clients are primarily handled via `uuid` arrays (e.g., `clientIds`).
+### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
+- Tracks general corporate clients and business entities.
+- Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
+- **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
 
-### `addresses`
-- Tracks physical and mailing addresses associated with people, households, companies, and assets.
+### `tasks` & sub-tables (`task_assignees`, `task_associations`)
+- Manages standard advisory workflows.
+- Idempotency is strictly guarded via a unique database index: `uq_tasks_auto_anchor` (`sourceType`, `sourceRefId`), preventing duplicate generation of birthday, anniversary, or policy renewal tasks.
+- **Assignees**: Links multiple active users to a single task via `task_assignees`.
+- **Contextual Links**: Connects a task to clients or companies using `task_associations`.
 
-### `households`
-- Groups multiple individuals (people) together into households to represent family groups for financial advisory and net worth aggregation.
+### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
+- reddit-style nested threaded workspace.
+- **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
+- **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
+- **Community Ratings**: Tracks up/down voting scores through `note_votes` and emoji counts in `note_reactions`.
+- **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
 
-### `client_policies`
-- Stores individual client policy records for Life, Disability, and Long Term Care insurance, detailing premium amounts, renewal dates, and payment schedules.
+### `change_history`
+- System-wide audit log mapping all mutations across CRM entities.
+- Stores the action (`insert`, `update`, `delete`, `link`), the actor (`actorId`), and snapshots of the record `before` and `after` the mutation as JSONB payloads.
 
-### `law_firms`, `accounting_firms`, `actuarial_firms`, `banks`, `property_and_casualty_firms`
-- Represent professional service provider firms associated with both clients and companies. Track contact info and arrays of associated client/company IDs.
-
-### `money_managers`, `record_keepers`
-- Represent specialized financial vendors managing client accounts and policy allocations, connected via client and company reference arrays.
-
-### `assets`
-- Tracks physical assets owned by clients (e.g., primary residences, investment properties, vehicles, and valuables).
-- Supports manual updates or automated integration (e.g., via financial institution linking). Can optionally link to `addresses` for real estate properties.
-
-### `asset_history`
-- Logs historical value snapshots for client assets. Used to build chronological timelines for net worth tracking and visualization.
-
-### `financial_data`
-- Template/example financial data records for users, strictly protected by AAL2 RLS policies.
+---
 
 ## Drizzle ORM
 
-The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used to generate SQL migrations from this file.
+The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used to generate SQL migrations.
 
 ### Migrations & Pushing
 - Schema updates are applied via `pnpm drizzle-kit push` or `pnpm drizzle-kit generate` depending on the environment.
 - The `src/db/migrate.ts` file handles automated migration execution.
 
 ### Local Seeding
-- To spin up a local environment quickly, a robust seeding script is provided at `src/db/seed.ts`.
-- It utilizes `@faker-js/faker` to generate hundreds of realistic records across all tables (People, Companies, Policies, etc.).
+- To spin up a local environment quickly, a seeding script is provided at `src/db/seed.ts`.
+- Generates realistic records across all tables (People, Companies, Policies, Notes, Tasks, and Valuations).
 - Run the seeder with: `pnpm run db:seed`.
+
+---
 
 ## Security & Row Level Security (RLS)
 
 All database access from the client side requires explicit Row Level Security policies.
 
 - **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets`, `asset_history`, and `financial_data`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
-- **Supabase Dashboards:** When testing queries in the Supabase Dashboard SQL Editor, RLS is bypassed. Always test via the client application or a dedicated authenticated service role.
-- **Subquery Cache Optimization:** For performance, RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
-- **Service Role:** The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.
+- **Collaborative Modules RLS**: Tables like `notes`, `tasks`, `change_history`, and their related tables allow read/write access to all `authenticated` users. More granular business logic validation (e.g., preventing a client from reading internal notes) is enforced at the application level to support rich team collaboration.
+- **Subquery Cache Optimization**: RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
+- **Service Role**: The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.
+

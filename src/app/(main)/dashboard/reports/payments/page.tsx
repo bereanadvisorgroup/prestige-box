@@ -72,7 +72,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
 
         <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-1 shadow-sm">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-            <Link href={`/dashboard/crm/payments?month=${prevMonth}&year=${prevYear}`}>
+            <Link href={`/dashboard/reports/payments?month=${prevMonth}&year=${prevYear}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -80,7 +80,7 @@ export default async function PaymentsPage({ searchParams }: PaymentsPageProps) 
             {monthNames[monthParam]} {yearParam}
           </div>
           <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-            <Link href={`/dashboard/crm/payments?month=${nextMonth}&year=${nextYear}`}>
+            <Link href={`/dashboard/reports/payments?month=${nextMonth}&year=${nextYear}`}>
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

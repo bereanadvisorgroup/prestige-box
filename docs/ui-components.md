@@ -25,7 +25,17 @@ Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesth
 All iconography is sourced exclusively from the `lucide-react` library.
 
 ### 4. Recharts
-The responsive charting library used for data visualizations (e.g., net worth graphs). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
+The responsive charting library used for data visualizations (e.g., net worth graphs and corporate valuation curves). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
+
+### 5. Rich Text Editor (Tiptap)
+For notes and task descriptions, the project integrates Tiptap:
+- **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
+- **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
+
+### 6. Drag & Drop Primitives (@dnd-kit)
+Used for task management and pipeline staging columns:
+- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
+- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
 
 ## Strict Data Tables Standard
 

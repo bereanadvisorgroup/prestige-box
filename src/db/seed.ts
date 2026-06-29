@@ -236,7 +236,9 @@ async function main() {
     // Pool of users tasks can be assigned to / clients can be owned by: admins and advisors.
     // Fall back to any non-client, then to all users, so seeding never produces an empty pool.
     const refreshedPublicUsers = await db.select().from(users);
-    let assignableUserIds = refreshedPublicUsers.filter((u) => u.role === "admin" || u.role === "advisor").map((u) => u.uid);
+    let assignableUserIds = refreshedPublicUsers
+      .filter((u) => u.role === "admin" || u.role === "advisor")
+      .map((u) => u.uid);
     if (assignableUserIds.length === 0) {
       assignableUserIds = refreshedPublicUsers.filter((u) => u.role !== "client").map((u) => u.uid);
     }
