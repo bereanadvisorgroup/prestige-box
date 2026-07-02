@@ -94,35 +94,46 @@ erDiagram
     }
     TASKS {
         uuid id PK
-        string title
-        string description
+        string name
         string status "New | In Process | Waiting Input | Complete"
-        string priority "Low | Medium | High | Critical"
+        string category "Other | Birthday | Wedding Anniversary | Policy Renewal"
+        string priority "Low | Medium | High"
+        string description "Tiptap HTML"
+        jsonb attachments
         timestamp dueDate
-        uuid createdBy FK "References users"
-        string sourceType "manual | birthday | anniversary | renewal"
+        timestamp completeDate
+        string source "manual | auto"
+        string sourceType "birthday | anniversary | renewal"
         string sourceRefId "anchor ID"
+        uuid createdBy FK "References users"
+        timestamp createdAt
+        timestamp updatedAt
     }
     TASK_ASSIGNEES {
         uuid id PK
         uuid taskId FK
         uuid userId FK "References users"
+        timestamp createdAt
     }
     TASK_ASSOCIATIONS {
         uuid id PK
         uuid taskId FK
         string entityType "client | company"
         uuid entityId
+        timestamp createdAt
     }
     NOTES {
         uuid id PK
         uuid parentId FK "self-reference"
         uuid rootId FK "self-reference"
+        integer depth
+        string title "Only on top-level notes"
+        string body "Tiptap HTML"
         uuid authorId FK "References users"
-        string title
-        string body "Rich text content"
+        integer score
         boolean isDeleted
         timestamp createdAt
+        timestamp updatedAt
     }
     NOTE_ATTACHMENTS {
         uuid id PK
@@ -130,41 +141,54 @@ erDiagram
         string kind "file | link"
         string fileUrl
         string fileName
-        numeric fileSize
+        integer fileSize
         string mimeType
         string linkUrl
         string linkTitle
         string linkFavicon
         string linkProvider "google-drive | web"
+        timestamp createdAt
     }
     NOTE_REACTIONS {
         uuid id PK
         uuid noteId FK
         uuid userId FK "References users"
         string emoji
+        timestamp createdAt
     }
     NOTE_VOTES {
         uuid id PK
         uuid noteId FK
         uuid userId FK "References users"
-        integer vote "1 | -1"
+        integer value "1 | -1"
+        timestamp createdAt
     }
     NOTE_NOTIFICATIONS {
         uuid id PK
         uuid noteId FK
+        uuid rootId FK
         uuid recipientId FK "References users"
         uuid actorId FK "References users"
+        string actorName
         string type "mention | reply"
+        string preview
         boolean isRead
+        timestamp createdAt
     }
     CHANGE_HISTORY {
         uuid id PK
-        uuid actorId FK "References users"
-        string entityType "client | company | task | note | etc"
+        string entityType "client | company | task"
         uuid entityId
-        string action "insert | update | delete | link"
-        jsonb before
-        jsonb after
+        string subType "Profile | Life Insurance | etc"
+        string action "created | updated | added | removed | deleted"
+        string fieldName
+        string fieldLabel
+        string oldValue
+        string newValue
+        string summary
+        uuid actorId FK "References users"
+        string actorName
+        timestamp changedAt
         timestamp createdAt
     }
 ```
@@ -198,12 +222,12 @@ erDiagram
 - reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
-- **Community Ratings**: Tracks up/down voting scores through `note_votes` and emoji counts in `note_reactions`.
+- **Community Ratings**: Tracks up/down voting scores through `note_votes` (using the `value` column) and emoji counts in `note_reactions`.
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
 
 ### `change_history`
-- System-wide audit log mapping all mutations across CRM entities.
-- Stores the action (`insert`, `update`, `delete`, `link`), the actor (`actorId`), and snapshots of the record `before` and `after` the mutation as JSONB payloads.
+- System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks).
+- Logs the semantic sub-type (e.g. Profile, Life Insurance, Valuation), action (`created`, `updated`, `added`, `removed`, `deleted`), specific changed fields with machine and human-readable names (`fieldName`, `fieldLabel`), before/after string snapshots (`oldValue`, `newValue`), a custom text `summary`, and details of the actor (`actorId`, `actorName`) and timestamp.
 
 ---
 
