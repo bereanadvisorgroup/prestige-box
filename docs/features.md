@@ -128,3 +128,9 @@ Secure client-specific onboarding pathway.
 - Custom setup page to welcome new clients and verify identity.
 - Enforces strict application password requirements (length, special characters).
 - Authenticated logger tracking onboarding flow completions.
+
+### 11. Authentication & Registration Entrypoints
+The application provides modern, secure access control via multiple options:
+- **Credential Sign-In & Sign-Up**: Secure login (`/login`) and account registration (`/login/create-account`) backed by strict validation and database status checks.
+- **Passwordless Device Passkeys**: Users can register and sign in seamlessly using native WebAuthn Passkeys (FaceID, TouchID, or hardware security keys) bypassing passwords entirely.
+- **Social OAuth Integration**: Quick authentication using third-party identity providers (Google and Microsoft Azure AD) for unified corporate identity.

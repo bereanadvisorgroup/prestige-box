@@ -311,6 +311,7 @@ export default function LoginPage() {
                       <Mail className="absolute top-3.5 left-3 h-4 w-4 text-neutral-500" />
                       <Input
                         id="email"
+                        type="email"
                         placeholder="name@yourdomain.com"
                         className="rounded-xl border border-neutral-300 bg-[#eae7e2] py-5 pl-10 text-neutral-800 placeholder:text-neutral-500 focus-visible:ring-neutral-400"
                         autoComplete="email"

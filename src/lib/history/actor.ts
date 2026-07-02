@@ -17,7 +17,7 @@ const SYSTEM_ACTOR: HistoryActor = { actorId: null, actorName: "System" };
  * The Supabase JS client stores the session in a cookie named
  * `sb-<projectRef>-auth-token`. Large sessions are split across chunked
  * cookies (`...-auth-token.0`, `.1`, ...) and may be prefixed with `base64-`.
- * This mirrors the parsing done in src/proxy.ts but works in a server-action
+ * This mirrors the parsing done in src/middleware.ts but works in a server-action
  * context via next/headers.
  */
 async function readAccessToken(): Promise<string | null> {

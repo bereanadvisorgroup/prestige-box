@@ -7,9 +7,9 @@ const clientFile = path.join(__dirname, "playwright/.auth/client.json");
 setup("authenticate as admin", async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
   await page.goto("/auth/v1/login");
-  await page.locator('input[type="email"]').fill("admin@prestigebox.dev");
-  await page.locator('input[type="password"]').fill("password123");
-  await page.locator('button[type="submit"]', { hasText: "Login" }).click();
+  await page.locator("input#email").fill("admin@prestigebox.dev");
+  await page.locator("input#password").fill("password123");
+  await page.locator('button[type="submit"]').click();
 
   // Wait until the page receives the cookies.
   // Sometimes login flow sets cookies in the process of several redirects.
@@ -24,9 +24,9 @@ setup("authenticate as admin", async ({ page }) => {
 setup("authenticate as client", async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.
   await page.goto("/auth/v1/login");
-  await page.locator('input[type="email"]').fill("client1@prestigebox.dev");
-  await page.locator('input[type="password"]').fill("password123");
-  await page.locator('button[type="submit"]', { hasText: "Login" }).click();
+  await page.locator("input#email").fill("client1@prestigebox.dev");
+  await page.locator("input#password").fill("password123");
+  await page.locator('button[type="submit"]').click();
 
   // Wait until the page receives the cookies.
   await expect(page).toHaveURL(/\/dashboard\/default/, { timeout: 30000 });

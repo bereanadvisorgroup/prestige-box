@@ -13,7 +13,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import type { TaskAssociation, TaskStatus, TaskWithRelations } from "@/types/crm";
 
 import { TaskBoard } from "./task-board";
-import { applyTaskFilters, defaultTaskFilters, TaskFilters, type TaskFilterState } from "./task-filters";
+import { applyTaskFilters, defaultTaskFilters, type TaskFilterState, TaskFilters } from "./task-filters";
 import { TaskFormDialog } from "./task-form-dialog";
 import { TaskList } from "./task-list";
 

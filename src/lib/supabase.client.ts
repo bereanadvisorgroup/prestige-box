@@ -23,7 +23,7 @@ function getClient() {
         getItem: (key) => {
           // localStorage holds the full session and is the source of truth for the
           // client. The cookie (read below) is only a trimmed copy for the server
-          // proxy, so prefer localStorage to avoid handing the client a partial session.
+          // middleware (src/middleware.ts), so prefer localStorage to avoid handing the client a partial session.
           if (typeof window !== "undefined") {
             const stored = localStorage.getItem(key);
             if (stored) return stored;
@@ -48,8 +48,8 @@ function getClient() {
             // The full Supabase session can exceed the browser's ~4KB single-cookie
             // limit — Azure/Microsoft sign-ins add large provider tokens and a heavy
             // user object, so the browser silently drops the oversized cookie and the
-            // server proxy (src/proxy.ts) sees no session, bouncing the user to /login.
-            // The proxy only needs the access_token JWT (for exp/aal), so write a
+            // server middleware (src/middleware.ts) sees no session, bouncing the user to /login.
+            // The middleware only needs the access_token JWT (for exp/aal), so write a
             // trimmed copy to the cookie and keep the full session in localStorage.
             let cookieValue = value;
             try {
