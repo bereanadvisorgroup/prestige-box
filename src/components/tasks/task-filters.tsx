@@ -251,7 +251,6 @@ export function TaskFilters({
           </Button>
         )}
       </div>
-
     </div>
   );
 }

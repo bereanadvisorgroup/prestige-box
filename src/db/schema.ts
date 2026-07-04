@@ -271,6 +271,14 @@ export const recordKeepers = pgTable("record_keepers", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 15b. Financial Account Types Table
+export const financialAccountTypes = pgTable("financial_account_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
 // 16. Assets Table
 export const assets = pgTable("assets", {
   id: uuid("id").primaryKey().defaultRandom(),

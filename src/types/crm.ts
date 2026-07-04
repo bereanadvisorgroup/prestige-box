@@ -825,3 +825,11 @@ export const TaskFormSchema = TaskSchema.omit({
 });
 export type TaskFormValues = z.infer<typeof TaskFormSchema>;
 export type TaskFormInput = z.input<typeof TaskFormSchema>;
+
+export const FinancialAccountTypeSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type FinancialAccountType = z.infer<typeof FinancialAccountTypeSchema>;
