@@ -15,6 +15,8 @@ The application's component architecture strictly relies on established primitiv
 
 ### 1. Base UI & Radix UI
 The foundational primitives for accessible, unstyled interactive components (e.g., Modals, Dropdowns, Tabs, Accordions).
+- **Combobox & Selection Picker**: Features interactive, searchable comboboxes built on the Base UI (`@base-ui/react`) `Combobox` primitives, custom styled for single/multi-selection tags (e.g., choosing associated grantors, trustees, or law firms in estate planning forms).
+
 
 ### 2. Shadcn UI
 Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesthetic. 

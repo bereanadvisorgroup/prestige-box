@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -36,7 +36,7 @@ export function DocumentsTab({
 }: {
   client: Client;
   title: string;
-  category: "pcDocuments" | "lifeDocuments" | "estateDocuments";
+  category: "pcDocuments" | "lifeDocuments";
   types: string[];
   firms?: { id: string; name: string }[];
   firmLabel?: string;
@@ -349,7 +349,7 @@ export function DocumentsTab({
   return (
     <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
       {!useHeaderPortal && (
-        <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between bg-muted/10 pb-4">
           <div className="space-y-1">
             <CardTitle>{title}</CardTitle>
           </div>

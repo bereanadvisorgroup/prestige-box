@@ -294,6 +294,45 @@ export const DocumentSchema = z.object({
   firmId: z.string().optional(),
 });
 
+// --- Estate Planning documents ---
+
+export const EstateDocumentTypeSchema = z.enum(["Will", "Revocable Trust", "Irrevocable Trust", "Other"]);
+
+// A single uploaded file within an estate document repository.
+export const EstateDocumentFileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string(),
+  uploadedAt: z.string().optional(),
+});
+
+// Reference to a person or company (used for grantor / trustees).
+export const EstatePartyRefSchema = z.object({
+  kind: z.enum(["person", "company"]),
+  id: z.string(),
+});
+
+// An estate planning "document repository": shared metadata plus one or more files.
+// e.g. a Revocable Trust holds the original trust document and any later amendments.
+export const EstateDocumentSchema = z.object({
+  id: z.string(),
+  type: EstateDocumentTypeSchema,
+  files: z.array(EstateDocumentFileSchema).default([]),
+  // Will
+  effectiveDate: z.string().optional(), // YYYY-MM-DD (also used by Trusts)
+  beneficiaries: z.string().optional(), // shared by Will and Trusts
+  // Revocable / Irrevocable Trust
+  trustName: z.string().optional(),
+  amendmentDate: z.string().optional(), // YYYY-MM-DD
+  attorneyFirmId: z.string().optional(), // references a law firm
+  grantor: EstatePartyRefSchema.optional(),
+  trustees: z.array(EstatePartyRefSchema).default([]),
+  // Other
+  description: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card", "Mortgage"]);
 export const LoanSchema = z.object({
   id: z.string().optional(),
@@ -328,7 +367,7 @@ export const ClientSchema = z.object({
   pcDocuments: z.array(DocumentSchema).default([]),
   lifeDocuments: z.array(DocumentSchema).default([]),
   ltcDocuments: z.array(DocumentSchema).default([]),
-  estateDocuments: z.array(DocumentSchema).default([]),
+  estateDocuments: z.array(EstateDocumentSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
   createdAt: z.string().optional(),
@@ -550,6 +589,10 @@ export type Employment = z.infer<typeof EmploymentSchema>;
 export type LoanInfo = z.infer<typeof LoanSchema>;
 export type MortgageInfo = z.infer<typeof MortgageSchema>;
 export type ClientDocument = z.infer<typeof DocumentSchema>;
+export type EstateDocument = z.infer<typeof EstateDocumentSchema>;
+export type EstateDocumentFile = z.infer<typeof EstateDocumentFileSchema>;
+export type EstatePartyRef = z.infer<typeof EstatePartyRefSchema>;
+export type EstateDocumentType = z.infer<typeof EstateDocumentTypeSchema>;
 
 // --- Form Schemas (omit server-generated fields) ---
 

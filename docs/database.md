@@ -205,6 +205,12 @@ erDiagram
 ### `clients`
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
 - Stores deep financial profiles (employment, liabilities) and insurance files.
+- **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
+  - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
+  - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).
+  - **Trust Schema**: Tracks the `trustName`, `effectiveDate`, `amendmentDate`, `attorneyFirmId` (linking to a law firm), `grantor` and `trustees` (party reference objects with `kind` as `person` or `company` and `id` linking to their record), `beneficiaries` (text), and the `files` array.
+  - **Other Schema**: Tracks custom `description` (text) and the `files` array.
+
 
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
 - Tracks general corporate clients and business entities.

@@ -46,6 +46,7 @@ import type {
 
 import { DocumentsTab } from "./tabs/documents-tab";
 import { EmploymentTab } from "./tabs/employment-tab";
+import { EstateDocumentsTab } from "./tabs/estate-documents-tab";
 import { FamilyTab } from "./tabs/family-tab";
 import { GeneralTab } from "./tabs/general-tab";
 import { LiabilitiesTab } from "./tabs/liabilities-tab";
@@ -410,12 +411,10 @@ export function ClientProfileTabs({
 
           {/* Estate Planning Tab */}
           <TabsContent value="estate" className="m-0 border-0 bg-muted/5 p-4 outline-none md:p-6 lg:p-8">
-            <DocumentsTab
+            <EstateDocumentsTab
               client={client}
-              category="estateDocuments"
-              title="Estate Planning Documents"
-              types={["Will", "Revocable Trust", "Irrevocable Trust", "Other"]}
-              uploadViaDialog={true}
+              lawFirms={associatedLawFirms.map((f) => ({ id: f.id!, name: f.firmName }))}
+              parties={associatedCompanies.map((c) => ({ id: c.id, name: c.name, kind: "company" as const }))}
             />
           </TabsContent>
 

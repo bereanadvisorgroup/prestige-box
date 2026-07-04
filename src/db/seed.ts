@@ -583,10 +583,20 @@ async function main() {
         ],
         estateDocuments: [
           {
-            name: "Last Will & Testament",
-            url: faker.internet.url(),
-            type: "PDF",
-            uploadedAt: faker.date.past().toISOString(),
+            id: faker.string.uuid(),
+            type: "Will",
+            effectiveDate: faker.date.past().toISOString().slice(0, 10),
+            beneficiaries: `${faker.person.fullName()}, ${faker.person.fullName()}`,
+            trustees: [],
+            files: [
+              {
+                id: faker.string.uuid(),
+                name: "Last Will & Testament",
+                url: faker.internet.url(),
+                uploadedAt: faker.date.past().toISOString(),
+              },
+            ],
+            createdAt: faker.date.past().toISOString(),
           },
         ],
         liabilities: [
