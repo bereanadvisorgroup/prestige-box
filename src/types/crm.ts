@@ -379,6 +379,25 @@ export const MoneyManagerAccountSchema = z.object({
 });
 export type MoneyManagerAccount = z.infer<typeof MoneyManagerAccountSchema>;
 
+// --- Record Keeper accounts (accounts a client holds with a record keeper firm) ---
+
+// A single account a client holds with a record keeper. Its `value` is also surfaced as a
+// virtual asset so it contributes to the client's total net worth (see actions/assets.ts).
+// `status` is derived: an account is "Open" while `closeDate` is empty and "Closed" once set.
+export const RecordKeeperAccountSchema = z.object({
+  id: z.string(),
+  recordKeeperId: z.string().min(1, "Record keeper is required"), // references record_keepers
+  financialTypeId: z.string().optional(), // references financial_account_types
+  accountNumber: z.string().optional(),
+  title: z.string().optional(),
+  value: z.number().min(0, "Value must be positive").default(0),
+  managementBeginDate: z.string().optional(), // YYYY-MM-DD
+  closeDate: z.string().optional(), // YYYY-MM-DD; presence flips status to "Closed"
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type RecordKeeperAccount = z.infer<typeof RecordKeeperAccountSchema>;
+
 // An insurance policy record (Life / Disability / Long-Term Care), optionally tied to a vendor company.
 export const InsurancePolicySchema = z.object({
   id: z.string(),
@@ -433,6 +452,7 @@ export const ClientSchema = z.object({
   disabilityPolicies: z.array(InsurancePolicySchema).default([]),
   ltcPolicies: z.array(InsurancePolicySchema).default([]),
   moneyManagerAccounts: z.array(MoneyManagerAccountSchema).default([]),
+  recordKeeperAccounts: z.array(RecordKeeperAccountSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
   createdAt: z.string().optional(),
@@ -446,6 +466,7 @@ export const AssetSubTypeSchema = z.enum([
   "Valuables",
   "Business Ownership",
   "Managed Account",
+  "Record Keeper Account",
 ]);
 
 export const AssetSchema = z.object({
@@ -464,6 +485,9 @@ export const AssetSchema = z.object({
   // Set on virtual assets derived from a client's money manager accounts; managed from the
   // Money Managers page and therefore read-only in the assets table.
   isManagedAccount: z.boolean().optional(),
+  // Set on virtual assets derived from a client's record keeper accounts; managed from the
+  // Record Keepers page and therefore read-only in the assets table.
+  isRecordKeeperAccount: z.boolean().optional(),
   isLinked: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),

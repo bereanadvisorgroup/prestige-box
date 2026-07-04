@@ -549,7 +549,7 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1.5">
-                          {asset.isCompanyAsset || asset.isManagedAccount ? (
+                          {asset.isCompanyAsset || asset.isManagedAccount || asset.isRecordKeeperAccount ? (
                             <>
                               <TooltipProvider>
                                 <Tooltip>
@@ -569,7 +569,9 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                                     <p>
                                       {asset.isManagedAccount
                                         ? "Edit this account on the client's Money Managers page."
-                                        : "Edit company estimated value on the company details page."}
+                                        : asset.isRecordKeeperAccount
+                                          ? "Edit this account on the client's Record Keepers page."
+                                          : "Edit company estimated value on the company details page."}
                                     </p>
                                   </TooltipContent>
                                 </Tooltip>
@@ -593,7 +595,9 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                                     <p>
                                       {asset.isManagedAccount
                                         ? "Manage this account on the client's Money Managers page."
-                                        : "Manage company ownership on the company details page."}
+                                        : asset.isRecordKeeperAccount
+                                          ? "Manage this account on the client's Record Keepers page."
+                                          : "Manage company ownership on the company details page."}
                                     </p>
                                   </TooltipContent>
                                 </Tooltip>

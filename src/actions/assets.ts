@@ -22,7 +22,7 @@ export async function getAssets(clientId: string) {
     // 2. Fetch client personId, liabilities, and managed accounts
     const { data: client, error: clientError } = await supabaseServer
       .from("clients")
-      .select("personId, liabilities, moneyManagerAccounts")
+      .select("personId, liabilities, moneyManagerAccounts, recordKeeperAccounts")
       .eq("id", clientId)
       .single();
 
@@ -69,6 +69,41 @@ export async function getAssets(clientId: string) {
           institutionName: managerName,
           addressId: null,
           isManagedAccount: true, // managed from the client's Money Managers page; read-only here
+          isLinked: true,
+          createdAt: account.createdAt,
+          updatedAt: account.updatedAt,
+        } as Asset);
+      }
+    }
+
+    // 3c. Surface record keeper accounts as virtual assets so their value rolls into net worth.
+    const recordKeeperAccounts = (client?.recordKeeperAccounts || []) as any[];
+    if (recordKeeperAccounts.length > 0) {
+      const keeperIds = Array.from(new Set(recordKeeperAccounts.map((a) => a.recordKeeperId).filter(Boolean)));
+      const keeperNames: Record<string, string> = {};
+      if (keeperIds.length > 0) {
+        const { data: keepers } = await supabaseServer
+          .from("record_keepers")
+          .select("id, firmName")
+          .in("id", keeperIds);
+        for (const k of keepers || []) keeperNames[k.id] = k.firmName;
+      }
+
+      for (const account of recordKeeperAccounts) {
+        const keeperName = keeperNames[account.recordKeeperId] || "Record Keeper";
+        const label = account.title || account.accountNumber || keeperName;
+        virtualAssets.push({
+          id: `rk-${account.id}`,
+          clientId,
+          name: `${label} (${keeperName})`,
+          category: "Record Keeper Accounts",
+          subType: "Record Keeper Account",
+          currentValue: Number(account.value) || 0,
+          currency: "USD",
+          isAutomated: false,
+          institutionName: keeperName,
+          addressId: null,
+          isRecordKeeperAccount: true, // managed from the client's Record Keepers page; read-only here
           isLinked: true,
           createdAt: account.createdAt,
           updatedAt: account.updatedAt,
@@ -357,7 +392,7 @@ export async function getClientAssetHistory(clientId: string) {
     // 2. Fetch client personId and managed accounts
     const { data: client, error: clientError } = await supabaseServer
       .from("clients")
-      .select("personId, moneyManagerAccounts")
+      .select("personId, moneyManagerAccounts, recordKeeperAccounts")
       .eq("id", clientId)
       .single();
 
@@ -389,6 +424,35 @@ export async function getClientAssetHistory(clientId: string) {
         virtualHistoryRecords.push({
           id: `mm-hist-${account.id}`,
           assetId: `mm-${account.id}`,
+          value: Number(account.value) || 0,
+          recordedAt: new Date(recordedAt).toISOString(),
+          createdAt: account.createdAt || recordedAt,
+        });
+      }
+    }
+
+    // 2c. Record keeper accounts: one snapshot per account (at its management begin date) so
+    // the account value is reflected in the net worth timeline.
+    const recordKeeperAccounts = (client?.recordKeeperAccounts || []) as any[];
+    if (recordKeeperAccounts.length > 0) {
+      const keeperIds = Array.from(new Set(recordKeeperAccounts.map((a) => a.recordKeeperId).filter(Boolean)));
+      const keeperNames: Record<string, string> = {};
+      if (keeperIds.length > 0) {
+        const { data: keepers } = await supabaseServer
+          .from("record_keepers")
+          .select("id, firmName")
+          .in("id", keeperIds);
+        for (const k of keepers || []) keeperNames[k.id] = k.firmName;
+      }
+
+      for (const account of recordKeeperAccounts) {
+        const keeperName = keeperNames[account.recordKeeperId] || "Record Keeper";
+        const label = account.title || account.accountNumber || keeperName;
+        const recordedAt = account.managementBeginDate || account.createdAt || new Date(0).toISOString();
+        virtualAssets.push({ id: `rk-${account.id}`, name: `${label} (${keeperName})` });
+        virtualHistoryRecords.push({
+          id: `rk-hist-${account.id}`,
+          assetId: `rk-${account.id}`,
           value: Number(account.value) || 0,
           recordedAt: new Date(recordedAt).toISOString(),
           createdAt: account.createdAt || recordedAt,

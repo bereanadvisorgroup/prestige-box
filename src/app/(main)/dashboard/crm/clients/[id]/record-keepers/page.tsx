@@ -1,13 +1,10 @@
 import { notFound } from "next/navigation";
 
-import { Database } from "lucide-react";
-
 import { getClient } from "@/actions/clients";
-import { getRecordKeepers, linkClientToRecordKeeper, unlinkClientFromRecordKeeper } from "@/actions/record-keepers";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+import { getFinancialAccountTypes } from "@/actions/financial-account-types";
+import { getRecordKeepers } from "@/actions/record-keepers";
 
-import { ClientHeaderPortal } from "../_components/client-header-portal";
+import { RecordKeeperAccountsManager } from "./_components/record-keeper-accounts-manager";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,49 +12,30 @@ interface Props {
 
 export default async function RecordKeepersPage({ params }: Props) {
   const { id } = await params;
-  const clientResult = await getClient(id);
+  const [clientResult, recordRes, typesRes] = await Promise.all([
+    getClient(id),
+    getRecordKeepers(),
+    getFinancialAccountTypes(),
+  ]);
 
   if (!clientResult.success || !clientResult.client) {
     notFound();
   }
 
   const client = clientResult.client;
-  const recordRes = await getRecordKeepers();
-  const allKeepers = (recordRes.success && recordRes.recordKeepers) || [];
 
-  const associatedRecordKeepers = allKeepers.filter((rk) => rk.clientIds?.includes(client.id || ""));
+  const recordKeepers = ((recordRes.success && recordRes.recordKeepers) || [])
+    .map((rk) => ({ id: rk.id as string, name: rk.firmName as string }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const availableFirms = allKeepers
-    .filter((rk) => !rk.clientIds?.includes(client.id || ""))
-    .map((rk) => ({ id: rk.id || "", name: rk.firmName }));
+  const financialTypes = ((typesRes.success && typesRes.types) || []).map((t) => ({
+    id: t.id as string,
+    name: t.name,
+  }));
 
   return (
     <div className="py-4">
-      <ClientHeaderPortal sectionName="Record Keepers">
-        <LinkFirmDialog
-          entityId={client.id || ""}
-          firmTypeLabel="Record Keeper"
-          availableFirms={availableFirms}
-          newFirmLink={`/dashboard/admin/record-keepers/new?clientId=${client.id}`}
-          onLinkAction={linkClientToRecordKeeper}
-        />
-      </ClientHeaderPortal>
-      <AssociationCardList
-        entityId={client.id || ""}
-        title="Associated Record Keepers"
-        description="Record keepers this client is associated with"
-        items={associatedRecordKeepers.map((rk) => ({
-          id: rk.id || "",
-          name: rk.firmName,
-          website: rk.website,
-          phone: rk.phone,
-          isLinked: false,
-        }))}
-        linkPrefix="/dashboard/admin/record-keepers"
-        icon={Database}
-        onUnlinkAction={unlinkClientFromRecordKeeper}
-        noCard={true}
-      />
+      <RecordKeeperAccountsManager client={client} recordKeepers={recordKeepers} financialTypes={financialTypes} />
     </div>
   );
 }
