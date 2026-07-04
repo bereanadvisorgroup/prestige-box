@@ -8,9 +8,10 @@ import { getBanks } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
 import { getLawFirms } from "@/actions/law-firms";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
+import { AssociationCardList } from "@/components/crm/association-card-list";
 import { Card } from "@/components/ui/card";
 
-import { AssociationCardList } from "../_components/association-card-list";
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { DocumentsTab } from "../_components/tabs/documents-tab";
 
 interface Props {
@@ -58,7 +59,8 @@ export default async function ProfessionalServicesPage({ params }: Props) {
     associatedPropertyAndCasualties.length > 0;
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Professional Services" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {associatedLawFirms.length > 0 && (
@@ -73,6 +75,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/law-firms"
               icon={Scale}
+              noCard={true}
             />
           )}
 
@@ -88,6 +91,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/accounting-firms"
               icon={ReceiptText}
+              noCard={true}
             />
           )}
 
@@ -103,6 +107,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/actuarial-firms"
               icon={Calculator}
+              noCard={true}
             />
           )}
 
@@ -118,6 +123,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/banks"
               icon={Landmark}
+              noCard={true}
             />
           )}
 
@@ -133,6 +139,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/property-and-casualty"
               icon={Shield}
+              noCard={true}
             />
           )}
 
@@ -161,6 +168,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               "4 Point Inspection",
               "Other",
             ]}
+            noCard={true}
           />
         </div>
       </div>

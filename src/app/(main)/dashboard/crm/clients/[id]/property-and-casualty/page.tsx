@@ -22,7 +22,7 @@ export default async function PropertyAndCasualtyPage({ params }: Props) {
   const allFirms = (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) || [];
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <PropertyAndCasualtyManager client={client} allFirms={allFirms} />
     </div>
   );

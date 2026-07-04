@@ -142,6 +142,7 @@ function NodeTree({
   );
 }
 
+import { ClientHeaderPortal } from "../client-header-portal";
 import { AddFamilyMemberModal } from "./add-family-member-modal";
 
 export function FamilyTab({ client }: { client: Client }) {
@@ -189,6 +190,13 @@ export function FamilyTab({ client }: { client: Client }) {
 
   return (
     <div className="space-y-6">
+      <ClientHeaderPortal sectionName="Family Tree">
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Family Member
+        </Button>
+      </ClientHeaderPortal>
+
       <AddFamilyMemberModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -198,76 +206,62 @@ export function FamilyTab({ client }: { client: Client }) {
         onSuccess={handleAddSuccess}
       />
 
-      <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
-        <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10 pb-4 pt-4">
-          <div>
-            <CardTitle>Family Tree</CardTitle>
-            <CardDescription className="mt-1">
-              Visual representation of the client's family configuration.
-            </CardDescription>
-          </div>
-          <Button onClick={() => setIsModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Family Member
-          </Button>
-        </CardHeader>
-        <CardContent className="overflow-x-auto pt-10 pb-10">
-          <div className="min-w-max">
-            <div className="flex flex-col items-center">
-              {/* Root Level: Client & Spouses */}
-              <div className="relative z-10 flex items-center gap-8">
-                {spouses.length > 0 && <div className="absolute left-10 right-10 top-1/2 -z-10 h-px bg-border" />}
-                <NodeCard person={clientPerson} label="Client" />
-                {spouses.map((spouse) => {
-                  const p = people.find((p) => p.id === spouse.personId);
-                  return <NodeCard key={spouse.id} person={p} member={spouse} onRemove={handleRemove} />;
-                })}
-              </div>
-
-              {/* Children Level */}
-              {children.length > 0 && (
-                <>
-                  <div className="h-6 w-px bg-border" />
-                  <div className="relative flex justify-center pt-0">
-                    {children.map((child, i) => (
-                      <TreeNodeContainer
-                        key={child.id}
-                        isFirst={i === 0}
-                        isLast={i === children.length - 1}
-                        isOnly={children.length === 1}
-                      >
-                        <NodeTree branch={child} members={members} people={people} onRemove={handleRemove} />
-                      </TreeNodeContainer>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* Unlinked Descendants (Fallback) */}
-              {unlinkedDescendants.length > 0 && (
-                <div className="mt-16 w-full max-w-3xl rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-6">
-                  <h4 className="mb-4 text-sm font-semibold text-muted-foreground">
-                    Unlinked Descendants (Missing Parent Association)
-                  </h4>
-                  <div className="flex flex-wrap gap-4">
-                    {unlinkedDescendants.map((member) => {
-                      const p = people.find((p) => p.id === member.personId);
-                      return <NodeCard key={member.id} person={p} member={member} onRemove={handleRemove} />;
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {members.length === 0 && (
-                <div className="mt-8 rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
-                  <User className="mx-auto mb-3 h-8 w-8 opacity-20" />
-                  <p className="text-sm">No family members linked yet.</p>
-                </div>
-              )}
+      <div className="fade-in animate-in overflow-x-auto pt-4 pb-4 duration-500">
+        <div className="min-w-max">
+          <div className="flex flex-col items-center">
+            {/* Root Level: Client & Spouses */}
+            <div className="relative z-10 flex items-center gap-8">
+              {spouses.length > 0 && <div className="absolute left-10 right-10 top-1/2 -z-10 h-px bg-border" />}
+              <NodeCard person={clientPerson} label="Client" />
+              {spouses.map((spouse) => {
+                const p = people.find((p) => p.id === spouse.personId);
+                return <NodeCard key={spouse.id} person={p} member={spouse} onRemove={handleRemove} />;
+              })}
             </div>
+
+            {/* Children Level */}
+            {children.length > 0 && (
+              <>
+                <div className="h-6 w-px bg-border" />
+                <div className="relative flex justify-center pt-0">
+                  {children.map((child, i) => (
+                    <TreeNodeContainer
+                      key={child.id}
+                      isFirst={i === 0}
+                      isLast={i === children.length - 1}
+                      isOnly={children.length === 1}
+                    >
+                      <NodeTree branch={child} members={members} people={people} onRemove={handleRemove} />
+                    </TreeNodeContainer>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Unlinked Descendants (Fallback) */}
+            {unlinkedDescendants.length > 0 && (
+              <div className="mt-16 w-full max-w-3xl rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-6">
+                <h4 className="mb-4 text-sm font-semibold text-muted-foreground">
+                  Unlinked Descendants (Missing Parent Association)
+                </h4>
+                <div className="flex flex-wrap gap-4">
+                  {unlinkedDescendants.map((member) => {
+                    const p = people.find((p) => p.id === member.personId);
+                    return <NodeCard key={member.id} person={p} member={member} onRemove={handleRemove} />;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {members.length === 0 && (
+              <div className="mt-8 rounded-lg border-2 border-dashed bg-muted/10 p-8 text-center text-muted-foreground">
+                <User className="mx-auto mb-3 h-8 w-8 opacity-20" />
+                <p className="text-sm">No family members linked yet.</p>
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

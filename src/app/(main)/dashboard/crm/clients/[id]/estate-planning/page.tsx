@@ -19,13 +19,15 @@ export default async function EstatePlanningPage({ params }: Props) {
   const client = clientResult.client;
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <DocumentsTab
         client={client}
         category="estateDocuments"
         title="Estate Planning Documents"
         types={["Will", "Revocable Trust", "Irrevocable Trust", "Other"]}
         uploadViaDialog={true}
+        useHeaderPortal={true}
+        noCard={true}
       />
     </div>
   );

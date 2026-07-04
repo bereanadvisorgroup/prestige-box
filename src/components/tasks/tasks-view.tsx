@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { getTasks, type TaskFilter, updateTaskStatus } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
+import { ClientHeaderPortal } from "@/app/(main)/dashboard/crm/clients/[id]/_components/client-header-portal";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuthStore } from "@/stores/auth.store";
@@ -22,6 +23,7 @@ interface TasksViewProps {
   scope?: TaskFilter;
   title?: string;
   description?: string;
+  useHeaderPortal?: boolean;
 }
 
 function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
@@ -32,7 +34,7 @@ function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
 
 const isGlobalScope = (scope?: TaskFilter) => !scope?.clientId && !scope?.companyId;
 
-export function TasksView({ scope, title = "Tasks", description }: TasksViewProps) {
+export function TasksView({ scope, title = "Tasks", description, useHeaderPortal = false }: TasksViewProps) {
   const profile = useAuthStore((s) => s.profile);
   const [tasks, setTasks] = React.useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -136,31 +138,56 @@ export function TasksView({ scope, title = "Tasks", description }: TasksViewProp
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-semibold text-2xl tracking-tight">{title}</h1>
-          {description && <p className="text-muted-foreground text-sm">{description}</p>}
-        </div>
-        <div className="flex items-center gap-2">
+      {useHeaderPortal && (
+        <ClientHeaderPortal sectionName={title}>
+          <Button onClick={openCreate} className="gap-1">
+            <Plus className="h-4 w-4" /> Add Task
+          </Button>
+        </ClientHeaderPortal>
+      )}
+
+      {useHeaderPortal ? (
+        <div className="flex justify-end">
           <ToggleGroup
             type="single"
             value={view}
             onValueChange={(v) => v && setView(v as "board" | "list")}
             variant="outline"
           >
-            <ToggleGroupItem value="board" aria-label="Board view">
+            <ToggleGroupItem value="board" aria-label="Board View" title="Board View">
               <KanbanSquare className="h-4 w-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem value="list" aria-label="List view">
+            <ToggleGroupItem value="list" aria-label="List View" title="List View">
               <List className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="font-semibold text-2xl tracking-tight">{title}</h1>
+            {description && <p className="text-muted-foreground text-sm">{description}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            <ToggleGroup
+              type="single"
+              value={view}
+              onValueChange={(v) => v && setView(v as "board" | "list")}
+              variant="outline"
+            >
+              <ToggleGroupItem value="board" aria-label="Board View" title="Board View">
+                <KanbanSquare className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List View" title="List View">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Button onClick={openCreate} className="gap-1">
+              <Plus className="h-4 w-4" /> Add Task
+            </Button>
+          </div>
+        </div>
+      )}
 
       <TaskFilters
         filters={filters}

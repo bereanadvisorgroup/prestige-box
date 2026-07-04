@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { getNotes, type NoteFilter } from "@/actions/notes";
+import { ClientHeaderPortal } from "@/app/(main)/dashboard/crm/clients/[id]/_components/client-header-portal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ interface NotesViewProps {
   /** Pre-selected associations for newly created notes (scoped pages). */
   defaultAssociations?: NoteAssociation[];
   lockAssociations?: boolean;
+  useHeaderPortal?: boolean;
 }
 
 function NoteSummaryCard({ note }: { note: NoteSummary }) {
@@ -107,6 +109,7 @@ export function NotesView({
   description = "",
   defaultAssociations = [],
   lockAssociations = false,
+  useHeaderPortal = false,
 }: NotesViewProps) {
   const [notes, setNotes] = React.useState<NoteSummary[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -148,21 +151,34 @@ export function NotesView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 font-bold text-2xl">
-            <StickyNote className="h-6 w-6 text-primary" />
-            {title}
-          </h1>
-          <p className="text-muted-foreground text-sm">{description}</p>
+      {useHeaderPortal && (
+        <ClientHeaderPortal sectionName={title}>
+          {!composing && (
+            <Button onClick={() => setComposing(true)} className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              New note
+            </Button>
+          )}
+        </ClientHeaderPortal>
+      )}
+
+      {!useHeaderPortal && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="flex items-center gap-2 font-bold text-2xl">
+              <StickyNote className="h-6 w-6 text-primary" />
+              {title}
+            </h1>
+            <p className="text-muted-foreground text-sm">{description}</p>
+          </div>
+          {!composing && (
+            <Button onClick={() => setComposing(true)} className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              New note
+            </Button>
+          )}
         </div>
-        {!composing && (
-          <Button onClick={() => setComposing(true)} className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            New note
-          </Button>
-        )}
-      </div>
+      )}
 
       {composing && (
         <NoteComposer

@@ -7,6 +7,8 @@ import { getMoneyManagers, linkClientToMoneyManager, unlinkClientFromMoneyManage
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
+import { ClientHeaderPortal } from "../_components/client-header-portal";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -30,7 +32,16 @@ export default async function MoneyManagersPage({ params }: Props) {
     .map((mm) => ({ id: mm.id || "", name: mm.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Money Managers">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Money Manager"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/admin/money-managers/new?clientId=${client.id}`}
+          onLinkAction={linkClientToMoneyManager}
+        />
+      </ClientHeaderPortal>
       <AssociationCardList
         entityId={client.id || ""}
         title="Associated Money Managers"
@@ -45,15 +56,7 @@ export default async function MoneyManagersPage({ params }: Props) {
         linkPrefix="/dashboard/admin/money-managers"
         icon={TrendingUp}
         onUnlinkAction={unlinkClientFromMoneyManager}
-        actionNode={
-          <LinkFirmDialog
-            entityId={client.id || ""}
-            firmTypeLabel="Money Manager"
-            availableFirms={availableFirms}
-            newFirmLink={`/dashboard/admin/money-managers/new?clientId=${client.id}`}
-            onLinkAction={linkClientToMoneyManager}
-          />
-        }
+        noCard={true}
       />
     </div>
   );

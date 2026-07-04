@@ -44,6 +44,8 @@ import { supabase } from "@/lib/supabase.client";
 import { cn, formatPhoneNumber } from "@/lib/utils";
 import type { Client, ClientDocument, LongTermCareInsurance } from "@/types/crm";
 
+import { ClientHeaderPortal } from "../../_components/client-header-portal";
+
 interface LongTermCareManagerProps {
   client: Client;
   allCompanies: LongTermCareInsurance[];
@@ -245,39 +247,26 @@ export function LongTermCareManager({ client, allCompanies }: LongTermCareManage
 
   return (
     <div className="space-y-8">
-      {/* Premium Glassmorphic Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-r from-primary/5 via-accent/5 to-transparent p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="flex items-center gap-2 font-bold text-foreground text-xl tracking-tight">
-              <HeartPulse className="h-5 w-5 text-primary" /> Long-Term Care Insurance
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Manage client's long-term care insurance connections and documents in one consolidated place.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsLinkOpen(true)}
-              className="bg-background/50 backdrop-blur-sm"
-            >
-              <Plus className="mr-1.5 h-4 w-4" /> Link Company
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setAddingCompanyId("");
-                setIsUploadOpen(true);
-              }}
-              className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-            >
-              <Plus className="mr-1.5 h-4 w-4" /> Add Document
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ClientHeaderPortal sectionName="Long-Term Care Insurance">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsLinkOpen(true)}
+          className="bg-background/50 backdrop-blur-sm"
+        >
+          <Plus className="mr-1.5 h-4 w-4" /> Link Company
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => {
+            setAddingCompanyId("");
+            setIsUploadOpen(true);
+          }}
+          className="bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+        >
+          <Plus className="mr-1.5 h-4 w-4" /> Add Document
+        </Button>
+      </ClientHeaderPortal>
 
       {/* Main Grid View */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

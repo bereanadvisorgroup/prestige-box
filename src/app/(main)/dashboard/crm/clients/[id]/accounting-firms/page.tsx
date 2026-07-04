@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { Building2, ReceiptText } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 
 import {
   getAccountingFirms,
@@ -10,6 +10,8 @@ import {
 import { getClient } from "@/actions/clients";
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -34,7 +36,16 @@ export default async function AccountingFirmsPage({ params }: Props) {
     .map((a) => ({ id: a.id || "", name: a.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Accounting Firms">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Accounting Firm"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/crm/accounting-firms/new?clientId=${client.id}`}
+          onLinkAction={linkClientToAccountingFirm}
+        />
+      </ClientHeaderPortal>
       <AssociationCardList
         entityId={client.id || ""}
         title="Associated Accounting Firms"
@@ -49,15 +60,7 @@ export default async function AccountingFirmsPage({ params }: Props) {
         linkPrefix="/dashboard/crm/accounting-firms"
         icon={ReceiptText}
         onUnlinkAction={unlinkClientFromAccountingFirm}
-        actionNode={
-          <LinkFirmDialog
-            entityId={client.id || ""}
-            firmTypeLabel="Accounting Firm"
-            availableFirms={availableFirms}
-            newFirmLink={`/dashboard/crm/accounting-firms/new?clientId=${client.id}`}
-            onLinkAction={linkClientToAccountingFirm}
-          />
-        }
+        noCard={true}
       />
     </div>
   );

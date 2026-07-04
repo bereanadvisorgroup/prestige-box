@@ -9,7 +9,6 @@ import { createAddress } from "@/actions/addresses";
 import { updateClient } from "@/actions/clients";
 import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import type { Address, Client, Employment } from "@/types/crm";
+
+import { ClientHeaderPortal } from "../client-header-portal";
 
 export function EmploymentTab({ client }: { client: Client }) {
   const [employments, setEmployments] = useState<Employment[]>(client.employments || []);
@@ -105,12 +106,8 @@ export function EmploymentTab({ client }: { client: Client }) {
   };
 
   return (
-    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
-      <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between space-y-0">
-        <div className="space-y-1">
-          <CardTitle>Employment History</CardTitle>
-          <CardDescription>View and manage employment records for this client.</CardDescription>
-        </div>
+    <div className="space-y-6">
+      <ClientHeaderPortal sectionName="Employment">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -181,8 +178,9 @@ export function EmploymentTab({ client }: { client: Client }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-6">
+      </ClientHeaderPortal>
+
+      <div className="fade-in animate-in duration-500">
         <div className="mt-6 space-y-3">
           {employments.length > 0 ? (
             employments.map((emp, index) => {
@@ -258,7 +256,7 @@ export function EmploymentTab({ client }: { client: Client }) {
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

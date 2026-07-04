@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 
-import { Building2, Landmark } from "lucide-react";
+import { Landmark } from "lucide-react";
 
 import { getBanks, linkClientToBank, unlinkClientFromBank } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { PaymentAccountsSection } from "../_components/payment-accounts-section";
 
 interface Props {
@@ -32,7 +33,16 @@ export default async function BanksPage({ params }: Props) {
     .map((b) => ({ id: b.id || "", name: b.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Banks">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Bank"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/crm/banks/new?clientId=${client.id}`}
+          onLinkAction={linkClientToBank}
+        />
+      </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <AssociationCardList
@@ -52,19 +62,11 @@ export default async function BanksPage({ params }: Props) {
             linkPrefix="/dashboard/crm/banks"
             icon={Landmark}
             onUnlinkAction={unlinkClientFromBank}
-            actionNode={
-              <LinkFirmDialog
-                entityId={client.id || ""}
-                firmTypeLabel="Bank"
-                availableFirms={availableFirms}
-                newFirmLink={`/dashboard/crm/banks/new?clientId=${client.id}`}
-                onLinkAction={linkClientToBank}
-              />
-            }
+            noCard={true}
           />
 
           {/* Moved Payment Accounts Section */}
-          <PaymentAccountsSection client={client} associatedBanks={associatedBanks as any} />
+          <PaymentAccountsSection client={client} associatedBanks={associatedBanks as any} noCard={true} />
         </div>
       </div>
     </div>

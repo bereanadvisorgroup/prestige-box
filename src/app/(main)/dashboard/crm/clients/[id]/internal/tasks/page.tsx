@@ -7,8 +7,13 @@ interface PageProps {
 export default async function ClientTasksPage({ params }: PageProps) {
   const { id } = await params;
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <TasksView scope={{ clientId: id }} title="Tasks" description="Tasks associated with this client." />
+    <div className="py-4">
+      <TasksView
+        scope={{ clientId: id }}
+        title="Tasks"
+        description="Tasks associated with this client."
+        useHeaderPortal={true}
+      />
     </div>
   );
 }

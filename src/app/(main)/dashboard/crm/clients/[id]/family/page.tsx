@@ -19,7 +19,7 @@ export default async function FamilyPage({ params }: Props) {
   const client = clientResult.client;
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <FamilyTab client={client} />
     </div>
   );

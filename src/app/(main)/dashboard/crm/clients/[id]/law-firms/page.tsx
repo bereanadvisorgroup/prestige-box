@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 
-import { Building2, Scale } from "lucide-react";
+import { Scale } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getLawFirms, linkClientToLawFirm, unlinkClientFromLawFirm } from "@/actions/law-firms";
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -30,7 +32,16 @@ export default async function LawFirmsPage({ params }: Props) {
     .map((l) => ({ id: l.id || "", name: l.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Law Firms">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Law Firm"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/crm/law-firms/new?clientId=${client.id}`}
+          onLinkAction={linkClientToLawFirm}
+        />
+      </ClientHeaderPortal>
       <AssociationCardList
         entityId={client.id || ""}
         title="Associated Law Firms"
@@ -45,15 +56,7 @@ export default async function LawFirmsPage({ params }: Props) {
         linkPrefix="/dashboard/crm/law-firms"
         icon={Scale}
         onUnlinkAction={unlinkClientFromLawFirm}
-        actionNode={
-          <LinkFirmDialog
-            entityId={client.id || ""}
-            firmTypeLabel="Law Firm"
-            availableFirms={availableFirms}
-            newFirmLink={`/dashboard/crm/law-firms/new?clientId=${client.id}`}
-            onLinkAction={linkClientToLawFirm}
-          />
-        }
+        noCard={true}
       />
     </div>
   );

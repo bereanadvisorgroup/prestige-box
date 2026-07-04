@@ -22,7 +22,7 @@ export default async function LifeInsurancePage({ params }: Props) {
   const allCompanies = (companiesRes.success && companiesRes.companies) || [];
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <LifeInsuranceManager client={client} allCompanies={allCompanies} />
     </div>
   );

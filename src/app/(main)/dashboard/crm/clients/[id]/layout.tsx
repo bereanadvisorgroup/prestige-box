@@ -1,11 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { Clock } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import type { Person } from "@/types/crm";
 
 interface LayoutProps {
@@ -42,17 +38,20 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
             <AvatarFallback className="bg-primary/5 text-2xl text-primary">{initials || "CL"}</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="font-bold text-3xl tracking-tight">
-              {person ? `${person.firstName} ${person.lastName}` : "Client Profile"}
+            <h1 className="font-bold text-3xl tracking-tight flex items-center gap-2">
+              <span>{person ? `${person.firstName} ${person.lastName}` : "Client Profile"}</span>
+              <span id="client-header-separator" className="text-muted-foreground/40 font-normal hidden">
+                {" "}
+                :{" "}
+              </span>
+              <span id="client-header-section-name" className="text-muted-foreground/80 font-normal" />
             </h1>
           </div>
         </div>
-        <div className="flex gap-2" />
+        <div id="client-header-actions" className="flex gap-2 items-center" />
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-xl border bg-background/50 shadow-sm backdrop-blur-sm">
-        {children}
-      </div>
+      <div className="mt-8">{children}</div>
     </div>
   );
 }

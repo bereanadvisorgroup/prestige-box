@@ -36,6 +36,8 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase.client";
 import type { Asset, Bank, Client, LoanInfo } from "@/types/crm";
 
+import { ClientHeaderPortal } from "../client-header-portal";
+
 const LOAN_TYPES = ["Auto", "Boat", "Business", "Credit Card", "Mortgage", "Student"] as const;
 
 const LOAN_TYPE_COLORS: Record<string, string> = {
@@ -152,12 +154,8 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
   const totalMonthly = liabilities.reduce((sum, l) => sum + (l.monthlyPayment ?? 0), 0);
 
   return (
-    <Card className="fade-in animate-in border-none bg-gradient-to-b from-card to-muted/20 shadow-md duration-500">
-      <CardHeader className="flex flex-row items-center justify-between bg-muted/10 pb-4">
-        <div>
-          <CardTitle>Liabilities</CardTitle>
-          <CardDescription>All loans, mortgages, and credit obligations for this client.</CardDescription>
-        </div>
+    <div className="space-y-6">
+      <ClientHeaderPortal sectionName="Liabilities">
         <Dialog
           open={isDialogOpen}
           onOpenChange={(open) => {
@@ -165,11 +163,9 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
             if (!open) resetForm();
           }}
         >
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Liability
-            </Button>
-          </DialogTrigger>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Add Liability
+          </Button>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Liability</DialogTitle>
@@ -295,9 +291,9 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardHeader>
+      </ClientHeaderPortal>
 
-      <CardContent className="space-y-6 pt-6">
+      <div className="space-y-6">
         {/* Summary Row */}
         {liabilities.length > 0 && (
           <div className="grid grid-cols-2 gap-4 rounded-lg border bg-muted/10 p-4">
@@ -421,7 +417,7 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

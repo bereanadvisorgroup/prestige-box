@@ -27,7 +27,7 @@ export default async function LiabilitiesPage({ params }: Props) {
   const clientAssets = (assetsRes.success && assetsRes.assets) || [];
 
   return (
-    <div className="space-y-8 bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <LiabilitiesTab client={client} associatedBanks={associatedBanks} clientAssets={clientAssets} />
     </div>
   );

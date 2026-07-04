@@ -7,6 +7,8 @@ import { getRecordKeepers, linkClientToRecordKeeper, unlinkClientFromRecordKeepe
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
 
+import { ClientHeaderPortal } from "../_components/client-header-portal";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -30,7 +32,16 @@ export default async function RecordKeepersPage({ params }: Props) {
     .map((rk) => ({ id: rk.id || "", name: rk.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Record Keepers">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Record Keeper"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/admin/record-keepers/new?clientId=${client.id}`}
+          onLinkAction={linkClientToRecordKeeper}
+        />
+      </ClientHeaderPortal>
       <AssociationCardList
         entityId={client.id || ""}
         title="Associated Record Keepers"
@@ -45,15 +56,7 @@ export default async function RecordKeepersPage({ params }: Props) {
         linkPrefix="/dashboard/admin/record-keepers"
         icon={Database}
         onUnlinkAction={unlinkClientFromRecordKeeper}
-        actionNode={
-          <LinkFirmDialog
-            entityId={client.id || ""}
-            firmTypeLabel="Record Keeper"
-            availableFirms={availableFirms}
-            newFirmLink={`/dashboard/admin/record-keepers/new?clientId=${client.id}`}
-            onLinkAction={linkClientToRecordKeeper}
-          />
-        }
+        noCard={true}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getClient } from "@/actions/clients";
 import type { Person } from "@/types/crm";
 
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { PersonalTab } from "../_components/tabs/personal-tab";
 
 interface Props {
@@ -20,7 +21,8 @@ export default async function PersonalPage({ params }: Props) {
   const person = clientResult.person as Person | null;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Personal" />
       {person ? (
         <PersonalTab person={person} />
       ) : (

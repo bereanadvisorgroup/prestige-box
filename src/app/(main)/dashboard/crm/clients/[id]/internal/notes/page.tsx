@@ -7,12 +7,13 @@ interface PageProps {
 export default async function ClientNotesPage({ params }: PageProps) {
   const { id } = await params;
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="py-4">
       <NotesView
         scope={{ clientId: id }}
         title="Notes"
         defaultAssociations={[{ entityType: "client", entityId: id }]}
         lockAssociations
+        useHeaderPortal={true}
       />
     </div>
   );

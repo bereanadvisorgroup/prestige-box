@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 
-import { Building2, Calculator } from "lucide-react";
+import { Calculator } from "lucide-react";
 
 import { getActuarialFirms, linkClientToActuarialFirm, unlinkClientFromActuarialFirm } from "@/actions/actuarial-firms";
 import { getClient } from "@/actions/clients";
 import { AssociationCardList } from "@/components/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -30,7 +32,16 @@ export default async function ActuarialFirmsPage({ params }: Props) {
     .map((act) => ({ id: act.id || "", name: act.firmName }));
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Actuarial Firms">
+        <LinkFirmDialog
+          entityId={client.id || ""}
+          firmTypeLabel="Actuarial Firm"
+          availableFirms={availableFirms}
+          newFirmLink={`/dashboard/crm/actuarial-firms/new?clientId=${client.id}`}
+          onLinkAction={linkClientToActuarialFirm}
+        />
+      </ClientHeaderPortal>
       <AssociationCardList
         entityId={client.id || ""}
         title="Associated Actuarial Firms"
@@ -45,15 +56,7 @@ export default async function ActuarialFirmsPage({ params }: Props) {
         linkPrefix="/dashboard/crm/actuarial-firms"
         icon={Calculator}
         onUnlinkAction={unlinkClientFromActuarialFirm}
-        actionNode={
-          <LinkFirmDialog
-            entityId={client.id || ""}
-            firmTypeLabel="Actuarial Firm"
-            availableFirms={availableFirms}
-            newFirmLink={`/dashboard/crm/actuarial-firms/new?clientId=${client.id}`}
-            onLinkAction={linkClientToActuarialFirm}
-          />
-        }
+        noCard={true}
       />
     </div>
   );

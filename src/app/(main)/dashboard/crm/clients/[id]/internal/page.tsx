@@ -3,12 +3,10 @@ import { notFound } from "next/navigation";
 import { ExternalLink, Trophy } from "lucide-react";
 
 import { getClient, getClients } from "@/actions/clients";
-import { getCompaniesByClient } from "@/actions/companies";
-import { getClientPoliciesByClient } from "@/actions/policies";
 import { getSportsNews } from "@/actions/sports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ClientPolicy, Company } from "@/types/crm";
 
+import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { GeneralTab } from "../_components/tabs/general-tab";
 
 interface ClientPageProps {
@@ -28,14 +26,8 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const client = clientResult.client;
 
   // Fetch only the entities required for the General page
-  const [companiesResult, policiesResult, allClientsResult] = await Promise.all([
-    getCompaniesByClient(id),
-    getClientPoliciesByClient(id),
-    getClients(),
-  ]);
+  const [allClientsResult] = await Promise.all([getClients()]);
 
-  const companies = (companiesResult.success ? companiesResult.companies : []) as (Company & { id: string })[];
-  const policies = (policiesResult.success ? policiesResult.policies : []) as (ClientPolicy & { id: string })[];
   const allClients = allClientsResult.success ? allClientsResult.clients : [];
 
   // Fetch news for each sports team
@@ -47,7 +39,8 @@ export default async function ClientPage({ params }: ClientPageProps) {
   );
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
+    <div className="py-4">
+      <ClientHeaderPortal sectionName="Internal Overview" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Preferences / Editing */}
         <div className="space-y-6 lg:col-span-2">

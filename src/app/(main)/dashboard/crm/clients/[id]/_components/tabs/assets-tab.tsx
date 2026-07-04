@@ -69,6 +69,8 @@ import {
   type Client,
 } from "@/types/crm";
 
+import { ClientHeaderPortal } from "../client-header-portal";
+
 const REAL_ESTATE_SUBTYPES = ["Primary Residence", "Investment Properties"] as const;
 const NEW_ADDRESS_SENTINEL = "__new__";
 const NONE_ADDRESS_SENTINEL = "__none__";
@@ -401,18 +403,11 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
 
   return (
     <div className="space-y-8">
-      {/* 1. Header & Actions */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="font-bold text-2xl tracking-tight">Real Estate & Fixed Physical Assets</h2>
-          <p className="text-muted-foreground text-sm">
-            Illiquid physical properties that hold equity, generate income, or depreciate.
-          </p>
-        </div>
+      <ClientHeaderPortal sectionName="Assets">
         <Button onClick={handleOpenCreate} className="shrink-0 font-semibold shadow-sm">
           <Plus className="mr-2 h-4 w-4" /> Add Asset
         </Button>
-      </div>
+      </ClientHeaderPortal>
 
       {/* 2. Key Performance Indicators */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -488,193 +483,184 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
       </div>
 
       {/* 4. Assets Table */}
-      <Card className="border-none bg-linear-to-b from-card to-muted/20 shadow-md">
-        <CardHeader className="border-b bg-muted/10">
-          <CardTitle>Tracked Assets</CardTitle>
-          <CardDescription>View and manage all real estate and fixed physical properties.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {assets.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Asset Name</TableHead>
-                    <TableHead>Sub-Type</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Tracking Mode</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead className="text-right">Current Value</TableHead>
-                    <TableHead className="w-[140px] text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assets.map((asset) => {
-                    const linkedAddress = getAddressById(asset.addressId);
-                    return (
-                      <TableRow key={asset.id} className="transition-colors hover:bg-muted/5">
-                        <TableCell className="font-semibold text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="grid size-7 place-content-center rounded bg-muted/50">
-                              {getSubtypeIcon(asset.subType)}
-                            </span>
-                            {asset.isCompanyAsset ? (
-                              <Link
-                                href={`/dashboard/crm/companies/${asset.companyId}`}
-                                className="flex items-center gap-1 text-primary hover:underline"
-                              >
-                                <span className="truncate">{asset.name}</span>
-                                <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-                              </Link>
-                            ) : (
-                              asset.name
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{asset.subType}</TableCell>
-                        <TableCell className="text-sm">
-                          {linkedAddress ? (
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <MapPin className="h-3.5 w-3.5 shrink-0 text-sky-500" />
-                              <span className="max-w-[200px] truncate text-xs">{formatAddress(linkedAddress)}</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground/40 text-xs">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {asset.isAutomated ? (
-                            <Badge
-                              variant="outline"
-                              className="border-emerald-500/20 bg-emerald-500/5 text-emerald-600"
+      <div className="rounded-xl border bg-background/50 shadow-sm backdrop-blur-sm p-0 overflow-hidden">
+        {assets.length > 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Asset Name</TableHead>
+                  <TableHead>Sub-Type</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Tracking Mode</TableHead>
+                  <TableHead>Institution</TableHead>
+                  <TableHead className="text-right">Current Value</TableHead>
+                  <TableHead className="w-[140px] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assets.map((asset) => {
+                  const linkedAddress = getAddressById(asset.addressId);
+                  return (
+                    <TableRow key={asset.id} className="transition-colors hover:bg-muted/5">
+                      <TableCell className="font-semibold text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="grid size-7 place-content-center rounded bg-muted/50">
+                            {getSubtypeIcon(asset.subType)}
+                          </span>
+                          {asset.isCompanyAsset ? (
+                            <Link
+                              href={`/dashboard/crm/companies/${asset.companyId}`}
+                              className="flex items-center gap-1 text-primary hover:underline"
                             >
-                              API Synced
-                            </Badge>
+                              <span className="truncate">{asset.name}</span>
+                              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+                            </Link>
                           ) : (
-                            <Badge variant="outline" className="border-amber-500/20 bg-amber-500/5 text-amber-600">
-                              Manual
-                            </Badge>
+                            asset.name
                           )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{asset.institutionName}</TableCell>
-                        <TableCell className="text-right font-semibold text-sm tabular-nums">
-                          {formatCurrency(Number(asset.currentValue))}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1.5">
-                            {asset.isCompanyAsset ? (
-                              <>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
-                                          disabled
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </Button>
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Edit company estimated value on the company details page.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
-                                          disabled
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Manage company ownership on the company details page.</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
-                                  onClick={() => handleOpenHistory(asset)}
-                                  title="Valuation History"
-                                >
-                                  <TrendingUp className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                  onClick={() => handleOpenEdit(asset)}
-                                  title="Edit Asset"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className={cn(
-                                            "h-8 w-8",
-                                            asset.isLinked
-                                              ? "text-muted-foreground/40 cursor-not-allowed"
-                                              : "text-muted-foreground hover:text-destructive",
-                                          )}
-                                          onClick={() => !asset.isLinked && handleDelete(asset.id!)}
-                                          disabled={asset.isLinked}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </span>
-                                    </TooltipTrigger>
-                                    {asset.isLinked && (
-                                      <TooltipContent>
-                                        <p>Cannot delete: asset is linked to one or more liabilities.</p>
-                                      </TooltipContent>
-                                    )}
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </>
-                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{asset.subType}</TableCell>
+                      <TableCell className="text-sm">
+                        {linkedAddress ? (
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 shrink-0 text-sky-500" />
+                            <span className="max-w-[200px] truncate text-xs">{formatAddress(linkedAddress)}</span>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-              <Coins className="mb-4 h-12 w-12 opacity-25" />
-              <h3 className="mb-1 font-semibold text-base">No Assets Tracked</h3>
-              <p className="mb-4 max-w-sm text-sm">
-                Add properties, vehicles, or valuables to start calculating the client's physical portfolio equity.
-              </p>
-              <Button onClick={handleOpenCreate} size="sm">
-                <Plus className="mr-2 h-4 w-4" /> Add First Asset
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        ) : (
+                          <span className="text-muted-foreground/40 text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {asset.isAutomated ? (
+                          <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/5 text-emerald-600">
+                            API Synced
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-amber-500/20 bg-amber-500/5 text-amber-600">
+                            Manual
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{asset.institutionName}</TableCell>
+                      <TableCell className="text-right font-semibold text-sm tabular-nums">
+                        {formatCurrency(Number(asset.currentValue))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1.5">
+                          {asset.isCompanyAsset ? (
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+                                        disabled
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit company estimated value on the company details page.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+                                        disabled
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Manage company ownership on the company details page.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                onClick={() => handleOpenHistory(asset)}
+                                title="Valuation History"
+                              >
+                                <TrendingUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleOpenEdit(asset)}
+                                title="Edit Asset"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn(
+                                          "h-8 w-8",
+                                          asset.isLinked
+                                            ? "text-muted-foreground/40 cursor-not-allowed"
+                                            : "text-muted-foreground hover:text-destructive",
+                                        )}
+                                        onClick={() => !asset.isLinked && handleDelete(asset.id!)}
+                                        disabled={asset.isLinked}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  {asset.isLinked && (
+                                    <TooltipContent>
+                                      <p>Cannot delete: asset is linked to one or more liabilities.</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+            <Coins className="mb-4 h-12 w-12 opacity-25" />
+            <h3 className="mb-1 font-semibold text-base">No Assets Tracked</h3>
+            <p className="mb-4 max-w-sm text-sm">
+              Add properties, vehicles, or valuables to start calculating the client's physical portfolio equity.
+            </p>
+            <Button onClick={handleOpenCreate} size="sm">
+              <Plus className="mr-2 h-4 w-4" /> Add First Asset
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* 5. Add/Edit Asset Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

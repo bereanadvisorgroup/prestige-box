@@ -39,7 +39,7 @@ export default async function ClientAssetsPage({ params }: Props) {
   const initialAddresses = addressesResult.success && addressesResult.addresses ? addressesResult.addresses : [];
 
   return (
-    <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+    <div className="py-4">
       <AssetsTab
         client={client}
         initialAssets={initialAssets}
