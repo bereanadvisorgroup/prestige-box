@@ -833,3 +833,11 @@ export const FinancialAccountTypeSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type FinancialAccountType = z.infer<typeof FinancialAccountTypeSchema>;
+
+export const CustodianSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Custodian = z.infer<typeof CustodianSchema>;

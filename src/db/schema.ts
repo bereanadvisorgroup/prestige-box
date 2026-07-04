@@ -279,6 +279,14 @@ export const financialAccountTypes = pgTable("financial_account_types", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 15c. Custodians Table
+export const custodians = pgTable("custodians", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
 // 16. Assets Table
 export const assets = pgTable("assets", {
   id: uuid("id").primaryKey().defaultRandom(),
