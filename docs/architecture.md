@@ -81,6 +81,19 @@ To support advisor insights and client financial planning, the application track
 - **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for each client by merging overlapping asset values on shared dates.
 - **Rendering**: Recharts is used on the client-side to render an interactive, beautiful area chart showing net worth growth and individual asset category distributions over time.
 
+## Deployment & CI/CD Pipelines
+
+Prestige Box uses GitHub Actions and Vercel for automation, testing, and deployment:
+- **Deployment Environments**:
+  - `dev` (Development): Runs security vulnerability scanning.
+  - `preview` (Preview): Deploys pull requests dynamically for staging and testing.
+  - `pre-prod` (Pre-production): Near-production environment for release verification.
+  - `main` (Production): Live environment for clients and advisors.
+- **CI/CD Automation Flow**:
+  - **Snyk Vulnerability Scan**: Development builds trigger dependency audits using Snyk to block security risks.
+  - **Automated Database Migrations**: Push to deployment environments triggers the database schema migration utility (`src/db/migrate.ts`) to keep databases in sync with Drizzle ORM schemas.
+  - **Vercel Build & Deployment**: Frontend assets are compiled and deployed to Vercel via GitHub actions.
+
 ## Tooling & Quality Assurance
 
 - **Biome**: Chosen over ESLint/Prettier for extremely fast, opinionated formatting and linting.

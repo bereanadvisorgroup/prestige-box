@@ -212,6 +212,10 @@ erDiagram
   - **Other Schema**: Tracks custom `description` (text) and the `files` array.
 
 
+### `client_policies` & `insurance_vendors`
+- **Policies**: `client_policies` tracks a client's Life, Disability, and Long-Term Care policies, detailing policy numbers, premium amounts, effective and renewal dates, and payment schedules.
+- **Vendors**: Tracks insurance companies (`life_insurance_companies`, `disability_insurance_companies`, `long_term_care_insurance`) with name, website, phone contacts, and relationships to individuals and corporate clients.
+
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
 - Tracks general corporate clients and business entities.
 - Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
