@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowRight, BarChart3, Clock, DollarSign } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, DollarSign, Share2 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -30,6 +30,14 @@ export default function ReportCenterPage() {
       href: "/dashboard/reports/history",
       icon: Clock,
       color: "bg-cyan-500",
+    },
+    {
+      title: "Referrals",
+      description:
+        "Explore the referral tree, referral-type mix, and how many clients were referred over the past year.",
+      href: "/dashboard/reports/referrals",
+      icon: Share2,
+      color: "bg-violet-500",
     },
   ];
 
