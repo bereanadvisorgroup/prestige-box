@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { File as FileIcon, Loader2, Plus, Trash2, UploadCloud, X } from "lucide-react";
+import { File as FileIcon, Loader2, Pencil, Plus, Save, Trash2, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
@@ -158,6 +158,40 @@ const emptyForm: FormState = {
   files: [],
 };
 
+/** Pre-fill the form from a saved document (used when editing). */
+const formFromDoc = (d: EstateDocument): FormState => ({
+  type: d.type,
+  effectiveDate: d.effectiveDate || "",
+  amendmentDate: d.amendmentDate || "",
+  beneficiaries: d.beneficiaries || "",
+  trustName: d.trustName || "",
+  attorneyFirmId: d.attorneyFirmId || "",
+  grantorKeys: d.grantor ? [partyKey(d.grantor)] : [],
+  trusteeKeys: (d.trustees || []).map(partyKey),
+  description: d.description || "",
+  files: [],
+});
+
+/** Map the form's type-specific fields into the document metadata (files handled separately). */
+const buildMetadata = (f: FormState): Partial<EstateDocument> => {
+  const meta: Partial<EstateDocument> = { trustees: [] };
+  if (f.type === "Will") {
+    meta.effectiveDate = f.effectiveDate || undefined;
+    meta.beneficiaries = f.beneficiaries || undefined;
+  } else if (isTrust(f.type)) {
+    meta.trustName = f.trustName || undefined;
+    meta.effectiveDate = f.effectiveDate || undefined;
+    meta.amendmentDate = f.amendmentDate || undefined;
+    meta.attorneyFirmId = f.attorneyFirmId || undefined;
+    meta.grantor = f.grantorKeys[0] ? parsePartyKey(f.grantorKeys[0]) : undefined;
+    meta.trustees = f.trusteeKeys.map(parsePartyKey);
+    meta.beneficiaries = f.beneficiaries || undefined;
+  } else if (f.type === "Other") {
+    meta.description = f.description || undefined;
+  }
+  return meta;
+};
+
 export function EstateDocumentsTab({
   client,
   lawFirms,
@@ -175,6 +209,7 @@ export function EstateDocumentsTab({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [addFilesFor, setAddFilesFor] = useState<string | null>(null);
 
   const partyOptions = parties.map((p) => ({
@@ -215,6 +250,18 @@ export function EstateDocumentsTab({
 
   const resetForm = () => setForm(emptyForm);
 
+  const openCreate = () => {
+    setEditingId(null);
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const openEdit = (doc: EstateDocument) => {
+    setEditingId(doc.id);
+    setForm(formFromDoc(doc));
+    setIsDialogOpen(true);
+  };
+
   const handleCreate = async () => {
     if (!form.type) {
       toast.error("Please select a document type");
@@ -235,31 +282,38 @@ export function EstateDocumentsTab({
         type: form.type,
         files: uploaded,
         trustees: [],
+        ...buildMetadata(form),
         createdAt: new Date().toISOString(),
       };
-
-      if (form.type === "Will") {
-        newDoc.effectiveDate = form.effectiveDate || undefined;
-        newDoc.beneficiaries = form.beneficiaries || undefined;
-      } else if (isTrust(form.type)) {
-        newDoc.trustName = form.trustName || undefined;
-        newDoc.effectiveDate = form.effectiveDate || undefined;
-        newDoc.amendmentDate = form.amendmentDate || undefined;
-        newDoc.attorneyFirmId = form.attorneyFirmId || undefined;
-        newDoc.grantor = form.grantorKeys[0] ? parsePartyKey(form.grantorKeys[0]) : undefined;
-        newDoc.trustees = form.trusteeKeys.map(parsePartyKey);
-        newDoc.beneficiaries = form.beneficiaries || undefined;
-      } else if (form.type === "Other") {
-        newDoc.description = form.description || undefined;
-      }
 
       await persist([...documents, newDoc]);
       toast.success("Document added successfully");
       resetForm();
+      setEditingId(null);
       setIsDialogOpen(false);
     } catch (e) {
       console.error(e);
       toast.error(e instanceof Error ? e.message : "Failed to add document");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !form.type) return;
+    try {
+      setIsUploading(true);
+      const updated = documents.map((d) =>
+        d.id === editingId ? { ...d, ...buildMetadata(form), updatedAt: new Date().toISOString() } : d,
+      );
+      await persist(updated);
+      toast.success("Document updated");
+      resetForm();
+      setEditingId(null);
+      setIsDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Failed to update document");
     } finally {
       setIsUploading(false);
     }
@@ -302,10 +356,11 @@ export function EstateDocumentsTab({
     }
   };
 
-  const canSubmit = !!form.type && form.files.length > 0 && !isUploading;
+  const isEditing = editingId !== null;
+  const canSubmit = isEditing ? !!form.type && !isUploading : !!form.type && form.files.length > 0 && !isUploading;
 
   const headerActions = (
-    <Button onClick={() => setIsDialogOpen(true)} size="sm" className="ml-4 shrink-0">
+    <Button onClick={openCreate} size="sm" className="ml-4 shrink-0">
       <Plus className="mr-2 h-4 w-4" /> Add Document
     </Button>
   );
@@ -315,21 +370,30 @@ export function EstateDocumentsTab({
       open={isDialogOpen}
       onOpenChange={(open) => {
         setIsDialogOpen(open);
-        if (!open) resetForm();
+        if (!open) {
+          resetForm();
+          setEditingId(null);
+        }
       }}
     >
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Estate Planning Document</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Estate Planning Document" : "Add Estate Planning Document"}</DialogTitle>
           <DialogDescription>
-            Choose a document type, then fill in its details and attach one or more files.
+            {isEditing
+              ? "Update this document's details. Files are managed from the document card."
+              : "Choose a document type, then fill in its details and attach one or more files."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label htmlFor="estate-doc-type">Document Type</Label>
-            <Select value={form.type} onValueChange={(v) => setForm({ ...emptyForm, type: v as EstateDocumentType })}>
+            <Select
+              value={form.type}
+              disabled={isEditing}
+              onValueChange={(v) => setForm({ ...emptyForm, type: v as EstateDocumentType })}
+            >
               <SelectTrigger id="estate-doc-type">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -464,7 +528,7 @@ export function EstateDocumentsTab({
             </div>
           )}
 
-          {form.type && (
+          {form.type && !isEditing && (
             <div className="space-y-2">
               <Label htmlFor="estate-files">Files</Label>
               <input
@@ -489,10 +553,14 @@ export function EstateDocumentsTab({
               Cancel
             </Button>
           </DialogClose>
-          <Button onClick={handleCreate} disabled={!canSubmit}>
+          <Button onClick={isEditing ? handleSaveEdit : handleCreate} disabled={!canSubmit}>
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditing ? "Saving..." : "Uploading..."}
+              </>
+            ) : isEditing ? (
+              <>
+                <Save className="mr-2 h-4 w-4" /> Save Changes
               </>
             ) : (
               <>
@@ -523,15 +591,20 @@ export function EstateDocumentsTab({
                   </div>
                   <EstateMeta doc={doc} partyLabel={partyLabel} firmLabel={firmLabel} />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDeleteDocument(doc.id)}
-                  title="Delete document"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(doc)} title="Edit document">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteDocument(doc.id)}
+                    title="Delete document"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="mt-3 space-y-2 border-t pt-3">

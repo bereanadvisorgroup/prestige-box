@@ -333,6 +333,45 @@ export const EstateDocumentSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
+// --- Insurance policies (Life / Disability / Long-Term Care) ---
+
+// A beneficiary reference: a person, a company, or one of the client's estate trusts.
+export const InsuranceBeneficiaryKindSchema = z.enum(["person", "company", "trust"]);
+export const InsuranceBeneficiaryRefSchema = z.object({
+  kind: InsuranceBeneficiaryKindSchema,
+  id: z.string(),
+});
+
+// A single beneficiary line: who receives the benefit and their percentage of it.
+export const InsuranceBeneficiarySchema = z.object({
+  id: z.string(),
+  ref: InsuranceBeneficiaryRefSchema,
+  percent: z.number().min(0, "Percent must be at least 0").max(100, "Percent cannot exceed 100"),
+});
+
+// A single uploaded file attached to an insurance policy.
+export const InsurancePolicyFileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string(),
+  uploadedAt: z.string().optional(),
+});
+
+// An insurance policy record (Life / Disability / Long-Term Care), optionally tied to a vendor company.
+export const InsurancePolicySchema = z.object({
+  id: z.string(),
+  companyId: z.string().optional(), // the associated insurance company / vendor (firm)
+  policyNumber: z.string().optional(),
+  policyName: z.string().optional(),
+  issueDate: z.string().optional(), // YYYY-MM-DD
+  renewalDate: z.string().optional(), // YYYY-MM-DD
+  beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
+  contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
+  files: z.array(InsurancePolicyFileSchema).default([]),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 export const LoanTypeSelection = z.enum(["Auto", "Boat", "Business", "Student", "Credit Card", "Mortgage"]);
 export const LoanSchema = z.object({
   id: z.string().optional(),
@@ -368,6 +407,9 @@ export const ClientSchema = z.object({
   lifeDocuments: z.array(DocumentSchema).default([]),
   ltcDocuments: z.array(DocumentSchema).default([]),
   estateDocuments: z.array(EstateDocumentSchema).default([]),
+  lifePolicies: z.array(InsurancePolicySchema).default([]),
+  disabilityPolicies: z.array(InsurancePolicySchema).default([]),
+  ltcPolicies: z.array(InsurancePolicySchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
   createdAt: z.string().optional(),
@@ -593,6 +635,11 @@ export type EstateDocument = z.infer<typeof EstateDocumentSchema>;
 export type EstateDocumentFile = z.infer<typeof EstateDocumentFileSchema>;
 export type EstatePartyRef = z.infer<typeof EstatePartyRefSchema>;
 export type EstateDocumentType = z.infer<typeof EstateDocumentTypeSchema>;
+export type InsuranceBeneficiaryKind = z.infer<typeof InsuranceBeneficiaryKindSchema>;
+export type InsuranceBeneficiaryRef = z.infer<typeof InsuranceBeneficiaryRefSchema>;
+export type InsuranceBeneficiary = z.infer<typeof InsuranceBeneficiarySchema>;
+export type InsurancePolicyFile = z.infer<typeof InsurancePolicyFileSchema>;
+export type InsurancePolicy = z.infer<typeof InsurancePolicySchema>;
 
 // --- Form Schemas (omit server-generated fields) ---
 

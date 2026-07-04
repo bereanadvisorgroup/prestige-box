@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { getClient } from "@/actions/clients";
+import { getCompanies } from "@/actions/companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
+import { getPeople } from "@/actions/people";
 
+import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
 import { LongTermCareManager } from "./_components/long-term-care-manager";
 
 interface Props {
@@ -11,19 +14,33 @@ interface Props {
 
 export default async function LongTermCarePage({ params }: Props) {
   const { id } = await params;
-  const clientResult = await getClient(id);
+  const [clientResult, companiesRes, peopleResult, allCompaniesResult] = await Promise.all([
+    getClient(id),
+    getLongTermCareInsurances(),
+    getPeople(),
+    getCompanies(),
+  ]);
 
   if (!clientResult.success || !clientResult.client) {
     notFound();
   }
 
   const client = clientResult.client;
-  const companiesRes = await getLongTermCareInsurances();
   const allCompanies = (companiesRes.success && companiesRes.companies) || [];
+
+  const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
+    id: p.id as string,
+    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    kind: "person" as const,
+  }));
+  const companies: BeneficiaryParty[] = (allCompaniesResult.success ? (allCompaniesResult.companies ?? []) : []).map(
+    (c) => ({ id: c.id as string, name: (c.name as string) || "Unnamed company", kind: "company" as const }),
+  );
+  const parties = [...people, ...companies].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="py-4">
-      <LongTermCareManager client={client} allCompanies={allCompanies} />
+      <LongTermCareManager client={client} allCompanies={allCompanies} parties={parties} />
     </div>
   );
 }
