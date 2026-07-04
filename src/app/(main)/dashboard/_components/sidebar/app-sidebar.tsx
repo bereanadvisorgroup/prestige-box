@@ -93,7 +93,7 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
     items: [
       {
         title: "Overview",
-        url: `/dashboard/crm/clients/${clientId}`,
+        url: `/dashboard/crm/clients/${clientId}/overview`,
         icon: LayoutDashboard,
       },
       {

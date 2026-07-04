@@ -3,11 +3,21 @@ import { notFound } from "next/navigation";
 import { ExternalLink, Trophy } from "lucide-react";
 
 import { getClient, getClients } from "@/actions/clients";
+import { getCompanies } from "@/actions/companies";
+import { getNotes } from "@/actions/notes";
+import { getPeople } from "@/actions/people";
+import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
+import { getTasks } from "@/actions/tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
-import { GeneralTab } from "../_components/tabs/general-tab";
+import { InterestsCard } from "../_components/interests-card";
+import { NotesCard } from "../_components/notes-card";
+import { ReferralTreeCard } from "../_components/referral-tree-card";
+import { ReferredByCard } from "../_components/referred-by-card";
+import { SportsTeamsCard } from "../_components/sports-teams-card";
+import { TasksCard } from "../_components/tasks-card";
 
 interface ClientPageProps {
   params: Promise<{
@@ -23,12 +33,31 @@ export default async function ClientPage({ params }: ClientPageProps) {
     notFound();
   }
 
-  const client = clientResult.client;
+  const client = {
+    ...clientResult.client,
+    person: clientResult.person,
+  };
 
-  // Fetch only the entities required for the General page
-  const [allClientsResult] = await Promise.all([getClients()]);
+  // Fetch all required data for the Internal Overview dashboard
+  const [allClientsResult, tasksResult, notesResult, companiesResult, peopleResult, referralTypesResult] =
+    await Promise.all([
+      getClients(),
+      getTasks({ clientId: id }),
+      getNotes({ clientId: id }),
+      getCompanies(),
+      getPeople(),
+      getReferralTypes(),
+    ]);
 
-  const allClients = allClientsResult.success ? allClientsResult.clients : [];
+  const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
+  const tasks = tasksResult.success && tasksResult.tasks ? tasksResult.tasks : [];
+  const notes = notesResult.success && notesResult.notes ? notesResult.notes : [];
+  const allCompanies = companiesResult.success ? companiesResult.companies || [] : [];
+  const allPeople = peopleResult.success ? peopleResult.people || [] : [];
+  const allReferralTypes = referralTypesResult.success ? referralTypesResult.referralTypes || [] : [];
+
+  const person = clientResult.person;
+  const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
 
   // Fetch news for each sports team
   const teamsNews = await Promise.all(
@@ -40,16 +69,26 @@ export default async function ClientPage({ params }: ClientPageProps) {
 
   return (
     <div className="py-4">
-      <ClientHeaderPortal sectionName="Internal Overview" />
+      <ClientHeaderPortal sectionName="Overview" />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Preferences / Editing */}
-        <div className="space-y-6 lg:col-span-2">
-          <GeneralTab client={client} allClients={allClients} />
+        {/* Six Cards Grid in 3x2 Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:col-span-2">
+          <TasksCard clientId={id} initialTasks={tasks} />
+          <NotesCard clientId={id} initialNotes={notes} />
+          <InterestsCard client={client} />
+          <SportsTeamsCard client={client} />
+          <ReferredByCard
+            client={client}
+            allClients={allClients}
+            allCompanies={allCompanies}
+            allPeople={allPeople}
+            allReferralTypes={allReferralTypes}
+          />
+          <ReferralTreeCard client={client} clientName={clientName} allClients={allClients} />
         </div>
 
-        {/* Companies, Policies, and Sports News */}
+        {/* Favorite Teams & News Sidebar */}
         <div className="space-y-6 lg:col-span-1">
-          {/* Favorite Teams & News */}
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 font-bold text-base">
               <Trophy className="h-4 w-4 text-yellow-600" /> Favorite Teams & News

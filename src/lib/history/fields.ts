@@ -26,6 +26,10 @@ export const COMPANY_PROFILE_FIELDS: FieldConfig[] = [
 // Client (clients table) fields. Tracked under the "Profile" subtype.
 export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "referredById", label: "Referred By" },
+  { name: "referredByType", label: "Referral Source Type" },
+  { name: "referredByCompanyId", label: "Referred by Company" },
+  { name: "referredByPersonId", label: "Referred by Person" },
+  { name: "referredByReferralTypeId", label: "Referred by Referral Type" },
   { name: "hobbies", label: "Hobbies" },
   { name: "favoriteSportsTeams", label: "Favorite Sports Teams" },
   { name: "paymentAccounts", label: "Payment Accounts" },

@@ -15,43 +15,126 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sportsTeams } from "@/data/sports-teams";
 import type { Client, PaymentAccount } from "@/types/crm";
 
-export function GeneralTab({ client, allClients = [] }: { client: Client; allClients?: any[] }) {
+export function GeneralTab({
+  client,
+  allClients = [],
+  allCompanies = [],
+  allPeople = [],
+  allReferralTypes = [],
+}: {
+  client: Client;
+  allClients?: any[];
+  allCompanies?: any[];
+  allPeople?: any[];
+  allReferralTypes?: any[];
+}) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [hobbies, setHobbies] = useState<string[]>(client.hobbies || []);
   const [hobbyInput, setHobbyInput] = useState("");
   const [favoriteTeams, setFavoriteTeams] = useState<string[]>(client.favoriteSportsTeams || []);
+  // Referral states
+  const [referredByType, setReferredByType] = useState<string | null>(client.referredByType || null);
   const [referredById, setReferredById] = useState<string | null>(client.referredById || null);
+  const [referredByCompanyId, setReferredByCompanyId] = useState<string | null>(client.referredByCompanyId || null);
+  const [referredByPersonId, setReferredByPersonId] = useState<string | null>(client.referredByPersonId || null);
+  const [referredByReferralTypeId, setReferredByReferralTypeId] = useState<string | null>(
+    client.referredByReferralTypeId || null,
+  );
+
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>(client.paymentAccounts || []);
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
 
   const [referrerSearchQuery, setReferrerSearchQuery] = useState("");
 
+  // Sync state with client prop changes
+  useEffect(() => {
+    setReferredByType(client.referredByType || null);
+    setReferredById(client.referredById || null);
+    setReferredByCompanyId(client.referredByCompanyId || null);
+    setReferredByPersonId(client.referredByPersonId || null);
+    setReferredByReferralTypeId(client.referredByReferralTypeId || null);
+  }, [client]);
+
   const referredClients = allClients.filter((c) => c.referredById === client.id);
 
-  const selectedReferrer = allClients.find((c) => c.id === referredById);
-  const selectedReferrerName = selectedReferrer
-    ? `${selectedReferrer.person?.firstName || ""} ${selectedReferrer.person?.lastName || ""}`.trim()
-    : "";
+  // Determine current active entity ID based on type
+  const activeEntityId = useMemo(() => {
+    if (!referredByType || referredByType === "none") return "";
+    if (referredByType === "client") return referredById || "";
+    if (referredByType === "company") return referredByCompanyId || "";
+    if (referredByType === "person") return referredByPersonId || "";
+    if (referredByType === "referral_type") return referredByReferralTypeId || "";
+    return "";
+  }, [referredByType, referredById, referredByCompanyId, referredByPersonId, referredByReferralTypeId]);
+
+  // Compute active referrer name for display in input
+  const activeLabel = useMemo(() => {
+    if (!referredByType || referredByType === "none") return "";
+    if (referredByType === "client") {
+      const match = allClients.find((c) => c.id === referredById);
+      return match ? `${match.person?.firstName || ""} ${match.person?.lastName || ""}`.trim() : "";
+    }
+    if (referredByType === "company") {
+      const match = allCompanies.find((c) => c.id === referredByCompanyId);
+      return match ? match.name : "";
+    }
+    if (referredByType === "person") {
+      const match = allPeople.find((p) => p.id === referredByPersonId);
+      return match ? `${match.firstName || ""} ${match.lastName || ""}`.trim() : "";
+    }
+    if (referredByType === "referral_type") {
+      const match = allReferralTypes.find((rt) => rt.id === referredByReferralTypeId);
+      return match ? match.name : "";
+    }
+    return "";
+  }, [
+    referredByType,
+    referredById,
+    referredByCompanyId,
+    referredByPersonId,
+    referredByReferralTypeId,
+    allClients,
+    allCompanies,
+    allPeople,
+    allReferralTypes,
+  ]);
 
   useEffect(() => {
-    setReferrerSearchQuery(selectedReferrerName);
-  }, [selectedReferrerName]);
+    setReferrerSearchQuery(activeLabel);
+  }, [activeLabel]);
 
-  const filteredReferrers = useMemo(() => {
-    const candidates = allClients.filter((c) => c.id !== client.id);
-    if (!referrerSearchQuery) return candidates;
-    if (selectedReferrerName && referrerSearchQuery === selectedReferrerName) {
-      return candidates;
-    }
-    return candidates.filter((c) => {
-      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
-      return name.toLowerCase().includes(referrerSearchQuery.toLowerCase());
+  // Filter lists based on search queries
+  const clientOptions = useMemo(() => {
+    const list = allClients.filter((c) => c.id !== client.id);
+    if (!referrerSearchQuery) return list;
+    return list.filter((c) => {
+      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`.toLowerCase();
+      return name.includes(referrerSearchQuery.toLowerCase());
     });
-  }, [allClients, client.id, referrerSearchQuery, selectedReferrerName]);
+  }, [allClients, client.id, referrerSearchQuery]);
+
+  const companyOptions = useMemo(() => {
+    if (!referrerSearchQuery) return allCompanies;
+    return allCompanies.filter((c) => c.name.toLowerCase().includes(referrerSearchQuery.toLowerCase()));
+  }, [allCompanies, referrerSearchQuery]);
+
+  const personOptions = useMemo(() => {
+    if (!referrerSearchQuery) return allPeople;
+    return allPeople.filter((p) => {
+      const name = `${p.firstName || ""} ${p.lastName || ""}`.toLowerCase();
+      return name.includes(referrerSearchQuery.toLowerCase());
+    });
+  }, [allPeople, referrerSearchQuery]);
+
+  const referralTypeOptions = useMemo(() => {
+    if (!referrerSearchQuery) return allReferralTypes;
+    return allReferralTypes.filter((rt) => rt.name.toLowerCase().includes(referrerSearchQuery.toLowerCase()));
+  }, [allReferralTypes, referrerSearchQuery]);
 
   const handleUpdate = async (updates: Partial<Client>) => {
     try {
@@ -93,11 +176,48 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
     handleUpdate({ favoriteSportsTeams: next });
   };
 
-  const handleSetReferrer = (val: string) => {
-    // val can be the ID or "none"
-    const newId = val === "none" ? null : val;
-    setReferredById(newId);
-    handleUpdate({ referredById: newId });
+  const handleTypeChange = (type: string) => {
+    const newType = type === "none" ? null : type;
+    setReferredByType(newType);
+    setReferrerSearchQuery("");
+
+    setReferredById(null);
+    setReferredByCompanyId(null);
+    setReferredByPersonId(null);
+    setReferredByReferralTypeId(null);
+
+    if (!newType) {
+      handleUpdate({
+        referredByType: null,
+        referredById: null,
+        referredByCompanyId: null,
+        referredByPersonId: null,
+        referredByReferralTypeId: null,
+      });
+    }
+  };
+
+  const handleEntitySelect = (entityId: string) => {
+    const isClear = entityId === "none";
+
+    const payload = {
+      referredByType: isClear ? null : referredByType,
+      referredById: !isClear && referredByType === "client" ? entityId : null,
+      referredByCompanyId: !isClear && referredByType === "company" ? entityId : null,
+      referredByPersonId: !isClear && referredByType === "person" ? entityId : null,
+      referredByReferralTypeId: !isClear && referredByType === "referral_type" ? entityId : null,
+    };
+
+    setReferredById(payload.referredById);
+    setReferredByCompanyId(payload.referredByCompanyId);
+    setReferredByPersonId(payload.referredByPersonId);
+    setReferredByReferralTypeId(payload.referredByReferralTypeId);
+
+    if (isClear) {
+      setReferredByType(null);
+    }
+
+    handleUpdate(payload);
   };
 
   return (
@@ -105,37 +225,101 @@ export function GeneralTab({ client, allClients = [] }: { client: Client; allCli
       <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
         <CardHeader className="bg-muted/10">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5 text-primary" /> Referrals
+            <Users className="h-5 w-5 text-primary" /> Referrals:{" "}
+            {activeLabel && <span className="text-primary font-semibold ml-1">{activeLabel}</span>}
           </CardTitle>
           <CardDescription>Manage who referred this client and the clients they have referred.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
-          <div className="space-y-2">
-            <label htmlFor="referred-by-select" className="font-semibold text-foreground text-sm">
-              Referred By
-            </label>
-            <Combobox
-              value={referredById || ""}
-              onValueChange={(val: unknown) => {
-                if (typeof val === "string") handleSetReferrer(val);
-              }}
-              inputValue={referrerSearchQuery}
-              onInputValueChange={setReferrerSearchQuery}
-            >
-              <ComboboxInput id="referred-by-select" placeholder="Search clients..." />
-              <ComboboxContent>
-                <ComboboxList>
-                  <ComboboxItem value="none">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="referrer-type-select" className="font-semibold text-foreground text-sm">
+                Referrer Type
+              </label>
+              <Select value={referredByType || "none"} onValueChange={handleTypeChange} disabled={isLoading}>
+                <SelectTrigger
+                  id="referrer-type-select"
+                  className="w-full bg-white dark:bg-zinc-950 border-neutral-300"
+                >
+                  <SelectValue placeholder="Select type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
                     <span className="text-muted-foreground italic">None / Clear</span>
-                  </ComboboxItem>
-                  {filteredReferrers.map((c) => (
-                    <ComboboxItem key={c.id} value={c.id} label={`${c.person?.firstName} ${c.person?.lastName}`}>
-                      {c.person?.firstName} {c.person?.lastName}
-                    </ComboboxItem>
-                  ))}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
+                  </SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="person">Person</SelectItem>
+                  <SelectItem value="referral_type">Referral Type</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {referredByType && referredByType !== "none" && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label htmlFor="referrer-entity-select" className="font-semibold text-foreground text-sm">
+                    Select Referrer
+                  </label>
+                  {activeLabel && <span className="text-xs font-semibold text-primary">Current: {activeLabel}</span>}
+                </div>
+                <Combobox
+                  value={activeEntityId}
+                  onValueChange={(val: unknown) => {
+                    if (typeof val === "string") handleEntitySelect(val);
+                  }}
+                  inputValue={referrerSearchQuery}
+                  onInputValueChange={setReferrerSearchQuery}
+                  disabled={isLoading}
+                >
+                  <ComboboxInput
+                    id="referrer-entity-select"
+                    placeholder={`Search ${referredByType === "referral_type" ? "referral types" : referredByType + "s"}...`}
+                  />
+                  <ComboboxContent className="w-full min-w-[280px]">
+                    <ComboboxList>
+                      <ComboboxItem value="none">
+                        <span className="text-muted-foreground italic">Clear Referrer</span>
+                      </ComboboxItem>
+
+                      {referredByType === "client" &&
+                        clientOptions.map((c) => {
+                          const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`.trim();
+                          return (
+                            <ComboboxItem key={c.id} value={c.id} label={name}>
+                              {name}
+                            </ComboboxItem>
+                          );
+                        })}
+
+                      {referredByType === "company" &&
+                        companyOptions.map((c) => (
+                          <ComboboxItem key={c.id} value={c.id} label={c.name}>
+                            {c.name}
+                          </ComboboxItem>
+                        ))}
+
+                      {referredByType === "person" &&
+                        personOptions.map((p) => {
+                          const name = `${p.firstName || ""} ${p.lastName || ""}`.trim();
+                          return (
+                            <ComboboxItem key={p.id} value={p.id} label={name}>
+                              {name}
+                            </ComboboxItem>
+                          );
+                        })}
+
+                      {referredByType === "referral_type" &&
+                        referralTypeOptions.map((rt) => (
+                          <ComboboxItem key={rt.id} value={rt.id} label={rt.name}>
+                            {rt.name}
+                          </ComboboxItem>
+                        ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

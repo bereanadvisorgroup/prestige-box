@@ -439,6 +439,10 @@ export const ClientSchema = z.object({
   personId: z.string(),
   advisorId: z.string().optional().nullable(),
   referredById: z.string().optional().nullable(),
+  referredByType: z.string().optional().nullable(),
+  referredByCompanyId: z.string().optional().nullable(),
+  referredByPersonId: z.string().optional().nullable(),
+  referredByReferralTypeId: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
@@ -892,3 +896,11 @@ export const CustodianSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type Custodian = z.infer<typeof CustodianSchema>;
+
+export const ReferralTypeSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type ReferralType = z.infer<typeof ReferralTypeSchema>;

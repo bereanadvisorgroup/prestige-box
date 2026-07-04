@@ -24,6 +24,7 @@ interface TasksViewProps {
   title?: string;
   description?: string;
   useHeaderPortal?: boolean;
+  editTaskId?: string;
 }
 
 function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
@@ -34,7 +35,13 @@ function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
 
 const isGlobalScope = (scope?: TaskFilter) => !scope?.clientId && !scope?.companyId;
 
-export function TasksView({ scope, title = "Tasks", description, useHeaderPortal = false }: TasksViewProps) {
+export function TasksView({
+  scope,
+  title = "Tasks",
+  description,
+  useHeaderPortal = false,
+  editTaskId,
+}: TasksViewProps) {
   const profile = useAuthStore((s) => s.profile);
   const [tasks, setTasks] = React.useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -64,6 +71,21 @@ export function TasksView({ scope, title = "Tasks", description, useHeaderPortal
   React.useEffect(() => {
     load();
   }, [load]);
+
+  React.useEffect(() => {
+    if (editTaskId && tasks.length > 0) {
+      const taskToEdit = tasks.find((t) => t.id === editTaskId);
+      if (taskToEdit) {
+        setEditing(taskToEdit);
+        setDialogOpen(true);
+
+        const params = new URLSearchParams(window.location.search);
+        params.delete("editTask");
+        const newRelativePathQuery = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+        window.history.replaceState(null, "", newRelativePathQuery);
+      }
+    }
+  }, [editTaskId, tasks]);
 
   // Load admin/advisor users for the assignee filter.
   React.useEffect(() => {

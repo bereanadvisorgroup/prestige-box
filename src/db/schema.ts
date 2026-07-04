@@ -103,6 +103,12 @@ export const clients = pgTable("clients", {
   personId: uuid("personId").notNull(),
   advisorId: uuid("advisorId"), // users.uid of the advisor/admin who services this client
   referredById: uuid("referredById"), // Self-referencing ID for referrals
+  referredByType: text("referredByType"), // 'client' | 'company' | 'person' | 'referral_type'
+  referredByCompanyId: uuid("referredByCompanyId").references(() => companies.id, { onDelete: "set null" }),
+  referredByPersonId: uuid("referredByPersonId").references(() => people.id, { onDelete: "set null" }),
+  referredByReferralTypeId: uuid("referredByReferralTypeId").references(() => referralTypes.id, {
+    onDelete: "set null",
+  }),
   hobbies: text("hobbies").array().default(sql`'{}'::text[]`),
   favoriteSportsTeams: text("favoriteSportsTeams").array().default(sql`'{}'::text[]`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
@@ -283,6 +289,14 @@ export const financialAccountTypes = pgTable("financial_account_types", {
 
 // 15c. Custodians Table
 export const custodians = pgTable("custodians", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 15d. Referral Types Table
+export const referralTypes = pgTable("referral_types", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
