@@ -15,7 +15,6 @@ import {
   Loader2,
   Phone,
   Plus,
-  ShieldAlert,
   Trash2,
   UploadCloud,
 } from "lucide-react";
@@ -27,7 +26,7 @@ import {
   unlinkClientFromDisabilityInsuranceCompany,
 } from "@/actions/disability-insurance-companies";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Dialog,
@@ -249,14 +248,6 @@ export function DisabilityInsuranceManager({ client, allCompanies }: DisabilityI
     <div className="space-y-8">
       <ClientHeaderPortal sectionName="Disability Insurance">
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsLinkOpen(true)}
-          className="bg-background/50 backdrop-blur-sm"
-        >
-          <Plus className="mr-1.5 h-4 w-4" /> Link Company
-        </Button>
-        <Button
           size="sm"
           onClick={() => {
             setAddingCompanyId("");
@@ -268,200 +259,112 @@ export function DisabilityInsuranceManager({ client, allCompanies }: DisabilityI
         </Button>
       </ClientHeaderPortal>
 
-      {/* Main Grid View */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Associated Companies and Their Documents */}
-        <div className="space-y-6 lg:col-span-2">
-          <h2 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
-            Associated Disability Insurance Companies
-          </h2>
+      {associatedCompanies.length === 0 && generalDocuments.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center border-2 border-muted/30 border-dashed bg-muted/5 px-6 py-12 text-center text-muted-foreground">
+          <Building2 className="mb-4 h-12 w-12 opacity-20" />
+          <h3 className="font-bold text-foreground text-sm">No Documents or Companies</h3>
+          <p className="mt-1 max-w-sm text-xs">
+            Connect this client to a disability insurance company or add general documents to get started.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" /> Link a Company
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setAddingCompanyId("");
+                setIsUploadOpen(true);
+              }}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Add Document
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="max-w-4xl space-y-10">
+          {associatedCompanies.map((company) => {
+            const companyDocs = documentsByCompany.get(company.id!) || [];
 
-          {associatedCompanies.length > 0 ? (
-            associatedCompanies.map((company) => {
-              const companyDocs = documentsByCompany.get(company.id!) || [];
-
-              return (
-                <Card
-                  key={company.id ?? company.name}
-                  className="overflow-hidden border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm transition-all duration-300 hover:shadow-md"
-                >
-                  <CardHeader className="border-muted/10 border-b bg-muted/10 px-6 py-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-base text-foreground">{company.name}</h3>
-                          <Link
-                            href={`/dashboard/admin/disability-insurance-companies/${company.id}`}
-                            className="text-muted-foreground transition-colors hover:text-primary"
-                          >
-                            <ArrowUpRight className="h-4 w-4" />
-                          </Link>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-xs">
-                          {company.websiteUrl && (
-                            <a
-                              href={
-                                company.websiteUrl.startsWith("http")
-                                  ? company.websiteUrl
-                                  : `https://${company.websiteUrl}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 hover:text-primary hover:underline"
-                            >
-                              <Globe className="h-3 w-3" />
-                              {company.websiteUrl.replace(/^https?:\/\//, "")}
-                            </a>
-                          )}
-                          {company.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {formatPhoneNumber(company.phone)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleUnlinkCompany(company.id!)}
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        title="Remove Association"
+            return (
+              <div key={company.id ?? company.name} className="space-y-4">
+                {/* Carrier Header */}
+                <div className="border-muted/20 border-b pb-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="flex items-center gap-1 font-bold text-foreground text-lg">
+                      <span>{company.name}</span>
+                      <Link
+                        href={`/dashboard/admin/disability-insurance-companies/${company.id}`}
+                        className="text-muted-foreground transition-colors hover:text-primary"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-muted-foreground/80 text-xs uppercase tracking-wider">
-                          Policy Documents
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setAddingCompanyId(company.id!);
-                            setIsUploadOpen(true);
-                          }}
-                          className="h-7 text-primary text-xs hover:bg-primary/5 hover:text-primary/80"
-                        >
-                          <Plus className="mr-1 h-3 w-3" /> Upload for this company
-                        </Button>
-                      </div>
+                        <ArrowUpRight className="inline h-4 w-4" />
+                      </Link>
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleUnlinkCompany(company.id!)}
+                      className="ml-auto h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Remove Association"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-xs">
+                    {company.websiteUrl && (
+                      <a
+                        href={
+                          company.websiteUrl.startsWith("http") ? company.websiteUrl : `https://${company.websiteUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:text-primary hover:underline"
+                      >
+                        <Globe className="h-3.5 w-3.5" />
+                        {company.websiteUrl.replace(/^https?:\/\//, "")}
+                      </a>
+                    )}
+                    {company.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3.5 w-3.5" />
+                        {formatPhoneNumber(company.phone)}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                      {companyDocs.length > 0 ? (
-                        <div className="divide-y divide-muted/10 overflow-hidden rounded-lg border border-muted/20 bg-background">
-                          {companyDocs.map((doc, idx) => (
-                            <div
-                              key={doc.id ?? idx}
-                              className="flex items-center justify-between p-3.5 transition-colors hover:bg-muted/5"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                  <FileText className="h-4 w-4" />
-                                </div>
-                                <div className="space-y-0.5">
-                                  <p className="font-semibold text-foreground text-sm leading-none">{doc.name}</p>
-                                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                                    <span className="font-medium text-primary/80">{doc.type}</span>
-                                    {doc.uploadedAt && (
-                                      <>
-                                        <span>•</span>
-                                        <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" className="h-8" asChild>
-                                  <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                    View
-                                  </a>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleDeleteDocument(doc.id!)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center rounded-lg border border-muted/30 border-dashed bg-muted/5 p-6 text-center text-muted-foreground">
-                          <FileText className="mb-2 h-6 w-6 opacity-30" />
-                          <p className="text-xs">No documents uploaded for this company.</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          ) : (
-            <Card className="flex flex-col items-center justify-center border-2 border-muted/30 border-dashed bg-muted/5 px-6 py-12 text-center text-muted-foreground">
-              <Building2 className="mb-4 h-12 w-12 opacity-20" />
-              <h3 className="font-bold text-foreground text-sm">No Companies Linked</h3>
-              <p className="mt-1 max-w-sm text-xs">
-                Connect this client to a disability insurance company to manage documents and associations.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" /> Link a Company
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setAddingCompanyId("");
-                    setIsUploadOpen(true);
-                  }}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" /> Add Document
-                </Button>
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Side Cards */}
-        <div className="space-y-6">
-          {/* General / Unassociated Documents */}
-          <div>
-            <h2 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wider">
-              General Documents
-            </h2>
-            <Card className="border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm">
-              <CardHeader className="py-4">
-                <CardTitle className="font-bold text-sm">General Files</CardTitle>
-                <CardDescription className="text-xs">Documents not associated with linked companies.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {generalDocuments.length > 0 ? (
-                  <div className="space-y-2">
-                    {generalDocuments.map((doc, idx) => (
+                {/* Documents List */}
+                <div className="space-y-3 pl-6 md:pl-12">
+                  {companyDocs.length > 0 ? (
+                    companyDocs.map((doc, idx) => (
                       <div
                         key={doc.id ?? idx}
-                        className="flex items-center justify-between rounded-lg border border-muted/20 bg-background p-3 transition-colors hover:bg-muted/5"
+                        className="flex items-center justify-between rounded-xl border border-muted/20 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                       >
-                        <div className="flex min-w-0 items-center gap-2">
-                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-foreground text-xs" title={doc.name}>
-                              {doc.name}
-                            </p>
-                            <p className="truncate text-[10px] text-muted-foreground">
-                              {doc.type} {doc.firmId && `(${companyNameMap.get(doc.firmId) || "Unknown Company"})`}
-                            </p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="font-medium text-base text-foreground leading-none">{doc.name}</p>
+                            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                              <span>{doc.type}</span>
+                              {doc.uploadedAt && (
+                                <>
+                                  <span>•</span>
+                                  <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <Button variant="outline" size="sm" className="h-7 px-2 text-xs" asChild>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 border-muted-foreground/20 px-4 font-medium text-sm hover:bg-muted"
+                            asChild
+                          >
                             <a href={doc.url} target="_blank" rel="noopener noreferrer">
                               View
                             </a>
@@ -469,80 +372,94 @@ export function DisabilityInsuranceManager({ client, allCompanies }: DisabilityI
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
                             onClick={() => handleDeleteDocument(doc.id!)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-muted/30 border-dashed bg-muted/5 p-6 text-center text-muted-foreground">
-                    <FileText className="mb-2 h-6 w-6 opacity-30" />
-                    <p className="text-xs">No general documents.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-muted/30 border-dashed bg-muted/5 p-6 text-center text-muted-foreground">
+                      <FileText className="mb-2 h-6 w-6 opacity-30" />
+                      <p className="text-xs">No documents uploaded for this company.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
-          {/* Quick Associations Panel */}
-          {availableCompaniesToLink.length > 0 && (
-            <div>
-              <h2 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wider">Quick Links</h2>
-              <Card className="border border-muted/20 bg-gradient-to-b from-card to-muted/5 shadow-sm">
-                <CardHeader className="py-4">
-                  <CardTitle className="font-bold text-sm">Available Companies</CardTitle>
-                  <CardDescription className="text-xs">Companies you can associate with this client.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="max-h-60 divide-y divide-muted/10 overflow-y-auto">
-                    {availableCompaniesToLink.map((company) => (
-                      <div key={company.id ?? company.name} className="flex items-center justify-between p-3.5 text-xs">
-                        <div className="min-w-0 pr-2">
-                          <p className="truncate font-semibold text-foreground">{company.name}</p>
-                          {company.websiteUrl && (
-                            <p className="truncate text-[10px] text-muted-foreground">{company.websiteUrl}</p>
+          {generalDocuments.length > 0 && (
+            <div className="space-y-4">
+              <div className="border-muted/20 border-b pb-2">
+                <h3 className="font-bold text-foreground text-lg">General Documents</h3>
+                <p className="mt-1 text-muted-foreground text-xs">Documents not associated with a specific company.</p>
+              </div>
+              <div className="space-y-3 pl-6 md:pl-12">
+                {generalDocuments.map((doc, idx) => (
+                  <div
+                    key={doc.id ?? idx}
+                    className="flex items-center justify-between rounded-xl border border-muted/20 bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="font-medium text-base text-foreground leading-none">{doc.name}</p>
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                          <span>{doc.type}</span>
+                          {doc.uploadedAt && (
+                            <>
+                              <span>•</span>
+                              <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
+                            </>
                           )}
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            setIsLinking(true);
-                            try {
-                              const res = await linkClientToDisabilityInsuranceCompany(company.id!, client.id!);
-                              if (res.success) {
-                                toast.success("Company associated successfully");
-                                window.dispatchEvent(new CustomEvent("association-change"));
-                                startTransition(() => {
-                                  router.refresh();
-                                });
-                              } else {
-                                toast.error(res.error || "Failed to associate company");
-                              }
-                            } catch (_e) {
-                              toast.error("Error occurred");
-                            } finally {
-                              setIsLinking(false);
-                            }
-                          }}
-                          disabled={isLinking}
-                          className="h-7 px-2 text-[10px]"
-                        >
-                          Link
-                        </Button>
                       </div>
-                    ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 border-muted-foreground/20 px-4 font-medium text-sm hover:bg-muted"
+                        asChild
+                      >
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          View
+                        </a>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleDeleteDocument(doc.id!)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {availableCompaniesToLink.length > 0 && (
+            <div className="flex justify-end pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLinkOpen(true)}
+                className="text-muted-foreground text-xs hover:text-foreground"
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" /> Link Another Company
+              </Button>
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Add Document Dialog */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>

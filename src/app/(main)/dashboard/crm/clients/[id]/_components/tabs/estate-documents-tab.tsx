@@ -9,7 +9,6 @@ import { updateClient } from "@/actions/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogClose,
@@ -50,7 +49,11 @@ const parsePartyKey = (key: string): EstatePartyRef => {
   return { kind: kind as "person" | "company", id: rest.join(":") };
 };
 
-/** Searchable single/multi picker built on the Combobox primitive; selection is managed here. */
+/**
+ * Searchable single/multi picker. Results render inline (no portalled popup) so it works
+ * reliably inside a modal Dialog, where a portalled combobox popup loses clicks to the
+ * dialog's focus trap. Selection state is managed by the parent.
+ */
 function SearchSelect({
   options,
   selected,
@@ -67,44 +70,47 @@ function SearchSelect({
   emptyText?: string;
 }) {
   const [query, setQuery] = useState("");
-  const filtered = options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()));
+  const trimmed = query.trim().toLowerCase();
+  const filtered = trimmed
+    ? options.filter((o) => o.label.toLowerCase().includes(trimmed) && !selected.includes(o.key)).slice(0, 8)
+    : [];
   const selectedOptions = selected.map((k) => options.find((o) => o.key === k)).filter(Boolean) as {
     key: string;
     label: string;
     sublabel?: string;
   }[];
 
+  const add = (key: string) => {
+    if (multiple) {
+      if (!selected.includes(key)) onChange([...selected, key]);
+    } else {
+      onChange([key]);
+    }
+    setQuery("");
+  };
+
   return (
     <div className="space-y-2">
-      <Combobox
-        onValueChange={(val) => {
-          if (typeof val !== "string") return;
-          if (multiple) {
-            if (!selected.includes(val)) onChange([...selected, val]);
-          } else {
-            onChange([val]);
-          }
-          setQuery("");
-        }}
-        inputValue={query}
-        onInputValueChange={setQuery}
-      >
-        <ComboboxInput placeholder={placeholder} />
-        <ComboboxContent>
-          <ComboboxList>
-            {filtered.length > 0 ? (
-              filtered.map((o) => (
-                <ComboboxItem key={o.key} value={o.key}>
-                  {o.label}
-                  {o.sublabel && <span className="ml-2 text-muted-foreground text-xs">{o.sublabel}</span>}
-                </ComboboxItem>
-              ))
-            ) : (
-              <div className="py-2 text-center text-muted-foreground text-sm">{emptyText}</div>
-            )}
-          </ComboboxList>
-        </ComboboxContent>
-      </Combobox>
+      <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={placeholder} />
+      {trimmed && (
+        <div className="max-h-52 overflow-auto rounded-md border bg-popover p-1 shadow-sm">
+          {filtered.length > 0 ? (
+            filtered.map((o) => (
+              <button
+                type="button"
+                key={o.key}
+                className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                onClick={() => add(o.key)}
+              >
+                <span>{o.label}</span>
+                {o.sublabel && <span className="text-muted-foreground text-xs">{o.sublabel}</span>}
+              </button>
+            ))
+          ) : (
+            <div className="px-2 py-1.5 text-center text-muted-foreground text-sm">{emptyText}</div>
+          )}
+        </div>
+      )}
       {selectedOptions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selectedOptions.map((o) => (
