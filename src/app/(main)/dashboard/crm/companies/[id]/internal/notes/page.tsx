@@ -11,7 +11,6 @@ export default async function CompanyNotesPage({ params }: PageProps) {
       <NotesView
         scope={{ companyId: id }}
         title="Notes"
-        description="Threaded notes and discussions for this company."
         defaultAssociations={[{ entityType: "company", entityId: id }]}
         lockAssociations
       />

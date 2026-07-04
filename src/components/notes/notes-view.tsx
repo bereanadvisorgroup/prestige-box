@@ -104,7 +104,7 @@ function NoteSummaryCard({ note }: { note: NoteSummary }) {
 export function NotesView({
   scope,
   title = "Notes",
-  description = "Threaded notes and discussions across clients and companies.",
+  description = "",
   defaultAssociations = [],
   lockAssociations = false,
 }: NotesViewProps) {

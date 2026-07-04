@@ -80,6 +80,33 @@ export function TasksView({ scope, title = "Tasks", description }: TasksViewProp
     };
   }, []);
 
+  const isFiltered = React.useMemo(() => {
+    const defaultAssignee = isGlobalScope(scope) && profile?.uid ? profile.uid : "all";
+    return (
+      filters.name !== "" ||
+      filters.status !== "all" ||
+      filters.assignee !== defaultAssignee ||
+      filters.priority !== "all" ||
+      filters.dueIn !== "all" ||
+      filters.clientName !== "" ||
+      filters.companyName !== "" ||
+      filters.category !== "all"
+    );
+  }, [filters, scope, profile]);
+
+  const handleClearFilters = React.useCallback(() => {
+    setFilters({
+      name: "",
+      status: "all",
+      assignee: isGlobalScope(scope) && profile?.uid ? profile.uid : "all",
+      priority: "all",
+      dueIn: "all",
+      clientName: "",
+      companyName: "",
+      category: "all",
+    });
+  }, [scope, profile]);
+
   const filteredTasks = React.useMemo(() => applyTaskFilters(tasks, filters), [tasks, filters]);
 
   async function handleStatusChange(taskId: string, status: TaskStatus) {
@@ -135,7 +162,14 @@ export function TasksView({ scope, title = "Tasks", description }: TasksViewProp
         </div>
       </div>
 
-      <TaskFilters filters={filters} onChange={updateFilters} assigneeOptions={assigneeOptions} />
+      <TaskFilters
+        filters={filters}
+        onChange={updateFilters}
+        assigneeOptions={assigneeOptions}
+        showClientCompanyFilters={isGlobalScope(scope)}
+        isFiltered={isFiltered}
+        onClear={handleClearFilters}
+      />
 
       {loading ? (
         <div className="flex h-64 items-center justify-center text-muted-foreground">

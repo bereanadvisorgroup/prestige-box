@@ -1,11 +1,12 @@
 "use client";
 
 import { endOfMonth, endOfWeek, isToday, startOfDay } from "date-fns";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TaskPriorities, TaskStatuses, type TaskWithRelations } from "@/types/crm";
+import { TaskCategories, TaskPriorities, TaskStatuses, type TaskWithRelations } from "@/types/crm";
 
 export type DueInFilter = "all" | "overdue" | "today" | "week" | "month";
 
@@ -15,6 +16,9 @@ export interface TaskFilterState {
   assignee: string; // "all" | userId
   priority: string; // "all" | TaskPriority
   dueIn: DueInFilter;
+  clientName: string;
+  companyName: string;
+  category: string; // "all" | TaskCategory
 }
 
 export const defaultTaskFilters: TaskFilterState = {
@@ -23,6 +27,9 @@ export const defaultTaskFilters: TaskFilterState = {
   assignee: "all",
   priority: "all",
   dueIn: "all",
+  clientName: "",
+  companyName: "",
+  category: "all",
 };
 
 const DUE_IN_OPTIONS: { value: DueInFilter; label: string }[] = [
@@ -65,6 +72,16 @@ export function applyTaskFilters(
     if (filters.priority !== "all" && t.priority !== filters.priority) return false;
     if (filters.assignee !== "all" && !t.assignees.some((a) => a.userId === filters.assignee)) return false;
     if (!matchesDueIn(t, filters.dueIn, now)) return false;
+    if (filters.clientName.trim() !== "") {
+      const cTerm = filters.clientName.trim().toLowerCase();
+      if (!t.associations.some((a) => a.entityType === "client" && a.name.toLowerCase().includes(cTerm))) return false;
+    }
+    if (filters.companyName.trim() !== "") {
+      const coTerm = filters.companyName.trim().toLowerCase();
+      if (!t.associations.some((a) => a.entityType === "company" && a.name.toLowerCase().includes(coTerm)))
+        return false;
+    }
+    if (filters.category !== "all" && t.category !== filters.category) return false;
     return true;
   });
 }
@@ -74,75 +91,167 @@ interface TaskFiltersProps {
   onChange: (patch: Partial<TaskFilterState>) => void;
   /** Admin/advisor users available as assignees. */
   assigneeOptions: { value: string; label: string }[];
+  showClientCompanyFilters?: boolean;
+  isFiltered?: boolean;
+  onClear?: () => void;
 }
 
-export function TaskFilters({ filters, onChange, assigneeOptions }: TaskFiltersProps) {
+export function TaskFilters({
+  filters,
+  onChange,
+  assigneeOptions,
+  showClientCompanyFilters = false,
+  isFiltered = false,
+  onClear,
+}: TaskFiltersProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <div className="relative min-w-[200px] flex-1">
-        <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Filter by name…"
-          value={filters.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          className="pl-9"
-        />
+    <div className="flex flex-col gap-3">
+      {/* Search Bar Row */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-[150px] flex-1">
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Filter by name…"
+            value={filters.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            className="pl-9 pr-9"
+          />
+          {filters.name && (
+            <button
+              type="button"
+              onClick={() => onChange({ name: "" })}
+              className="-translate-y-1/2 absolute top-1/2 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+              <span className="sr-only">Clear name filter</span>
+            </button>
+          )}
+        </div>
+
+        {showClientCompanyFilters && (
+          <>
+            <div className="relative min-w-[150px] flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filter by client…"
+                value={filters.clientName}
+                onChange={(e) => onChange({ clientName: e.target.value })}
+                className="pl-9 pr-9"
+              />
+              {filters.clientName && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ clientName: "" })}
+                  className="-translate-y-1/2 absolute top-1/2 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                  <span className="sr-only">Clear client filter</span>
+                </button>
+              )}
+            </div>
+
+            <div className="relative min-w-[150px] flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filter by company…"
+                value={filters.companyName}
+                onChange={(e) => onChange({ companyName: e.target.value })}
+                className="pl-9 pr-9"
+              />
+              {filters.companyName && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ companyName: "" })}
+                  className="-translate-y-1/2 absolute top-1/2 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                  <span className="sr-only">Clear company filter</span>
+                </button>
+              )}
+            </div>
+            <Select value={filters.status} onValueChange={(v) => onChange({ status: v })}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {TaskStatuses.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.assignee} onValueChange={(v) => onChange({ assignee: v })}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Assignees</SelectItem>
+                {assigneeOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.priority} onValueChange={(v) => onChange({ priority: v })}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                {TaskPriorities.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.dueIn} onValueChange={(v) => onChange({ dueIn: v as DueInFilter })}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Due In" />
+              </SelectTrigger>
+              <SelectContent>
+                {DUE_IN_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.category} onValueChange={(v) => onChange({ category: v })}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {TaskCategories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
+
+        {isFiltered && onClear && (
+          <Button
+            variant="ghost"
+            onClick={onClear}
+            className="shrink-0 px-3 text-muted-foreground hover:text-foreground"
+          >
+            Clear
+            <X className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
 
-      <Select value={filters.status} onValueChange={(v) => onChange({ status: v })}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          {TaskStatuses.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={filters.assignee} onValueChange={(v) => onChange({ assignee: v })}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Assignee" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Assignees</SelectItem>
-          {assigneeOptions.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={filters.priority} onValueChange={(v) => onChange({ priority: v })}>
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Priority" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Priorities</SelectItem>
-          {TaskPriorities.map((p) => (
-            <SelectItem key={p} value={p}>
-              {p}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={filters.dueIn} onValueChange={(v) => onChange({ dueIn: v as DueInFilter })}>
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Due In" />
-        </SelectTrigger>
-        <SelectContent>
-          {DUE_IN_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 }
