@@ -115,6 +115,7 @@ export const clients = pgTable("clients", {
   lifePolicies: jsonb("lifePolicies").default(sql`'[]'::jsonb`),
   disabilityPolicies: jsonb("disabilityPolicies").default(sql`'[]'::jsonb`),
   ltcPolicies: jsonb("ltcPolicies").default(sql`'[]'::jsonb`),
+  moneyManagerAccounts: jsonb("moneyManagerAccounts").default(sql`'[]'::jsonb`),
   liabilities: jsonb("liabilities").default(sql`'[]'::jsonb`),
   mortgages: jsonb("mortgages").default(sql`'[]'::jsonb`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),

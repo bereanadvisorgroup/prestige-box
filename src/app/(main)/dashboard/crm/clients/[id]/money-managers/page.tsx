@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 
-import { TrendingUp } from "lucide-react";
-
 import { getClient } from "@/actions/clients";
-import { getMoneyManagers, linkClientToMoneyManager, unlinkClientFromMoneyManager } from "@/actions/money-managers";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+import { getCompanies } from "@/actions/companies";
+import { getCustodians } from "@/actions/custodians";
+import { getFinancialAccountTypes } from "@/actions/financial-account-types";
+import { getMoneyManagers } from "@/actions/money-managers";
+import { getPeople } from "@/actions/people";
 
-import { ClientHeaderPortal } from "../_components/client-header-portal";
+import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
+import { MoneyManagerAccountsManager } from "./_components/money-manager-accounts-manager";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,48 +16,57 @@ interface Props {
 
 export default async function MoneyManagersPage({ params }: Props) {
   const { id } = await params;
-  const clientResult = await getClient(id);
+  const [clientResult, moneyRes, typesRes, custodiansRes, peopleResult, companiesResult] = await Promise.all([
+    getClient(id),
+    getMoneyManagers(),
+    getFinancialAccountTypes(),
+    getCustodians(),
+    getPeople(),
+    getCompanies(),
+  ]);
 
   if (!clientResult.success || !clientResult.client) {
     notFound();
   }
 
   const client = clientResult.client;
-  const moneyRes = await getMoneyManagers();
-  const allManagers = (moneyRes.success && moneyRes.moneyManagers) || [];
 
-  const associatedMoneyManagers = allManagers.filter((mm) => mm.clientIds?.includes(client.id || ""));
+  const moneyManagers = ((moneyRes.success && moneyRes.moneyManagers) || [])
+    .map((mm) => ({ id: mm.id as string, name: mm.firmName as string }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const availableFirms = allManagers
-    .filter((mm) => !mm.clientIds?.includes(client.id || ""))
-    .map((mm) => ({ id: mm.id || "", name: mm.firmName }));
+  const financialTypes = ((typesRes.success && typesRes.types) || []).map((t) => ({
+    id: t.id as string,
+    name: t.name,
+  }));
+
+  const custodians = ((custodiansRes.success && custodiansRes.custodians) || []).map((c) => ({
+    id: c.id as string,
+    name: c.name,
+  }));
+
+  const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
+    id: p.id as string,
+    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    kind: "person" as const,
+  }));
+
+  const companies: BeneficiaryParty[] = (companiesResult.success ? (companiesResult.companies ?? []) : []).map((c) => ({
+    id: c.id as string,
+    name: (c.name as string) || "Unnamed company",
+    kind: "company" as const,
+  }));
+
+  const parties = [...people, ...companies].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="py-4">
-      <ClientHeaderPortal sectionName="Money Managers">
-        <LinkFirmDialog
-          entityId={client.id || ""}
-          firmTypeLabel="Money Manager"
-          availableFirms={availableFirms}
-          newFirmLink={`/dashboard/admin/money-managers/new?clientId=${client.id}`}
-          onLinkAction={linkClientToMoneyManager}
-        />
-      </ClientHeaderPortal>
-      <AssociationCardList
-        entityId={client.id || ""}
-        title="Associated Money Managers"
-        description="Money managers this client is associated with"
-        items={associatedMoneyManagers.map((mm) => ({
-          id: mm.id || "",
-          name: mm.firmName,
-          website: mm.website,
-          phone: mm.phone,
-          isLinked: false,
-        }))}
-        linkPrefix="/dashboard/admin/money-managers"
-        icon={TrendingUp}
-        onUnlinkAction={unlinkClientFromMoneyManager}
-        noCard={true}
+      <MoneyManagerAccountsManager
+        client={client}
+        moneyManagers={moneyManagers}
+        financialTypes={financialTypes}
+        custodians={custodians}
+        parties={parties}
       />
     </div>
   );

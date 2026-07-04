@@ -549,7 +549,7 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1.5">
-                          {asset.isCompanyAsset ? (
+                          {asset.isCompanyAsset || asset.isManagedAccount ? (
                             <>
                               <TooltipProvider>
                                 <Tooltip>
@@ -566,7 +566,11 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Edit company estimated value on the company details page.</p>
+                                    <p>
+                                      {asset.isManagedAccount
+                                        ? "Edit this account on the client's Money Managers page."
+                                        : "Edit company estimated value on the company details page."}
+                                    </p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -586,7 +590,11 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Manage company ownership on the company details page.</p>
+                                    <p>
+                                      {asset.isManagedAccount
+                                        ? "Manage this account on the client's Money Managers page."
+                                        : "Manage company ownership on the company details page."}
+                                    </p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>

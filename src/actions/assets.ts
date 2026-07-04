@@ -19,10 +19,10 @@ export async function getAssets(clientId: string) {
 
     if (assetsError) throw new Error(assetsError.message);
 
-    // 2. Fetch client personId and liabilities
+    // 2. Fetch client personId, liabilities, and managed accounts
     const { data: client, error: clientError } = await supabaseServer
       .from("clients")
-      .select("personId, liabilities")
+      .select("personId, liabilities, moneyManagerAccounts")
       .eq("id", clientId)
       .single();
 
@@ -40,6 +40,41 @@ export async function getAssets(clientId: string) {
     });
 
     const virtualAssets: Asset[] = [];
+
+    // 3b. Surface money manager accounts as virtual assets so their value rolls into net worth.
+    const managedAccounts = (client?.moneyManagerAccounts || []) as any[];
+    if (managedAccounts.length > 0) {
+      const managerIds = Array.from(new Set(managedAccounts.map((a) => a.moneyManagerId).filter(Boolean)));
+      const managerNames: Record<string, string> = {};
+      if (managerIds.length > 0) {
+        const { data: managers } = await supabaseServer
+          .from("money_managers")
+          .select("id, firmName")
+          .in("id", managerIds);
+        for (const m of managers || []) managerNames[m.id] = m.firmName;
+      }
+
+      for (const account of managedAccounts) {
+        const managerName = managerNames[account.moneyManagerId] || "Money Manager";
+        const label = account.title || account.accountNumber || managerName;
+        virtualAssets.push({
+          id: `mm-${account.id}`,
+          clientId,
+          name: `${label} (${managerName})`,
+          category: "Managed Accounts",
+          subType: "Managed Account",
+          currentValue: Number(account.value) || 0,
+          currency: "USD",
+          isAutomated: false,
+          institutionName: managerName,
+          addressId: null,
+          isManagedAccount: true, // managed from the client's Money Managers page; read-only here
+          isLinked: true,
+          createdAt: account.createdAt,
+          updatedAt: account.updatedAt,
+        } as Asset);
+      }
+    }
 
     // 4. Fetch company ownership assets if personId exists
     if (client?.personId) {
@@ -319,18 +354,47 @@ export async function getClientAssetHistory(clientId: string) {
 
     if (assetsError) throw new Error(assetsError.message);
 
-    // 2. Fetch client personId
+    // 2. Fetch client personId and managed accounts
     const { data: client, error: clientError } = await supabaseServer
       .from("clients")
-      .select("personId")
+      .select("personId, moneyManagerAccounts")
       .eq("id", clientId)
       .single();
 
     if (clientError) throw new Error(clientError.message);
 
     const assetIds = (clientAssets || []).map((a) => a.id);
-    const virtualAssets: { id: string; name: string; ownershipPercentage: number }[] = [];
+    const virtualAssets: { id: string; name: string; ownershipPercentage?: number }[] = [];
     const virtualHistoryRecords: any[] = [];
+
+    // 2b. Money manager accounts: one snapshot per account (at its management begin date) so
+    // the account value is reflected in the net worth timeline.
+    const managedAccounts = (client?.moneyManagerAccounts || []) as any[];
+    if (managedAccounts.length > 0) {
+      const managerIds = Array.from(new Set(managedAccounts.map((a) => a.moneyManagerId).filter(Boolean)));
+      const managerNames: Record<string, string> = {};
+      if (managerIds.length > 0) {
+        const { data: managers } = await supabaseServer
+          .from("money_managers")
+          .select("id, firmName")
+          .in("id", managerIds);
+        for (const m of managers || []) managerNames[m.id] = m.firmName;
+      }
+
+      for (const account of managedAccounts) {
+        const managerName = managerNames[account.moneyManagerId] || "Money Manager";
+        const label = account.title || account.accountNumber || managerName;
+        const recordedAt = account.managementBeginDate || account.createdAt || new Date(0).toISOString();
+        virtualAssets.push({ id: `mm-${account.id}`, name: `${label} (${managerName})` });
+        virtualHistoryRecords.push({
+          id: `mm-hist-${account.id}`,
+          assetId: `mm-${account.id}`,
+          value: Number(account.value) || 0,
+          recordedAt: new Date(recordedAt).toISOString(),
+          createdAt: account.createdAt || recordedAt,
+        });
+      }
+    }
 
     // 3. Fetch company ownerships and their valuation histories if personId exists
     if (client?.personId) {
