@@ -33,6 +33,9 @@ Reserved for system administrators.
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
 - **Portal Settings**: Global portal-wide configuration parameters.
+- **Financial Account Types (`/dashboard/admin/financial-account-types`)**: Manage categories of client financial accounts (e.g. 401(k), IRA, Taxable).
+- **Custodians (`/dashboard/admin/custodians`)**: Manage a registry of asset custodians (e.g. Schwab, Fidelity).
+- **Referral Types (`/dashboard/admin/referral-types`)**: Manage types of client referral channels (e.g. CPA, Attorney).
 
 ### 2. CRM Module (`/dashboard/crm`)
 The core relationship management suite.
@@ -112,6 +115,7 @@ Dynamic reporting and analytical views.
 - **Benefit Payments (`/dashboard/reports/payments`)**: Tracks expected premium payments, collections, and forecasts.
 - **Relationship Graph (`/dashboard/reports/relationship-graph`)**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
 - **History Report (`/dashboard/reports/history`)**: Global feed of audit history logs tracking mutations (insert/updates/deletions) across CRM entities.
+- **Referrals Report (`/dashboard/reports/referrals`)**: Visualizes referral network trees, tracks referral volume over time, and shows breakdowns by referral type.
 
 ### 8. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
 Personal configuration pages for the authenticated user.

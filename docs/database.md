@@ -40,6 +40,9 @@ erDiagram
     NOTES ||--o{ NOTE_NOTIFICATIONS : "alerts user"
     
     USERS ||--o{ CHANGE_HISTORY : "acts on (actorId)"
+    REFERRAL_TYPES ||--o{ CLIENTS : "referred client"
+    MONEY_MANAGERS ||--o{ CLIENTS : "manages accounts"
+    RECORD_KEEPERS ||--o{ CLIENTS : "records accounts"
     
     USERS {
         uuid uid PK "References auth.users"
@@ -59,12 +62,24 @@ erDiagram
         uuid id PK
         uuid personId FK
         uuid advisorId FK "References users"
+        uuid referredById FK "Self-referencing parent client"
+        string referredByType
+        uuid referredByCompanyId FK "References companies"
+        uuid referredByPersonId FK "References people"
+        uuid referredByReferralTypeId FK "References referral_types"
+        string[] hobbies
+        string[] favoriteSportsTeams
         jsonb employments
         jsonb liabilities
         jsonb pcDocuments
         jsonb lifeDocuments
         jsonb ltcDocuments
         jsonb estateDocuments
+        jsonb lifePolicies
+        jsonb disabilityPolicies
+        jsonb ltcPolicies
+        jsonb moneyManagerAccounts
+        jsonb recordKeeperAccounts
     }
     COMPANIES {
         uuid id PK
@@ -191,6 +206,49 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
+    MONEY_MANAGERS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    RECORD_KEEPERS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    FINANCIAL_ACCOUNT_TYPES {
+        uuid id PK
+        string name
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    CUSTODIANS {
+        uuid id PK
+        string name
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    REFERRAL_TYPES {
+        uuid id PK
+        string name
+        timestamp createdAt
+        timestamp updatedAt
+    }
+```
 ```
 
 ## Core Entities
@@ -204,17 +262,30 @@ erDiagram
 
 ### `clients`
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
-- Stores deep financial profiles (employment, liabilities) and insurance files.
-- **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
+- Stores deep financial profiles (employment, liabilities), assets, and insurance files.
+- **Interests**: `hobbies` and `favoriteSportsTeams` stored as string arrays.
+- **Client Referrals**: Supports multi-type referrals tracking via `referredById` (self-referencing client), `referredByType` (`'client' | 'company' | 'person' | 'referral_type'`), `referredByCompanyId` (references `companies.id`), `referredByPersonId` (references `people.id`), and `referredByReferralTypeId` (references `referral_types.id`).
+- **Insurance Policies JSONB**: `lifePolicies`, `disabilityPolicies`, and `ltcPolicies` are stored as JSONB arrays of policy objects containing policy numbers, renewal dates, beneficiary lists, and uploaded documents.
+- **Managed Accounts JSONB**: `moneyManagerAccounts` and `recordKeeperAccounts` are stored as JSONB arrays of account objects containing values, account numbers, and relationships to Money Managers, Record Keepers, Custodians, and Financial Account Types.
+- **Estate Planning Documents**: The `estateDocuments` column is a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
   - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
   - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).
   - **Trust Schema**: Tracks the `trustName`, `effectiveDate`, `amendmentDate`, `attorneyFirmId` (linking to a law firm), `grantor` and `trustees` (party reference objects with `kind` as `person` or `company` and `id` linking to their record), `beneficiaries` (text), and the `files` array.
   - **Other Schema**: Tracks custom `description` (text) and the `files` array.
 
-
 ### `client_policies` & `insurance_vendors`
-- **Policies**: `client_policies` tracks a client's Life, Disability, and Long-Term Care policies, detailing policy numbers, premium amounts, effective and renewal dates, and payment schedules.
+- **Policies**: `client_policies` tracks a client's Life, Disability, and Long-Term Care policies, detailing policy numbers, premium amounts, effective and renewal dates, and payment schedules (used for global dashboards and relationship mapping).
 - **Vendors**: Tracks insurance companies (`life_insurance_companies`, `disability_insurance_companies`, `long_term_care_insurance`) with name, website, phone contacts, and relationships to individuals and corporate clients.
+
+### `money_managers` & `record_keepers`
+- Tracks external asset management firms and record keeper companies.
+- Includes references to associated contact persons (`personIds` referencing `people.id`), addresses (`firmAddressId`), websites, phone numbers, and arrays of associated client IDs and company IDs.
+
+### `financial_account_types`, `custodians`, & `referral_types`
+- Global administrator-managed lookup tables.
+- **`financial_account_types`**: Stores investment account categories (e.g. 401(k), IRA, Taxable).
+- **`custodians`**: Stores custodians (e.g. Charles Schwab, Fidelity).
+- **`referral_types`**: Stores types of referral channels (e.g. CPA, Attorney, Web Search).
 
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
 - Tracks general corporate clients and business entities.

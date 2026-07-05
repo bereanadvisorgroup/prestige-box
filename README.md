@@ -13,7 +13,7 @@ Prestige Box is a comprehensive, modern web application designed to manage compl
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand (Client) & TanStack React Query (Server)
 - **UI Components**: Shadcn UI, Base UI, Radix UI, Lucide React
-- **Data Visualizations**: Recharts
+- **Data Visualizations**: Recharts, D3.js (for interactive referral network simulations)
 - **Logging & Telemetry**: Axiom via `next-axiom`
 
 ## Documentation
