@@ -9,7 +9,6 @@ The database is built on **PostgreSQL** hosted by Supabase. Schema definitions a
 ```mermaid
 erDiagram
     USERS ||--o{ CLIENTS : "is managed by (role)"
-    USERS ||--o{ FINANCIAL_DATA : "has security restricted"
     PEOPLE ||--o{ CLIENTS : "is a"
     PEOPLE ||--o{ HOUSEHOLDS : "belongs to"
     ADDRESSES ||--o{ PEOPLE : "lives at"
@@ -43,6 +42,16 @@ erDiagram
     REFERRAL_TYPES ||--o{ CLIENTS : "referred client"
     MONEY_MANAGERS ||--o{ CLIENTS : "manages accounts"
     RECORD_KEEPERS ||--o{ CLIENTS : "records accounts"
+    CLIENTS ||--o{ LAW_FIRMS : "associated with"
+    COMPANIES ||--o{ LAW_FIRMS : "associated with"
+    CLIENTS ||--o{ ACCOUNTING_FIRMS : "associated with"
+    COMPANIES ||--o{ ACCOUNTING_FIRMS : "associated with"
+    CLIENTS ||--o{ ACTUARIAL_FIRMS : "associated with"
+    COMPANIES ||--o{ ACTUARIAL_FIRMS : "associated with"
+    CLIENTS ||--o{ BANKS : "associated with"
+    COMPANIES ||--o{ BANKS : "associated with"
+    CLIENTS ||--o{ PROPERTY_AND_CASUALTY_FIRMS : "associated with"
+    COMPANIES ||--o{ PROPERTY_AND_CASUALTY_FIRMS : "associated with"
     
     USERS {
         uuid uid PK "References auth.users"
@@ -50,17 +59,85 @@ erDiagram
         string role "Admin | Advisor | Client"
         string firstName
         string lastName
+        string photoURL
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ADDRESSES {
+        uuid id PK
+        string street1
+        string street2
+        string city
+        string state
+        string zipCode
+        string country
+        timestamp createdAt
+        timestamp updatedAt
     }
     PEOPLE {
         uuid id PK
+        string prefix
         string firstName
+        string middleName
         string lastName
+        string suffix
+        string photoUrl
         jsonb emails
         jsonb phones
+        jsonb driversLicense
+        jsonb pii
+        jsonb addresses
+        uuid[] addressIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    HOUSEHOLDS {
+        uuid id PK
+        string name
+        uuid addressId FK "References addresses"
+        jsonb memberIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    LIFE_INSURANCE_COMPANIES {
+        uuid id PK
+        string name
+        string websiteUrl
+        string[] policyNames
+        string phone
+        uuid[] personIds
+        uuid[] companyIds
+        uuid[] clientIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    DISABILITY_INSURANCE_COMPANIES {
+        uuid id PK
+        string name
+        string websiteUrl
+        string[] policyNames
+        string phone
+        uuid[] personIds
+        uuid[] companyIds
+        uuid[] clientIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    LONG_TERM_CARE_INSURANCE {
+        uuid id PK
+        string name
+        string websiteUrl
+        string[] policyNames
+        string phone
+        uuid[] personIds
+        uuid[] companyIds
+        uuid[] clientIds
+        timestamp createdAt
+        timestamp updatedAt
     }
     CLIENTS {
         uuid id PK
-        uuid personId FK
+        uuid personId FK "References people"
         uuid advisorId FK "References users"
         uuid referredById FK "Self-referencing parent client"
         string referredByType
@@ -69,8 +146,9 @@ erDiagram
         uuid referredByReferralTypeId FK "References referral_types"
         string[] hobbies
         string[] favoriteSportsTeams
+        jsonb paymentAccounts
+        jsonb familyMembers
         jsonb employments
-        jsonb liabilities
         jsonb pcDocuments
         jsonb lifeDocuments
         jsonb ltcDocuments
@@ -80,32 +158,147 @@ erDiagram
         jsonb ltcPolicies
         jsonb moneyManagerAccounts
         jsonb recordKeeperAccounts
+        jsonb liabilities
+        jsonb mortgages
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANIES {
         uuid id PK
         string name
+        string dba
         string ein
-        uuid[] clientIds
+        uuid addressId FK "References addresses"
         string website
         string phone
-        jsonb addressSitus
-        jsonb addressNexus
+        jsonb situsRecords
+        jsonb nexusRecords
         jsonb paymentAccounts
         jsonb lifeDocuments
         jsonb disabilityDocuments
         jsonb ltcDocuments
+        numeric estimatedValue
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANY_VALUATION_HISTORY {
         uuid id PK
-        uuid companyId FK
-        numeric valuation
-        timestamp recordedAt
+        uuid companyId FK "References companies"
+        numeric value
+        timestamp valuationDate
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANY_OWNERS {
         uuid id PK
-        uuid companyId FK
-        uuid personId FK
+        uuid companyId FK "References companies"
+        uuid personId FK "References people"
         numeric ownershipPercentage
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    CLIENT_POLICIES {
+        uuid id PK
+        uuid clientId FK "References clients"
+        uuid lifeInsuranceCompanyId FK "References life_insurance_companies"
+        uuid disabilityInsuranceCompanyId FK "References disability_insurance_companies"
+        uuid longTermCareInsuranceId FK "References long_term_care_insurance"
+        string paymentAccountId
+        string policyName
+        string policyNumber
+        numeric premiumAmount
+        timestamp effectiveDate
+        timestamp renewalDate
+        string paymentSchedule
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    LAW_FIRMS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ACCOUNTING_FIRMS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ACTUARIAL_FIRMS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    BANKS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    PROPERTY_AND_CASUALTY_FIRMS {
+        uuid id PK
+        uuid[] personIds FK "References people"
+        string firmName
+        uuid firmAddressId FK "References addresses"
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ASSETS {
+        uuid id PK
+        uuid clientId FK "References clients"
+        string name
+        string category
+        string subType
+        numeric currentValue
+        string currency
+        boolean isAutomated
+        string institutionName
+        uuid addressId FK "References addresses"
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ASSET_HISTORY {
+        uuid id PK
+        uuid assetId FK "References assets"
+        numeric value
+        timestamp recordedAt
+        timestamp createdAt
+    }
+    KEYVALS {
+        string id PK
+        string value
+        timestamp createdAt
+        timestamp updatedAt
     }
     TASKS {
         uuid id PK
@@ -331,7 +524,7 @@ The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used t
 
 All database access from the client side requires explicit Row Level Security policies.
 
-- **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets`, `asset_history`, and `financial_data`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
+- **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets` and `asset_history`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
 - **Collaborative Modules RLS**: Tables like `notes`, `tasks`, `change_history`, and their related tables allow read/write access to all `authenticated` users. More granular business logic validation (e.g., preventing a client from reading internal notes) is enforced at the application level to support rich team collaboration.
 - **Subquery Cache Optimization**: RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
 - **Service Role**: The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.
