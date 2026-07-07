@@ -17,6 +17,7 @@ import { createPropertyAndCasualtyFirm, updatePropertyAndCasualtyFirm } from "@/
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { LogoUpload } from "@/components/crm/logo-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
           phone: propertyAndCasualtyFirm.phone,
           clientIds: propertyAndCasualtyFirm.clientIds,
           companyIds: propertyAndCasualtyFirm.companyIds,
+          logoUrl: propertyAndCasualtyFirm.logoUrl || null,
         }
       : {
           personIds: [],
@@ -71,6 +73,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
           phone: "",
           clientIds: [],
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -197,6 +200,24 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={propertyAndCasualtyFirm?.id}
+                      entityType="property-and-casualty-firms"
+                      name={form.watch("firmName") || "Firm"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="firmName"

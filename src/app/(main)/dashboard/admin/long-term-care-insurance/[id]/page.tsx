@@ -18,6 +18,7 @@ import { getCompanies } from "@/actions/companies";
 import { getLongTermCareInsurance } from "@/actions/long-term-care-insurance";
 import { getClientPolicies } from "@/actions/policies";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,11 +59,12 @@ export default async function LongTermCareInsurancePage({ params }: LongTermCare
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
-              <Shield className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={company.logoUrl}
+            name={company.name}
+            className="h-20 w-20 rounded-md border-2 border-primary/10"
+            size="lg"
+          />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-sm">

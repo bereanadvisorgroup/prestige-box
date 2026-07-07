@@ -17,6 +17,7 @@ import {
 import { getPeople } from "@/actions/people";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { LogoUpload } from "@/components/crm/logo-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,6 +58,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
           phone: company.phone,
           personIds: company.personIds,
           companyIds: company.companyIds,
+          logoUrl: company.logoUrl || null,
         }
       : {
           name: "",
@@ -65,6 +67,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
           phone: "",
           personIds: [],
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -174,6 +177,24 @@ export function CompanyForm({ company }: CompanyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={company?.id}
+                      entityType="disability-insurance-companies"
+                      name={form.watch("name") || "Company"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <FormField
                 control={form.control}

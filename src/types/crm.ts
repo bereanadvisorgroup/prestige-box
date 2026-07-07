@@ -94,6 +94,7 @@ export const LifeInsuranceCompanySchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -107,6 +108,7 @@ export const DisabilityInsuranceCompanySchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -120,6 +122,7 @@ export const LongTermCareInsuranceSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -569,6 +572,7 @@ export const LawFirmSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -582,6 +586,7 @@ export const AccountingFirmSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -595,6 +600,7 @@ export const ActuarialFirmSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -608,6 +614,7 @@ export const BankSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -621,6 +628,7 @@ export const PropertyAndCasualtyFirmSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -634,6 +642,7 @@ export const MoneyManagerSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -647,6 +656,7 @@ export const RecordKeeperSchema = z.object({
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

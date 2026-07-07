@@ -65,6 +65,7 @@ export const lifeInsuranceCompanies = pgTable("life_insurance_companies", {
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -79,6 +80,7 @@ export const disabilityInsuranceCompanies = pgTable("disability_insurance_compan
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -93,6 +95,7 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -192,6 +195,7 @@ export const lawFirms = pgTable("law_firms", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -206,6 +210,7 @@ export const accountingFirms = pgTable("accounting_firms", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -220,6 +225,7 @@ export const actuarialFirms = pgTable("actuarial_firms", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -234,6 +240,7 @@ export const banks = pgTable("banks", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -248,6 +255,7 @@ export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -262,6 +270,7 @@ export const moneyManagers = pgTable("money_managers", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -276,6 +285,7 @@ export const recordKeepers = pgTable("record_keepers", {
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

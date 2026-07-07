@@ -17,6 +17,7 @@ import { getPeople } from "@/actions/people";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { LogoUpload } from "@/components/crm/logo-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
           phone: actuarialFirm.phone,
           clientIds: actuarialFirm.clientIds,
           companyIds: actuarialFirm.companyIds,
+          logoUrl: actuarialFirm.logoUrl || null,
         }
       : {
           personIds: [],
@@ -71,6 +73,7 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
           phone: "",
           clientIds: [],
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -195,6 +198,24 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={actuarialFirm?.id}
+                      entityType="actuarial-firms"
+                      name={form.watch("firmName") || "Firm"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="firmName"

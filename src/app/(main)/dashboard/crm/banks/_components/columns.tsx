@@ -6,6 +6,7 @@ import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { Bank } from "@/types/crm";
@@ -22,13 +23,16 @@ export const columns = (onDelete: (bank: Bank) => void): ColumnDef<Bank>[] => [
     cell: ({ row }: { row: Row<Bank> }) => {
       const bank = row.original;
       return (
-        <Link
-          href={`/dashboard/crm/banks/${bank.id}`}
-          className="flex items-center gap-1 font-medium text-primary hover:underline"
-        >
-          <span className="truncate">{bank.firmName}</span>
-          <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <FirmLogo logoUrl={bank.logoUrl} name={bank.firmName} className="h-6 w-6" />
+          <Link
+            href={`/dashboard/crm/banks/${bank.id}`}
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <span className="truncate">{bank.firmName}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+          </Link>
+        </div>
       );
     },
   },
