@@ -40,8 +40,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase.client";
-import { cn, formatPhoneNumber } from "@/lib/utils";
+import { cn, formatCurrency, formatPhoneNumber } from "@/lib/utils";
 import type { Client, InsuranceBeneficiary, InsuranceBeneficiaryRef, InsurancePolicy } from "@/types/crm";
 
 import { ClientHeaderPortal } from "./client-header-portal";
@@ -104,15 +106,24 @@ interface BeneficiaryRow {
   percent: string; // kept as string for the controlled number input
 }
 
+interface FormFile {
+  file: File;
+  title: "Issued Illustration" | "Policy Receipts" | "Other";
+}
+
 interface FormState {
   companyId: string;
   policyNumber: string;
   policyName: string;
   issueDate: string;
   renewalDate: string;
+  anniversaryDate: string;
+  premiumFrequency: "Monthly" | "Quarterly" | "Semi-Annual" | "Annually" | "";
+  premiumPayment: number;
+  note: string;
   beneficiaries: BeneficiaryRow[];
   contingentBeneficiaries: BeneficiaryRow[];
-  files: File[];
+  files: FormFile[];
 }
 
 const emptyForm: FormState = {
@@ -121,6 +132,10 @@ const emptyForm: FormState = {
   policyName: "",
   issueDate: "",
   renewalDate: "",
+  anniversaryDate: "",
+  premiumFrequency: "",
+  premiumPayment: 0,
+  note: "",
   beneficiaries: [],
   contingentBeneficiaries: [],
   files: [],
@@ -134,7 +149,11 @@ const formFromPolicy = (p: InsurancePolicy): FormState => ({
   policyNumber: p.policyNumber || "",
   policyName: p.policyName || "",
   issueDate: p.issueDate || "",
-  renewalDate: p.renewalDate || "",
+  renewalDate: p.renewalDate || p.anniversaryDate || "",
+  anniversaryDate: p.anniversaryDate || p.renewalDate || "",
+  premiumFrequency: p.premiumFrequency || "",
+  premiumPayment: p.premiumPayment ?? 0,
+  note: p.note || "",
   beneficiaries: rowsFromBeneficiaries(p.beneficiaries),
   contingentBeneficiaries: rowsFromBeneficiaries(p.contingentBeneficiaries),
   files: [],
@@ -321,6 +340,10 @@ export function InsurancePolicyManager({
   const [isSaving, setIsSaving] = useState(false);
   const [companyComboOpen, setCompanyComboOpen] = useState(false);
   const [addFilesFor, setAddFilesFor] = useState<string | null>(null);
+  const [filesToUpload, setFilesToUpload] = useState<{
+    policyId: string;
+    files: FormFile[];
+  } | null>(null);
 
   // Link company dialog
   const [isLinkOpen, setIsLinkOpen] = useState(false);
@@ -389,9 +412,13 @@ export function InsurancePolicyManager({
     setPolicies(updated);
   };
 
-  const uploadFiles = async (policyId: string, files: File[]): Promise<InsurancePolicy["files"]> => {
+  const uploadFilesWithMetadata = async (
+    policyId: string,
+    formFiles: FormFile[],
+  ): Promise<InsurancePolicy["files"]> => {
     const uploaded: InsurancePolicy["files"] = [];
-    for (const file of files) {
+    for (const item of formFiles) {
+      const { file, title } = item;
       const fileExt = file.name.split(".").pop();
       const randomStr = Math.random().toString(36).substring(7);
       const filePath = `clients/${client.id}/${policyField}/${policyId}/${randomStr}_${Date.now()}.${fileExt}`;
@@ -400,9 +427,24 @@ export function InsurancePolicyManager({
       const {
         data: { publicUrl: url },
       } = supabase.storage.from("documents").getPublicUrl(filePath);
-      uploaded.push({ id: crypto.randomUUID(), name: file.name, url, uploadedAt: new Date().toISOString() });
+      uploaded.push({
+        id: crypto.randomUUID(),
+        name: file.name,
+        url,
+        title: policyField === "lifePolicies" ? title : undefined,
+        uploadedAt: new Date().toISOString(),
+      });
     }
     return uploaded;
+  };
+
+  // Keep original signature for fallback direct card uploads on disability/LTC
+  const uploadFiles = async (policyId: string, files: File[]): Promise<InsurancePolicy["files"]> => {
+    const formFiles: FormFile[] = files.map((file) => ({
+      file,
+      title: "Other",
+    }));
+    return uploadFilesWithMetadata(policyId, formFiles);
   };
 
   const resetForm = () => {
@@ -424,6 +466,14 @@ export function InsurancePolicyManager({
 
   /** Build the persisted metadata (everything but files) from the form, validating beneficiary percentages. */
   const buildPolicyMetadata = (): Omit<InsurancePolicy, "id" | "files"> | null => {
+    if (policyField === "lifePolicies" && !form.companyId) {
+      toast.error("Insurance Company is a required field");
+      return null;
+    }
+    if (policyField === "lifePolicies" && (form.premiumPayment === undefined || form.premiumPayment < 0)) {
+      toast.error("Premium Payment is required and must be at least 0");
+      return null;
+    }
     const beneficiaries = beneficiariesFromRows(form.beneficiaries);
     const contingentBeneficiaries = beneficiariesFromRows(form.contingentBeneficiaries);
     if (!beneficiaries || !contingentBeneficiaries) {
@@ -438,12 +488,19 @@ export function InsurancePolicyManager({
       toast.error("Total of all contingent beneficiaries cannot exceed 100%");
       return null;
     }
+
+    const dateVal = policyField === "lifePolicies" ? form.anniversaryDate : form.renewalDate;
+
     return {
       companyId: form.companyId || undefined,
       policyNumber: form.policyNumber.trim() || undefined,
       policyName: form.policyName.trim() || undefined,
       issueDate: form.issueDate || undefined,
-      renewalDate: form.renewalDate || undefined,
+      renewalDate: dateVal || undefined,
+      anniversaryDate: policyField === "lifePolicies" ? dateVal || undefined : undefined,
+      premiumFrequency: policyField === "lifePolicies" ? form.premiumFrequency || undefined : undefined,
+      premiumPayment: policyField === "lifePolicies" ? (form.premiumPayment ?? 0) : 0,
+      note: policyField === "lifePolicies" ? form.note || undefined : undefined,
       beneficiaries,
       contingentBeneficiaries,
     };
@@ -472,7 +529,7 @@ export function InsurancePolicyManager({
     try {
       if (isEditing && editingId) {
         const existing = policies.find((p) => p.id === editingId);
-        const uploaded = form.files.length > 0 ? await uploadFiles(editingId, form.files) : [];
+        const uploaded = form.files.length > 0 ? await uploadFilesWithMetadata(editingId, form.files) : [];
         const updated = policies.map((p) =>
           p.id === editingId
             ? {
@@ -488,7 +545,7 @@ export function InsurancePolicyManager({
         toast.success("Policy updated");
       } else {
         const policyId = crypto.randomUUID();
-        const files = form.files.length > 0 ? await uploadFiles(policyId, form.files) : [];
+        const files = form.files.length > 0 ? await uploadFilesWithMetadata(policyId, form.files) : [];
         const newPolicy: InsurancePolicy = {
           id: policyId,
           ...metadata,
@@ -602,8 +659,30 @@ export function InsurancePolicyManager({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
             {policy.policyNumber && <span>Policy #: {policy.policyNumber}</span>}
             {policy.issueDate && <span>Issued: {policy.issueDate}</span>}
-            {policy.renewalDate && <span>Renews: {policy.renewalDate}</span>}
+            {policyField === "lifePolicies"
+              ? (policy.anniversaryDate || policy.renewalDate) && (
+                  <span>Anniversary Date: {policy.anniversaryDate || policy.renewalDate}</span>
+                )
+              : policy.renewalDate && <span>Renews: {policy.renewalDate}</span>}
           </div>
+          {policyField === "lifePolicies" && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 border-t border-dashed pt-1 text-muted-foreground text-xs">
+              <span>
+                Premium:{" "}
+                <span className="font-semibold text-green-700">{formatCurrency(policy.premiumPayment ?? 0)}</span>
+              </span>
+              {policy.premiumFrequency && (
+                <span>
+                  Frequency: <span className="font-medium text-foreground">{policy.premiumFrequency}</span>
+                </span>
+              )}
+            </div>
+          )}
+          {policyField === "lifePolicies" && policy.note && (
+            <p className="mt-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded-md border border-muted/20 italic whitespace-pre-wrap">
+              Note: {policy.note}
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => openEdit(policy)} title="Edit policy">
@@ -636,9 +715,19 @@ export function InsurancePolicyManager({
         {(policy.files || []).length > 0 ? (
           (policy.files || []).map((f) => (
             <div key={f.id} className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <FileIcon className="h-4 w-4 shrink-0 text-primary" />
-                <span className="truncate text-sm">{f.name}</span>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 mr-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileIcon className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate text-sm font-medium">{f.name}</span>
+                </div>
+                {f.title && (
+                  <Badge
+                    variant="outline"
+                    className="w-fit text-[10px] py-0 px-1.5 uppercase font-semibold text-muted-foreground bg-muted/10"
+                  >
+                    {f.title}
+                  </Badge>
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Button variant="outline" size="sm" asChild>
@@ -681,7 +770,17 @@ export function InsurancePolicyManager({
             className="hidden"
             disabled={addFilesFor === policy.id}
             onChange={(e) => {
-              handleAddFiles(policy.id, e.target.files);
+              if (e.target.files && e.target.files.length > 0) {
+                if (policyField === "lifePolicies") {
+                  const files = Array.from(e.target.files).map((f) => ({
+                    file: f,
+                    title: "Issued Illustration" as const,
+                  }));
+                  setFilesToUpload({ policyId: policy.id, files });
+                } else {
+                  handleAddFiles(policy.id, e.target.files);
+                }
+              }
               e.target.value = "";
             }}
           />
@@ -837,7 +936,10 @@ export function InsurancePolicyManager({
           <div className="space-y-4 py-2">
             {/* Company */}
             <div className="space-y-2">
-              <Label>Insurance Company</Label>
+              <Label className="flex items-center gap-1">
+                Insurance Company
+                {policyField === "lifePolicies" && <span className="text-destructive">*</span>}
+              </Label>
               <Popover open={companyComboOpen} onOpenChange={setCompanyComboOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -846,7 +948,8 @@ export function InsurancePolicyManager({
                     aria-expanded={companyComboOpen}
                     className="w-full justify-between text-left font-normal text-sm"
                   >
-                    {selectedCompanyName || "Select company (optional)"}
+                    {selectedCompanyName ||
+                      (policyField === "lifePolicies" ? "Select company *" : "Select company (optional)")}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -918,15 +1021,75 @@ export function InsurancePolicyManager({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="policy-renewal-date">Renewal Date</Label>
+                <Label htmlFor="policy-renewal-date">
+                  {policyField === "lifePolicies" ? "Anniversary Date" : "Renewal Date"}
+                </Label>
                 <Input
                   id="policy-renewal-date"
                   type="date"
-                  value={form.renewalDate}
-                  onChange={(e) => setForm({ ...form, renewalDate: e.target.value })}
+                  value={policyField === "lifePolicies" ? form.anniversaryDate : form.renewalDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (policyField === "lifePolicies") {
+                      setForm({ ...form, anniversaryDate: val, renewalDate: val });
+                    } else {
+                      setForm({ ...form, renewalDate: val });
+                    }
+                  }}
                 />
               </div>
             </div>
+
+            {policyField === "lifePolicies" && (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="policy-premium-frequency">Premium Frequency</Label>
+                    <Select
+                      value={form.premiumFrequency}
+                      onValueChange={(val) => setForm({ ...form, premiumFrequency: val as FormState["premiumFrequency"] })}
+                    >
+                      <SelectTrigger id="policy-premium-frequency">
+                        <SelectValue placeholder="Select frequency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Monthly">Monthly</SelectItem>
+                        <SelectItem value="Quarterly">Quarterly</SelectItem>
+                        <SelectItem value="Semi-Annual">Semi-Annual</SelectItem>
+                        <SelectItem value="Annually">Annually</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="policy-premium-payment" className="flex items-center gap-1">
+                      Premium Payment <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <Input
+                        id="policy-premium-payment"
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="pl-7"
+                        value={form.premiumPayment}
+                        onChange={(e) => setForm({ ...form, premiumPayment: Number(e.target.value) || 0 })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="policy-note">Note</Label>
+                  <Textarea
+                    id="policy-note"
+                    value={form.note}
+                    onChange={(e) => setForm({ ...form, note: e.target.value })}
+                    placeholder="Enter notes about the policy..."
+                  />
+                </div>
+              </>
+            )}
 
             <BeneficiaryRows
               title="Beneficiaries"
@@ -948,12 +1111,64 @@ export function InsurancePolicyManager({
                 type="file"
                 multiple
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                onChange={(e) => setForm({ ...form, files: e.target.files ? Array.from(e.target.files) : [] })}
+                onChange={(e) => {
+                  const fileList = e.target.files ? Array.from(e.target.files) : [];
+                  const newFiles = fileList.map((f) => ({
+                    file: f,
+                    title: "Issued Illustration" as const,
+                  }));
+                  setForm({ ...form, files: [...form.files, ...newFiles] });
+                }}
               />
               {form.files.length > 0 && (
-                <p className="text-muted-foreground text-xs">
-                  {form.files.length} file{form.files.length === 1 ? "" : "s"} selected
-                </p>
+                <div className="mt-3 space-y-2 border-t pt-3">
+                  <Label className="text-xs font-semibold">Selected Files to Upload</Label>
+                  {form.files.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 rounded-md border p-2 bg-muted/5">
+                      <FileIcon className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="truncate text-xs flex-1" title={item.file.name}>
+                        {item.file.name}
+                      </span>
+                      {policyField === "lifePolicies" ? (
+                        <Select
+                          value={item.title}
+                          onValueChange={(val) => {
+                            const updated = [...form.files];
+                            updated[idx].title = val as FormFile["title"];
+                            setForm({ ...form, files: updated });
+                          }}
+                        >
+                          <SelectTrigger className="w-[160px] h-8 text-xs bg-background">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Issued Illustration">Issued Illustration</SelectItem>
+                            <SelectItem value="Policy Receipts">Policy Receipts</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          Document
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setForm({
+                            ...form,
+                            files: form.files.filter((_, i) => i !== idx),
+                          });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               )}
               {isEditing && (
                 <p className="text-muted-foreground text-xs">
@@ -1071,6 +1286,87 @@ export function InsurancePolicyManager({
                   <Check className="mr-2 h-4 w-4" /> Link Company
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Files Dialog with Metadata */}
+      <Dialog
+        open={filesToUpload !== null}
+        onOpenChange={(open) => {
+          if (!open) setFilesToUpload(null);
+        }}
+      >
+        <DialogContent className="border border-muted/20 bg-background sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UploadCloud className="h-5 w-5 text-primary" /> Title Uploaded Documents
+            </DialogTitle>
+            <DialogDescription>Assign a document type to each file before uploading.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2 max-h-[50vh] overflow-y-auto">
+            {filesToUpload?.files.map((item, idx) => (
+              <div key={idx} className="flex flex-col gap-2 rounded-md border p-3 bg-muted/5">
+                <div className="flex items-center gap-2">
+                  <FileIcon className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate text-xs font-medium flex-1" title={item.file.name}>
+                    {item.file.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-muted-foreground">Document Type:</span>
+                  <Select
+                    value={item.title}
+                    onValueChange={(val) => {
+                      if (!filesToUpload) return;
+                      const updated = [...filesToUpload.files];
+                      updated[idx].title = val as FormFile["title"];
+                      setFilesToUpload({ ...filesToUpload, files: updated });
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px] h-8 text-xs bg-background">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Issued Illustration">Issued Illustration</SelectItem>
+                      <SelectItem value="Policy Receipts">Policy Receipts</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setFilesToUpload(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={addFilesFor !== null}
+              onClick={async () => {
+                if (!filesToUpload) return;
+                const { policyId, files } = filesToUpload;
+                setFilesToUpload(null);
+                try {
+                  setAddFilesFor(policyId);
+                  const uploaded = await uploadFilesWithMetadata(policyId, files);
+                  const updated = policies.map((p) =>
+                    p.id === policyId ? { ...p, files: [...(p.files || []), ...uploaded] } : p,
+                  );
+                  await persist(updated);
+                  toast.success("Document(s) uploaded successfully");
+                } catch (e) {
+                  console.error(e);
+                  toast.error(e instanceof Error ? e.message : "Failed to upload document(s)");
+                } finally {
+                  setAddFilesFor(null);
+                }
+              }}
+            >
+              Upload
             </Button>
           </DialogFooter>
         </DialogContent>

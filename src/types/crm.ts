@@ -100,6 +100,7 @@ export const LifeInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
   logoUrl: z.string().optional().nullable(),
@@ -114,6 +115,7 @@ export const DisabilityInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
   logoUrl: z.string().optional().nullable(),
@@ -128,6 +130,7 @@ export const LongTermCareInsuranceSchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
   logoUrl: z.string().optional().nullable(),
@@ -369,6 +372,7 @@ export const InsurancePolicyFileSchema = z.object({
   id: z.string(),
   name: z.string(),
   url: z.string(),
+  title: z.enum(["Issued Illustration", "Policy Receipts", "Other"]).optional(),
   uploadedAt: z.string().optional(),
 });
 
@@ -421,6 +425,10 @@ export const InsurancePolicySchema = z.object({
   policyName: z.string().optional(),
   issueDate: z.string().optional(), // YYYY-MM-DD
   renewalDate: z.string().optional(), // YYYY-MM-DD
+  anniversaryDate: z.string().optional(), // YYYY-MM-DD
+  premiumFrequency: z.enum(["Monthly", "Quarterly", "Semi-Annual", "Annually"]).optional(),
+  premiumPayment: z.number().default(0),
+  note: z.string().optional(),
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
@@ -580,6 +588,7 @@ export const ClientPolicySchema = z.object({
 export const LawFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -594,6 +603,7 @@ export const LawFirmSchema = z.object({
 export const AccountingFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -608,6 +618,7 @@ export const AccountingFirmSchema = z.object({
 export const ActuarialFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -622,6 +633,7 @@ export const ActuarialFirmSchema = z.object({
 export const BankSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Bank name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -636,6 +648,7 @@ export const BankSchema = z.object({
 export const PropertyAndCasualtyFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -650,6 +663,7 @@ export const PropertyAndCasualtyFirmSchema = z.object({
 export const MoneyManagerSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Money manager name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
@@ -664,6 +678,7 @@ export const MoneyManagerSchema = z.object({
 export const RecordKeeperSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Record keeper name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),

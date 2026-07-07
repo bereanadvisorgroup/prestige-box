@@ -51,6 +51,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     resolver: zodResolver(DisabilityInsuranceCompanyFormSchema),
     defaultValues: company
       ? {
+          personTitles: company.personTitles || {},
           id: company.id,
           name: company.name,
           websiteUrl: company.websiteUrl,
@@ -66,6 +67,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
           policyNames: ["Short Term Disability", "Long Term Disability"],
           phone: "",
           personIds: [],
+          personTitles: {},
           companyIds: [],
           logoUrl: null,
         },
@@ -121,6 +123,12 @@ export function CompanyForm({ company }: CompanyFormProps) {
       current.filter((id) => id !== personId),
     );
     form.trigger("personIds");
+
+    const currentTitles = form.getValues("personTitles") || {};
+    const newTitles = { ...currentTitles };
+    delete newTitles[personId];
+    form.setValue("personTitles", newTitles);
+    form.trigger("personTitles");
   };
 
   async function onSubmit(values: DisabilityInsuranceCompanyFormValues) {
@@ -282,6 +290,25 @@ export function CompanyForm({ company }: CompanyFormProps) {
                                   person?.emails?.[0]?.address ||
                                   "No Email"}
                               </p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase shrink-0">
+                                  Title:
+                                </span>
+                                <Input
+                                  size={20}
+                                  placeholder="e.g. Managing Partner"
+                                  value={(form.watch("personTitles") as Record<string, string>)?.[pId] || ""}
+                                  onChange={(e) => {
+                                    const currentTitles = form.getValues("personTitles") || {};
+                                    form.setValue("personTitles", {
+                                      ...currentTitles,
+                                      [pId]: e.target.value,
+                                    });
+                                    form.trigger("personTitles");
+                                  }}
+                                  className="h-7 w-48 text-xs px-2"
+                                />
+                              </div>
                             </div>
                           </div>
 

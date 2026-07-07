@@ -16,6 +16,7 @@ interface Policy {
   policyName: string;
   policyNumber: string;
   clientName: string;
+  clientId: string;
   premiumAmount: number;
   paymentSchedule: string;
   renewalDate: string | Date;
@@ -71,7 +72,14 @@ export function ActivePoliciesList({ initialPolicies }: ActivePoliciesListProps)
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs">
                       <span className="flex items-center gap-1 font-medium text-foreground">
-                        Client: {policy.clientName}
+                        Client:{" "}
+                        <LinkNext
+                          href={`/dashboard/crm/clients/${policy.clientId}/long-term-care`}
+                          className="hover:underline text-primary flex items-center gap-0.5"
+                        >
+                          {policy.clientName}
+                          <ArrowUpRight className="h-3 w-3 inline opacity-65" />
+                        </LinkNext>
                       </span>
                       <span className="flex items-center gap-1 font-bold text-green-700">
                         Premium: {formatCurrency(policy.premiumAmount)} ({policy.paymentSchedule})

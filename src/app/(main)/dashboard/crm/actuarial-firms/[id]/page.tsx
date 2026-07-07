@@ -107,7 +107,10 @@ export default async function ActuarialFirmDetailsPage({ params }: ActuarialFirm
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="font-medium text-muted-foreground text-xs">Actuarial Professional</p>
+                          <p className="font-medium text-muted-foreground text-xs">
+                            {(actuarialFirm.personTitles as Record<string, string>)?.[person.id as string] ||
+                              "Actuarial Professional"}
+                          </p>
                         </div>
                       </div>
 
@@ -221,7 +224,7 @@ export default async function ActuarialFirmDetailsPage({ params }: ActuarialFirm
                     return (
                       <Link
                         key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
+                        href={`/dashboard/crm/clients/${client.id}/actuarial-firms`}
                         className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                       >
                         <div className="space-y-1">

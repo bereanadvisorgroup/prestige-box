@@ -72,7 +72,7 @@ function AssociationCardList({
 }: {
   title: string;
   description: string;
-  items: { id: string; name: string; website?: string | null; phone?: string | null }[];
+  items: { id: string; name: string; website?: string | null; phone?: string | null; title?: string | null }[];
   linkPrefix: string;
   icon: any;
 }) {
@@ -93,7 +93,12 @@ function AssociationCardList({
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                    {item.title && (
+                      <p className="text-muted-foreground text-[11px] font-semibold mt-0.5">{item.title}</p>
+                    )}
+                  </div>
                   <Link href={`${linkPrefix}/${item.id}`}>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                       <ArrowUpRight className="h-4 w-4" />
@@ -543,6 +548,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Legal Professional",
                 }))}
                 linkPrefix="/dashboard/crm/law-firms"
                 icon={Scale}
@@ -561,6 +567,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Accounting Professional",
                 }))}
                 linkPrefix="/dashboard/crm/accounting-firms"
                 icon={ReceiptText}
@@ -579,6 +586,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Actuarial Professional",
                 }))}
                 linkPrefix="/dashboard/crm/actuarial-firms"
                 icon={Calculator}
@@ -597,6 +605,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Banking Professional",
                 }))}
                 linkPrefix="/dashboard/crm/banks"
                 icon={Landmark}
@@ -615,6 +624,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/crm/property-and-casualty"
                 icon={Shield}
@@ -633,6 +643,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/life-insurance-companies"
                 icon={HeartHandshake}
@@ -651,6 +662,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/disability-insurance-companies"
                 icon={ShieldAlert}
@@ -669,6 +681,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/long-term-care-insurance"
                 icon={HeartPulse}
@@ -687,6 +700,7 @@ export function PersonProfileTabs({
                   name: c.firmName,
                   website: c.website,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Wealth Advisor",
                 }))}
                 linkPrefix="/dashboard/admin/money-managers"
                 icon={TrendingUp}
@@ -705,6 +719,7 @@ export function PersonProfileTabs({
                   name: c.firmName,
                   website: c.website,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Plan Administrator",
                 }))}
                 linkPrefix="/dashboard/admin/record-keepers"
                 icon={Database}

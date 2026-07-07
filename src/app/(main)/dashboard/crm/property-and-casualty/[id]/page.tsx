@@ -107,7 +107,10 @@ export default async function PropertyAndCasualtyDetailsPage({ params }: Propert
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="font-medium text-muted-foreground text-xs">Insurance Professional</p>
+                          <p className="font-medium text-muted-foreground text-xs">
+                            {(propertyAndCasualtyFirm.personTitles as Record<string, string>)?.[person.id as string] ||
+                              "Insurance Professional"}
+                          </p>
                         </div>
                       </div>
 
@@ -221,7 +224,7 @@ export default async function PropertyAndCasualtyDetailsPage({ params }: Propert
                     return (
                       <Link
                         key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
+                        href={`/dashboard/crm/clients/${client.id}/property-and-casualty`}
                         className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                       >
                         <div className="space-y-1">

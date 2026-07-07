@@ -62,6 +62,7 @@ export const lifeInsuranceCompanies = pgTable("life_insurance_companies", {
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   logoUrl: text("logoUrl"),
@@ -77,6 +78,7 @@ export const disabilityInsuranceCompanies = pgTable("disability_insurance_compan
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   logoUrl: text("logoUrl"),
@@ -92,6 +94,7 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   logoUrl: text("logoUrl"),
@@ -192,6 +195,7 @@ export const clientPolicies = pgTable("client_policies", {
 export const lawFirms = pgTable("law_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -207,6 +211,7 @@ export const lawFirms = pgTable("law_firms", {
 export const accountingFirms = pgTable("accounting_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -222,6 +227,7 @@ export const accountingFirms = pgTable("accounting_firms", {
 export const actuarialFirms = pgTable("actuarial_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -237,6 +243,7 @@ export const actuarialFirms = pgTable("actuarial_firms", {
 export const banks = pgTable("banks", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -252,6 +259,7 @@ export const banks = pgTable("banks", {
 export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -267,6 +275,7 @@ export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
 export const moneyManagers = pgTable("money_managers", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
@@ -282,6 +291,7 @@ export const moneyManagers = pgTable("money_managers", {
 export const recordKeepers = pgTable("record_keepers", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),

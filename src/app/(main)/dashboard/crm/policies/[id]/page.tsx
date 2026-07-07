@@ -243,7 +243,9 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                     <p className="font-medium text-foreground">{new Date(policy.effectiveDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="mb-1 font-medium text-muted-foreground text-sm">Renewal Date</p>
+                    <p className="mb-1 font-medium text-muted-foreground text-sm">
+                      {policy.lifeInsuranceCompanyId ? "Anniversary Date" : "Renewal Date"}
+                    </p>
                     <p className="font-medium text-foreground">{new Date(policy.renewalDate).toLocaleDateString()}</p>
                   </div>
                 </div>

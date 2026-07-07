@@ -107,7 +107,10 @@ export default async function BankDetailsPage({ params }: BankDetailsPageProps) 
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="font-medium text-muted-foreground text-xs">Banking Professional</p>
+                          <p className="font-medium text-muted-foreground text-xs">
+                            {(bank.personTitles as Record<string, string>)?.[person.id as string] ||
+                              "Banking Professional"}
+                          </p>
                         </div>
                       </div>
 
@@ -217,7 +220,7 @@ export default async function BankDetailsPage({ params }: BankDetailsPageProps) 
                     return (
                       <Link
                         key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
+                        href={`/dashboard/crm/clients/${client.id}/banks`}
                         className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                       >
                         <div className="space-y-1">
