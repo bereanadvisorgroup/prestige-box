@@ -8,6 +8,7 @@ import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
+import { getPersonPhotoUrl } from "@/lib/social";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
@@ -26,7 +27,7 @@ export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedP
       const name = row.getValue("name") as string;
       return (
         <div className="flex items-center gap-2">
-          <PersonAvatar photoUrl={person.photoUrl} firstName={person.firstName} lastName={person.lastName} />
+          <PersonAvatar photoUrl={getPersonPhotoUrl(person)} firstName={person.firstName} lastName={person.lastName} />
           <Link
             href={`/dashboard/crm/people/${person.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { Building2, Clock, Pencil } from "lucide-react";
 
 import { getCompany } from "@/actions/companies";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { Button } from "@/components/ui/button";
+import { getCompanyLogoUrl } from "@/lib/social";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,11 +30,13 @@ export default async function CompanyDetailLayout({ children, params }: LayoutPr
       {/* Header Section */}
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
-              <Building2 className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={getCompanyLogoUrl(company)}
+            name={company.name}
+            className="h-20 w-20 rounded-md border-2 border-primary/10"
+            size="lg"
+            fallbackIcon={<Building2 className="h-8 w-8" />}
+          />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
           </div>

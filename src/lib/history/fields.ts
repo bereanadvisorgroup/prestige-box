@@ -21,6 +21,8 @@ export const COMPANY_PROFILE_FIELDS: FieldConfig[] = [
   { name: "lifeDocuments", label: "Life Documents" },
   { name: "disabilityDocuments", label: "Disability Documents" },
   { name: "ltcDocuments", label: "LTC Documents" },
+  { name: "logoUrl", label: "Logo" },
+  { name: "socialMedia", label: "Social Media Accounts" },
 ];
 
 // Client (clients table) fields. Tracked under the "Profile" subtype.

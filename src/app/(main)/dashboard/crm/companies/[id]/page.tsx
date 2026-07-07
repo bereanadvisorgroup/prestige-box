@@ -117,6 +117,33 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                   )}
                 </div>
               </div>
+
+              {company.socialMedia && company.socialMedia.length > 0 && (
+                <div className="border-t pt-4">
+                  <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                    Social Media Accounts
+                  </p>
+                  <div className="space-y-2">
+                    {company.socialMedia.map((sm: any) => (
+                      <div key={sm.id} className="flex items-center gap-2 text-sm">
+                        <GlobeIcon className="h-4 w-4 text-muted-foreground" />
+                        <a
+                          href={sm.url.startsWith("http") ? sm.url : `https://${sm.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          {sm.type}
+                        </a>
+                        <Badge variant={sm.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
+                          {sm.isPrimary ? "Primary" : "Secondary"}
+                          {sm.useProfilePhoto && " (Using Photo)"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

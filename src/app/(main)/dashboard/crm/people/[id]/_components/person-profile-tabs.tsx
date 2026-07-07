@@ -305,6 +305,42 @@ export function PersonProfileTabs({
                         <p className="text-muted-foreground text-sm">No phone numbers listed.</p>
                       )}
                     </div>
+
+                    <div>
+                      <p className="mt-4 mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                        Social Media Accounts
+                      </p>
+                      {person.socialMedia && person.socialMedia.length > 0 ? (
+                        <div className="space-y-2">
+                          {person.socialMedia.map((sm) => {
+                            const Icon = Globe;
+
+                            return (
+                              <div key={sm.id} className="flex items-center gap-2 text-sm">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                <a
+                                  href={sm.url.startsWith("http") ? sm.url : `https://${sm.url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                                >
+                                  {sm.type}
+                                </a>
+                                <Badge
+                                  variant={sm.isPrimary ? "default" : "outline"}
+                                  className="px-1.5 py-0 text-[10px]"
+                                >
+                                  {sm.isPrimary ? "Primary" : "Secondary"}
+                                  {sm.useProfilePhoto && " (Using Photo)"}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">No social media accounts listed.</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 

@@ -29,6 +29,15 @@ export const PhoneNumberSchema = z.object({
   isPrimary: z.boolean().default(false),
 });
 
+export const SocialMediaTypeSchema = z.enum(["Facebook", "Instagram", "X", "LinkedIn", "YouTube"]);
+export const SocialMediaAccountSchema = z.object({
+  id: z.string(),
+  type: SocialMediaTypeSchema,
+  url: z.string().url("Invalid social media URL (must start with http:// or https://)"),
+  isPrimary: z.boolean().default(false),
+  useProfilePhoto: z.boolean().default(false),
+});
+
 export const DriversLicenseSchema = z.object({
   number: z.string().optional(),
   issueState: z.string().optional(),
@@ -61,6 +70,7 @@ export const PersonSchema = z.object({
   photoUrl: z.string().optional().nullable(),
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
   driversLicense: DriversLicenseSchema.optional(),
   pii: PiiSchema.optional(),
   addresses: z.array(PersonAddressSchema).default([]),
@@ -253,6 +263,8 @@ export const CompanySchema = z.object({
       }),
     )
     .default([]),
+  logoUrl: z.string().optional().nullable(),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
   estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -665,6 +677,7 @@ export const RecordKeeperSchema = z.object({
 
 export type Address = z.infer<typeof AddressSchema>;
 export type PersonAddress = z.infer<typeof PersonAddressSchema>;
+export type SocialMediaAccount = z.infer<typeof SocialMediaAccountSchema>;
 export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
