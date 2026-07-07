@@ -17,8 +17,8 @@ import {
 import { getCompanies } from "@/actions/companies";
 import { getLongTermCareInsurance } from "@/actions/long-term-care-insurance";
 import { getClientPolicies } from "@/actions/policies";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FirmLogo } from "@/components/crm/firm-logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -133,17 +133,17 @@ export async function syncBirthdayForPerson(personId: string): Promise<void> {
   try {
     const { data: client } = await supabaseServer
       .from("clients")
-      .select("id, advisorId")
+      .select("id, advisorId, pii")
       .eq("personId", personId)
       .maybeSingle();
     if (!client) return; // birthdays are tracked for clients only
 
     const { data: person } = await supabaseServer
       .from("people")
-      .select("firstName, lastName, pii")
+      .select("firstName, lastName")
       .eq("id", personId)
       .maybeSingle();
-    const birthDate = (person?.pii as { birthDate?: string } | null)?.birthDate;
+    const birthDate = (client.pii as { birthDate?: string } | null)?.birthDate;
 
     if (!birthDate) {
       await removeAutoTask("birthday", personId);

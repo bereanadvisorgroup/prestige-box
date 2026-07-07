@@ -15,9 +15,9 @@ import {
   updateDisabilityInsuranceCompany,
 } from "@/actions/disability-insurance-companies";
 import { getPeople } from "@/actions/people";
+import { LogoUpload } from "@/components/crm/logo-upload";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
-import { LogoUpload } from "@/components/crm/logo-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

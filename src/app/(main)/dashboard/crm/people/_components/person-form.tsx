@@ -34,7 +34,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
-  const [showSSN, setShowSSN] = useState(false);
   const [addressSearchQuery, setAddressSearchQuery] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,9 +99,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     ? person.phones
     : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
 
-  const defaultSocialMedia = person?.socialMedia?.length
-    ? person.socialMedia
-    : [];
+  const defaultSocialMedia = person?.socialMedia?.length ? person.socialMedia : [];
 
   const defaultAddresses = person?.addresses?.length
     ? person.addresses
@@ -124,33 +121,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       socialMedia: p.socialMedia || defaultSocialMedia,
       addresses: p.addresses || defaultAddresses,
       addressIds: p.addressIds || defaultAddresses.map((a) => a.id),
-      driversLicense: p.driversLicense
-        ? {
-            number: p.driversLicense.number ?? "",
-            issueState:
-              ((p.driversLicense as Record<string, unknown>).issueState as string) ??
-              ((p.driversLicense as Record<string, unknown>).state as string) ??
-              "",
-            issueDate: p.driversLicense.issueDate ?? "",
-            expirationDate: p.driversLicense.expirationDate ?? "",
-          }
-        : {
-            number: "",
-            issueState: "",
-            issueDate: "",
-            expirationDate: "",
-          },
-      pii: p.pii
-        ? {
-            ssn: p.pii.ssn ?? "",
-            biologicalGender: p.pii.biologicalGender ?? undefined,
-            birthDate: p.pii.birthDate ?? "",
-          }
-        : {
-            ssn: "",
-            biologicalGender: undefined,
-            birthDate: "",
-          },
     };
   };
 
@@ -169,17 +139,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       socialMedia: defaultSocialMedia,
       addresses: defaultAddresses,
       addressIds: defaultAddresses.map((a) => a.id),
-      driversLicense: {
-        number: "",
-        issueState: "",
-        issueDate: "",
-        expirationDate: "",
-      },
-      pii: {
-        ssn: "",
-        biologicalGender: undefined,
-        birthDate: "",
-      },
     },
   });
 
@@ -267,15 +226,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   async function onSubmit(values: PersonFormValues) {
     try {
       setIsLoading(true);
-
-      // Clean up empty optional compound objects if not fully filled out
       const submission = { ...values };
-      if (!submission.driversLicense?.number && !submission.driversLicense?.issueState) {
-        delete submission.driversLicense;
-      }
-      if (!submission.pii?.ssn && !submission.pii?.biologicalGender && !submission.pii?.birthDate) {
-        delete submission.pii;
-      }
       // Ensure addressIds syncs with addresses array
       submission.addressIds = submission.addresses?.map((a) => a.id) || [];
 
@@ -326,7 +277,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     const socialMediaList = form.watch("socialMedia") || [];
                     const activeSocial = socialMediaList.find((sm) => sm.useProfilePhoto);
                     const previewPhotoUrl = activeSocial
-                      ? (getSocialAvatarUrl(activeSocial.type, activeSocial.url) || currentPhotoUrl)
+                      ? getSocialAvatarUrl(activeSocial.type, activeSocial.url) || currentPhotoUrl
                       : currentPhotoUrl;
                     return (
                       <Avatar className="h-[88px] w-[88px]">
@@ -791,131 +742,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     </Button>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Drivers License Section */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="border-b pb-2 font-medium text-sm">Driver&apos;s License</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <FormField
-                  control={form.control}
-                  name="driversLicense.number"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>DL Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="D12345678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.issueState"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Issue State</FormLabel>
-                      <FormControl>
-                        <Input placeholder="CA" maxLength={2} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.issueDate"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Issue Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.expirationDate"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Expiration Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* PII Section */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="border-b pb-2 font-medium text-sm">Personal Identifiable Information (PII)</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="pii.ssn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SSN</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <SsnInput type={showSSN ? "text" : "password"} placeholder="XXX-XX-XXXX" {...field} />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-0 right-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowSSN(!showSSN)}
-                        >
-                          {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          <span className="sr-only">{showSSN ? "Hide SSN" : "Show SSN"}</span>
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pii.biologicalGender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Biological Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pii.birthDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Birth Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </div>
 

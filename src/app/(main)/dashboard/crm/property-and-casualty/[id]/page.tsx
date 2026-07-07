@@ -6,8 +6,8 @@ import { ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, S
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getPropertyAndCasualtyFirm } from "@/actions/property-and-casualty";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FirmLogo } from "@/components/crm/firm-logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";

@@ -12,7 +12,9 @@ const TABLE = "companies";
 
 export async function getCompanies() {
   try {
-    const { data: companies, error } = await supabaseServer.from(TABLE).select("*, owners:company_owners(id)");
+    const { data: companies, error } = await supabaseServer
+      .from(TABLE)
+      .select("*, owners:company_owners(id, personId)");
 
     if (error) throw new Error((error as { message: string }).message);
 

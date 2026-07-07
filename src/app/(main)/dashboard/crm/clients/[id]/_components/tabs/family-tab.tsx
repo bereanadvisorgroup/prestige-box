@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Loader2, Plus, Trash2, User } from "lucide-react";
+import { Plus, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
@@ -10,16 +10,14 @@ import { getPeople } from "@/actions/people";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client, FamilyMember, Person } from "@/types/crm";
 
 function TreeEdgeHorizontal({ isFirst, isLast, isOnly }: { isFirst: boolean; isLast: boolean; isOnly: boolean }) {
   if (isOnly) return null;
   return (
     <>
-      {!isFirst && <div className="absolute left-0 top-0 h-px w-1/2 bg-border" />}
-      {!isLast && <div className="absolute right-0 top-0 h-px w-1/2 bg-border" />}
+      {!isFirst && <div className="absolute top-0 left-0 h-px w-1/2 bg-border" />}
+      {!isLast && <div className="absolute top-0 right-0 h-px w-1/2 bg-border" />}
     </>
   );
 }
@@ -44,11 +42,11 @@ function TreeNodeContainer({
   );
 }
 
-function getGenderedRelationshipLabel(person?: Person, member?: FamilyMember, label?: string) {
+function getGenderedRelationshipLabel(_person?: Person, member?: FamilyMember, label?: string) {
   if (label) return label;
   if (!member) return "Unknown";
 
-  const gender = person?.pii?.biologicalGender;
+  const gender = member.gender;
   const rel = member.relationship;
 
   if (!gender) return rel;
@@ -80,12 +78,12 @@ function NodeCard({
       <PersonAvatar photoUrl={person?.photoUrl} firstName={person?.firstName} lastName={person?.lastName} size="lg" />
       <div className="text-center">
         <p
-          className="line-clamp-1 text-sm font-semibold text-foreground"
+          className="line-clamp-1 font-semibold text-foreground text-sm"
           title={person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
         >
           {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
         </p>
-        <Badge variant="secondary" className="mt-1 bg-muted/50 text-[10px] uppercase tracking-wider font-semibold">
+        <Badge variant="secondary" className="mt-1 bg-muted/50 font-semibold text-[10px] uppercase tracking-wider">
           {displayLabel}
         </Badge>
       </div>
@@ -94,7 +92,7 @@ function NodeCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1 h-6 w-6 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           onClick={() => onRemove(member.id!)}
         >
           <Trash2 className="h-3 w-3" />
@@ -211,7 +209,7 @@ export function FamilyTab({ client }: { client: Client }) {
           <div className="flex flex-col items-center">
             {/* Root Level: Client & Spouses */}
             <div className="relative z-10 flex items-center gap-8">
-              {spouses.length > 0 && <div className="absolute left-10 right-10 top-1/2 -z-10 h-px bg-border" />}
+              {spouses.length > 0 && <div className="absolute top-1/2 right-10 left-10 -z-10 h-px bg-border" />}
               <NodeCard person={clientPerson} label="Client" />
               {spouses.map((spouse) => {
                 const p = people.find((p) => p.id === spouse.personId);
@@ -240,8 +238,8 @@ export function FamilyTab({ client }: { client: Client }) {
 
             {/* Unlinked Descendants (Fallback) */}
             {unlinkedDescendants.length > 0 && (
-              <div className="mt-16 w-full max-w-3xl rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-6">
-                <h4 className="mb-4 text-sm font-semibold text-muted-foreground">
+              <div className="mt-16 w-full max-w-3xl rounded-lg border border-muted-foreground/30 border-dashed bg-muted/10 p-6">
+                <h4 className="mb-4 font-semibold text-muted-foreground text-sm">
                   Unlinked Descendants (Missing Parent Association)
                 </h4>
                 <div className="flex flex-wrap gap-4">

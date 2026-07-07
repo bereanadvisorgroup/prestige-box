@@ -71,8 +71,6 @@ export const PersonSchema = z.object({
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
   socialMedia: z.array(SocialMediaAccountSchema).default([]),
-  driversLicense: DriversLicenseSchema.optional(),
-  pii: PiiSchema.optional(),
   addresses: z.array(PersonAddressSchema).default([]),
   addressIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
@@ -288,6 +286,8 @@ export const FamilyMemberSchema = z.object({
   relationship: FamilyRelationType,
   parentId: z.string().optional(),
   marriageDate: z.string().optional(), // YYYY-MM-DD; meaningful on the Spouse entry, drives anniversary tasks
+  gender: BiologicalGenderSchema.optional(),
+  birthDate: z.string().optional(),
 });
 
 export const EmploymentSchema = z.object({
@@ -474,6 +474,8 @@ export const ClientSchema = z.object({
   recordKeeperAccounts: z.array(RecordKeeperAccountSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
+  driversLicense: DriversLicenseSchema.optional(),
+  pii: PiiSchema.optional(),
   documentUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, Heart, Trash2, Trophy } from "lucide-react";
+import { CreditCard, Eye, EyeOff, Heart, Trash2, Trophy } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -20,9 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
-import { Form, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SsnInput } from "@/components/ui/ssn-input";
 import { sportsTeams } from "@/data/sports-teams";
 import { formatPhoneNumber } from "@/lib/utils";
 import {
@@ -46,6 +47,7 @@ export function ClientForm({ client }: ClientFormProps) {
   const [hobbyInput, setHobbyInput] = useState("");
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [createPortalAccount, setCreatePortalAccount] = useState(true);
+  const [showSSN, setShowSSN] = useState(false);
 
   const form = useForm<ClientFormInput, any, ClientFormValues>({
     resolver: zodResolver(ClientFormSchema),
@@ -57,6 +59,33 @@ export function ClientForm({ client }: ClientFormProps) {
           hobbies: client.hobbies,
           favoriteSportsTeams: client.favoriteSportsTeams,
           paymentAccounts: client.paymentAccounts,
+          driversLicense: client.driversLicense
+            ? {
+                number: client.driversLicense.number ?? "",
+                issueState:
+                  ((client.driversLicense as Record<string, unknown>).issueState as string) ??
+                  ((client.driversLicense as Record<string, unknown>).state as string) ??
+                  "",
+                issueDate: client.driversLicense.issueDate ?? "",
+                expirationDate: client.driversLicense.expirationDate ?? "",
+              }
+            : {
+                number: "",
+                issueState: "",
+                issueDate: "",
+                expirationDate: "",
+              },
+          pii: client.pii
+            ? {
+                ssn: client.pii.ssn ?? "",
+                biologicalGender: client.pii.biologicalGender ?? undefined,
+                birthDate: client.pii.birthDate ?? "",
+              }
+            : {
+                ssn: "",
+                biologicalGender: undefined,
+                birthDate: "",
+              },
         }
       : {
           personId: "",
@@ -64,6 +93,17 @@ export function ClientForm({ client }: ClientFormProps) {
           hobbies: [],
           favoriteSportsTeams: [],
           paymentAccounts: [],
+          driversLicense: {
+            number: "",
+            issueState: "",
+            issueDate: "",
+            expirationDate: "",
+          },
+          pii: {
+            ssn: "",
+            biologicalGender: undefined,
+            birthDate: "",
+          },
         },
   });
 
@@ -133,7 +173,16 @@ export function ClientForm({ client }: ClientFormProps) {
       setIsLoading(true);
       const isEditing = !!client?.id;
 
-      const result = isEditing ? await updateClient(client.id!, values) : await createClient(values);
+      // Clean up empty optional compound objects if not fully filled out
+      const submission = { ...values };
+      if (!submission.driversLicense?.number && !submission.driversLicense?.issueState) {
+        delete submission.driversLicense;
+      }
+      if (!submission.pii?.ssn && !submission.pii?.biologicalGender && !submission.pii?.birthDate) {
+        delete submission.pii;
+      }
+
+      const result = isEditing ? await updateClient(client.id!, submission) : await createClient(submission);
 
       if (result.success) {
         toast.success(isEditing ? "Client record updated" : "Client record created");
@@ -287,6 +336,131 @@ export function ClientForm({ client }: ClientFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Drivers License Section */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Driver&apos;s License</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <FormField
+                  control={form.control}
+                  name="driversLicense.number"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>DL Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="D12345678" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driversLicense.issueState"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Issue State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="CA" maxLength={2} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driversLicense.issueDate"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Issue Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="driversLicense.expirationDate"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-1">
+                      <FormLabel>Expiration Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* PII Section */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="border-b pb-2 font-medium text-sm">Personal Identifiable Information (PII)</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="pii.ssn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SSN</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <SsnInput type={showSSN ? "text" : "password"} placeholder="XXX-XX-XXXX" {...field} />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-0 right-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowSSN(!showSSN)}
+                        >
+                          {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          <span className="sr-only">{showSSN ? "Hide SSN" : "Show SSN"}</span>
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pii.biologicalGender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Biological Gender</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pii.birthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Birth Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {!!client && (
               <>
