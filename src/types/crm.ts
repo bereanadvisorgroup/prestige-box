@@ -459,6 +459,7 @@ export const ClientSchema = z.object({
   recordKeeperAccounts: z.array(RecordKeeperAccountSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
+  documentUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

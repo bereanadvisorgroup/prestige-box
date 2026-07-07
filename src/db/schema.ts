@@ -125,6 +125,7 @@ export const clients = pgTable("clients", {
   recordKeeperAccounts: jsonb("recordKeeperAccounts").default(sql`'[]'::jsonb`),
   liabilities: jsonb("liabilities").default(sql`'[]'::jsonb`),
   mortgages: jsonb("mortgages").default(sql`'[]'::jsonb`),
+  documentUrl: text("documentUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

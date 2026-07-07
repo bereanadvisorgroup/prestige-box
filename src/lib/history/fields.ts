@@ -41,6 +41,7 @@ export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "lifeDocuments", label: "Life Documents" },
   { name: "ltcDocuments", label: "LTC Documents" },
   { name: "estateDocuments", label: "Estate Documents" },
+  { name: "documentUrl", label: "Document URL" },
 ];
 
 // Person (people table) fields — a client's personal/contact profile.

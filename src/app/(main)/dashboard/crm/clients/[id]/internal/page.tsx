@@ -12,6 +12,7 @@ import { getTasks } from "@/actions/tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
+import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
 import { NotesCard } from "../_components/notes-card";
 import { ReferralTreeCard } from "../_components/referral-tree-card";
@@ -68,11 +69,13 @@ export default async function ClientPage({ params }: ClientPageProps) {
   );
 
   return (
-    <div className="py-4">
-      <ClientHeaderPortal sectionName="Overview" />
+    <div className="space-y-6 py-4">
+      <ClientHeaderPortal sectionName="Overview">
+        <DocumentsButton client={client} />
+      </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Six Cards Grid in 3x2 Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:col-span-2">
           <TasksCard clientId={id} initialTasks={tasks} />
           <NotesCard clientId={id} initialNotes={notes} />
           <InterestsCard client={client} />

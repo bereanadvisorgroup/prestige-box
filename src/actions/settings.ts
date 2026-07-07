@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { supabaseServer } from "@/lib/supabase.server";
+import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
 
 export async function getBusinessContact() {
   try {
@@ -36,11 +36,8 @@ export async function getBusinessContact() {
 export async function updateBusinessContact(email: string, phone: string) {
   try {
     // Security Check: Only authenticated users with admin role can modify settings.
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseServer.auth.getUser();
-    if (authError || !user) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
       throw new Error("Unauthorized: Please sign in.");
     }
 
