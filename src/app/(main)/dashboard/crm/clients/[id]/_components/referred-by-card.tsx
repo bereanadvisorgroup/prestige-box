@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client } from "@/types/crm";
@@ -204,14 +205,16 @@ export function ReferredByCard({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[220px] rounded-lg border border-neutral-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
-          Referred By: {activeLabel && <span className="text-primary font-semibold ml-1">{activeLabel}</span>}
-        </h3>
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      </div>
-      <div className="flex-1 flex flex-col justify-center space-y-4">
+    <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex justify-between items-center w-full">
+          <span className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
+            Referred By: {activeLabel && <span className="text-primary font-semibold ml-1">{activeLabel}</span>}
+          </span>
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col justify-center space-y-4">
         {/* Source Type Select */}
         <div className="space-y-1">
           <label
@@ -308,7 +311,7 @@ export function ReferredByCard({
             </Combobox>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

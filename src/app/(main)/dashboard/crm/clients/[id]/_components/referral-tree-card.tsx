@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { ArrowUpRight } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Client } from "@/types/crm";
 
 interface ReferralTreeNode {
@@ -33,7 +34,7 @@ function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLa
       {/* Node label */}
       <div className="flex items-center gap-1.5 py-0.5">
         {node.isCurrent ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-850 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-neutral-700 dark:border-zinc-350 shadow-xs">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-850 dark:bg-zinc-100 dark:text-zinc-900 border border-neutral-700 dark:border-zinc-350 shadow-xs">
             {node.name} (Current)
           </span>
         ) : (
@@ -126,11 +127,13 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
   const hasRelations = ancestors.length > 0 || rootNode.children.length > 0;
 
   return (
-    <div className="flex flex-col h-full min-h-[220px] rounded-lg border border-neutral-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <h3 className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200 mb-4">
-        Referral Tree:
-      </h3>
-      <div className="flex-1 overflow-y-auto max-h-[220px] pr-1 scrollbar-thin">
+    <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
+          Referral Tree:
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto max-h-[220px] pr-1 scrollbar-thin">
         {hasRelations ? (
           <div className="py-2">
             <RenderTreeNode node={rootNode} isLast={true} isRoot={true} />
@@ -138,7 +141,7 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
         ) : (
           <p className="text-xs text-muted-foreground italic py-2">No referral relations to display.</p>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
