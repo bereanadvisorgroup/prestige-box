@@ -74,10 +74,20 @@ Prestige Box integrates **Axiom** for telemetry, performance tracing, and secure
 - **WebVitals Tracking**: Root layouts mount `<AxiomWebVitals />` to capture real user monitoring (RUM) metrics like LCP, FID, CLS, and TTFB.
 - **Client & Server Logging**: Telemetry hooks (`useLogger` from `next-axiom`) are integrated within critical client components (such as `LoginForm` and `ClientSetupForm`) to securely stream application events (successful sign-ins, onboarding completions, and unhandled errors) to Axiom without exposing sensitive details.
 
+## Security & Web Protections
+
+Prestige Box enforces strict security boundaries at multiple layers:
+- **HTTP Security Headers**: Next.js configurations (`next.config.mjs`) inject robust security headers across all routes to prevent common web vulnerabilities:
+  - `X-Frame-Options: DENY` and `Content-Security-Policy: frame-ancestors 'none'` to block Clickjacking attacks.
+  - `X-Content-Type-Options: nosniff` to prevent MIME-type sniffing.
+  - `Referrer-Policy: strict-origin-when-cross-origin` to limit referrer leaks.
+- **Multi-Factor Authentication (MFA)**: Strict AAL2 verification is enforced at the routing and database levels.
+
 ## Asset History & Net Worth Visualization
 
 To support advisor insights and client financial planning, the application tracks historical asset values:
 - **Snapshots**: Every time an asset is created or its value is updated, a historical record is automatically appended to `asset_history` via backend Server Actions.
+- **Virtual Asset Integration**: To keep client Net Worth data complete and accurate, money manager accounts and record keeper accounts managed under a client are automatically projected as read-only virtual assets. Their values contribute to the chronological Net Worth calculation and are rendered dynamically alongside physical assets.
 - **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for each client by merging overlapping asset values on shared dates.
 - **Rendering**: Recharts is used on the client-side to render an interactive, beautiful area chart showing net worth growth and individual asset category distributions over time.
 

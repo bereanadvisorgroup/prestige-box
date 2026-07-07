@@ -40,6 +40,12 @@ erDiagram
     NOTES ||--o{ NOTE_NOTIFICATIONS : "alerts user"
     
     USERS ||--o{ CHANGE_HISTORY : "acts on (actorId)"
+
+    REFERRAL_TYPES ||--o{ CLIENTS : "defines referral type of"
+    CUSTODIANS ||--o{ CLIENTS : "custodies MM accounts of"
+    FINANCIAL_ACCOUNT_TYPES ||--o{ CLIENTS : "defines account types of"
+    COMPANIES ||--o{ CLIENTS : "referred client (referredByCompanyId)"
+    PEOPLE ||--o{ CLIENTS : "referred client (referredByPersonId)"
     
     USERS {
         uuid uid PK "References auth.users"
@@ -59,12 +65,19 @@ erDiagram
         uuid id PK
         uuid personId FK
         uuid advisorId FK "References users"
+        uuid referredById
+        string referredByType
+        uuid referredByCompanyId FK "References companies"
+        uuid referredByPersonId FK "References people"
+        uuid referredByReferralTypeId FK "References referral_types"
         jsonb employments
         jsonb liabilities
         jsonb pcDocuments
         jsonb lifeDocuments
         jsonb ltcDocuments
         jsonb estateDocuments
+        jsonb moneyManagerAccounts
+        jsonb recordKeeperAccounts
     }
     COMPANIES {
         uuid id PK
@@ -79,6 +92,7 @@ erDiagram
         jsonb lifeDocuments
         jsonb disabilityDocuments
         jsonb ltcDocuments
+        numeric estimatedValue
     }
     COMPANY_VALUATION_HISTORY {
         uuid id PK
@@ -205,6 +219,13 @@ erDiagram
 ### `clients`
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
 - Stores deep financial profiles (employment, liabilities) and insurance files.
+- **Client Referrals**: Tracks referral source details directly in the table:
+  - `referredById`: UUID representing the source of the referral.
+  - `referredByType`: Coded enum representing the type of referral source (`client`, `company`, `person`, or `referral_type`).
+  - `referredByCompanyId`, `referredByPersonId`, `referredByReferralTypeId`: Foreign keys providing direct relational links to corresponding database entities.
+- **Managed Accounts**: Tracks client accounts held with Money Managers and Record Keepers using JSONB array fields:
+  - `moneyManagerAccounts`: Structured array of accounts containing identifiers, firm links, balance values, inception/closure dates, custodian references, and primary/contingent beneficiaries.
+  - `recordKeeperAccounts`: Structured array of record keeper accounts containing firm links, account numbers, title details, values, and inception/closure dates.
 - **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
   - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
   - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).
@@ -221,6 +242,17 @@ erDiagram
 - Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
 - **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
 - **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
+
+### `money_managers` & `record_keepers` (Professional Service Vendors)
+- **Money Managers**: Table tracking money manager firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`).
+- **Record Keepers**: Table tracking record keeper firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`).
+
+### `custodians` & `financial_account_types` (Managed Account Parameters)
+- **Custodians**: Stores institutions acting as custodians (e.g. Charles Schwab, Fidelity, Pershing) for money manager accounts.
+- **Financial Account Types**: Defines various account categories (e.g., Traditional IRA, Roth IRA, 401(k), Taxable Brokerage) to tag and organize client managed/record keeper accounts.
+
+### `referral_types` (Referral Channels)
+- **Referral Types**: Stores custom referral categories (e.g. CPA, Attorney, Client, Event) to attribute incoming client leads.
 
 ### `tasks` & sub-tables (`task_assignees`, `task_associations`)
 - Manages standard advisory workflows.

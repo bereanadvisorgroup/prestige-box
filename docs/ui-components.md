@@ -27,14 +27,20 @@ Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesth
 All iconography is sourced exclusively from the `lucide-react` library.
 
 ### 4. Recharts
-The responsive charting library used for data visualizations (e.g., net worth graphs and corporate valuation curves). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
+The responsive charting library used for data visualizations (e.g., net worth graphs, corporate valuation curves, and referral source distributions). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
 
-### 5. Rich Text Editor (Tiptap)
+### 5. D3.js (Force-Directed Graphs)
+Used for rendering complex network systems such as the interactive **Referral Tree** in `/dashboard/reports/referrals`:
+- **Force Simulation**: Employs charge, link distance, center, and collision force parameters to simulate nodes dynamically.
+- **Node Configuration**: Node colors map to standard CSS theme variables (e.g. `var(--chart-1)`, `var(--chart-2)`) based on entity type (Client, Company, Person). Radius is computed proportionally to the node's out-degree (the number of direct referrals initiated).
+- **Interactions**: Nodes support drag gestures to modify the force simulation layout, zoom/pan capabilities, and double-click routing to navigate directly to the entity's dashboard profile.
+
+### 6. Rich Text Editor (Tiptap)
 For notes and task descriptions, the project integrates Tiptap:
 - **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
 - **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
 
-### 6. Drag & Drop Primitives (@dnd-kit)
+### 7. Drag & Drop Primitives (@dnd-kit)
 Used for task management and pipeline staging columns:
 - **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
 - **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.

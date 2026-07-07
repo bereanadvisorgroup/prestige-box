@@ -22,6 +22,9 @@ flowchart LR
     Reports --> RelGraph[Relationship Graph]
     Reports --> BenPayment[Benefit Payments]
     Reports --> AudHistory[Audit History Log]
+    Reports --> RefRep[Referral Network]
+    Admin --> UsersMgmt[Users & Roles]
+    Admin --> SystemParams[System Parameters]
 ```
 
 ## Dashboard (`/dashboard`)
@@ -29,10 +32,18 @@ flowchart LR
 The main entry point for authenticated users. It serves as a central hub navigating to all distinct business verticals of Prestige Box.
 
 ### 1. Admin Panel (`/dashboard/admin`)
-Reserved for system administrators.
-- **User Management**: Creating and disabling user accounts.
-- **Role Assignment**: Managing permissions between `admin` and `client` roles.
-- **Portal Settings**: Global portal-wide configuration parameters.
+Reserved for system administrators to manage system configurations and entity lists.
+- **User Management (`/dashboard/admin/users`)**: Creating, managing, and disabling user accounts, roles (`admin`, `advisor`, `client`), and multi-factor statuses.
+- **Service Vendors & Firms**: Full CRUD interfaces to manage linked professional entities:
+  - Life Insurance Companies (`/dashboard/admin/life-insurance-companies`)
+  - Disability Insurance Companies (`/dashboard/admin/disability-insurance-companies`)
+  - Long Term Care Insurance Companies (`/dashboard/admin/long-term-care-insurance`)
+  - Money Managers (`/dashboard/admin/money-managers`)
+  - Record Keepers (`/dashboard/admin/record-keepers`)
+- **System Parameters**: Full CRUD interfaces to configure system-wide dropdown variables:
+  - Custodians (`/dashboard/admin/custodians`): Installs custodians like Fidelity, Schwab, etc.
+  - Financial Account Types (`/dashboard/admin/financial-account-types`): Defines account schemas (e.g. Traditional IRA, Roth IRA, 401k).
+  - Referral Types (`/dashboard/admin/referral-types`): Manages lead sources (e.g. CPA, Attorney, Client, Event).
 
 ### 2. CRM Module (`/dashboard/crm`)
 The core relationship management suite.
@@ -49,7 +60,9 @@ The core relationship management suite.
   - **Policies (`/dashboard/crm/policies`)**: Central registry for all Life, Disability, and Long-Term Care insurance policies, detailing premiums, effective dates, and payment schedules.
 
 - **Client Profile & Contextual Navigation**: Selecting a client dynamically switches the sidebar to a tailored client-centric navigation menu containing:
-  - **Overview & Profile (`/dashboard/crm/clients/[id]`)**: Contact details card, personal info (hobbies, sports teams), and interactive Net Worth timeline graph.
+  - **Overview & Profile (`/dashboard/crm/clients/[id]`)**: Contact details card, personal info (hobbies, sports teams), interactive Net Worth timeline graph, and referrals integration:
+    - **Referral Source Card (`referred-by-card`)**: View and assign the specific entity that referred the client (supports linking to a Person, Client, Company, or custom Referral Type).
+    - **Referral Tree Card (`referral-tree-card`)**: Visual diagram showing the network of clients referred by this individual.
   - **Family Tab (`/dashboard/crm/clients/[id]/family`)**: Structure family connections (spouse, parent, child, etc.) and link them directly to system profiles.
   - **Employment (`/dashboard/crm/clients/[id]/employment`)**: Manage employment records, employers, compensation, and active statuses.
   - **Estate Planning (`/dashboard/crm/clients/[id]/estate-planning`)**: Tracks estate planning instruments (Wills, Revocable/Irrevocable Trusts, and other custom documents) in a structured metadata repository. Integrates a searchable autocomplete picker (built on Radix/Base UI Combobox primitives) to link grantors and trustees (either individuals/people or corporate entities/companies) and external legal advisors (law firms). Supports multi-file uploads per repository.
@@ -65,8 +78,8 @@ The core relationship management suite.
     - Life Insurance (`/dashboard/crm/clients/[id]/life-insurance`)
     - Disability Insurance (`/dashboard/crm/clients/[id]/disability-insurance`)
     - Long-Term Care (`/dashboard/crm/clients/[id]/long-term-care`)
-    - Money Managers (`/dashboard/crm/clients/[id]/money-managers`)
-    - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`)
+    - Money Managers (`/dashboard/crm/clients/[id]/money-managers`): Manage accounts linked to Money Managers, including account numbers, balances, inception dates, custodians, and primary/contingent beneficiaries. Balances automatically project as virtual assets contributing to Net Worth.
+    - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`): Manage record keeper accounts, account numbers, and balances. Balances automatically project as virtual assets contributing to Net Worth.
   - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, and audit logs:
     - **Internal Notes (`/dashboard/crm/clients/[id]/internal/notes`)**: Collaborative client logs.
     - **Internal Tasks (`/dashboard/crm/clients/[id]/internal/tasks`)**: Tasks associated with this client.
@@ -111,6 +124,7 @@ Dedicated space for managing overall corporate numbers and client insurance poli
 Dynamic reporting and analytical views.
 - **Benefit Payments (`/dashboard/reports/payments`)**: Tracks expected premium payments, collections, and forecasts.
 - **Relationship Graph (`/dashboard/reports/relationship-graph`)**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
+- **Referral Network (`/dashboard/reports/referrals`)**: Interactive force-directed network tree visualization built using D3.js. Shows client-to-client referral connections, referral source channel breakdowns (using Recharts Pie charts), and acquisition trends over time.
 - **History Report (`/dashboard/reports/history`)**: Global feed of audit history logs tracking mutations (insert/updates/deletions) across CRM entities.
 
 ### 8. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
