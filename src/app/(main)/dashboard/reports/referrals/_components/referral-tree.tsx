@@ -16,6 +16,7 @@ export const NODE_COLORS: Record<ReferralNodeType, string> = {
   Client: "var(--chart-1)",
   Company: "var(--chart-2)",
   Person: "var(--chart-3)",
+  Advisor: "var(--chart-4)",
 };
 
 interface SimulationNode extends ReferralTreeNode, d3.SimulationNodeDatum {

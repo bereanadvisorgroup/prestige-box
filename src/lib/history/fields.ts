@@ -32,6 +32,8 @@ export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "referredByCompanyId", label: "Referred by Company" },
   { name: "referredByPersonId", label: "Referred by Person" },
   { name: "referredByReferralTypeId", label: "Referred by Referral Type" },
+  { name: "referredByEventId", label: "Referred by Event" },
+  { name: "referredByAdvisorId", label: "Referred by Advisor" },
   { name: "hobbies", label: "Hobbies" },
   { name: "favoriteSportsTeams", label: "Favorite Sports Teams" },
   { name: "paymentAccounts", label: "Payment Accounts" },

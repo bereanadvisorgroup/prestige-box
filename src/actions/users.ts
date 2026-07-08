@@ -339,3 +339,33 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function getAdvisors() {
+  try {
+    const { data: dbUsers, error } = await supabaseServer
+      .from("users")
+      .select("uid, firstName, lastName, role")
+      .in("role", ["admin", "advisor"]);
+
+    if (error) throw new Error(error.message);
+
+    const advisors = (dbUsers || []).map((dbUser) => ({
+      uid: dbUser.uid,
+      firstName: dbUser.firstName || "",
+      lastName: dbUser.lastName || "",
+      role: dbUser.role,
+    }));
+
+    // Sort alphabetically by name
+    advisors.sort((a, b) => {
+      const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
+      const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    return { success: true, advisors };
+  } catch (error) {
+    console.error("Failed to fetch advisors:", error);
+    return { success: false, error: (error as { message: string }).message, advisors: [] };
+  }
+}

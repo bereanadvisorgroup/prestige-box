@@ -121,6 +121,7 @@ interface FormState {
   premiumFrequency: "Monthly" | "Quarterly" | "Semi-Annual" | "Annually" | "";
   premiumPayment: number;
   note: string;
+  eliminationPeriod: "60 days" | "90 days" | "120 days" | "365 days" | "";
   beneficiaries: BeneficiaryRow[];
   contingentBeneficiaries: BeneficiaryRow[];
   files: FormFile[];
@@ -136,6 +137,7 @@ const emptyForm: FormState = {
   premiumFrequency: "",
   premiumPayment: 0,
   note: "",
+  eliminationPeriod: "",
   beneficiaries: [],
   contingentBeneficiaries: [],
   files: [],
@@ -154,6 +156,7 @@ const formFromPolicy = (p: InsurancePolicy): FormState => ({
   premiumFrequency: p.premiumFrequency || "",
   premiumPayment: p.premiumPayment ?? 0,
   note: p.note || "",
+  eliminationPeriod: p.eliminationPeriod || "",
   beneficiaries: rowsFromBeneficiaries(p.beneficiaries),
   contingentBeneficiaries: rowsFromBeneficiaries(p.contingentBeneficiaries),
   files: [],
@@ -431,20 +434,11 @@ export function InsurancePolicyManager({
         id: crypto.randomUUID(),
         name: file.name,
         url,
-        title: policyField === "lifePolicies" ? title : undefined,
+        title,
         uploadedAt: new Date().toISOString(),
       });
     }
     return uploaded;
-  };
-
-  // Keep original signature for fallback direct card uploads on disability/LTC
-  const uploadFiles = async (policyId: string, files: File[]): Promise<InsurancePolicy["files"]> => {
-    const formFiles: FormFile[] = files.map((file) => ({
-      file,
-      title: "Other",
-    }));
-    return uploadFilesWithMetadata(policyId, formFiles);
   };
 
   const resetForm = () => {
@@ -464,13 +458,12 @@ export function InsurancePolicyManager({
     setIsDialogOpen(true);
   };
 
-  /** Build the persisted metadata (everything but files) from the form, validating beneficiary percentages. */
   const buildPolicyMetadata = (): Omit<InsurancePolicy, "id" | "files"> | null => {
-    if (policyField === "lifePolicies" && !form.companyId) {
+    if (!form.companyId) {
       toast.error("Insurance Company is a required field");
       return null;
     }
-    if (policyField === "lifePolicies" && (form.premiumPayment === undefined || form.premiumPayment < 0)) {
+    if (form.premiumPayment === undefined || form.premiumPayment < 0) {
       toast.error("Premium Payment is required and must be at least 0");
       return null;
     }
@@ -489,7 +482,7 @@ export function InsurancePolicyManager({
       return null;
     }
 
-    const dateVal = policyField === "lifePolicies" ? form.anniversaryDate : form.renewalDate;
+    const dateVal = form.anniversaryDate || form.renewalDate;
 
     return {
       companyId: form.companyId || undefined,
@@ -497,10 +490,11 @@ export function InsurancePolicyManager({
       policyName: form.policyName.trim() || undefined,
       issueDate: form.issueDate || undefined,
       renewalDate: dateVal || undefined,
-      anniversaryDate: policyField === "lifePolicies" ? dateVal || undefined : undefined,
-      premiumFrequency: policyField === "lifePolicies" ? form.premiumFrequency || undefined : undefined,
-      premiumPayment: policyField === "lifePolicies" ? (form.premiumPayment ?? 0) : 0,
-      note: policyField === "lifePolicies" ? form.note || undefined : undefined,
+      anniversaryDate: dateVal || undefined,
+      premiumFrequency: form.premiumFrequency || undefined,
+      premiumPayment: form.premiumPayment ?? 0,
+      note: form.note || undefined,
+      eliminationPeriod: form.eliminationPeriod || undefined,
       beneficiaries,
       contingentBeneficiaries,
     };
@@ -564,22 +558,6 @@ export function InsurancePolicyManager({
       toast.error(e instanceof Error ? e.message : "Failed to save policy");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleAddFiles = async (policyId: string, fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    try {
-      setAddFilesFor(policyId);
-      const uploaded = await uploadFiles(policyId, Array.from(fileList));
-      const updated = policies.map((p) => (p.id === policyId ? { ...p, files: [...(p.files || []), ...uploaded] } : p));
-      await persist(updated);
-      toast.success("File(s) added");
-    } catch (e) {
-      console.error(e);
-      toast.error(e instanceof Error ? e.message : "Failed to add file(s)");
-    } finally {
-      setAddFilesFor(null);
     }
   };
 
@@ -659,26 +637,27 @@ export function InsurancePolicyManager({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
             {policy.policyNumber && <span>Policy #: {policy.policyNumber}</span>}
             {policy.issueDate && <span>Issued: {policy.issueDate}</span>}
-            {policyField === "lifePolicies"
-              ? (policy.anniversaryDate || policy.renewalDate) && (
-                  <span>Anniversary Date: {policy.anniversaryDate || policy.renewalDate}</span>
-                )
-              : policy.renewalDate && <span>Renews: {policy.renewalDate}</span>}
+            {(policy.anniversaryDate || policy.renewalDate) && (
+              <span>Anniversary Date: {policy.anniversaryDate || policy.renewalDate}</span>
+            )}
           </div>
-          {policyField === "lifePolicies" && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 border-t border-dashed pt-1 text-muted-foreground text-xs">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 border-t border-dashed pt-1 text-muted-foreground text-xs">
+            <span>
+              Premium:{" "}
+              <span className="font-semibold text-green-700">{formatCurrency(policy.premiumPayment ?? 0)}</span>
+            </span>
+            {policy.premiumFrequency && (
               <span>
-                Premium:{" "}
-                <span className="font-semibold text-green-700">{formatCurrency(policy.premiumPayment ?? 0)}</span>
+                Frequency: <span className="font-medium text-foreground">{policy.premiumFrequency}</span>
               </span>
-              {policy.premiumFrequency && (
-                <span>
-                  Frequency: <span className="font-medium text-foreground">{policy.premiumFrequency}</span>
-                </span>
-              )}
-            </div>
-          )}
-          {policyField === "lifePolicies" && policy.note && (
+            )}
+            {policy.eliminationPeriod && (
+              <span>
+                Elimination Period: <span className="font-medium text-foreground">{policy.eliminationPeriod}</span>
+              </span>
+            )}
+          </div>
+          {policy.note && (
             <p className="mt-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded-md border border-muted/20 italic whitespace-pre-wrap">
               Note: {policy.note}
             </p>
@@ -771,15 +750,11 @@ export function InsurancePolicyManager({
             disabled={addFilesFor === policy.id}
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) {
-                if (policyField === "lifePolicies") {
-                  const files = Array.from(e.target.files).map((f) => ({
-                    file: f,
-                    title: "Issued Illustration" as const,
-                  }));
-                  setFilesToUpload({ policyId: policy.id, files });
-                } else {
-                  handleAddFiles(policy.id, e.target.files);
-                }
+                const files = Array.from(e.target.files).map((f) => ({
+                  file: f,
+                  title: "Issued Illustration" as const,
+                }));
+                setFilesToUpload({ policyId: policy.id, files });
               }
               e.target.value = "";
             }}
@@ -937,8 +912,7 @@ export function InsurancePolicyManager({
             {/* Company */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1">
-                Insurance Company
-                {policyField === "lifePolicies" && <span className="text-destructive">*</span>}
+                Insurance Company <span className="text-destructive">*</span>
               </Label>
               <Popover open={companyComboOpen} onOpenChange={setCompanyComboOpen}>
                 <PopoverTrigger asChild>
@@ -948,8 +922,7 @@ export function InsurancePolicyManager({
                     aria-expanded={companyComboOpen}
                     className="w-full justify-between text-left font-normal text-sm"
                   >
-                    {selectedCompanyName ||
-                      (policyField === "lifePolicies" ? "Select company *" : "Select company (optional)")}
+                    {selectedCompanyName || "Select company *"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -1021,75 +994,88 @@ export function InsurancePolicyManager({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="policy-renewal-date">
-                  {policyField === "lifePolicies" ? "Anniversary Date" : "Renewal Date"}
-                </Label>
+                <Label htmlFor="policy-renewal-date">Anniversary Date</Label>
                 <Input
                   id="policy-renewal-date"
                   type="date"
-                  value={policyField === "lifePolicies" ? form.anniversaryDate : form.renewalDate}
+                  value={form.anniversaryDate || form.renewalDate}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (policyField === "lifePolicies") {
-                      setForm({ ...form, anniversaryDate: val, renewalDate: val });
-                    } else {
-                      setForm({ ...form, renewalDate: val });
-                    }
+                    setForm({ ...form, anniversaryDate: val, renewalDate: val });
                   }}
                 />
               </div>
             </div>
 
-            {policyField === "lifePolicies" && (
-              <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="policy-premium-frequency">Premium Frequency</Label>
-                    <Select
-                      value={form.premiumFrequency}
-                      onValueChange={(val) => setForm({ ...form, premiumFrequency: val as FormState["premiumFrequency"] })}
-                    >
-                      <SelectTrigger id="policy-premium-frequency">
-                        <SelectValue placeholder="Select frequency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Monthly">Monthly</SelectItem>
-                        <SelectItem value="Quarterly">Quarterly</SelectItem>
-                        <SelectItem value="Semi-Annual">Semi-Annual</SelectItem>
-                        <SelectItem value="Annually">Annually</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="policy-premium-payment" className="flex items-center gap-1">
-                      Premium Payment <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <Input
-                        id="policy-premium-payment"
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        className="pl-7"
-                        value={form.premiumPayment}
-                        onChange={(e) => setForm({ ...form, premiumPayment: Number(e.target.value) || 0 })}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="policy-note">Note</Label>
-                  <Textarea
-                    id="policy-note"
-                    value={form.note}
-                    onChange={(e) => setForm({ ...form, note: e.target.value })}
-                    placeholder="Enter notes about the policy..."
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="policy-premium-frequency">Premium Frequency</Label>
+                <Select
+                  value={form.premiumFrequency}
+                  onValueChange={(val) => setForm({ ...form, premiumFrequency: val as FormState["premiumFrequency"] })}
+                >
+                  <SelectTrigger id="policy-premium-frequency">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Monthly">Monthly</SelectItem>
+                    <SelectItem value="Quarterly">Quarterly</SelectItem>
+                    <SelectItem value="Semi-Annual">Semi-Annual</SelectItem>
+                    <SelectItem value="Annually">Annually</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="policy-premium-payment" className="flex items-center gap-1">
+                  Premium Payment <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    id="policy-premium-payment"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="pl-7"
+                    value={form.premiumPayment}
+                    onChange={(e) => setForm({ ...form, premiumPayment: Number(e.target.value) || 0 })}
+                    placeholder="0.00"
                   />
                 </div>
-              </>
+              </div>
+            </div>
+
+            {(policyField === "disabilityPolicies" || policyField === "ltcPolicies") && (
+              <div className="space-y-2">
+                <Label htmlFor="policy-elimination-period">Elimination Period</Label>
+                <Select
+                  value={form.eliminationPeriod}
+                  onValueChange={(val) =>
+                    setForm({ ...form, eliminationPeriod: val as FormState["eliminationPeriod"] })
+                  }
+                >
+                  <SelectTrigger id="policy-elimination-period">
+                    <SelectValue placeholder="Select elimination period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="60 days">60 days</SelectItem>
+                    <SelectItem value="90 days">90 days</SelectItem>
+                    <SelectItem value="120 days">120 days</SelectItem>
+                    <SelectItem value="365 days">365 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="policy-note">Note</Label>
+              <Textarea
+                id="policy-note"
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+                placeholder="Enter notes about the policy..."
+              />
+            </div>
 
             <BeneficiaryRows
               title="Beneficiaries"
@@ -1129,29 +1115,23 @@ export function InsurancePolicyManager({
                       <span className="truncate text-xs flex-1" title={item.file.name}>
                         {item.file.name}
                       </span>
-                      {policyField === "lifePolicies" ? (
-                        <Select
-                          value={item.title}
-                          onValueChange={(val) => {
-                            const updated = [...form.files];
-                            updated[idx].title = val as FormFile["title"];
-                            setForm({ ...form, files: updated });
-                          }}
-                        >
-                          <SelectTrigger className="w-[160px] h-8 text-xs bg-background">
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Issued Illustration">Issued Illustration</SelectItem>
-                            <SelectItem value="Policy Receipts">Policy Receipts</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          Document
-                        </span>
-                      )}
+                      <Select
+                        value={item.title}
+                        onValueChange={(val) => {
+                          const updated = [...form.files];
+                          updated[idx].title = val as FormFile["title"];
+                          setForm({ ...form, files: updated });
+                        }}
+                      >
+                        <SelectTrigger className="w-[160px] h-8 text-xs bg-background">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Issued Illustration">Issued Illustration</SelectItem>
+                          <SelectItem value="Policy Receipts">Policy Receipts</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         type="button"
                         variant="ghost"

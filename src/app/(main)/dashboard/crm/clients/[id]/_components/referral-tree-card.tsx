@@ -13,12 +13,14 @@ interface ReferralTreeNode {
   isCurrent: boolean;
   isAncestor: boolean;
   children: ReferralTreeNode[];
+  isAdvisor?: boolean;
 }
 
 interface ReferralTreeCardProps {
   client: Client & { person?: any };
   clientName: string;
   allClients: any[];
+  allAdvisors?: any[];
 }
 
 function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLast: boolean; isRoot: boolean }) {
@@ -36,6 +38,10 @@ function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLa
         {node.isCurrent ? (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-850 dark:bg-zinc-100 dark:text-zinc-900 border border-neutral-700 dark:border-zinc-350 shadow-xs">
             {node.name} (Current)
+          </span>
+        ) : node.isAdvisor ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground border border-neutral-300 dark:border-zinc-800">
+            Advisor: {node.name}
           </span>
         ) : (
           <Link
@@ -60,20 +66,36 @@ function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLa
   );
 }
 
-export function ReferralTreeCard({ client, clientName, allClients = [] }: ReferralTreeCardProps) {
+export function ReferralTreeCard({ client, clientName, allClients = [], allAdvisors = [] }: ReferralTreeCardProps) {
   // 1. Get referrer chain (oldest first)
   const ancestors: any[] = [];
   let curr = allClients.find((c) => c.id === client.id);
   const visited = new Set<string>(); // Prevent infinite loops just in case of cycles
 
-  while (curr && curr.referredById) {
+  while (curr) {
     if (visited.has(curr.id)) break;
     visited.add(curr.id);
 
-    const parent = allClients.find((c) => c.id === curr.referredById);
-    if (parent) {
-      ancestors.unshift(parent);
-      curr = parent;
+    if (curr.referredByType === "advisor" && curr.referredByAdvisorId) {
+      const advisor = allAdvisors.find((u) => u.uid === curr.referredByAdvisorId);
+      if (advisor) {
+        ancestors.unshift({
+          id: advisor.uid,
+          name: `${advisor.firstName || ""} ${advisor.lastName || ""}`.trim() || "Unknown Advisor",
+          isAdvisor: true,
+        });
+      }
+      break;
+    }
+
+    if (curr.referredById) {
+      const parent = allClients.find((c) => c.id === curr.referredById);
+      if (parent) {
+        ancestors.unshift(parent);
+        curr = parent;
+      } else {
+        break;
+      }
     } else {
       break;
     }
@@ -109,12 +131,15 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
     let lastNode = currentClientNode;
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const ancestor = ancestors[i];
-      const name = `${ancestor.person?.firstName || ""} ${ancestor.person?.lastName || ""}`.trim();
+      const name = ancestor.isAdvisor
+        ? ancestor.name
+        : `${ancestor.person?.firstName || ""} ${ancestor.person?.lastName || ""}`.trim();
       const ancestorNode: ReferralTreeNode = {
         id: ancestor.id,
         name,
         isCurrent: false,
         isAncestor: true,
+        isAdvisor: ancestor.isAdvisor || false,
         children: [lastNode],
       };
       lastNode = ancestorNode;

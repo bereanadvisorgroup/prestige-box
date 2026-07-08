@@ -429,6 +429,7 @@ export const InsurancePolicySchema = z.object({
   premiumFrequency: z.enum(["Monthly", "Quarterly", "Semi-Annual", "Annually"]).optional(),
   premiumPayment: z.number().default(0),
   note: z.string().optional(),
+  eliminationPeriod: z.enum(["60 days", "90 days", "120 days", "365 days"]).optional(),
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
@@ -466,6 +467,8 @@ export const ClientSchema = z.object({
   referredByCompanyId: z.string().optional().nullable(),
   referredByPersonId: z.string().optional().nullable(),
   referredByReferralTypeId: z.string().optional().nullable(),
+  referredByEventId: z.string().optional().nullable(),
+  referredByAdvisorId: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
@@ -945,3 +948,14 @@ export const ReferralTypeSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type ReferralType = z.infer<typeof ReferralTypeSchema>;
+
+export const EventSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  addressId: z.string().optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Event = z.infer<typeof EventSchema>;

@@ -108,12 +108,14 @@ export const clients = pgTable("clients", {
   personId: uuid("personId").notNull(),
   advisorId: uuid("advisorId"), // users.uid of the advisor/admin who services this client
   referredById: uuid("referredById"), // Self-referencing ID for referrals
-  referredByType: text("referredByType"), // 'client' | 'company' | 'person' | 'referral_type'
+  referredByType: text("referredByType"), // 'client' | 'company' | 'person' | 'referral_type' | 'event'
   referredByCompanyId: uuid("referredByCompanyId").references(() => companies.id, { onDelete: "set null" }),
   referredByPersonId: uuid("referredByPersonId").references(() => people.id, { onDelete: "set null" }),
   referredByReferralTypeId: uuid("referredByReferralTypeId").references(() => referralTypes.id, {
     onDelete: "set null",
   }),
+  referredByEventId: uuid("referredByEventId").references(() => events.id, { onDelete: "set null" }),
+  referredByAdvisorId: uuid("referredByAdvisorId").references(() => users.uid, { onDelete: "set null" }),
   hobbies: text("hobbies").array().default(sql`'{}'::text[]`),
   favoriteSportsTeams: text("favoriteSportsTeams").array().default(sql`'{}'::text[]`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
@@ -323,6 +325,17 @@ export const custodians = pgTable("custodians", {
 export const referralTypes = pgTable("referral_types", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 15e. Events Table
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  addressId: uuid("addressId").references(() => addresses.id, { onDelete: "set null" }),
+  startDate: timestamp("startDate", { withTimezone: true }),
+  endDate: timestamp("endDate", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
