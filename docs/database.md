@@ -70,14 +70,24 @@ erDiagram
         uuid referredByCompanyId FK "References companies"
         uuid referredByPersonId FK "References people"
         uuid referredByReferralTypeId FK "References referral_types"
+        text[] hobbies
+        text[] favoriteSportsTeams
+        jsonb paymentAccounts
+        jsonb familyMembers
         jsonb employments
         jsonb liabilities
+        jsonb mortgages
         jsonb pcDocuments
         jsonb lifeDocuments
         jsonb ltcDocuments
         jsonb estateDocuments
+        jsonb lifePolicies
+        jsonb disabilityPolicies
+        jsonb ltcPolicies
         jsonb moneyManagerAccounts
         jsonb recordKeeperAccounts
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANIES {
         uuid id PK
@@ -205,6 +215,48 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
+    REFERRAL_TYPES {
+        uuid id PK
+        string name UK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    CUSTODIANS {
+        uuid id PK
+        string name UK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    FINANCIAL_ACCOUNT_TYPES {
+        uuid id PK
+        string name UK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    MONEY_MANAGERS {
+        uuid id PK
+        uuid[] personIds
+        string firmName
+        uuid firmAddressId FK
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    RECORD_KEEPERS {
+        uuid id PK
+        uuid[] personIds
+        string firmName
+        uuid firmAddressId FK
+        string website
+        string phone
+        uuid[] clientIds
+        uuid[] companyIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
 ```
 
 ## Core Entities
@@ -226,6 +278,10 @@ erDiagram
 - **Managed Accounts**: Tracks client accounts held with Money Managers and Record Keepers using JSONB array fields:
   - `moneyManagerAccounts`: Structured array of accounts containing identifiers, firm links, balance values, inception/closure dates, custodian references, and primary/contingent beneficiaries.
   - `recordKeeperAccounts`: Structured array of record keeper accounts containing firm links, account numbers, title details, values, and inception/closure dates.
+- **Insurance Policies**: Tracks a client's Life, Disability, and Long-Term Care policies directly on the `clients` table as structured JSONB arrays (migrated to local JSONB storage for flexibility):
+  - `lifePolicies`: Structured array of life insurance policies (using `InsurancePolicySchema` structure containing `id`, `companyId`, `policyNumber`, `policyName`, `issueDate`, `renewalDate`, `beneficiaries`, `contingentBeneficiaries`, and `files`).
+  - `disabilityPolicies`: Structured array of disability insurance policies (using `InsurancePolicySchema` structure).
+  - `ltcPolicies`: Structured array of long-term care insurance policies (using `InsurancePolicySchema` structure).
 - **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
   - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
   - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).

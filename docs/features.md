@@ -60,9 +60,10 @@ The core relationship management suite.
   - **Policies (`/dashboard/crm/policies`)**: Central registry for all Life, Disability, and Long-Term Care insurance policies, detailing premiums, effective dates, and payment schedules.
 
 - **Client Profile & Contextual Navigation**: Selecting a client dynamically switches the sidebar to a tailored client-centric navigation menu containing:
-  - **Overview & Profile (`/dashboard/crm/clients/[id]`)**: Contact details card, personal info (hobbies, sports teams), interactive Net Worth timeline graph, and referrals integration:
+  - **Overview & Profile (`/dashboard/crm/clients/[id]/overview`)**: Contact details card, personal info (hobbies, sports teams), interactive Net Worth timeline graph, and referrals integration:
     - **Referral Source Card (`referred-by-card`)**: View and assign the specific entity that referred the client (supports linking to a Person, Client, Company, or custom Referral Type).
     - **Referral Tree Card (`referral-tree-card`)**: Visual diagram showing the network of clients referred by this individual.
+  - **Personal Info Tab (`/dashboard/crm/clients/[id]/personal`)**: Dedicated page to manage client personal interests (hobbies and favorite sports teams).
   - **Family Tab (`/dashboard/crm/clients/[id]/family`)**: Structure family connections (spouse, parent, child, etc.) and link them directly to system profiles.
   - **Employment (`/dashboard/crm/clients/[id]/employment`)**: Manage employment records, employers, compensation, and active statuses.
   - **Estate Planning (`/dashboard/crm/clients/[id]/estate-planning`)**: Tracks estate planning instruments (Wills, Revocable/Irrevocable Trusts, and other custom documents) in a structured metadata repository. Integrates a searchable autocomplete picker (built on Radix/Base UI Combobox primitives) to link grantors and trustees (either individuals/people or corporate entities/companies) and external legal advisors (law firms). Supports multi-file uploads per repository.
