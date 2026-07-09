@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { supabaseServer } from "@/lib/supabase.server";
+import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
 import { type FinancialAccountType, FinancialAccountTypeSchema } from "@/types/crm";
 
 const TABLE = "financial_account_types";
@@ -11,12 +11,9 @@ const TABLE = "financial_account_types";
  * Helper to verify that the current user is authenticated and has the admin role.
  */
 async function verifyAdmin() {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabaseServer.auth.getUser();
+  const user = await getAuthenticatedUser();
 
-  if (authError || !user) {
+  if (!user) {
     throw new Error("Unauthorized: Please sign in.");
   }
 

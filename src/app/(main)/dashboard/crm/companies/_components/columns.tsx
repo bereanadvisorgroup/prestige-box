@@ -3,10 +3,12 @@
 import Link from "next/link";
 
 import type { ColumnDef, Row } from "@tanstack/react-table";
-import { ArrowUpRight, Building2, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
+import { getCompanyLogoUrl } from "@/lib/social";
 import { formatCurrency, formatPhoneNumber } from "@/lib/utils";
 import type { Company } from "@/types/crm";
 
@@ -24,7 +26,7 @@ export const columns = (onDelete: (company: Company) => void): ColumnDef<Enriche
       const company = row.original;
       return (
         <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <FirmLogo logoUrl={getCompanyLogoUrl(company)} name={company.name} className="h-6 w-6" />
           <Link
             href={`/dashboard/crm/companies/${company.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

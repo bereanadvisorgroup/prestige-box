@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Globe, Pencil, Phone, Shield, Trash2 } from "lucide-react";
 
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export const columns = (
       const company = row.original;
       return (
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
+          <FirmLogo logoUrl={company.logoUrl} name={company.name} className="h-6 w-6" />
           <Link
             href={`/dashboard/admin/disability-insurance-companies/${company.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

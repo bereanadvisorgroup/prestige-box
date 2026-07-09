@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, Users } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getRecordKeeper } from "@/actions/record-keepers";
+import { FirmLogo } from "@/components/crm/firm-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +18,15 @@ interface RecordKeeperDetailsPageProps {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<{
+    clientId?: string;
+  }>;
 }
 
-export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDetailsPageProps) {
+export default async function RecordKeeperDetailsPage({ params, searchParams }: RecordKeeperDetailsPageProps) {
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const clientId = resolvedSearchParams?.clientId;
   const result = await getRecordKeeper(id);
 
   if (!result.success || !result.recordKeeper) {
@@ -36,6 +42,11 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
   const allClients = clientsResult.success && clientsResult.clients ? clientsResult.clients : [];
   const associatedClients = allClients.filter((c) => (recordKeeper.clientIds || []).includes(c.id!));
 
+  const referringClient = allClients.find((c) => c.id === clientId);
+  const referringClientName = referringClient?.person
+    ? `${referringClient.person.firstName} ${referringClient.person.lastName}`
+    : "Client";
+
   // Fetch associated companies details
   const companiesResult = await getCompanies();
   const allCompanies = companiesResult.success && companiesResult.companies ? companiesResult.companies : [];
@@ -43,13 +54,24 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
+      {clientId && (
+        <div className="-mb-4">
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+            <Link href={`/dashboard/crm/clients/${clientId}/assets`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to {referringClientName}&apos;s Assets
+            </Link>
+          </Button>
+        </div>
+      )}
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="flex h-full w-full items-center justify-center rounded-md bg-primary/5 text-primary">
-              <Building2 className="h-8 w-8 text-primary" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={recordKeeper.logoUrl}
+            name={recordKeeper.firmName}
+            className="h-16 w-16 rounded-md border-2 border-primary/10"
+            size="lg"
+          />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{recordKeeper.firmName}</h1>
             <p className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
@@ -105,7 +127,10 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="font-medium text-muted-foreground text-xs">Plan Administrator</p>
+                          <p className="font-medium text-muted-foreground text-xs">
+                            {(recordKeeper.personTitles as Record<string, string>)?.[person.id as string] ||
+                              "Plan Administrator"}
+                          </p>
                         </div>
                       </div>
 
@@ -219,7 +244,7 @@ export default async function RecordKeeperDetailsPage({ params }: RecordKeeperDe
                     return (
                       <Link
                         key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
+                        href={`/dashboard/crm/clients/${client.id}/record-keepers`}
                         className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                       >
                         <div className="space-y-1">

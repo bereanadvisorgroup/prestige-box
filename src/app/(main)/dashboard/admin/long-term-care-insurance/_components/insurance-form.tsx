@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { getCompanies } from "@/actions/companies";
 import { createLongTermCareInsurance, updateLongTermCareInsurance } from "@/actions/long-term-care-insurance";
 import { getPeople } from "@/actions/people";
+import { LogoUpload } from "@/components/crm/logo-upload";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { PersonSearchSelect } from "@/components/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
     resolver: zodResolver(LongTermCareInsuranceFormSchema),
     defaultValues: company
       ? {
+          personTitles: company.personTitles || {},
           id: company.id,
           name: company.name,
           websiteUrl: company.websiteUrl,
@@ -53,6 +55,7 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
           phone: company.phone,
           personIds: company.personIds,
           companyIds: company.companyIds,
+          logoUrl: company.logoUrl || null,
         }
       : {
           name: "",
@@ -60,7 +63,9 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
           policyNames: ["Long Term Care"],
           phone: "",
           personIds: [],
+          personTitles: {},
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -114,6 +119,12 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
       current.filter((id) => id !== personId),
     );
     form.trigger("personIds");
+
+    const currentTitles = form.getValues("personTitles") || {};
+    const newTitles = { ...currentTitles };
+    delete newTitles[personId];
+    form.setValue("personTitles", newTitles);
+    form.trigger("personTitles");
   };
 
   async function onSubmit(values: LongTermCareInsuranceFormValues) {
@@ -172,6 +183,24 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={company?.id}
+                      entityType="long-term-care-insurance"
+                      name={form.watch("name") || "Company"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <FormField
                 control={form.control}
@@ -259,6 +288,25 @@ export function InsuranceForm({ company }: InsuranceFormProps) {
                                   person?.emails?.[0]?.address ||
                                   "No Email"}
                               </p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase shrink-0">
+                                  Title:
+                                </span>
+                                <Input
+                                  size={20}
+                                  placeholder="e.g. Managing Partner"
+                                  value={(form.watch("personTitles") as Record<string, string>)?.[pId] || ""}
+                                  onChange={(e) => {
+                                    const currentTitles = form.getValues("personTitles") || {};
+                                    form.setValue("personTitles", {
+                                      ...currentTitles,
+                                      [pId]: e.target.value,
+                                    });
+                                    form.trigger("personTitles");
+                                  }}
+                                  className="h-7 w-48 text-xs px-2"
+                                />
+                              </div>
                             </div>
                           </div>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { ArrowUpRight } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Client } from "@/types/crm";
 
 interface ReferralTreeNode {
@@ -12,12 +13,14 @@ interface ReferralTreeNode {
   isCurrent: boolean;
   isAncestor: boolean;
   children: ReferralTreeNode[];
+  isAdvisor?: boolean;
 }
 
 interface ReferralTreeCardProps {
   client: Client & { person?: any };
   clientName: string;
   allClients: any[];
+  allAdvisors?: any[];
 }
 
 function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLast: boolean; isRoot: boolean }) {
@@ -33,8 +36,12 @@ function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLa
       {/* Node label */}
       <div className="flex items-center gap-1.5 py-0.5">
         {node.isCurrent ? (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-850 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-neutral-700 dark:border-zinc-350 shadow-xs">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-neutral-850 dark:bg-zinc-100 dark:text-zinc-900 border border-neutral-700 dark:border-zinc-350 shadow-xs">
             {node.name} (Current)
+          </span>
+        ) : node.isAdvisor ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground border border-neutral-300 dark:border-zinc-800">
+            Advisor: {node.name}
           </span>
         ) : (
           <Link
@@ -59,20 +66,36 @@ function RenderTreeNode({ node, isLast, isRoot }: { node: ReferralTreeNode; isLa
   );
 }
 
-export function ReferralTreeCard({ client, clientName, allClients = [] }: ReferralTreeCardProps) {
+export function ReferralTreeCard({ client, clientName, allClients = [], allAdvisors = [] }: ReferralTreeCardProps) {
   // 1. Get referrer chain (oldest first)
   const ancestors: any[] = [];
   let curr = allClients.find((c) => c.id === client.id);
   const visited = new Set<string>(); // Prevent infinite loops just in case of cycles
 
-  while (curr && curr.referredById) {
+  while (curr) {
     if (visited.has(curr.id)) break;
     visited.add(curr.id);
 
-    const parent = allClients.find((c) => c.id === curr.referredById);
-    if (parent) {
-      ancestors.unshift(parent);
-      curr = parent;
+    if (curr.referredByType === "advisor" && curr.referredByAdvisorId) {
+      const advisor = allAdvisors.find((u) => u.uid === curr.referredByAdvisorId);
+      if (advisor) {
+        ancestors.unshift({
+          id: advisor.uid,
+          name: `${advisor.firstName || ""} ${advisor.lastName || ""}`.trim() || "Unknown Advisor",
+          isAdvisor: true,
+        });
+      }
+      break;
+    }
+
+    if (curr.referredById) {
+      const parent = allClients.find((c) => c.id === curr.referredById);
+      if (parent) {
+        ancestors.unshift(parent);
+        curr = parent;
+      } else {
+        break;
+      }
     } else {
       break;
     }
@@ -108,12 +131,15 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
     let lastNode = currentClientNode;
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const ancestor = ancestors[i];
-      const name = `${ancestor.person?.firstName || ""} ${ancestor.person?.lastName || ""}`.trim();
+      const name = ancestor.isAdvisor
+        ? ancestor.name
+        : `${ancestor.person?.firstName || ""} ${ancestor.person?.lastName || ""}`.trim();
       const ancestorNode: ReferralTreeNode = {
         id: ancestor.id,
         name,
         isCurrent: false,
         isAncestor: true,
+        isAdvisor: ancestor.isAdvisor || false,
         children: [lastNode],
       };
       lastNode = ancestorNode;
@@ -126,11 +152,13 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
   const hasRelations = ancestors.length > 0 || rootNode.children.length > 0;
 
   return (
-    <div className="flex flex-col h-full min-h-[220px] rounded-lg border border-neutral-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <h3 className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200 mb-4">
-        Referral Tree:
-      </h3>
-      <div className="flex-1 overflow-y-auto max-h-[220px] pr-1 scrollbar-thin">
+    <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
+          Referral Tree:
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto max-h-[220px] pr-1 scrollbar-thin">
         {hasRelations ? (
           <div className="py-2">
             <RenderTreeNode node={rootNode} isLast={true} isRoot={true} />
@@ -138,7 +166,7 @@ export function ReferralTreeCard({ client, clientName, allClients = [] }: Referr
         ) : (
           <p className="text-xs text-muted-foreground italic py-2">No referral relations to display.</p>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

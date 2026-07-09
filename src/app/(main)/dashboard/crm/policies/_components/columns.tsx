@@ -97,11 +97,11 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
           </div>
           {isPast ? (
             <Badge variant="destructive" className="h-3 w-fit py-0 text-[8px] shadow-none">
-              EXPIRED
+              {row.original.lifeInsuranceCompanyId ? "ANNIVERSARY PASSED" : "EXPIRED"}
             </Badge>
           ) : isSoon ? (
             <Badge variant="secondary" className="h-3 w-fit bg-amber-100 py-0 text-[8px] text-amber-700 shadow-none">
-              RENEWAL SOON
+              {row.original.lifeInsuranceCompanyId ? "ANNIVERSARY SOON" : "RENEWAL SOON"}
             </Badge>
           ) : null}
         </div>

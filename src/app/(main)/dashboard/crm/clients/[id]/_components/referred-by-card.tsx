@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client } from "@/types/crm";
@@ -18,6 +19,8 @@ interface ReferredByCardProps {
   allCompanies: any[];
   allPeople: any[];
   allReferralTypes: any[];
+  allEvents: any[];
+  allAdvisors?: any[];
 }
 
 export function ReferredByCard({
@@ -26,6 +29,8 @@ export function ReferredByCard({
   allCompanies = [],
   allPeople = [],
   allReferralTypes = [],
+  allEvents = [],
+  allAdvisors = [],
 }: ReferredByCardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +43,8 @@ export function ReferredByCard({
   const [referredByReferralTypeId, setReferredByReferralTypeId] = useState<string | null>(
     client.referredByReferralTypeId || null,
   );
+  const [referredByEventId, setReferredByEventId] = useState<string | null>(client.referredByEventId || null);
+  const [referredByAdvisorId, setReferredByAdvisorId] = useState<string | null>(client.referredByAdvisorId || null);
 
   // Search query for combobox
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,6 +56,8 @@ export function ReferredByCard({
     setReferredByCompanyId(client.referredByCompanyId || null);
     setReferredByPersonId(client.referredByPersonId || null);
     setReferredByReferralTypeId(client.referredByReferralTypeId || null);
+    setReferredByEventId(client.referredByEventId || null);
+    setReferredByAdvisorId(client.referredByAdvisorId || null);
   }, [client]);
 
   // Determine current active entity ID based on type
@@ -58,8 +67,18 @@ export function ReferredByCard({
     if (referredByType === "company") return referredByCompanyId || "";
     if (referredByType === "person") return referredByPersonId || "";
     if (referredByType === "referral_type") return referredByReferralTypeId || "";
+    if (referredByType === "event") return referredByEventId || "";
+    if (referredByType === "advisor") return referredByAdvisorId || "";
     return "";
-  }, [referredByType, referredById, referredByCompanyId, referredByPersonId, referredByReferralTypeId]);
+  }, [
+    referredByType,
+    referredById,
+    referredByCompanyId,
+    referredByPersonId,
+    referredByReferralTypeId,
+    referredByEventId,
+    referredByAdvisorId,
+  ]);
 
   // Compute active referrer name for display in input
   const activeLabel = useMemo(() => {
@@ -80,6 +99,14 @@ export function ReferredByCard({
       const match = allReferralTypes.find((rt) => rt.id === referredByReferralTypeId);
       return match ? match.name : "";
     }
+    if (referredByType === "event") {
+      const match = allEvents.find((e) => e.id === referredByEventId);
+      return match ? match.title : "";
+    }
+    if (referredByType === "advisor") {
+      const match = allAdvisors.find((u) => u.uid === referredByAdvisorId);
+      return match ? `${match.firstName || ""} ${match.lastName || ""}`.trim() : "";
+    }
     return "";
   }, [
     referredByType,
@@ -87,10 +114,14 @@ export function ReferredByCard({
     referredByCompanyId,
     referredByPersonId,
     referredByReferralTypeId,
+    referredByEventId,
+    referredByAdvisorId,
     allClients,
     allCompanies,
     allPeople,
     allReferralTypes,
+    allEvents,
+    allAdvisors,
   ]);
 
   useEffect(() => {
@@ -125,6 +156,19 @@ export function ReferredByCard({
     return allReferralTypes.filter((rt) => rt.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [allReferralTypes, searchQuery]);
 
+  const eventOptions = useMemo(() => {
+    if (!searchQuery) return allEvents;
+    return allEvents.filter((e) => e.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [allEvents, searchQuery]);
+
+  const advisorOptions = useMemo(() => {
+    if (!searchQuery) return allAdvisors;
+    return allAdvisors.filter((u) => {
+      const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+      return name.includes(searchQuery.toLowerCase());
+    });
+  }, [allAdvisors, searchQuery]);
+
   // Handle source type changes
   const handleTypeChange = async (type: string) => {
     const newType = type === "none" ? null : type;
@@ -136,6 +180,8 @@ export function ReferredByCard({
     setReferredByCompanyId(null);
     setReferredByPersonId(null);
     setReferredByReferralTypeId(null);
+    setReferredByEventId(null);
+    setReferredByAdvisorId(null);
 
     // If "none", save immediately
     if (!newType) {
@@ -145,6 +191,8 @@ export function ReferredByCard({
         referredByCompanyId: null,
         referredByPersonId: null,
         referredByReferralTypeId: null,
+        referredByEventId: null,
+        referredByAdvisorId: null,
       });
     }
   };
@@ -156,6 +204,8 @@ export function ReferredByCard({
     referredByCompanyId: string | null;
     referredByPersonId: string | null;
     referredByReferralTypeId: string | null;
+    referredByEventId: string | null;
+    referredByAdvisorId: string | null;
   }) => {
     try {
       setIsLoading(true);
@@ -174,6 +224,8 @@ export function ReferredByCard({
       setReferredByCompanyId(client.referredByCompanyId || null);
       setReferredByPersonId(client.referredByPersonId || null);
       setReferredByReferralTypeId(client.referredByReferralTypeId || null);
+      setReferredByEventId(client.referredByEventId || null);
+      setReferredByAdvisorId(client.referredByAdvisorId || null);
     } finally {
       setIsLoading(false);
     }
@@ -189,12 +241,16 @@ export function ReferredByCard({
       referredByCompanyId: !isClear && referredByType === "company" ? entityId : null,
       referredByPersonId: !isClear && referredByType === "person" ? entityId : null,
       referredByReferralTypeId: !isClear && referredByType === "referral_type" ? entityId : null,
+      referredByEventId: !isClear && referredByType === "event" ? entityId : null,
+      referredByAdvisorId: !isClear && referredByType === "advisor" ? entityId : null,
     };
 
     setReferredById(payload.referredById);
     setReferredByCompanyId(payload.referredByCompanyId);
     setReferredByPersonId(payload.referredByPersonId);
     setReferredByReferralTypeId(payload.referredByReferralTypeId);
+    setReferredByEventId(payload.referredByEventId);
+    setReferredByAdvisorId(payload.referredByAdvisorId);
 
     if (isClear) {
       setReferredByType(null);
@@ -204,14 +260,16 @@ export function ReferredByCard({
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[220px] rounded-lg border border-neutral-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
-          Referred By: {activeLabel && <span className="text-primary font-semibold ml-1">{activeLabel}</span>}
-        </h3>
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-      </div>
-      <div className="flex-1 flex flex-col justify-center space-y-4">
+    <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex justify-between items-center w-full">
+          <span className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
+            Referred By: {activeLabel && <span className="text-primary font-semibold ml-1">{activeLabel}</span>}
+          </span>
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col justify-center space-y-4">
         {/* Source Type Select */}
         <div className="space-y-1">
           <label
@@ -231,10 +289,12 @@ export function ReferredByCard({
               <SelectItem value="none">
                 <span className="text-muted-foreground italic">None / Clear</span>
               </SelectItem>
+              <SelectItem value="advisor">Advisor</SelectItem>
               <SelectItem value="client">Client</SelectItem>
               <SelectItem value="company">Company</SelectItem>
               <SelectItem value="person">Person</SelectItem>
               <SelectItem value="referral_type">Referral Type</SelectItem>
+              <SelectItem value="event">Event</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -262,7 +322,7 @@ export function ReferredByCard({
             >
               <ComboboxInput
                 id="referrer-entity-select"
-                placeholder={`Search ${referredByType === "referral_type" ? "referral types" : referredByType + "s"}...`}
+                placeholder={`Search ${referredByType === "referral_type" ? "referral types" : referredByType === "event" ? "events" : referredByType === "advisor" ? "advisors" : referredByType + "s"}...`}
               />
               <ComboboxContent className="w-full min-w-[280px]">
                 <ComboboxList>
@@ -303,12 +363,29 @@ export function ReferredByCard({
                         {rt.name}
                       </ComboboxItem>
                     ))}
+
+                  {referredByType === "event" &&
+                    eventOptions.map((e) => (
+                      <ComboboxItem key={e.id} value={e.id} label={e.title}>
+                        {e.title}
+                      </ComboboxItem>
+                    ))}
+
+                  {referredByType === "advisor" &&
+                    advisorOptions.map((u) => {
+                      const name = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+                      return (
+                        <ComboboxItem key={u.uid} value={u.uid} label={name}>
+                          {name}
+                        </ComboboxItem>
+                      );
+                    })}
                 </ComboboxList>
               </ComboboxContent>
             </Combobox>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

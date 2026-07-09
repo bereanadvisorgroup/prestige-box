@@ -4,14 +4,17 @@ import { ExternalLink, Trophy } from "lucide-react";
 
 import { getClient, getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { getEvents } from "@/actions/events";
 import { getNotes } from "@/actions/notes";
 import { getPeople } from "@/actions/people";
 import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
 import { getTasks } from "@/actions/tasks";
+import { getAdvisors } from "@/actions/users";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
+import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
 import { NotesCard } from "../_components/notes-card";
 import { ReferralTreeCard } from "../_components/referral-tree-card";
@@ -39,15 +42,25 @@ export default async function ClientPage({ params }: ClientPageProps) {
   };
 
   // Fetch all required data for the Internal Overview dashboard
-  const [allClientsResult, tasksResult, notesResult, companiesResult, peopleResult, referralTypesResult] =
-    await Promise.all([
-      getClients(),
-      getTasks({ clientId: id }),
-      getNotes({ clientId: id }),
-      getCompanies(),
-      getPeople(),
-      getReferralTypes(),
-    ]);
+  const [
+    allClientsResult,
+    tasksResult,
+    notesResult,
+    companiesResult,
+    peopleResult,
+    referralTypesResult,
+    eventsResult,
+    advisorsResult,
+  ] = await Promise.all([
+    getClients(),
+    getTasks({ clientId: id }),
+    getNotes({ clientId: id }),
+    getCompanies(),
+    getPeople(),
+    getReferralTypes(),
+    getEvents(),
+    getAdvisors(),
+  ]);
 
   const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
   const tasks = tasksResult.success && tasksResult.tasks ? tasksResult.tasks : [];
@@ -55,6 +68,8 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const allCompanies = companiesResult.success ? companiesResult.companies || [] : [];
   const allPeople = peopleResult.success ? peopleResult.people || [] : [];
   const allReferralTypes = referralTypesResult.success ? referralTypesResult.referralTypes || [] : [];
+  const allEvents = eventsResult.success ? eventsResult.events || [] : [];
+  const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
 
   const person = clientResult.person;
   const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
@@ -68,11 +83,13 @@ export default async function ClientPage({ params }: ClientPageProps) {
   );
 
   return (
-    <div className="py-4">
-      <ClientHeaderPortal sectionName="Overview" />
+    <div className="space-y-6 py-4">
+      <ClientHeaderPortal sectionName="Overview">
+        <DocumentsButton client={client} />
+      </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Six Cards Grid in 3x2 Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:col-span-2">
           <TasksCard clientId={id} initialTasks={tasks} />
           <NotesCard clientId={id} initialNotes={notes} />
           <InterestsCard client={client} />
@@ -83,8 +100,10 @@ export default async function ClientPage({ params }: ClientPageProps) {
             allCompanies={allCompanies}
             allPeople={allPeople}
             allReferralTypes={allReferralTypes}
+            allEvents={allEvents}
+            allAdvisors={allAdvisors}
           />
-          <ReferralTreeCard client={client} clientName={clientName} allClients={allClients} />
+          <ReferralTreeCard client={client} clientName={clientName} allClients={allClients} allAdvisors={allAdvisors} />
         </div>
 
         {/* Favorite Teams & News Sidebar */}

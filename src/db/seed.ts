@@ -322,16 +322,6 @@ async function main() {
             isPrimary: false,
           },
         ],
-        driversLicense: {
-          number: faker.string.numeric(9),
-          state: faker.location.state({ abbreviated: true }),
-          expirationDate: faker.date.future({ years: 5 }).toISOString().split("T")[0],
-        },
-        pii: {
-          ssn: faker.helpers.fromRegExp(/[0-9]{3}-[0-9]{2}-[0-9]{4}/),
-          biologicalGender: faker.helpers.arrayElement(["Male", "Female"]),
-          birthDate: faker.date.birthdate({ min: 18, max: 80, mode: "age" }).toISOString().split("T")[0],
-        },
         addresses: addressJSON,
         addressIds: personAddressIds,
       });
@@ -505,11 +495,15 @@ async function main() {
           relationship: "Spouse" as const,
           // Drives the auto-generated wedding-anniversary task.
           marriageDate: faker.date.past({ years: 25 }).toISOString().split("T")[0],
+          gender: faker.helpers.arrayElement(["Male", "Female"]),
+          birthDate: faker.date.birthdate({ min: 18, max: 80, mode: "age" }).toISOString().split("T")[0],
         },
         {
           id: faker.string.uuid(),
           personId: randomFamilyPeople[1],
           relationship: "Child" as const,
+          gender: faker.helpers.arrayElement(["Male", "Female"]),
+          birthDate: faker.date.birthdate({ min: 1, max: 18, mode: "age" }).toISOString().split("T")[0],
         },
       ];
 
@@ -557,6 +551,17 @@ async function main() {
         paymentAccounts: paymentAccounts,
         familyMembers: familyMembers,
         employments: employments,
+        driversLicense: {
+          number: faker.string.numeric(9),
+          issueState: faker.location.state({ abbreviated: true }),
+          issueDate: faker.date.past({ years: 5 }).toISOString().split("T")[0],
+          expirationDate: faker.date.future({ years: 5 }).toISOString().split("T")[0],
+        },
+        pii: {
+          ssn: faker.helpers.fromRegExp(/[0-9]{3}-[0-9]{2}-[0-9]{4}/),
+          biologicalGender: faker.helpers.arrayElement(["Male", "Female"]),
+          birthDate: faker.date.birthdate({ min: 18, max: 80, mode: "age" }).toISOString().split("T")[0],
+        },
         pcDocuments: [
           {
             name: "Homeowners Declarations",
@@ -1027,8 +1032,8 @@ async function main() {
       const person = personById.get(client.personId);
       const clientName = `${person?.firstName ?? ""} ${person?.lastName ?? ""}`.trim() || "Client";
 
-      // Birthday — anchored on the person.
-      const birthDate = (person?.pii as { birthDate?: string } | undefined)?.birthDate;
+      // Birthday — anchored on the person, but loaded from client.
+      const birthDate = (client.pii as { birthDate?: string } | undefined)?.birthDate;
       if (birthDate) {
         pushAutoTask({
           sourceType: "birthday",

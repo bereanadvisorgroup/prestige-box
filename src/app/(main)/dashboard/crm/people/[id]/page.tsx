@@ -33,6 +33,7 @@ import { getRecordKeepers } from "@/actions/record-keepers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getPersonPhotoUrl } from "@/lib/social";
 
 import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
@@ -143,9 +144,9 @@ export default async function PersonPage({ params }: PersonPageProps) {
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            {person.photoUrl && (
+            {getPersonPhotoUrl(person) && (
               <AvatarImage
-                src={person.photoUrl}
+                src={getPersonPhotoUrl(person)!}
                 alt={`${person.firstName} ${person.lastName}`}
                 className="object-cover"
               />

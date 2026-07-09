@@ -72,7 +72,7 @@ function AssociationCardList({
 }: {
   title: string;
   description: string;
-  items: { id: string; name: string; website?: string | null; phone?: string | null }[];
+  items: { id: string; name: string; website?: string | null; phone?: string | null; title?: string | null }[];
   linkPrefix: string;
   icon: any;
 }) {
@@ -93,7 +93,12 @@ function AssociationCardList({
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                    {item.title && (
+                      <p className="text-muted-foreground text-[11px] font-semibold mt-0.5">{item.title}</p>
+                    )}
+                  </div>
                   <Link href={`${linkPrefix}/${item.id}`}>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                       <ArrowUpRight className="h-4 w-4" />
@@ -305,77 +310,44 @@ export function PersonProfileTabs({
                         <p className="text-muted-foreground text-sm">No phone numbers listed.</p>
                       )}
                     </div>
+
+                    <div>
+                      <p className="mt-4 mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                        Social Media Accounts
+                      </p>
+                      {person.socialMedia && person.socialMedia.length > 0 ? (
+                        <div className="space-y-2">
+                          {person.socialMedia.map((sm) => {
+                            const Icon = Globe;
+
+                            return (
+                              <div key={sm.id} className="flex items-center gap-2 text-sm">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                <a
+                                  href={sm.url.startsWith("http") ? sm.url : `https://${sm.url}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                                >
+                                  {sm.type}
+                                </a>
+                                <Badge
+                                  variant={sm.isPrimary ? "default" : "outline"}
+                                  className="px-1.5 py-0 text-[10px]"
+                                >
+                                  {sm.isPrimary ? "Primary" : "Secondary"}
+                                  {sm.useProfilePhoto && " (Using Photo)"}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">No social media accounts listed.</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
-
-                {/* Personal Information */}
-                {(person.pii || person.driversLicense) && (
-                  <Card className="border-none shadow-md">
-                    <CardHeader className="border-b bg-muted/10 pb-4">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <Fingerprint className="h-5 w-5 text-primary" /> Personal Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-6">
-                      {person.pii && (
-                        <div className="grid grid-cols-2 gap-4">
-                          {person.pii.birthDate && (
-                            <div>
-                              <p className="font-medium text-muted-foreground text-xs">Date of Birth</p>
-                              <p className="mt-0.5 font-semibold text-sm">{person.pii.birthDate}</p>
-                            </div>
-                          )}
-                          {person.pii.biologicalGender && (
-                            <div>
-                              <p className="font-medium text-muted-foreground text-xs">Biological Gender</p>
-                              <p className="mt-0.5 font-semibold text-sm">{person.pii.biologicalGender}</p>
-                            </div>
-                          )}
-                          {person.pii.ssn && (
-                            <div className="col-span-2">
-                              <p className="font-medium text-muted-foreground text-xs">Social Security Number (SSN)</p>
-                              <p className="mt-0.5 font-mono font-semibold text-sm">
-                                ***-**-{person.pii.ssn.slice(-4)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {person.driversLicense?.number && (
-                        <div className="mt-2 border-t pt-4">
-                          <p className="mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                            Driver's License
-                          </p>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-muted-foreground text-xs">License Number</p>
-                              <p className="font-mono font-semibold">{person.driversLicense.number}</p>
-                            </div>
-                            {person.driversLicense.issueState && (
-                              <div>
-                                <p className="text-muted-foreground text-xs">State</p>
-                                <p className="font-semibold">{person.driversLicense.issueState}</p>
-                              </div>
-                            )}
-                            {person.driversLicense.issueDate && (
-                              <div>
-                                <p className="text-muted-foreground text-xs">Issue Date</p>
-                                <p className="font-semibold">{person.driversLicense.issueDate}</p>
-                              </div>
-                            )}
-                            {person.driversLicense.expirationDate && (
-                              <div>
-                                <p className="text-muted-foreground text-xs">Expiration Date</p>
-                                <p className="font-semibold">{person.driversLicense.expirationDate}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
               </div>
 
               {/* Associated Locations */}
@@ -576,6 +548,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Legal Professional",
                 }))}
                 linkPrefix="/dashboard/crm/law-firms"
                 icon={Scale}
@@ -594,6 +567,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Accounting Professional",
                 }))}
                 linkPrefix="/dashboard/crm/accounting-firms"
                 icon={ReceiptText}
@@ -612,6 +586,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Actuarial Professional",
                 }))}
                 linkPrefix="/dashboard/crm/actuarial-firms"
                 icon={Calculator}
@@ -630,6 +605,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Banking Professional",
                 }))}
                 linkPrefix="/dashboard/crm/banks"
                 icon={Landmark}
@@ -648,6 +624,7 @@ export function PersonProfileTabs({
                   name: f.firmName,
                   website: f.website,
                   phone: f.phone,
+                  title: (f.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/crm/property-and-casualty"
                 icon={Shield}
@@ -666,6 +643,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/life-insurance-companies"
                 icon={HeartHandshake}
@@ -684,6 +662,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/disability-insurance-companies"
                 icon={ShieldAlert}
@@ -702,6 +681,7 @@ export function PersonProfileTabs({
                   name: c.name,
                   website: c.websiteUrl,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Insurance Professional",
                 }))}
                 linkPrefix="/dashboard/admin/long-term-care-insurance"
                 icon={HeartPulse}
@@ -720,6 +700,7 @@ export function PersonProfileTabs({
                   name: c.firmName,
                   website: c.website,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Wealth Advisor",
                 }))}
                 linkPrefix="/dashboard/admin/money-managers"
                 icon={TrendingUp}
@@ -738,6 +719,7 @@ export function PersonProfileTabs({
                   name: c.firmName,
                   website: c.website,
                   phone: c.phone,
+                  title: (c.personTitles as Record<string, string>)?.[person.id as string] || "Plan Administrator",
                 }))}
                 linkPrefix="/dashboard/admin/record-keepers"
                 icon={Database}

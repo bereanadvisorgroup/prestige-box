@@ -37,8 +37,7 @@ export const people = pgTable("people", {
   photoUrl: text("photoUrl"),
   emails: jsonb("emails").default(sql`'[]'::jsonb`),
   phones: jsonb("phones").default(sql`'[]'::jsonb`),
-  driversLicense: jsonb("driversLicense").default(sql`'{}'::jsonb`),
-  pii: jsonb("pii").default(sql`'{}'::jsonb`),
+  socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   addresses: jsonb("addresses").default(sql`'[]'::jsonb`),
   addressIds: uuid("addressIds").array().default(sql`'{}'::uuid[]`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
@@ -63,8 +62,10 @@ export const lifeInsuranceCompanies = pgTable("life_insurance_companies", {
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -77,8 +78,10 @@ export const disabilityInsuranceCompanies = pgTable("disability_insurance_compan
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -91,8 +94,10 @@ export const longTermCareInsurance = pgTable("long_term_care_insurance", {
   policyNames: text("policyNames").array().default(sql`'{}'::text[]`),
   phone: text("phone"),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -103,12 +108,14 @@ export const clients = pgTable("clients", {
   personId: uuid("personId").notNull(),
   advisorId: uuid("advisorId"), // users.uid of the advisor/admin who services this client
   referredById: uuid("referredById"), // Self-referencing ID for referrals
-  referredByType: text("referredByType"), // 'client' | 'company' | 'person' | 'referral_type'
+  referredByType: text("referredByType"), // 'client' | 'company' | 'person' | 'referral_type' | 'event'
   referredByCompanyId: uuid("referredByCompanyId").references(() => companies.id, { onDelete: "set null" }),
   referredByPersonId: uuid("referredByPersonId").references(() => people.id, { onDelete: "set null" }),
   referredByReferralTypeId: uuid("referredByReferralTypeId").references(() => referralTypes.id, {
     onDelete: "set null",
   }),
+  referredByEventId: uuid("referredByEventId").references(() => events.id, { onDelete: "set null" }),
+  referredByAdvisorId: uuid("referredByAdvisorId").references(() => users.uid, { onDelete: "set null" }),
   hobbies: text("hobbies").array().default(sql`'{}'::text[]`),
   favoriteSportsTeams: text("favoriteSportsTeams").array().default(sql`'{}'::text[]`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
@@ -125,6 +132,9 @@ export const clients = pgTable("clients", {
   recordKeeperAccounts: jsonb("recordKeeperAccounts").default(sql`'[]'::jsonb`),
   liabilities: jsonb("liabilities").default(sql`'[]'::jsonb`),
   mortgages: jsonb("mortgages").default(sql`'[]'::jsonb`),
+  driversLicense: jsonb("driversLicense").default(sql`'{}'::jsonb`),
+  pii: jsonb("pii").default(sql`'{}'::jsonb`),
+  documentUrl: text("documentUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -144,6 +154,8 @@ export const companies = pgTable("companies", {
   lifeDocuments: jsonb("lifeDocuments").default(sql`'[]'::jsonb`),
   disabilityDocuments: jsonb("disabilityDocuments").default(sql`'[]'::jsonb`),
   ltcDocuments: jsonb("ltcDocuments").default(sql`'[]'::jsonb`),
+  logoUrl: text("logoUrl"),
+  socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
@@ -185,12 +197,14 @@ export const clientPolicies = pgTable("client_policies", {
 export const lawFirms = pgTable("law_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -199,12 +213,14 @@ export const lawFirms = pgTable("law_firms", {
 export const accountingFirms = pgTable("accounting_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -213,12 +229,14 @@ export const accountingFirms = pgTable("accounting_firms", {
 export const actuarialFirms = pgTable("actuarial_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -227,12 +245,14 @@ export const actuarialFirms = pgTable("actuarial_firms", {
 export const banks = pgTable("banks", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -241,12 +261,14 @@ export const banks = pgTable("banks", {
 export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -255,12 +277,14 @@ export const propertyAndCasualtyFirms = pgTable("property_and_casualty_firms", {
 export const moneyManagers = pgTable("money_managers", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -269,12 +293,14 @@ export const moneyManagers = pgTable("money_managers", {
 export const recordKeepers = pgTable("record_keepers", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
   firmName: text("firmName").notNull(),
   firmAddressId: uuid("firmAddressId"),
   website: text("website"),
   phone: text("phone"),
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -299,6 +325,17 @@ export const custodians = pgTable("custodians", {
 export const referralTypes = pgTable("referral_types", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 15e. Events Table
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  addressId: uuid("addressId").references(() => addresses.id, { onDelete: "set null" }),
+  startDate: timestamp("startDate", { withTimezone: true }),
+  endDate: timestamp("endDate", { withTimezone: true }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

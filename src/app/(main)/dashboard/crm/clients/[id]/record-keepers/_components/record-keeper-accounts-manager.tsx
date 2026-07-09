@@ -342,7 +342,7 @@ export function RecordKeeperAccountsManager({
                       <span>{group.keeperName}</span>
                       {group.keeperId && (
                         <Link
-                          href={`/dashboard/admin/record-keepers/${group.keeperId}`}
+                          href={`/dashboard/admin/record-keepers/${group.keeperId}?clientId=${client.id}`}
                           className="text-muted-foreground transition-colors hover:text-primary"
                         >
                           <ArrowUpRight className="inline h-4 w-4" />

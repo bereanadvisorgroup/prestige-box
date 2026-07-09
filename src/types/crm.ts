@@ -29,6 +29,15 @@ export const PhoneNumberSchema = z.object({
   isPrimary: z.boolean().default(false),
 });
 
+export const SocialMediaTypeSchema = z.enum(["Facebook", "Instagram", "X", "LinkedIn", "YouTube"]);
+export const SocialMediaAccountSchema = z.object({
+  id: z.string(),
+  type: SocialMediaTypeSchema,
+  url: z.string().url("Invalid social media URL (must start with http:// or https://)"),
+  isPrimary: z.boolean().default(false),
+  useProfilePhoto: z.boolean().default(false),
+});
+
 export const DriversLicenseSchema = z.object({
   number: z.string().optional(),
   issueState: z.string().optional(),
@@ -61,8 +70,7 @@ export const PersonSchema = z.object({
   photoUrl: z.string().optional().nullable(),
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
-  driversLicense: DriversLicenseSchema.optional(),
-  pii: PiiSchema.optional(),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
   addresses: z.array(PersonAddressSchema).default([]),
   addressIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
@@ -92,8 +100,10 @@ export const LifeInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -105,8 +115,10 @@ export const DisabilityInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -118,8 +130,10 @@ export const LongTermCareInsuranceSchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -250,6 +264,8 @@ export const CompanySchema = z.object({
       }),
     )
     .default([]),
+  logoUrl: z.string().optional().nullable(),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
   estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -273,6 +289,8 @@ export const FamilyMemberSchema = z.object({
   relationship: FamilyRelationType,
   parentId: z.string().optional(),
   marriageDate: z.string().optional(), // YYYY-MM-DD; meaningful on the Spouse entry, drives anniversary tasks
+  gender: BiologicalGenderSchema.optional(),
+  birthDate: z.string().optional(),
 });
 
 export const EmploymentSchema = z.object({
@@ -354,6 +372,7 @@ export const InsurancePolicyFileSchema = z.object({
   id: z.string(),
   name: z.string(),
   url: z.string(),
+  title: z.enum(["Issued Illustration", "Policy Receipts", "Other"]).optional(),
   uploadedAt: z.string().optional(),
 });
 
@@ -406,6 +425,11 @@ export const InsurancePolicySchema = z.object({
   policyName: z.string().optional(),
   issueDate: z.string().optional(), // YYYY-MM-DD
   renewalDate: z.string().optional(), // YYYY-MM-DD
+  anniversaryDate: z.string().optional(), // YYYY-MM-DD
+  premiumFrequency: z.enum(["Monthly", "Quarterly", "Semi-Annual", "Annually"]).optional(),
+  premiumPayment: z.number().default(0),
+  note: z.string().optional(),
+  eliminationPeriod: z.enum(["60 days", "90 days", "120 days", "365 days"]).optional(),
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
@@ -443,6 +467,8 @@ export const ClientSchema = z.object({
   referredByCompanyId: z.string().optional().nullable(),
   referredByPersonId: z.string().optional().nullable(),
   referredByReferralTypeId: z.string().optional().nullable(),
+  referredByEventId: z.string().optional().nullable(),
+  referredByAdvisorId: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
@@ -459,6 +485,9 @@ export const ClientSchema = z.object({
   recordKeeperAccounts: z.array(RecordKeeperAccountSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
+  driversLicense: DriversLicenseSchema.optional(),
+  pii: PiiSchema.optional(),
+  documentUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -562,12 +591,14 @@ export const ClientPolicySchema = z.object({
 export const LawFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -575,12 +606,14 @@ export const LawFirmSchema = z.object({
 export const AccountingFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -588,12 +621,14 @@ export const AccountingFirmSchema = z.object({
 export const ActuarialFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -601,12 +636,14 @@ export const ActuarialFirmSchema = z.object({
 export const BankSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Bank name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -614,12 +651,14 @@ export const BankSchema = z.object({
 export const PropertyAndCasualtyFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -627,12 +666,14 @@ export const PropertyAndCasualtyFirmSchema = z.object({
 export const MoneyManagerSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Money manager name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -640,12 +681,14 @@ export const MoneyManagerSchema = z.object({
 export const RecordKeeperSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Record keeper name is required"),
   firmAddressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -654,6 +697,7 @@ export const RecordKeeperSchema = z.object({
 
 export type Address = z.infer<typeof AddressSchema>;
 export type PersonAddress = z.infer<typeof PersonAddressSchema>;
+export type SocialMediaAccount = z.infer<typeof SocialMediaAccountSchema>;
 export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
@@ -904,3 +948,14 @@ export const ReferralTypeSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type ReferralType = z.infer<typeof ReferralTypeSchema>;
+
+export const EventSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  addressId: z.string().optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Event = z.infer<typeof EventSchema>;
