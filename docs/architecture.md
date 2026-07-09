@@ -55,6 +55,9 @@ Authentication and MFA are handled by Supabase Auth.
 ### Database Connection
 Instead of using the Supabase Javascript Client to execute database queries directly against the PostgREST API, Prestige Box connects to the Supabase Postgres database directly using **Drizzle ORM** via standard connection pooling.
 
+### Storage
+- **File & Asset Storage**: Logos, avatars, and documents are stored securely using Supabase Storage. Brand assets (such as Money Manager, Record Keeper, and corporate logos) are hosted in the `avatars` bucket, while sensitive client policy and estate planning files are uploaded to secure private storage folders.
+
 ## State Management
 
 Prestige Box employs a dual-tier state management strategy:

@@ -46,6 +46,9 @@ erDiagram
     FINANCIAL_ACCOUNT_TYPES ||--o{ CLIENTS : "defines account types of"
     COMPANIES ||--o{ CLIENTS : "referred client (referredByCompanyId)"
     PEOPLE ||--o{ CLIENTS : "referred client (referredByPersonId)"
+    EVENTS ||--o{ CLIENTS : "referred client (referredByEventId)"
+    USERS ||--o{ CLIENTS : "referred client (referredByAdvisorId)"
+    ADDRESSES ||--o{ EVENTS : "held at (addressId)"
     
     USERS {
         uuid uid PK "References auth.users"
@@ -58,8 +61,10 @@ erDiagram
         uuid id PK
         string firstName
         string lastName
+        string title
         jsonb emails
         jsonb phones
+        jsonb socialMedia
     }
     CLIENTS {
         uuid id PK
@@ -70,6 +75,10 @@ erDiagram
         uuid referredByCompanyId FK "References companies"
         uuid referredByPersonId FK "References people"
         uuid referredByReferralTypeId FK "References referral_types"
+        uuid referredByEventId FK "References events"
+        uuid referredByAdvisorId FK "References users"
+        jsonb driversLicense
+        jsonb pii
         text[] hobbies
         text[] favoriteSportsTeams
         jsonb paymentAccounts
@@ -86,6 +95,7 @@ erDiagram
         jsonb ltcPolicies
         jsonb moneyManagerAccounts
         jsonb recordKeeperAccounts
+        string documentUrl
         timestamp createdAt
         timestamp updatedAt
     }
@@ -96,12 +106,14 @@ erDiagram
         uuid[] clientIds
         string website
         string phone
+        string logoUrl
         jsonb addressSitus
         jsonb addressNexus
         jsonb paymentAccounts
         jsonb lifeDocuments
         jsonb disabilityDocuments
         jsonb ltcDocuments
+        jsonb socialMedia
         numeric estimatedValue
     }
     COMPANY_VALUATION_HISTORY {
@@ -221,6 +233,15 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
+    EVENTS {
+        uuid id PK
+        string title
+        uuid addressId FK "References addresses"
+        timestamp startDate
+        timestamp endDate
+        timestamp createdAt
+        timestamp updatedAt
+    }
     CUSTODIANS {
         uuid id PK
         string name UK
@@ -236,10 +257,12 @@ erDiagram
     MONEY_MANAGERS {
         uuid id PK
         uuid[] personIds
+        jsonb personTitles
         string firmName
         uuid firmAddressId FK
         string website
         string phone
+        string logoUrl
         uuid[] clientIds
         uuid[] companyIds
         timestamp createdAt
@@ -248,10 +271,12 @@ erDiagram
     RECORD_KEEPERS {
         uuid id PK
         uuid[] personIds
+        jsonb personTitles
         string firmName
         uuid firmAddressId FK
         string website
         string phone
+        string logoUrl
         uuid[] clientIds
         uuid[] companyIds
         timestamp createdAt
@@ -266,15 +291,18 @@ erDiagram
 - Stores custom application-specific roles (`admin`, `advisor`, `client`) and basic profile details like name, phone, and profile photo URL.
 
 ### `people`
-- A master record of a physical person. Tracks names, contact information (JSONB arrays), PII, and household associations.
+- A master record of a physical person. Tracks names, contact information (JSONB arrays), professional title/role (`title`), social media links (`socialMedia` JSONB array), and household associations.
+- *Note*: Drivers License and PII data (SSN, biological gender, birth date) were migrated to the `clients` table for better security segregation.
 
 ### `clients`
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
-- Stores deep financial profiles (employment, liabilities) and insurance files.
+- Stores deep financial profiles (employment, liabilities, mortgages) and insurance files.
+- **Drivers License & PII**: Contains `driversLicense` and `pii` JSONB columns storing license details, SSN (partially masked in UI), biological gender, and birth date.
 - **Client Referrals**: Tracks referral source details directly in the table:
   - `referredById`: UUID representing the source of the referral.
-  - `referredByType`: Coded enum representing the type of referral source (`client`, `company`, `person`, or `referral_type`).
-  - `referredByCompanyId`, `referredByPersonId`, `referredByReferralTypeId`: Foreign keys providing direct relational links to corresponding database entities.
+  - `referredByType`: Coded enum representing the type of referral source (`client`, `company`, `person`, `referral_type`, `event`, or `advisor`).
+  - `referredByCompanyId`, `referredByPersonId`, `referredByReferralTypeId`, `referredByEventId`, `referredByAdvisorId`: Foreign keys providing direct relational links to corresponding database entities (companies, people, referral_types, events, users).
+- **Document URL**: `documentUrl` tracks the primary client documentation URL path.
 - **Managed Accounts**: Tracks client accounts held with Money Managers and Record Keepers using JSONB array fields:
   - `moneyManagerAccounts`: Structured array of accounts containing identifiers, firm links, balance values, inception/closure dates, custodian references, and primary/contingent beneficiaries.
   - `recordKeeperAccounts`: Structured array of record keeper accounts containing firm links, account numbers, title details, values, and inception/closure dates.
@@ -288,20 +316,22 @@ erDiagram
   - **Trust Schema**: Tracks the `trustName`, `effectiveDate`, `amendmentDate`, `attorneyFirmId` (linking to a law firm), `grantor` and `trustees` (party reference objects with `kind` as `person` or `company` and `id` linking to their record), `beneficiaries` (text), and the `files` array.
   - **Other Schema**: Tracks custom `description` (text) and the `files` array.
 
-
 ### `client_policies` & `insurance_vendors`
 - **Policies**: `client_policies` tracks a client's Life, Disability, and Long-Term Care policies, detailing policy numbers, premium amounts, effective and renewal dates, and payment schedules.
-- **Vendors**: Tracks insurance companies (`life_insurance_companies`, `disability_insurance_companies`, `long_term_care_insurance`) with name, website, phone contacts, and relationships to individuals and corporate clients.
+- **Vendors**: Tracks insurance companies (`life_insurance_companies`, `disability_insurance_companies`, `long_term_care_insurance`) with name, website, phone contacts, logoUrl, personTitles JSONB mapping, and relationships to individuals and corporate clients.
 
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
 - Tracks general corporate clients and business entities.
-- Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts, logoUrl, socialMedia JSONB array) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
 - **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
 - **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
 
 ### `money_managers` & `record_keepers` (Professional Service Vendors)
-- **Money Managers**: Table tracking money manager firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`).
-- **Record Keepers**: Table tracking record keeper firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`).
+- **Money Managers**: Table tracking money manager firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`). Includes `logoUrl` and a `personTitles` JSONB column (mapping linked person IDs to their respective title/role within the firm).
+- **Record Keepers**: Table tracking record keeper firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`). Includes `logoUrl` and a `personTitles` JSONB column (mapping linked person IDs to their respective title/role within the firm).
+
+### `events` (Client Referral Events)
+- **Events**: Table tracking events that served as a source of client referrals. Contains title, address, startDate, and endDate, and maps to the `clients` table via `referredByEventId`.
 
 ### `custodians` & `financial_account_types` (Managed Account Parameters)
 - **Custodians**: Stores institutions acting as custodians (e.g. Charles Schwab, Fidelity, Pershing) for money manager accounts.
@@ -350,6 +380,7 @@ All database access from the client side requires explicit Row Level Security po
 
 - **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets`, `asset_history`, and `financial_data`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
 - **Collaborative Modules RLS**: Tables like `notes`, `tasks`, `change_history`, and their related tables allow read/write access to all `authenticated` users. More granular business logic validation (e.g., preventing a client from reading internal notes) is enforced at the application level to support rich team collaboration.
+- **Events RLS**: Read access is allowed to all `authenticated` users (`TO authenticated USING (true)`). Full write/modify access is restricted only to system administrators.
 - **Subquery Cache Optimization**: RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
 - **Service Role**: The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.
 
