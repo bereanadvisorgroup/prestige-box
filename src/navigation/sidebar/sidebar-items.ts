@@ -76,6 +76,11 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/crm/tasks",
         icon: ListTodo,
       },
+      {
+        title: "Workflows",
+        url: "/dashboard/crm/workflows",
+        icon: Clock,
+      },
     ],
   },
   {
