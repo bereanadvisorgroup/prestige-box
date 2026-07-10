@@ -28,6 +28,7 @@ import {
   TrendingUp,
   User,
   Users,
+  Workflow,
 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -79,6 +80,11 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         title: "Tasks",
         url: `/dashboard/crm/clients/${clientId}/internal/tasks`,
         icon: ListTodo,
+      },
+      {
+        title: "Workflows",
+        url: `/dashboard/crm/clients/${clientId}/internal/workflows`,
+        icon: Workflow,
       },
       {
         title: "History",
@@ -226,6 +232,11 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         title: "Tasks",
         url: `/dashboard/crm/companies/${companyId}/internal/tasks`,
         icon: ListTodo,
+      },
+      {
+        title: "Workflows",
+        url: `/dashboard/crm/companies/${companyId}/internal/workflows`,
+        icon: Workflow,
       },
       {
         title: "History",
