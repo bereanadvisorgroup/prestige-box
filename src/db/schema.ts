@@ -530,3 +530,70 @@ export const noteNotifications = pgTable("note_notifications", {
   isRead: boolean("isRead").notNull().default(false),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// 30. Workflow Templates (reusable definitions created by admins)
+export const workflowTemplates = pgTable("workflow_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description"), // Tiptap HTML
+  createdBy: uuid("createdBy").references(() => users.uid, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 31. Workflow Template Steps (ordered steps belonging to a template)
+export const workflowTemplateSteps = pgTable("workflow_template_steps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("templateId")
+    .notNull()
+    .references(() => workflowTemplates.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  sortOrder: integer("sortOrder").notNull().default(0),
+  setDueDate: boolean("setDueDate").notNull().default(false),
+  dueDays: integer("dueDays"), // 1-7, only when setDueDate
+  dueDateBase: text("dueDateBase"), // workflow_start | after_last_step
+  priority: text("priority").notNull().default("None"), // None | Low | Medium | High
+  description: text("description"), // Tiptap HTML
+  responsibility: text("responsibility").notNull().default("advisor"), // advisor | client
+  attachments: jsonb("attachments").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 32. Workflow Instances (a snapshot copy of a template assigned to a client or company)
+export const workflowInstances = pgTable("workflow_instances", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  templateId: uuid("templateId").references(() => workflowTemplates.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  description: text("description"), // Tiptap HTML (snapshot)
+  entityType: text("entityType").notNull(), // client | company
+  entityId: uuid("entityId").notNull(),
+  startDate: timestamp("startDate", { withTimezone: true }).notNull().defaultNow(),
+  createdBy: uuid("createdBy").references(() => users.uid, { onDelete: "set null" }),
+  completedAt: timestamp("completedAt", { withTimezone: true }),
+  completedBy: uuid("completedBy").references(() => users.uid, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 33. Workflow Instance Steps (snapshot of template steps with completion tracking)
+export const workflowInstanceSteps = pgTable("workflow_instance_steps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  instanceId: uuid("instanceId")
+    .notNull()
+    .references(() => workflowInstances.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  sortOrder: integer("sortOrder").notNull().default(0),
+  setDueDate: boolean("setDueDate").notNull().default(false),
+  dueDays: integer("dueDays"),
+  dueDateBase: text("dueDateBase"), // workflow_start | after_last_step
+  priority: text("priority").notNull().default("None"),
+  description: text("description"), // Tiptap HTML
+  responsibility: text("responsibility").notNull().default("advisor"),
+  attachments: jsonb("attachments").notNull().default(sql`'[]'::jsonb`),
+  dueDate: timestamp("dueDate", { withTimezone: true }), // resolved due date for this instance
+  completedAt: timestamp("completedAt", { withTimezone: true }),
+  completedBy: uuid("completedBy").references(() => users.uid, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});

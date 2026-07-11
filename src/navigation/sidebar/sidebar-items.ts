@@ -14,6 +14,7 @@ import {
   Shield,
   StickyNote,
   Users,
+  Workflow,
 } from "lucide-react";
 
 export interface NavSubItem {
@@ -79,7 +80,7 @@ export const sidebarItems: NavGroup[] = [
       {
         title: "Workflows",
         url: "/dashboard/crm/workflows",
-        icon: Clock,
+        icon: Workflow,
       },
     ],
   },
