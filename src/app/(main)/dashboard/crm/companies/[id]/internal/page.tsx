@@ -6,6 +6,9 @@ interface PageProps {
 
 // The "internal" section currently surfaces change history.
 export default async function CompanyInternalPage({ params }: PageProps) {
-  const { id } = await params;
-  redirect(`/dashboard/crm/companies/${id}/internal/history`);
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      OVERVIEW PAGE
+    </div>
+  );
 }

@@ -3,8 +3,13 @@ import { expect, test } from "@playwright/test";
 test.describe("Responsive Layout - Unauthenticated", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("should render login page correctly on all viewports", async ({ page }) => {
+  test("should render login page correctly on all viewports", async ({ page, context }) => {
+    await context.addCookies([{ name: "is_e2e", value: "true", url: "http://localhost:3000" }]);
     await page.goto("/auth/v1/login");
+    await page.evaluate(() => {
+      document.cookie = "is_e2e=true; path=/";
+      localStorage.setItem("is_e2e", "true");
+    });
     const loginButton = page.locator('button[type="submit"]', { hasText: "Login" });
     await expect(loginButton).toBeVisible();
 

@@ -148,6 +148,7 @@ export const companies = pgTable("companies", {
   addressId: uuid("addressId"),
   website: text("website"),
   phone: text("phone"),
+  advisorId: uuid("advisorId"), // users.uid of the advisor/admin assigned to this company
   situsRecords: jsonb("situsRecords").default(sql`'[]'::jsonb`),
   nexusRecords: jsonb("nexusRecords").default(sql`'[]'::jsonb`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),

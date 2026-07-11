@@ -13,6 +13,7 @@ import { getTasks } from "@/actions/tasks";
 import { getAdvisors } from "@/actions/users";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { AdvisorDropdown } from "../_components/advisor-dropdown";
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
@@ -85,6 +86,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
   return (
     <div className="space-y-6 py-4">
       <ClientHeaderPortal sectionName="Overview">
+        <AdvisorDropdown client={client} advisors={allAdvisors} />
         <DocumentsButton client={client} />
       </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

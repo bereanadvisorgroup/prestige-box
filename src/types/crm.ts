@@ -225,6 +225,7 @@ export const CompanySchema = z.object({
   addressId: z.string().optional(),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional(),
+  advisorId: z.string().optional().nullable(),
   situsRecords: z.array(SitusSchema).default([]),
   nexusRecords: z.array(NexusSchema).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),

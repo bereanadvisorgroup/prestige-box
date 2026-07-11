@@ -1,10 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowUpRight, Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Phone, Users } from "lucide-react";
+import {
+  ArrowUpRight,
+  Briefcase,
+  Building2,
+  ExternalLink,
+  Fingerprint,
+  MapPin,
+  Phone,
+  UserCog,
+  Users,
+} from "lucide-react";
 
 import { getAddress } from "@/actions/addresses";
 import { getCompany } from "@/actions/companies";
+import { getUser } from "@/actions/users";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +38,12 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   const company = result.company;
   const addressResult = company.addressId ? await getAddress(company.addressId) : null;
   const address = addressResult?.success ? addressResult.address : null;
+
+  let advisor = null;
+  if (company.advisorId) {
+    const advisorResult = await getUser(company.advisorId);
+    advisor = advisorResult.success ? advisorResult.user : null;
+  }
 
   const owners = company.owners || [];
 
@@ -114,6 +131,35 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                     </div>
                   ) : (
                     <p className="mt-1 font-semibold text-sm">N/A</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-primary/10 p-2 text-primary">
+                  <UserCog className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Assigned Advisor</p>
+                  {advisor ? (
+                    <div className="mt-1 flex items-center gap-2">
+                      <PersonAvatar
+                        photoUrl={advisor.photoURL}
+                        firstName={advisor.firstName}
+                        lastName={advisor.lastName}
+                        size="sm"
+                      />
+                      <span className="font-semibold text-sm">
+                        {advisor.firstName} {advisor.lastName}
+                      </span>
+                      {advisor.role && (
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] capitalize">
+                          {advisor.role}
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-muted-foreground/60 text-sm italic">Unassigned</p>
                   )}
                 </div>
               </div>
