@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
-import path from "path";
+
+process.env.NEXT_PUBLIC_BYPASS_MFA = "true";
 
 /**
  * Read environment variables from file.
@@ -93,7 +94,10 @@ export default defineConfig({
   webServer: {
     command: "pnpm dev",
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120 * 1000,
+    env: {
+      NEXT_PUBLIC_BYPASS_MFA: "true",
+    },
   },
 });

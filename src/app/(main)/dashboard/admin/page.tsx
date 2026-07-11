@@ -214,9 +214,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">
-                Create, edit, and manage automated workflows.
-              </p>
+              <p className="text-sm text-muted-foreground">Create, edit, and manage automated workflows.</p>
             </CardContent>
           </Card>
         </Link>

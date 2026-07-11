@@ -45,6 +45,7 @@ Reserved for system administrators to manage system configurations and entity li
   - Financial Account Types (`/dashboard/admin/financial-account-types`): Defines account schemas (e.g. Traditional IRA, Roth IRA, 401k).
   - Referral Types (`/dashboard/admin/referral-types`): Manages lead sources (e.g. CPA, Attorney, Client, Event).
   - Events (`/dashboard/admin/events`): Manages specific events that serve as lead/referral sources.
+- **Workflows (`/dashboard/admin/workflows`)**: Administrative workspace for creating, editing, and managing reusable workflow templates. System administrators can use the template builder interface to specify step names, set relative due date rules, define step responsibility (advisor vs. client), choose priority levels, and upload supporting attachment resources.
 
 ### 2. CRM Module (`/dashboard/crm`)
 The core relationship management suite.
@@ -53,6 +54,7 @@ The core relationship management suite.
   - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
   - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications.
   - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
+  - **Workflows (`/dashboard/crm/workflows`)**: A centralized console displaying all active workflow instances across the system. Allows advisors to track overall step progress, check completed steps, start new workflows, and filter active files.
   - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
   - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
@@ -81,9 +83,10 @@ The core relationship management suite.
     - Long-Term Care (`/dashboard/crm/clients/[id]/long-term-care`)
     - Money Managers (`/dashboard/crm/clients/[id]/money-managers`): Manage accounts linked to Money Managers, including account numbers, balances, inception dates, custodians, and primary/contingent beneficiaries. Balances automatically project as virtual assets contributing to Net Worth.
     - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`): Manage record keeper accounts, account numbers, and balances. Balances automatically project as virtual assets contributing to Net Worth.
-  - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, and audit logs:
+  - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, workflows, and audit logs:
     - **Internal Notes (`/dashboard/crm/clients/[id]/internal/notes`)**: Collaborative client logs.
     - **Internal Tasks (`/dashboard/crm/clients/[id]/internal/tasks`)**: Tasks associated with this client.
+    - **Internal Workflows (`/dashboard/crm/clients/[id]/internal/workflows`)**: View, start, and manage active workflow instances assigned specifically to this client.
     - **Internal History (`/dashboard/crm/clients/[id]/internal/history`)**: Chronological audit trail of changes made to the client's profile.
 
 - **Company Profile & Contextual Navigation**: Selecting a company dynamically switches the sidebar to a tailored company-centric navigation menu containing:
@@ -92,7 +95,7 @@ The core relationship management suite.
   - **Payment Accounts & Documents Tab**: Managed tab for company-specific premium payment accounts, and documents folders (Life, Disability, LTC) with file upload capability.
   - **Professional Services**: Link and manage associated service firms specific to that company (Accounting, Actuarial, Banks, Law, Property & Casualty).
   - **Vendors**: Manage company-linked vendors (Life, Disability, LTC insurance companies, Money Managers, Record Keepers).
-  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), and Audit History logs (`/history`).
+  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), Company Workflows (`/workflows` to view, start, and manage active workflow instances assigned to this company), and Audit History logs (`/history`).
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.
@@ -137,6 +140,17 @@ Personal configuration pages for the authenticated user.
 Strict authentication gates using Supabase MFA.
 - **Enrollment (`/auth/mfa-enroll`)**: Screen for generating and enrolling a TOTP factor. Displays a dynamic QR code and manual setup key, demanding a 6-digit confirmation code from the authenticator app to activate the factor.
 - **Verification (`/auth/mfa-verify`)**: Mandatory challenge page for users with verified factors who are at the single-factor level (`aal1`), requiring a 6-digit TOTP code to elevate their session to `aal2`.
+- **E2E Test Bypass**: Supplying `NEXT_PUBLIC_BYPASS_MFA=true` as an environment variable (e.g. in Playwright config) skips the AAL2 MFA TOTP verification challenge, facilitating automated front-end testing.
+
+### 12. Workflow Automation & Tracking
+Prestige Box implements a complete workflow engine that allows firms to formalize, instantiate, and track complex sequences of client or corporate advisory steps.
+- **Template Definition**: Admins define master workflows containing a set of ordered steps. Each step specifies:
+  - **Responsibility**: Designated to either the `advisor` (internal staff) or `client` (external action).
+  - **Relative Deadlines**: Configured via a relative offset (1-7 days) from the start of the workflow or after the completion of the preceding step.
+  - **Priority & description**: Priorities range from Low to High, and descriptions support Tiptap WYSIWYG rich text formatting.
+  - **Attachments**: Standard reference files uploaded directly to Supabase storage can be pinned to any step.
+- **Active Instances**: Templates can be instantiated and assigned to a Client or Company. The system clones the template steps, computes the absolute due dates based on the start date, and registers the active instance.
+- **Progress Tracking**: Interactive boards render progress percentage bars calculated dynamically by checking the ratio of completed steps. Staff can view step descriptions, download attachments, and mark steps complete directly in the UI.
 
 ### 10. Client Onboarding Setup Flow (`/auth/v1/client-setup`)
 Secure client-specific onboarding pathway.
