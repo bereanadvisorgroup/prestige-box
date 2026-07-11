@@ -38,17 +38,17 @@ export default async function CompanyDetailLayout({ children, params }: LayoutPr
             fallbackIcon={<Building2 className="h-8 w-8" />}
           />
           <div>
-            <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
+            <h1 className="font-bold text-3xl tracking-tight flex items-center gap-2">
+              <span>{company.name}</span>
+              <span id="company-header-separator" className="text-muted-foreground/40 font-normal hidden">
+                {" "}
+                :{" "}
+              </span>
+              <span id="company-header-section-name" className="text-muted-foreground/80 font-normal" />
+            </h1>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/crm/companies/${id}/edit`}>
-            <Button>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Company
-            </Button>
-          </Link>
-        </div>
+        <div id="company-header-actions" className="flex gap-2 items-center" />
       </div>
 
       <div className="mt-8 overflow-hidden rounded-xl border bg-background/50 shadow-sm backdrop-blur-sm">

@@ -18,20 +18,21 @@ export type EnrichedCompany = Company & {
   advisorName?: string | null;
 };
 
-export const columns = (onDelete: (company: Company) => void): ColumnDef<EnrichedCompany>[] => [
+export const columns = (onDelete: (company: Company) => void, role?: string): ColumnDef<EnrichedCompany>[] => [
   {
     accessorKey: "name",
     filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedCompany> }) => {
       const company = row.original;
+      const isInternal = role === "admin" || role === "advisor";
+      const href = isInternal
+        ? `/dashboard/crm/companies/${company.id}/internal`
+        : `/dashboard/crm/companies/${company.id}`;
       return (
         <div className="flex items-center gap-2">
           <FirmLogo logoUrl={getCompanyLogoUrl(company)} name={company.name} className="h-6 w-6" />
-          <Link
-            href={`/dashboard/crm/companies/${company.id}`}
-            className="flex items-center gap-1 font-medium text-primary hover:underline"
-          >
+          <Link href={href} className="flex items-center gap-1 font-medium text-primary hover:underline">
             <span>{company.name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
           </Link>

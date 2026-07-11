@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import {
   ArrowUpRight,
@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Fingerprint,
   MapPin,
+  Pencil,
   Phone,
   UserCog,
   Users,
@@ -18,7 +19,9 @@ import { getCompany } from "@/actions/companies";
 import { getUser } from "@/actions/users";
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAuthenticatedUser } from "@/lib/supabase.server";
 import { formatCurrency, formatPhoneNumber } from "@/lib/utils";
 
 interface CompanyPageProps {
@@ -33,6 +36,22 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 
   if (!result.success || !result.company) {
     notFound();
+  }
+
+  const authUser = await getAuthenticatedUser();
+  if (authUser) {
+    const role = authUser.app_metadata?.role || authUser.user_metadata?.role;
+    if (role === "admin" || role === "advisor") {
+      redirect(`/dashboard/crm/companies/${id}/internal`);
+    } else if (!role) {
+      const userRes = await getUser(authUser.id);
+      if (userRes.success && userRes.user) {
+        const dbRole = userRes.user.role;
+        if (dbRole === "admin" || dbRole === "advisor") {
+          redirect(`/dashboard/crm/companies/${id}/internal`);
+        }
+      }
+    }
   }
 
   const company = result.company;
@@ -52,8 +71,14 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-6">
           <Card className="overflow-hidden border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
-            <CardHeader className="bg-muted/30 pb-4">
+            <CardHeader className="bg-muted/30 pb-4 flex flex-row items-center justify-between space-y-0">
               <CardTitle className="flex items-center gap-2 text-lg">Company Information</CardTitle>
+              <Link href={`/dashboard/crm/companies/${id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Company
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               {company.dba && (

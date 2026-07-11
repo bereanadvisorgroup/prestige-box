@@ -267,6 +267,7 @@ export const CompanySchema = z.object({
     .default([]),
   logoUrl: z.string().optional().nullable(),
   socialMedia: z.array(SocialMediaAccountSchema).default([]),
+  documentUrl: z.string().optional().nullable(),
   estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),

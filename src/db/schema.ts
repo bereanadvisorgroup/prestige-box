@@ -157,6 +157,7 @@ export const companies = pgTable("companies", {
   ltcDocuments: jsonb("ltcDocuments").default(sql`'[]'::jsonb`),
   logoUrl: text("logoUrl"),
   socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
+  documentUrl: text("documentUrl"),
   estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
