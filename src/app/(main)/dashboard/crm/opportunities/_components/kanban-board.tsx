@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   DndContext,
@@ -223,6 +224,7 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ initialOpportunities, pipelines, clients, companies }: KanbanBoardProps) {
+  const router = useRouter();
   const [opportunities, setOpportunities] = React.useState(initialOpportunities);
   const [selectedPipelineId, setSelectedPipelineId] = React.useState<string>("");
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -243,13 +245,16 @@ export function KanbanBoard({ initialOpportunities, pipelines, clients, companie
 
   // Set initial pipeline
   React.useEffect(() => {
+    const stillExists = pipelines.some((p) => p.id === selectedPipelineId);
+    if (selectedPipelineId && stillExists) return;
+
     const activePipelines = pipelines.filter((p) => p.isActive);
     if (activePipelines.length > 0) {
       setSelectedPipelineId(activePipelines[0].id);
     } else if (pipelines.length > 0) {
       setSelectedPipelineId(pipelines[0].id);
     }
-  }, [pipelines]);
+  }, [pipelines, selectedPipelineId]);
 
   // Update local opportunities when server updates prop
   React.useEffect(() => {
@@ -370,8 +375,8 @@ export function KanbanBoard({ initialOpportunities, pipelines, clients, companie
   // Refetch action / refresh page on save
   const handleSaved = () => {
     toast.success("Saved successfully");
-    // Trigger window location refresh to reload server side data
-    window.location.reload();
+    // Trigger router refresh to reload server side data
+    router.refresh();
   };
 
   const pendingOppName = React.useMemo(() => {
