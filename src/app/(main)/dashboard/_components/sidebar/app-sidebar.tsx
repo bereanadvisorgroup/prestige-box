@@ -82,6 +82,11 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         icon: ListTodo,
       },
       {
+        title: "Opportunities",
+        url: `/dashboard/crm/clients/${clientId}/internal/opportunities`,
+        icon: DollarSign,
+      },
+      {
         title: "Workflows",
         url: `/dashboard/crm/clients/${clientId}/internal/workflows`,
         icon: Workflow,
@@ -237,6 +242,11 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         title: "Workflows",
         url: `/dashboard/crm/companies/${companyId}/internal/workflows`,
         icon: Workflow,
+      },
+      {
+        title: "Opportunities",
+        url: `/dashboard/crm/companies/${companyId}/internal/opportunities`,
+        icon: DollarSign,
       },
       {
         title: "History",

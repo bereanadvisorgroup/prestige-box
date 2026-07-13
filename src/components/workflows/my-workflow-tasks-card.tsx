@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
+
 import Link from "next/link";
+
 import { format } from "date-fns";
 import { ArrowUpRight, Building2, Calendar, Clock, User, Workflow } from "lucide-react";
 
 import { getUpcomingWorkflowStepsForUser } from "@/actions/workflows";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthStore } from "@/stores/auth.store";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface WorkflowStepExtended {
   id: string;
@@ -138,7 +140,7 @@ export function MyWorkflowTasksCard() {
                           className={cn(
                             "gap-1 bg-white px-2 py-0.5 font-normal text-[11px] dark:bg-zinc-950",
                             overdue &&
-                            "border-red-300 bg-red-50/30 text-red-600 dark:border-red-900 dark:bg-red-950/10 dark:text-red-400",
+                              "border-red-300 bg-red-50/30 text-red-600 dark:border-red-900 dark:bg-red-950/10 dark:text-red-400",
                           )}
                         >
                           {overdue ? <Clock className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}

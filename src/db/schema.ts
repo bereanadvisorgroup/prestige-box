@@ -606,3 +606,46 @@ export const workflowInstanceSteps = pgTable("workflow_instance_steps", {
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
+
+// 19. Opportunity Pipelines
+export const opportunityPipelines = pgTable("opportunity_pipelines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 20. Opportunity Pipeline Stages
+export const opportunityPipelineStages = pgTable("opportunity_pipeline_stages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pipelineId: uuid("pipelineId")
+    .notNull()
+    .references(() => opportunityPipelines.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  order: integer("order").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 21. Opportunities
+export const opportunities = pgTable("opportunities", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("clientId").references(() => clients.id, { onDelete: "cascade" }),
+  companyId: uuid("companyId").references(() => companies.id, { onDelete: "cascade" }),
+  amount: numeric("amount").notNull().default("0.00"),
+  targetCloseDate: timestamp("targetCloseDate", { withTimezone: true }),
+  pipelineId: uuid("pipelineId")
+    .notNull()
+    .references(() => opportunityPipelines.id, { onDelete: "restrict" }),
+  stageId: uuid("stageId")
+    .notNull()
+    .references(() => opportunityPipelineStages.id, { onDelete: "restrict" }),
+  probabilityWin: integer("probabilityWin").notNull().default(0),
+  notes: text("notes"), // WYSIWYG
+  resultStatus: text("resultStatus"), // 'TRASH' | 'WON' | 'LOST' | null/empty for active
+  resultNotes: text("resultNotes"), // WYSIWYG
+  updatedById: uuid("updatedById").references(() => users.uid, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});

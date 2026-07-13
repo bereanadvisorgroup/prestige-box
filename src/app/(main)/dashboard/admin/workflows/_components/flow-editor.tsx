@@ -16,7 +16,18 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { ChevronDown, GripVertical, Loader2, Maximize2, Minimize2, Paperclip, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  GripVertical,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Paperclip,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { RichTextEditor } from "@/components/tasks/rich-text-editor";
@@ -303,10 +314,13 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
     [setEdges],
   );
 
-  const onEdgeDoubleClick = useCallback((_event: any, edge: any) => {
-    setEdges((eds) => eds.filter((e) => e.id !== edge.id));
-    toast.success("Connection removed");
-  }, [setEdges]);
+  const onEdgeDoubleClick = useCallback(
+    (_event: any, edge: any) => {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      toast.success("Connection removed");
+    },
+    [setEdges],
+  );
 
   // Function to edit a step node
   const startEditStep = useCallback(
@@ -518,263 +532,264 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
         </div>
 
         <div className="flex-1 w-full h-full relative">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={handleEdgesChange}
-          onConnect={onConnect}
-          onEdgeDoubleClick={onEdgeDoubleClick}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-muted/5"
-        >
-          <Background gap={12} size={1} />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
-      </div>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={handleEdgesChange}
+            onConnect={onConnect}
+            onEdgeDoubleClick={onEdgeDoubleClick}
+            nodeTypes={nodeTypes}
+            fitView
+            className="bg-muted/5"
+          >
+            <Background gap={12} size={1} />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </div>
 
-      {/* Editing Drawer Sheet */}
-      <Sheet open={!!editingStep} onOpenChange={(open) => !open && setEditingStep(null)}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto z-[110]">
-          <SheetHeader className="border-b pb-4 mb-4 flex-row items-center justify-between space-y-0">
-            <div>
-              <SheetTitle>Edit Step Details</SheetTitle>
-              <SheetDescription>Configure step outcomes, responsibilities, and details</SheetDescription>
-            </div>
-            {editingStep?.id && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
-                onClick={() => handleDeleteStep(editingStep.id!)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </SheetHeader>
-
-          {editingStep && (
-            <div className="space-y-5 pb-8">
-              <div className="space-y-2">
-                <Label htmlFor="step-name">Step Name</Label>
-                <Input
-                  id="step-name"
-                  value={editingStep.name}
-                  onChange={(e) => updateEditingStep({ name: e.target.value })}
-                />
+        {/* Editing Drawer Sheet */}
+        <Sheet open={!!editingStep} onOpenChange={(open) => !open && setEditingStep(null)}>
+          <SheetContent className="sm:max-w-xl overflow-y-auto z-[110]">
+            <SheetHeader className="border-b pb-4 mb-4 flex-row items-center justify-between space-y-0">
+              <div>
+                <SheetTitle>Edit Step Details</SheetTitle>
+                <SheetDescription>Configure step outcomes, responsibilities, and details</SheetDescription>
               </div>
+              {editingStep?.id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
+                  onClick={() => handleDeleteStep(editingStep.id!)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </SheetHeader>
 
-              {/* Outcomes Management */}
-              <div className="rounded-md border p-4 space-y-3 bg-muted/5">
-                <h4 className="font-semibold text-sm">Step Outcomes (Branching Paths)</h4>
-                <p className="text-xs text-muted-foreground">
-                  Define outcomes. Each outcome will appear as an output handle on the node to connect to the next step.
-                </p>
-
-                <div className="flex gap-2">
+            {editingStep && (
+              <div className="space-y-5 pb-8">
+                <div className="space-y-2">
+                  <Label htmlFor="step-name">Step Name</Label>
                   <Input
-                    placeholder="e.g. Approved, Rejected, Completed"
-                    value={newOutcomeName}
-                    onChange={(e) => setNewOutcomeName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddOutcome()}
+                    id="step-name"
+                    value={editingStep.name}
+                    onChange={(e) => updateEditingStep({ name: e.target.value })}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddOutcome}>
-                    Add
-                  </Button>
                 </div>
 
-                <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                  {(editingStep.outcomes || []).map((outcome) => (
-                    <div
-                      key={outcome.id}
-                      className="flex justify-between items-center bg-card border rounded p-2 text-sm"
+                {/* Outcomes Management */}
+                <div className="rounded-md border p-4 space-y-3 bg-muted/5">
+                  <h4 className="font-semibold text-sm">Step Outcomes (Branching Paths)</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Define outcomes. Each outcome will appear as an output handle on the node to connect to the next
+                    step.
+                  </p>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. Approved, Rejected, Completed"
+                      value={newOutcomeName}
+                      onChange={(e) => setNewOutcomeName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddOutcome()}
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddOutcome}>
+                      Add
+                    </Button>
+                  </div>
+
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {(editingStep.outcomes || []).map((outcome) => (
+                      <div
+                        key={outcome.id}
+                        className="flex justify-between items-center bg-card border rounded p-2 text-sm"
+                      >
+                        <span className="font-medium text-xs">{outcome.name}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveOutcome(outcome.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    {(editingStep.outcomes || []).length === 0 && (
+                      <div className="text-center text-xs text-muted-foreground py-2 italic border border-dashed rounded">
+                        No branching outcomes. Step will lead to the next node by default.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Responsibility & Priority */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Responsibility</Label>
+                    <RadioGroup
+                      value={editingStep.responsibility}
+                      onValueChange={(val) => updateEditingStep({ responsibility: val as any })}
+                      className="flex flex-col gap-2 pt-1"
                     >
-                      <span className="font-medium text-xs">{outcome.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive hover:text-destructive"
-                        onClick={() => handleRemoveOutcome(outcome.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                  {(editingStep.outcomes || []).length === 0 && (
-                    <div className="text-center text-xs text-muted-foreground py-2 italic border border-dashed rounded">
-                      No branching outcomes. Step will lead to the next node by default.
-                    </div>
-                  )}
-                </div>
-              </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="advisor" id="sheet-resp-advisor" />
+                        <Label htmlFor="sheet-resp-advisor" className="text-xs">
+                          Advisor
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="client" id="sheet-resp-client" />
+                        <Label htmlFor="sheet-resp-client" className="text-xs">
+                          Client / Company
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
-              {/* Responsibility & Priority */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Responsibility</Label>
-                  <RadioGroup
-                    value={editingStep.responsibility}
-                    onValueChange={(val) => updateEditingStep({ responsibility: val as any })}
-                    className="flex flex-col gap-2 pt-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="advisor" id="sheet-resp-advisor" />
-                      <Label htmlFor="sheet-resp-advisor" className="text-xs">
-                        Advisor
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="client" id="sheet-resp-client" />
-                      <Label htmlFor="sheet-resp-client" className="text-xs">
-                        Client / Company
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="step-priority">Priority</Label>
-                  <Select
-                    value={editingStep.priority}
-                    onValueChange={(val) => updateEditingStep({ priority: val as any })}
-                  >
-                    <SelectTrigger id="step-priority" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[120]">
-                      {WORKFLOW_PRIORITIES.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Due Date Config */}
-              <div className="rounded-md border p-4 space-y-3 bg-muted/5">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="sheet-set-due"
-                    checked={editingStep.setDueDate}
-                    onCheckedChange={(checked) => updateEditingStep({ setDueDate: checked === true })}
-                  />
-                  <Label htmlFor="sheet-set-due" className="font-semibold text-sm">
-                    Set due date
-                  </Label>
-                </div>
-
-                {editingStep.setDueDate && (
-                  <div className="flex flex-col gap-3 pl-6 pt-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="text-muted-foreground">Resolve due date</span>
-                      <Select
-                        value={String(editingStep.dueDays ?? 1)}
-                        onValueChange={(val) => updateEditingStep({ dueDays: Number(val) })}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-[120]">
-                          {WORKFLOW_DUE_DAYS.map((d) => (
-                            <SelectItem key={d} value={String(d)}>
-                              {d}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-muted-foreground">day(s) from</span>
-                    </div>
-
+                  <div className="space-y-2">
+                    <Label htmlFor="step-priority">Priority</Label>
                     <Select
-                      value={editingStep.dueDateBase ?? "workflow_start"}
-                      onValueChange={(val) => updateEditingStep({ dueDateBase: val as any })}
+                      value={editingStep.priority}
+                      onValueChange={(val) => updateEditingStep({ priority: val as any })}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger id="step-priority" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[120]">
-                        {WORKFLOW_DUE_DATE_BASES.map((b) => (
-                          <SelectItem key={b} value={b}>
-                            {DUE_DATE_BASE_LABELS[b]}
+                        {WORKFLOW_PRIORITIES.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Rich Text Description */}
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <RichTextEditor
-                  value={editingStep.description ?? ""}
-                  onChange={(html) => updateEditingStep({ description: html })}
-                  placeholder="Describe what needs to happen in this step…"
-                />
-              </div>
+                {/* Due Date Config */}
+                <div className="rounded-md border p-4 space-y-3 bg-muted/5">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="sheet-set-due"
+                      checked={editingStep.setDueDate}
+                      onCheckedChange={(checked) => updateEditingStep({ setDueDate: checked === true })}
+                    />
+                    <Label htmlFor="sheet-set-due" className="font-semibold text-sm">
+                      Set due date
+                    </Label>
+                  </div>
 
-              {/* Attachments */}
-              <div className="space-y-2">
-                <Label>File Attachments</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {(editingStep.attachments ?? []).map((attachment) => (
-                    <Badge key={attachment.id} variant="secondary" className="gap-1.5 py-1 pr-1 pl-2">
-                      <Paperclip className="h-3 w-3" />
-                      <a
-                        href={attachment.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="max-w-40 truncate hover:underline"
+                  {editingStep.setDueDate && (
+                    <div className="flex flex-col gap-3 pl-6 pt-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">Resolve due date</span>
+                        <Select
+                          value={String(editingStep.dueDays ?? 1)}
+                          onValueChange={(val) => updateEditingStep({ dueDays: Number(val) })}
+                        >
+                          <SelectTrigger className="w-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="z-[120]">
+                            {WORKFLOW_DUE_DAYS.map((d) => (
+                              <SelectItem key={d} value={String(d)}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-muted-foreground">day(s) from</span>
+                      </div>
+
+                      <Select
+                        value={editingStep.dueDateBase ?? "workflow_start"}
+                        onValueChange={(val) => updateEditingStep({ dueDateBase: val as any })}
                       >
-                        {attachment.fileName}
-                      </a>
-                      <button
-                        type="button"
-                        className="rounded-full p-0.5 hover:bg-muted-foreground/20"
-                        onClick={() =>
-                          updateEditingStep({
-                            attachments: (editingStep.attachments ?? []).filter((a) => a.id !== attachment.id),
-                          })
-                        }
-                        aria-label={`Remove ${attachment.fileName}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => handleUpload(e.target.files)}
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[120]">
+                          {WORKFLOW_DUE_DATE_BASES.map((b) => (
+                            <SelectItem key={b} value={b}>
+                              {DUE_DATE_BASE_LABELS[b]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Rich Text Description */}
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <RichTextEditor
+                    value={editingStep.description ?? ""}
+                    onChange={(html) => updateEditingStep({ description: html })}
+                    placeholder="Describe what needs to happen in this step…"
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={isUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    {isUploading ? (
-                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Paperclip className="mr-1.5 h-4 w-4" />
-                    )}
-                    {isUploading ? "Uploading..." : "Attach Files"}
-                  </Button>
+                </div>
+
+                {/* Attachments */}
+                <div className="space-y-2">
+                  <Label>File Attachments</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(editingStep.attachments ?? []).map((attachment) => (
+                      <Badge key={attachment.id} variant="secondary" className="gap-1.5 py-1 pr-1 pl-2">
+                        <Paperclip className="h-3 w-3" />
+                        <a
+                          href={attachment.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="max-w-40 truncate hover:underline"
+                        >
+                          {attachment.fileName}
+                        </a>
+                        <button
+                          type="button"
+                          className="rounded-full p-0.5 hover:bg-muted-foreground/20"
+                          onClick={() =>
+                            updateEditingStep({
+                              attachments: (editingStep.attachments ?? []).filter((a) => a.id !== attachment.id),
+                            })
+                          }
+                          aria-label={`Remove ${attachment.fileName}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleUpload(e.target.files)}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isUploading}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Paperclip className="mr-1.5 h-4 w-4" />
+                      )}
+                      {isUploading ? "Uploading..." : "Attach Files"}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
-  </>
-);
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
+  );
 }

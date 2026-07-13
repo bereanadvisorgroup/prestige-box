@@ -961,3 +961,45 @@ export const EventSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type Event = z.infer<typeof EventSchema>;
+
+// Opportunities Types & Schemas
+export const OpportunityPipelineStageSchema = z.object({
+  id: z.string().optional(),
+  pipelineId: z.string().optional(),
+  name: z.string().min(1, "Stage name is required"),
+  order: z.number().int().nonnegative(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type OpportunityPipelineStage = z.infer<typeof OpportunityPipelineStageSchema>;
+
+export const OpportunityPipelineSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Pipeline name is required"),
+  isActive: z.boolean().default(true),
+  stages: z.array(OpportunityPipelineStageSchema).min(1, "At least one stage is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type OpportunityPipeline = z.infer<typeof OpportunityPipelineSchema>;
+
+export const OpportunitySchema = z.object({
+  id: z.string().optional(),
+  clientId: z.string().nullable().optional(),
+  companyId: z.string().nullable().optional(),
+  amount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  targetCloseDate: z.string().nullable().optional(),
+  pipelineId: z.string().min(1, "Pipeline is required"),
+  stageId: z.string().min(1, "Stage is required"),
+  probabilityWin: z.number().int().min(0).max(100).default(0),
+  notes: z.string().nullable().optional(),
+  resultStatus: z.enum(["TRASH", "WON", "LOST"]).nullable().optional(),
+  resultNotes: z.string().nullable().optional(),
+  updatedById: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Opportunity = z.infer<typeof OpportunitySchema>;

@@ -47,17 +47,16 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
   const graphRef = useRef(initialGraph);
   const stepsRef = useRef<WorkflowTemplateStep[]>(template?.steps ?? []);
 
-  const handleFlowChange = useCallback((updatedGraph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => {
-    graphRef.current = updatedGraph;
-    stepsRef.current = updatedSteps;
+  const handleFlowChange = useCallback(
+    (updatedGraph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => {
+      graphRef.current = updatedGraph;
+      stepsRef.current = updatedSteps;
 
-    const validation = checkGraphConnectivity(
-      updatedGraph.nodes || [],
-      updatedGraph.edges || [],
-      updatedSteps
-    );
-    setWarnings(validation);
-  }, []);
+      const validation = checkGraphConnectivity(updatedGraph.nodes || [], updatedGraph.edges || [], updatedSteps);
+      setWarnings(validation);
+    },
+    [],
+  );
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -151,14 +150,16 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
       </Card>
 
       {/* Workflow Warnings / Diagnostics Section */}
-      <Card className={cn(
-        "border transition-all duration-300 shadow-sm",
-        warnings?.isValid === false 
-          ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/30" 
-          : warnings?.isValid === true
-            ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-900/30"
-            : "border-muted bg-muted/5"
-      )}>
+      <Card
+        className={cn(
+          "border transition-all duration-300 shadow-sm",
+          warnings?.isValid === false
+            ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/30"
+            : warnings?.isValid === true
+              ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-900/30"
+              : "border-muted bg-muted/5",
+        )}
+      >
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
             {warnings ? (
@@ -166,7 +167,9 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
                 <>
                   <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Workflow is correct</h3>
+                    <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">
+                      Workflow is correct
+                    </h3>
                     <p className="text-emerald-700/80 dark:text-emerald-400/80 text-xs">
                       All steps are connected and there is a valid path leading from Start to End.
                     </p>
@@ -179,7 +182,10 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
                     <h3 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Workflow Warnings</h3>
                     <ul className="text-amber-700 dark:text-amber-400 text-xs space-y-1.5 list-disc pl-4 font-medium">
                       {!warnings.hasPathStartToEnd && (
-                        <li>No active path connects the green <strong>Start</strong> node to the red <strong>End</strong> node.</li>
+                        <li>
+                          No active path connects the green <strong>Start</strong> node to the red <strong>End</strong>{" "}
+                          node.
+                        </li>
                       )}
                       {warnings.unreachableSteps.length > 0 && (
                         <li>
@@ -211,11 +217,7 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
   );
 }
 
-function checkGraphConnectivity(
-  nodes: any[],
-  edges: any[],
-  steps: WorkflowTemplateStep[]
-) {
+function checkGraphConnectivity(nodes: any[], edges: any[], steps: WorkflowTemplateStep[]) {
   const adjList = new Map<string, string[]>();
   for (const node of nodes) {
     adjList.set(node.id, []);

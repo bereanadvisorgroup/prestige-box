@@ -1,6 +1,16 @@
 import Link from "next/link";
 
-import { AlertCircle, ArrowUpRight, Calendar, Clock, Database, ShieldCheck, Tag, Users } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowUpRight,
+  Calendar,
+  Clock,
+  Database,
+  DollarSign,
+  ShieldCheck,
+  Tag,
+  Users,
+} from "lucide-react";
 
 import { getBusinessContact } from "@/actions/settings";
 import { getUsers } from "@/actions/users";
@@ -200,6 +210,25 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
+        <Link href="/dashboard/admin/opportunities" className="group block h-full">
+          <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="space-y-1.5 pr-4">
+                <CardTitle className="flex items-center gap-1.5 font-bold text-xl transition-colors group-hover:text-primary">
+                  Opportunity Pipelines
+                  <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
+                </CardTitle>
+              </div>
+              <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <DollarSign className="h-6 w-6" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-sm text-muted-foreground">Create, edit, and manage Oopportunity Pipelines.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
         <Link href="/dashboard/admin/workflows" className="group block h-full">
           <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
@@ -214,7 +243,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">Create, edit, and manage automated workflows.</p>
+              <p className="text-sm text-muted-foreground">Create, edit, and manage automated Workflows.</p>
             </CardContent>
           </Card>
         </Link>

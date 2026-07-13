@@ -3,6 +3,7 @@ import {
   Briefcase,
   Building2,
   Clock,
+  DollarSign,
   FileText,
   Home,
   LayoutDashboard,
@@ -76,6 +77,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Tasks",
         url: "/dashboard/crm/tasks",
         icon: ListTodo,
+      },
+      {
+        title: "Opportunities",
+        url: "/dashboard/crm/opportunities",
+        icon: DollarSign,
       },
       {
         title: "Workflows",
