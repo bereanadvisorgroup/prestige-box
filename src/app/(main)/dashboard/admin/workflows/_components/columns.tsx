@@ -87,14 +87,27 @@ export const columns = (
               <Pencil className="h-4 w-4" />
             </Button>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive/80"
-            onClick={() => onDelete(template)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {template.isLinked ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground/40 cursor-not-allowed"
+              title="Cannot delete template: it has active workflow instances"
+              disabled
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive/80"
+              onClick={() => onDelete(template)}
+              title="Delete workflow template"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       );
     },

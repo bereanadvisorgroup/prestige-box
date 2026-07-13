@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { randomUUID } from "crypto";
+
 import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
 import { type WorkflowTemplate, type WorkflowTemplateListItem, WorkflowTemplateSchema } from "@/types/workflows";
 
@@ -39,7 +41,7 @@ export async function getWorkflowTemplates() {
   try {
     const { data: list, error } = await supabaseServer
       .from(TEMPLATES_TABLE)
-      .select("id, name, description, createdAt, updatedAt, workflow_template_steps(id)")
+      .select("id, name, description, createdAt, updatedAt, workflow_template_steps(id), workflow_instances(id)")
       .order("name", { ascending: true });
 
     if (error) throw new Error((error as { message: string }).message);
@@ -49,6 +51,7 @@ export async function getWorkflowTemplates() {
       name: t.name,
       description: t.description,
       stepCount: (t.workflow_template_steps || []).length,
+      isLinked: (t.workflow_instances || []).length > 0,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
     }));
@@ -77,7 +80,53 @@ export async function getWorkflowTemplate(id: string) {
 
     if (stepsError) throw new Error((stepsError as { message: string }).message);
 
-    return { success: true, template: { ...record, steps: steps || [] } as WorkflowTemplate };
+    const stepsList = steps || [];
+    let graph = record.graph || { nodes: [], edges: [] };
+
+    // Automatically convert old linear templates to layout graph on the fly
+    if ((!graph.nodes || graph.nodes.length === 0) && stepsList.length > 0) {
+      const nodes: any[] = [{ id: "start", type: "start", position: { x: 100, y: 250 }, data: { label: "Start" } }];
+      const edges: any[] = [];
+
+      stepsList.forEach((step, idx) => {
+        nodes.push({
+          id: step.id,
+          type: "step",
+          position: { x: 300 + idx * 250, y: 200 },
+          data: { label: step.name, step },
+        });
+
+        if (idx === 0) {
+          edges.push({ id: `e-start-${step.id}`, source: "start", target: step.id });
+        } else {
+          const prevStep = stepsList[idx - 1];
+          edges.push({
+            id: `e-${prevStep.id}-${step.id}`,
+            source: prevStep.id,
+            target: step.id,
+            sourceHandle: prevStep.outcomes?.[0]?.id || "default",
+          });
+        }
+      });
+
+      const lastStep = stepsList[stepsList.length - 1];
+      nodes.push({
+        id: "end",
+        type: "end",
+        position: { x: 300 + stepsList.length * 250, y: 250 },
+        data: { label: "End" },
+      });
+      edges.push({
+        id: `e-${lastStep.id}-end`,
+        source: lastStep.id,
+        target: "end",
+        sourceHandle: lastStep.outcomes?.[0]?.id || "default",
+      });
+
+      graph = { nodes, edges };
+    }
+
+    return { success: true, template: { ...record, graph, steps: stepsList } as WorkflowTemplate };
   } catch (error) {
     console.error("[getWorkflowTemplate] Error:", error);
     return { success: false, error: (error as Error).message };
@@ -86,6 +135,7 @@ export async function getWorkflowTemplate(id: string) {
 
 function toStepRow(templateId: string, step: WorkflowTemplate["steps"][number], sortOrder: number) {
   return {
+    id: step.id || randomUUID(),
     templateId,
     name: step.name,
     sortOrder,
@@ -96,6 +146,9 @@ function toStepRow(templateId: string, step: WorkflowTemplate["steps"][number], 
     description: step.description ?? null,
     responsibility: step.responsibility,
     attachments: step.attachments ?? [],
+    outcomes: step.outcomes ?? [],
+    positionX: step.positionX ?? 0,
+    positionY: step.positionY ?? 0,
   };
 }
 
@@ -113,6 +166,7 @@ export async function createWorkflowTemplate(data: Partial<WorkflowTemplate>) {
       .insert({
         name: validated.name,
         description: validated.description ?? null,
+        graph: validated.graph ?? { nodes: [], edges: [] },
         createdBy: user.id,
       })
       .select()
@@ -149,21 +203,48 @@ export async function updateWorkflowTemplate(id: string, data: Partial<WorkflowT
       .update({
         name: validated.name,
         description: validated.description ?? null,
+        graph: validated.graph ?? { nodes: [], edges: [] },
         updatedAt: new Date().toISOString(),
       })
       .eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
 
-    // Replace steps wholesale — instances hold their own snapshot, so this is safe.
-    const { error: deleteError } = await supabaseServer.from(STEPS_TABLE).delete().eq("templateId", id);
-    if (deleteError) throw new Error((deleteError as { message: string }).message);
-
-    const { error: stepsError } = await supabaseServer
+    // Fetch existing steps for differential updates
+    const { data: existingSteps, error: fetchError } = await supabaseServer
       .from(STEPS_TABLE)
-      .insert(validated.steps.map((step, index) => toStepRow(id, step, index)));
+      .select("id")
+      .eq("templateId", id);
 
-    if (stepsError) throw new Error((stepsError as { message: string }).message);
+    if (fetchError) throw new Error((fetchError as { message: string }).message);
+
+    const existingIds = new Set((existingSteps || []).map((s) => s.id));
+    const incomingSteps = validated.steps.map((step, index) => toStepRow(id, step, index));
+    const incomingIds = new Set(incomingSteps.map((s) => s.id));
+
+    // Steps to delete: in existing, not in incoming
+    const toDeleteIds = [...existingIds].filter((existingId) => !incomingIds.has(existingId));
+
+    // Steps to insert: in incoming, not in existing
+    const toInsert = incomingSteps.filter((s) => !existingIds.has(s.id));
+
+    // Steps to update: in incoming and in existing
+    const toUpdate = incomingSteps.filter((s) => existingIds.has(s.id));
+
+    if (toDeleteIds.length > 0) {
+      const { error: deleteError } = await supabaseServer.from(STEPS_TABLE).delete().in("id", toDeleteIds);
+      if (deleteError) throw new Error((deleteError as { message: string }).message);
+    }
+
+    if (toInsert.length > 0) {
+      const { error: insertError } = await supabaseServer.from(STEPS_TABLE).insert(toInsert);
+      if (insertError) throw new Error((insertError as { message: string }).message);
+    }
+
+    for (const step of toUpdate) {
+      const { error: updateError } = await supabaseServer.from(STEPS_TABLE).update(step).eq("id", step.id);
+      if (updateError) throw new Error((updateError as { message: string }).message);
+    }
 
     revalidatePath("/dashboard/admin/workflows");
     revalidatePath(`/dashboard/admin/workflows/${id}/edit`);

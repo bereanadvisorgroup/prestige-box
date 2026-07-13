@@ -98,7 +98,7 @@ export function AllWorkflowsList({ workflows }: AllWorkflowsListProps) {
       ) : (
         <div className="space-y-3">
           {filtered.map((workflow) => {
-            const percent = workflowPercentComplete(workflow.steps);
+            const percent = workflow.percentComplete ?? workflowPercentComplete(workflow.steps);
             const doneSteps = workflow.steps.filter((s) => s.completedAt).length;
             const segment = workflow.entityType === "client" ? "clients" : "companies";
             const detailPath = `/dashboard/crm/${segment}/${workflow.entityId}/internal/workflows/${workflow.id}`;

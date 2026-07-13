@@ -38,6 +38,18 @@ export const WorkflowAttachmentSchema = z.object({
 export type WorkflowAttachment = z.infer<typeof WorkflowAttachmentSchema>;
 
 // ---------------------------------------------------------------------------
+// Outcomes (outcomes of a workflow step leading to a next step)
+// ---------------------------------------------------------------------------
+
+export const WorkflowOutcomeSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Outcome name is required"),
+  nextStepId: z.string().optional().nullable(),
+});
+
+export type WorkflowOutcome = z.infer<typeof WorkflowOutcomeSchema>;
+
+// ---------------------------------------------------------------------------
 // Template step
 // ---------------------------------------------------------------------------
 
@@ -53,6 +65,9 @@ export const WorkflowTemplateStepSchema = z.object({
   description: z.string().optional().nullable(),
   responsibility: z.enum(WORKFLOW_RESPONSIBILITIES).default("advisor"),
   attachments: z.array(WorkflowAttachmentSchema).default([]),
+  outcomes: z.array(WorkflowOutcomeSchema).default([]),
+  positionX: z.number().optional().nullable().default(0),
+  positionY: z.number().optional().nullable().default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -69,6 +84,7 @@ export const WorkflowTemplateSchema = z.object({
   description: z.string().optional().nullable(),
   createdBy: z.string().optional().nullable(),
   steps: z.array(WorkflowTemplateStepSchema).min(1, "Add at least one step"),
+  graph: z.any().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -81,6 +97,7 @@ export interface WorkflowTemplateListItem {
   name: string;
   description: string | null;
   stepCount: number;
+  isLinked?: boolean;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -104,6 +121,9 @@ export interface WorkflowInstanceStep {
   dueDate: string | null;
   completedAt: string | null;
   completedBy: string | null;
+  templateStepId: string | null;
+  outcomes: WorkflowOutcome[];
+  selectedOutcome: WorkflowOutcome | null;
   createdAt: string;
   updatedAt: string | null;
 }
@@ -125,6 +145,7 @@ export interface WorkflowInstance {
   entityName?: string | null;
   completedAt: string | null;
   completedBy: string | null;
+  percentComplete?: number;
   createdAt: string;
   updatedAt: string | null;
   steps: WorkflowInstanceStep[];

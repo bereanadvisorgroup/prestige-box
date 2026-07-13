@@ -1,77 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, GripVertical, Loader2, Paperclip, Plus, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { createWorkflowTemplate, updateWorkflowTemplate } from "@/actions/workflow-templates";
 import { RichTextEditor } from "@/components/tasks/rich-text-editor";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase.client";
 import { cn } from "@/lib/utils";
-import {
-  DUE_DATE_BASE_LABELS,
-  WORKFLOW_DUE_DATE_BASES,
-  WORKFLOW_DUE_DAYS,
-  WORKFLOW_PRIORITIES,
-  type WorkflowAttachment,
-  type WorkflowTemplate,
-  WorkflowTemplateSchema,
-  type WorkflowTemplateStep,
-} from "@/types/workflows";
+import { type WorkflowTemplate, WorkflowTemplateSchema, type WorkflowTemplateStep } from "@/types/workflows";
 
-type BuilderStep = WorkflowTemplateStep & { localId: string };
-
-const PRIORITY_BADGE_CLASSES: Record<string, string> = {
-  None: "bg-muted text-muted-foreground",
-  Low: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  Medium: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  High: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-};
-
-function newStep(): BuilderStep {
-  return {
-    localId: crypto.randomUUID(),
-    name: "",
-    sortOrder: 0,
-    setDueDate: false,
-    dueDays: 1,
-    dueDateBase: "workflow_start",
-    priority: "None",
-    description: "",
-    responsibility: "advisor",
-    attachments: [],
-  };
-}
+import { FlowEditor } from "./flow-editor";
 
 interface TemplateBuilderProps {
   template?: WorkflowTemplate;
@@ -81,42 +26,64 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
   const router = useRouter();
   const [name, setName] = useState(template?.name ?? "");
   const [description, setDescription] = useState(template?.description ?? "");
-  const [steps, setSteps] = useState<BuilderStep[]>(() =>
-    template?.steps?.length
-      ? template.steps.map((s) => ({ ...s, attachments: s.attachments ?? [], localId: s.id ?? crypto.randomUUID() }))
-      : [newStep()],
-  );
   const [isSaving, setIsSaving] = useState(false);
+  const [warnings, setWarnings] = useState<{
+    isValid: boolean;
+    unreachableSteps: string[];
+    hasPathStartToEnd: boolean;
+  } | null>(null);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const initialGraph = useMemo(() => {
+    if (template?.graph) return template.graph;
+    return {
+      nodes: [
+        { id: "start", type: "start", position: { x: 100, y: 250 }, data: { label: "Start" } },
+        { id: "end", type: "end", position: { x: 600, y: 250 }, data: { label: "End" } },
+      ],
+      edges: [],
+    };
+  }, [template]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    setSteps((current) => {
-      const oldIndex = current.findIndex((s) => s.localId === active.id);
-      const newIndex = current.findIndex((s) => s.localId === over.id);
-      return arrayMove(current, oldIndex, newIndex);
-    });
-  };
+  const graphRef = useRef(initialGraph);
+  const stepsRef = useRef<WorkflowTemplateStep[]>(template?.steps ?? []);
 
-  const updateStep = (localId: string, patch: Partial<BuilderStep>) => {
-    setSteps((current) => current.map((s) => (s.localId === localId ? { ...s, ...patch } : s)));
-  };
+  const handleFlowChange = useCallback((updatedGraph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => {
+    graphRef.current = updatedGraph;
+    stepsRef.current = updatedSteps;
 
-  const removeStep = (localId: string) => {
-    setSteps((current) => current.filter((s) => s.localId !== localId));
-  };
+    const validation = checkGraphConnectivity(
+      updatedGraph.nodes || [],
+      updatedGraph.edges || [],
+      updatedSteps
+    );
+    setWarnings(validation);
+  }, []);
 
   const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("Workflow name is required");
+      return;
+    }
+
+    const currentSteps = stepsRef.current;
+    if (currentSteps.length === 0) {
+      toast.error("Add at least one step to the workflow");
+      return;
+    }
+
+    const currentGraph = graphRef.current;
+    // Check if we have a connection from start to some step
+    const startEdge = (currentGraph.edges || []).find((e: any) => e.source === "start");
+    if (!startEdge) {
+      toast.error("Connect the green 'Start' node to your first step!");
+      return;
+    }
+
     const payload = {
       name,
-      description,
-      steps: steps.map(({ localId: _localId, ...step }, index) => ({ ...step, sortOrder: index })),
+      description: description || null,
+      graph: currentGraph,
+      steps: currentSteps.map((s, idx) => ({ ...s, sortOrder: idx })),
     };
 
     const parsed = WorkflowTemplateSchema.omit({ id: true }).safeParse(payload);
@@ -133,7 +100,7 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
         : await createWorkflowTemplate(parsed.data);
 
       if (result.success) {
-        toast.success(template?.id ? "Workflow updated" : "Workflow created");
+        toast.success(template?.id ? "Workflow updated successfully" : "Workflow created successfully");
         router.push("/dashboard/admin/workflows");
         router.refresh();
       } else {
@@ -147,7 +114,7 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <h1 className="font-bold text-3xl tracking-tight">{template?.id ? "Edit Workflow" : "New Workflow"}</h1>
         <div className="flex gap-2">
@@ -183,289 +150,109 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
         </CardContent>
       </Card>
 
+      {/* Workflow Warnings / Diagnostics Section */}
+      <Card className={cn(
+        "border transition-all duration-300 shadow-sm",
+        warnings?.isValid === false 
+          ? "border-amber-300 bg-amber-50/50 dark:bg-amber-950/10 dark:border-amber-900/30" 
+          : warnings?.isValid === true
+            ? "border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-900/30"
+            : "border-muted bg-muted/5"
+      )}>
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            {warnings ? (
+              warnings.isValid ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 text-sm">Workflow is correct</h3>
+                    <p className="text-emerald-700/80 dark:text-emerald-400/80 text-xs">
+                      All steps are connected and there is a valid path leading from Start to End.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Workflow Warnings</h3>
+                    <ul className="text-amber-700 dark:text-amber-400 text-xs space-y-1.5 list-disc pl-4 font-medium">
+                      {!warnings.hasPathStartToEnd && (
+                        <li>No active path connects the green <strong>Start</strong> node to the red <strong>End</strong> node.</li>
+                      )}
+                      {warnings.unreachableSteps.length > 0 && (
+                        <li>
+                          Unlinked step(s):{" "}
+                          <span className="font-semibold">{warnings.unreachableSteps.join(", ")}</span>.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </>
+              )
+            ) : (
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" /> Running diagnostics...
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-xl">Steps</h2>
-          <Button variant="outline" size="sm" onClick={() => setSteps((current) => [...current, newStep()])}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Step
-          </Button>
+          <h2 className="font-semibold text-xl">Workflow Graph Editor</h2>
         </div>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext items={steps.map((s) => s.localId)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
-              {steps.map((step, index) => (
-                <SortableStepCard
-                  key={step.localId}
-                  step={step}
-                  index={index}
-                  canRemove={steps.length > 1}
-                  onChange={(patch) => updateStep(step.localId, patch)}
-                  onRemove={() => removeStep(step.localId)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <FlowEditor initialGraph={initialGraph} steps={stepsRef.current} onChange={handleFlowChange} />
       </div>
     </div>
   );
 }
 
-interface SortableStepCardProps {
-  step: BuilderStep;
-  index: number;
-  canRemove: boolean;
-  onChange: (patch: Partial<BuilderStep>) => void;
-  onRemove: () => void;
-}
+function checkGraphConnectivity(
+  nodes: any[],
+  edges: any[],
+  steps: WorkflowTemplateStep[]
+) {
+  const adjList = new Map<string, string[]>();
+  for (const node of nodes) {
+    adjList.set(node.id, []);
+  }
 
-function SortableStepCard({ step, index, canRemove, onChange, onRemove }: SortableStepCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.localId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const handleUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    setIsUploading(true);
-    try {
-      const uploaded: WorkflowAttachment[] = [];
-      for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const randomStr = Math.random().toString(36).substring(7);
-        const filePath = `workflows/steps/${randomStr}_${Date.now()}.${fileExt}`;
-
-        const { error } = await supabase.storage.from("documents").upload(filePath, file);
-        if (error) throw error;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("documents").getPublicUrl(filePath);
-
-        uploaded.push({
-          id: crypto.randomUUID(),
-          fileUrl: publicUrl,
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type,
-        });
-      }
-      onChange({ attachments: [...(step.attachments ?? []), ...uploaded] });
-      toast.success(`${uploaded.length} file(s) attached`);
-    } catch (e) {
-      console.error(e);
-      toast.error(e instanceof Error ? e.message : "Failed to upload file");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  for (const edge of edges) {
+    if (adjList.has(edge.source)) {
+      adjList.get(edge.source)!.push(edge.target);
     }
+  }
+
+  const visitedFromStart = new Set<string>();
+  const queue: string[] = ["start"];
+  visitedFromStart.add("start");
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const neighbors = adjList.get(current) || [];
+    for (const n of neighbors) {
+      if (!visitedFromStart.has(n)) {
+        visitedFromStart.add(n);
+        queue.push(n);
+      }
+    }
+  }
+
+  const hasPathStartToEnd = visitedFromStart.has("end");
+  const unreachableSteps: string[] = [];
+  for (const step of steps) {
+    if (!visitedFromStart.has(step.id!)) {
+      unreachableSteps.push(step.name);
+    }
+  }
+
+  return {
+    isValid: unreachableSteps.length === 0 && hasPathStartToEnd,
+    unreachableSteps,
+    hasPathStartToEnd,
   };
-
-  return (
-    <Card ref={setNodeRef} style={style} className={cn("border", isDragging && "z-10 opacity-80 shadow-lg")}>
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0 py-3">
-        <button
-          type="button"
-          className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
-          aria-label="Drag to reorder step"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-5 w-5" />
-        </button>
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary text-sm">
-          {index + 1}
-        </div>
-        <Input
-          placeholder="Step name"
-          value={step.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          className="max-w-md font-medium"
-        />
-        <div className="ml-auto flex items-center gap-2">
-          {step.priority !== "None" && (
-            <Badge className={cn("border-0", PRIORITY_BADGE_CLASSES[step.priority])}>{step.priority}</Badge>
-          )}
-          <Badge variant="outline" className="capitalize">
-            {step.responsibility === "advisor" ? "Advisor" : "Client"}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground"
-            onClick={() => setIsExpanded((v) => !v)}
-            aria-label={isExpanded ? "Collapse step" : "Expand step"}
-          >
-            <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive/80"
-            onClick={onRemove}
-            disabled={!canRemove}
-            aria-label="Remove step"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-
-      {isExpanded && (
-        <CardContent className="space-y-4 border-t pt-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={`due-${step.localId}`}
-                  checked={step.setDueDate}
-                  onCheckedChange={(checked) => onChange({ setDueDate: checked === true })}
-                />
-                <Label htmlFor={`due-${step.localId}`}>Set due date</Label>
-              </div>
-              {step.setDueDate && (
-                <div className="flex flex-wrap items-center gap-2 pl-6">
-                  <Select
-                    value={String(step.dueDays ?? 1)}
-                    onValueChange={(value) => onChange({ dueDays: Number(value) })}
-                  >
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WORKFLOW_DUE_DAYS.map((d) => (
-                        <SelectItem key={d} value={String(d)}>
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-muted-foreground text-sm">day(s) from</span>
-                  <Select
-                    value={step.dueDateBase ?? "workflow_start"}
-                    onValueChange={(value) => onChange({ dueDateBase: value as BuilderStep["dueDateBase"] })}
-                  >
-                    <SelectTrigger className="w-56">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WORKFLOW_DUE_DATE_BASES.map((base) => (
-                        <SelectItem key={base} value={base}>
-                          {DUE_DATE_BASE_LABELS[base]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select
-                  value={step.priority}
-                  onValueChange={(value) => onChange({ priority: value as BuilderStep["priority"] })}
-                >
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {WORKFLOW_PRIORITIES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Responsibility</Label>
-              <RadioGroup
-                value={step.responsibility}
-                onValueChange={(value) => onChange({ responsibility: value as BuilderStep["responsibility"] })}
-                className="flex gap-6"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="advisor" id={`resp-advisor-${step.localId}`} />
-                  <Label htmlFor={`resp-advisor-${step.localId}`}>Advisor</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="client" id={`resp-client-${step.localId}`} />
-                  <Label htmlFor={`resp-client-${step.localId}`}>Client / Company</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <RichTextEditor
-              value={step.description ?? ""}
-              onChange={(html) => onChange({ description: html })}
-              placeholder="Describe what needs to happen in this step…"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>File Attachments</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              {(step.attachments ?? []).map((attachment) => (
-                <Badge key={attachment.id} variant="secondary" className="gap-1.5 py-1 pr-1 pl-2">
-                  <Paperclip className="h-3 w-3" />
-                  <a
-                    href={attachment.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="max-w-48 truncate hover:underline"
-                  >
-                    {attachment.fileName}
-                  </a>
-                  <button
-                    type="button"
-                    className="rounded-full p-0.5 hover:bg-muted-foreground/20"
-                    onClick={() =>
-                      onChange({ attachments: (step.attachments ?? []).filter((a) => a.id !== attachment.id) })
-                    }
-                    aria-label={`Remove ${attachment.fileName}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => handleUpload(e.target.files)}
-              />
-              <Button variant="outline" size="sm" disabled={isUploading} onClick={() => fileInputRef.current?.click()}>
-                {isUploading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Paperclip className="mr-2 h-4 w-4" />
-                )}
-                {isUploading ? "Uploading..." : "Attach Files"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      )}
-    </Card>
-  );
 }

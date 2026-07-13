@@ -52,7 +52,84 @@ function addDays(base: Date, days: number) {
 }
 
 /**
+ * BFS algorithm to find shortest path distance to the "end" node.
+ */
+function getShortestPathToEnd(graph: any, startNodeId: string): number {
+  if (!graph || !graph.nodes || !graph.edges) return 0;
+  const edges = graph.edges || [];
+  const queue: [string, number][] = [[startNodeId, 0]];
+  const visited = new Set<string>([startNodeId]);
+
+  while (queue.length > 0) {
+    const [currentId, dist] = queue.shift()!;
+    if (currentId === "end") {
+      return dist;
+    }
+
+    const outgoing = edges.filter((e: any) => e.source === currentId);
+    for (const edge of outgoing) {
+      const target = edge.target;
+      if (!visited.has(target)) {
+        visited.add(target);
+        queue.push([target, dist + 1]);
+      }
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Batch enrich workflow instances with calculated percentage complete.
+ */
+async function enrichWorkflowsWithProgress(instances: any[]) {
+  if (instances.length === 0) return;
+
+  const templateIds = [...new Set(instances.map((w) => w.templateId).filter(Boolean))] as string[];
+  const templateGraphs = new Map<string, any>();
+
+  if (templateIds.length > 0) {
+    const { data: templates } = await supabaseServer
+      .from("workflow_templates")
+      .select("id, graph")
+      .in("id", templateIds);
+
+    for (const t of templates || []) {
+      templateGraphs.set(t.id, t.graph);
+    }
+  }
+
+  for (const w of instances) {
+    let percentComplete = 0;
+    if (w.completedAt) {
+      percentComplete = 100;
+    } else {
+      const steps = (w.workflow_instance_steps || w.steps || []) as WorkflowInstanceStep[];
+      const completedCount = steps.filter((s) => s.completedAt).length;
+
+      // Find the current active step in the list (highest sortOrder that is not yet completed)
+      const sortedSteps = [...steps].sort((a, b) => b.sortOrder - a.sortOrder);
+      const activeStep = sortedSteps.find((s) => !s.completedAt);
+
+      if (activeStep && activeStep.templateStepId && w.templateId) {
+        const graph = templateGraphs.get(w.templateId);
+        if (graph) {
+          const dist = getShortestPathToEnd(graph, activeStep.templateStepId);
+          const remainingCount = dist > 0 ? dist - 1 : 0;
+          const totalEstimate = completedCount + remainingCount + 1;
+          percentComplete = Math.round((completedCount / totalEstimate) * 100);
+        }
+      } else if (steps.length > 0 && steps.every((s) => s.completedAt)) {
+        percentComplete = 100;
+      }
+    }
+    w.percentComplete = percentComplete;
+  }
+}
+
+/**
  * Create a new workflow for a client or company as a snapshot copy of a template.
+ * Under the new design, only the first step is copied immediately.
  */
 export async function createWorkflowFromTemplate(templateId: string, entityType: WorkflowEntityType, entityId: string) {
   try {
@@ -60,19 +137,28 @@ export async function createWorkflowFromTemplate(templateId: string, entityType:
 
     const { data: template, error: templateError } = await supabaseServer
       .from("workflow_templates")
-      .select("*")
+      .select("*, workflow_template_steps(*)")
       .eq("id", templateId)
       .single();
 
     if (templateError || !template) throw new Error("Workflow template not found.");
 
-    const { data: templateSteps, error: stepsError } = await supabaseServer
-      .from(TEMPLATE_STEPS_TABLE)
-      .select("*")
-      .eq("templateId", templateId)
-      .order("sortOrder", { ascending: true });
+    const graph = template.graph || { nodes: [], edges: [] };
+    const templateSteps = template.workflow_template_steps || [];
 
-    if (stepsError) throw new Error((stepsError as { message: string }).message);
+    // Find the first step from graph
+    let firstStep = null;
+    const startEdge = (graph.edges || []).find((e: any) => e.source === "start");
+    if (startEdge) {
+      firstStep = templateSteps.find((s: any) => s.id === startEdge.target);
+    }
+
+    // Fallback if no startEdge or step not found
+    if (!firstStep && templateSteps.length > 0) {
+      firstStep = [...templateSteps].sort((a, b) => a.sortOrder - b.sortOrder)[0];
+    }
+
+    if (!firstStep) throw new Error("This workflow template has no steps.");
 
     const startDate = new Date();
 
@@ -92,36 +178,30 @@ export async function createWorkflowFromTemplate(templateId: string, entityType:
 
     if (instanceError) throw new Error((instanceError as { message: string }).message);
 
-    const stepRows = (templateSteps || []).map((step, index) => {
-      // Steps based on the workflow start date get a due date immediately.
-      // "After last step completed" due dates resolve when the prior step is
-      // completed — except for the first step, whose "last step" is the start.
-      let dueDate: string | null = null;
-      if (step.setDueDate && step.dueDays) {
-        if (step.dueDateBase === "workflow_start" || index === 0) {
-          dueDate = addDays(startDate, step.dueDays);
-        }
-      }
-
-      return {
-        instanceId: instance.id,
-        name: step.name,
-        sortOrder: index,
-        setDueDate: step.setDueDate,
-        dueDays: step.dueDays,
-        dueDateBase: step.dueDateBase,
-        priority: step.priority,
-        description: step.description,
-        responsibility: step.responsibility,
-        attachments: step.attachments ?? [],
-        dueDate,
-      };
-    });
-
-    if (stepRows.length > 0) {
-      const { error: insertStepsError } = await supabaseServer.from(INSTANCE_STEPS_TABLE).insert(stepRows);
-      if (insertStepsError) throw new Error((insertStepsError as { message: string }).message);
+    let dueDate: string | null = null;
+    if (firstStep.setDueDate && firstStep.dueDays) {
+      dueDate = addDays(startDate, firstStep.dueDays);
     }
+
+    const firstStepRow = {
+      instanceId: instance.id,
+      templateStepId: firstStep.id,
+      name: firstStep.name,
+      sortOrder: 0,
+      setDueDate: firstStep.setDueDate,
+      dueDays: firstStep.dueDays,
+      dueDateBase: firstStep.dueDateBase,
+      priority: firstStep.priority,
+      description: firstStep.description,
+      responsibility: firstStep.responsibility,
+      attachments: firstStep.attachments ?? [],
+      outcomes: firstStep.outcomes ?? [],
+      selectedOutcome: null,
+      dueDate,
+    };
+
+    const { error: insertStepError } = await supabaseServer.from(INSTANCE_STEPS_TABLE).insert(firstStepRow);
+    if (insertStepError) throw new Error((insertStepError as { message: string }).message);
 
     revalidateWorkflowPaths(entityType, entityId);
 
@@ -163,6 +243,8 @@ export async function getWorkflows(entityType: WorkflowEntityType, entityId: str
       createdByName: w.createdBy ? (creatorNames.get(w.createdBy) ?? null) : null,
       steps: ((w.workflow_instance_steps || []) as WorkflowInstanceStep[]).sort((a, b) => a.sortOrder - b.sortOrder),
     }));
+
+    await enrichWorkflowsWithProgress(workflows);
 
     return { success: true, workflows };
   } catch (error) {
@@ -234,6 +316,8 @@ export async function getAllWorkflows() {
       steps: ((w.workflow_instance_steps || []) as WorkflowInstanceStep[]).sort((a, b) => a.sortOrder - b.sortOrder),
     }));
 
+    await enrichWorkflowsWithProgress(workflows);
+
     return { success: true, workflows };
   } catch (error) {
     console.error("[getAllWorkflows] Error:", error);
@@ -272,6 +356,8 @@ export async function getWorkflow(id: string) {
       ),
     };
 
+    await enrichWorkflowsWithProgress([workflow]);
+
     return { success: true, workflow };
   } catch (error) {
     console.error("[getWorkflow] Error:", error);
@@ -306,11 +392,128 @@ export async function deleteWorkflow(id: string) {
 }
 
 /**
- * Mark a workflow step complete or incomplete.
- * Completing a step resolves the next step's "after last step completed" due
- * date; un-completing clears it again and reopens a completed workflow.
+ * Complete a workflow step, select the outcome, and copy the next step from template.
  */
-export async function setWorkflowStepCompletion(stepId: string, completed: boolean) {
+export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
+  try {
+    const user = await verifyStaff();
+
+    const { data: step, error: stepError } = await supabaseServer
+      .from(INSTANCE_STEPS_TABLE)
+      .select("*")
+      .eq("id", stepId)
+      .single();
+
+    if (stepError || !step) throw new Error("Workflow step not found.");
+
+    const now = new Date();
+    let selectedOutcome = null;
+    let nextStepId = null;
+
+    if (outcomeId && step.outcomes) {
+      const outcome = (step.outcomes as any[]).find((o) => o.id === outcomeId);
+      if (outcome) {
+        selectedOutcome = outcome;
+        nextStepId = outcome.nextStepId;
+      }
+    } else if (step.outcomes && step.outcomes.length === 1) {
+      // Auto-select if there is exactly 1 outcome
+      selectedOutcome = step.outcomes[0];
+      nextStepId = step.outcomes[0].nextStepId;
+    }
+
+    // Update current step to completed
+    const { error: updateError } = await supabaseServer
+      .from(INSTANCE_STEPS_TABLE)
+      .update({
+        completedAt: now.toISOString(),
+        completedBy: user.id,
+        selectedOutcome,
+        updatedAt: now.toISOString(),
+      })
+      .eq("id", stepId);
+
+    if (updateError) throw new Error((updateError as { message: string }).message);
+
+    // If there is a next step, copy it
+    if (nextStepId) {
+      const { data: nextTemplateStep, error: nextStepError } = await supabaseServer
+        .from(TEMPLATE_STEPS_TABLE)
+        .select("*")
+        .eq("id", nextStepId)
+        .single();
+
+      if (nextStepError || !nextTemplateStep) {
+        console.error("Next template step not found:", nextStepId, nextStepError);
+      } else {
+        let dueDate: string | null = null;
+        if (nextTemplateStep.setDueDate && nextTemplateStep.dueDays) {
+          if (nextTemplateStep.dueDateBase === "workflow_start") {
+            const { data: instance } = await supabaseServer
+              .from(INSTANCES_TABLE)
+              .select("startDate")
+              .eq("id", step.instanceId)
+              .single();
+            if (instance?.startDate) {
+              dueDate = addDays(new Date(instance.startDate), nextTemplateStep.dueDays);
+            }
+          } else {
+            dueDate = addDays(now, nextTemplateStep.dueDays);
+          }
+        }
+
+        const newStepRow = {
+          instanceId: step.instanceId,
+          templateStepId: nextTemplateStep.id,
+          name: nextTemplateStep.name,
+          sortOrder: step.sortOrder + 1,
+          setDueDate: nextTemplateStep.setDueDate,
+          dueDays: nextTemplateStep.dueDays,
+          dueDateBase: nextTemplateStep.dueDateBase,
+          priority: nextTemplateStep.priority,
+          description: nextTemplateStep.description,
+          responsibility: nextTemplateStep.responsibility,
+          attachments: nextTemplateStep.attachments ?? [],
+          outcomes: nextTemplateStep.outcomes ?? [],
+          selectedOutcome: null,
+          dueDate,
+        };
+
+        const { error: insertNextError } = await supabaseServer.from(INSTANCE_STEPS_TABLE).insert(newStepRow);
+
+        if (insertNextError) throw new Error((insertNextError as { message: string }).message);
+      }
+    } else {
+      // No next step (leads to End), mark workflow instance completed!
+      await supabaseServer
+        .from(INSTANCES_TABLE)
+        .update({
+          completedAt: now.toISOString(),
+          completedBy: user.id,
+          updatedAt: now.toISOString(),
+        })
+        .eq("id", step.instanceId);
+    }
+
+    const { data: instance } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .select("entityType, entityId")
+      .eq("id", step.instanceId)
+      .single();
+
+    if (instance) revalidateWorkflowPaths(instance.entityType, instance.entityId, step.instanceId);
+
+    return { success: true };
+  } catch (error) {
+    console.error("[completeWorkflowStep] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Reopen a completed workflow step and remove any subsequent steps that were copied.
+ */
+export async function reopenWorkflowStep(stepId: string) {
   try {
     const user = await verifyStaff();
 
@@ -324,45 +527,37 @@ export async function setWorkflowStepCompletion(stepId: string, completed: boole
 
     const now = new Date();
 
+    // Reopen the step by resetting completion fields
     const { error: updateError } = await supabaseServer
       .from(INSTANCE_STEPS_TABLE)
       .update({
-        completedAt: completed ? now.toISOString() : null,
-        completedBy: completed ? user.id : null,
+        completedAt: null,
+        completedBy: null,
+        selectedOutcome: null,
         updatedAt: now.toISOString(),
       })
       .eq("id", stepId);
 
     if (updateError) throw new Error((updateError as { message: string }).message);
 
-    // Resolve or clear the next step's "after last step completed" due date.
-    const { data: nextStep } = await supabaseServer
+    // Delete all steps after this one in the sequence
+    const { error: deleteError } = await supabaseServer
       .from(INSTANCE_STEPS_TABLE)
-      .select("id, setDueDate, dueDays, dueDateBase, completedAt")
+      .delete()
       .eq("instanceId", step.instanceId)
-      .eq("sortOrder", step.sortOrder + 1)
-      .maybeSingle();
+      .gt("sortOrder", step.sortOrder);
 
-    if (nextStep?.setDueDate && nextStep.dueDateBase === "after_last_step" && nextStep.dueDays) {
-      await supabaseServer
-        .from(INSTANCE_STEPS_TABLE)
-        .update({
-          dueDate: completed ? addDays(now, nextStep.dueDays) : null,
-          updatedAt: now.toISOString(),
-        })
-        .eq("id", nextStep.id);
-    }
+    if (deleteError) throw new Error((deleteError as { message: string }).message);
 
-    // Un-completing a step reopens a completed workflow.
-    if (!completed) {
-      await supabaseServer
-        .from(INSTANCES_TABLE)
-        .update({ completedAt: null, completedBy: null, updatedAt: now.toISOString() })
-        .eq("id", step.instanceId)
-        .not("completedAt", "is", null);
-    } else {
-      await supabaseServer.from(INSTANCES_TABLE).update({ updatedAt: now.toISOString() }).eq("id", step.instanceId);
-    }
+    // Reopen the workflow itself if it was completed
+    await supabaseServer
+      .from(INSTANCES_TABLE)
+      .update({
+        completedAt: null,
+        completedBy: null,
+        updatedAt: now.toISOString(),
+      })
+      .eq("id", step.instanceId);
 
     const { data: instance } = await supabaseServer
       .from(INSTANCES_TABLE)
@@ -374,9 +569,19 @@ export async function setWorkflowStepCompletion(stepId: string, completed: boole
 
     return { success: true };
   } catch (error) {
-    console.error("[setWorkflowStepCompletion] Error:", error);
+    console.error("[reopenWorkflowStep] Error:", error);
     return { success: false, error: (error as Error).message };
   }
+}
+
+/**
+ * Compatibility wrapper mapping setWorkflowStepCompletion to new functions.
+ */
+export async function setWorkflowStepCompletion(stepId: string, completed: boolean) {
+  if (completed) {
+    return completeWorkflowStep(stepId);
+  }
+  return reopenWorkflowStep(stepId);
 }
 
 /**

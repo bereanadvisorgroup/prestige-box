@@ -537,6 +537,7 @@ export const workflowTemplates = pgTable("workflow_templates", {
   name: text("name").notNull(),
   description: text("description"), // Tiptap HTML
   createdBy: uuid("createdBy").references(() => users.uid, { onDelete: "set null" }),
+  graph: jsonb("graph").notNull().default(sql`'{"nodes": [], "edges": []}'::jsonb`),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -556,6 +557,9 @@ export const workflowTemplateSteps = pgTable("workflow_template_steps", {
   description: text("description"), // Tiptap HTML
   responsibility: text("responsibility").notNull().default("advisor"), // advisor | client
   attachments: jsonb("attachments").notNull().default(sql`'[]'::jsonb`),
+  outcomes: jsonb("outcomes").notNull().default(sql`'[]'::jsonb`),
+  positionX: numeric("positionX").default("0"),
+  positionY: numeric("positionY").default("0"),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -594,6 +598,9 @@ export const workflowInstanceSteps = pgTable("workflow_instance_steps", {
   dueDate: timestamp("dueDate", { withTimezone: true }), // resolved due date for this instance
   completedAt: timestamp("completedAt", { withTimezone: true }),
   completedBy: uuid("completedBy").references(() => users.uid, { onDelete: "set null" }),
+  templateStepId: uuid("templateStepId").references(() => workflowTemplateSteps.id, { onDelete: "set null" }),
+  outcomes: jsonb("outcomes").notNull().default(sql`'[]'::jsonb`),
+  selectedOutcome: jsonb("selectedOutcome"),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

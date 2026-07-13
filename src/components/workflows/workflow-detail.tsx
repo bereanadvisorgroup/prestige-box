@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, CheckCircle2, Circle, Loader2, Paperclip, RotateCcw, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
-import { completeWorkflow, reopenWorkflow, setWorkflowStepCompletion } from "@/actions/workflows";
+import { completeWorkflow, completeWorkflowStep, reopenWorkflow, reopenWorkflowStep } from "@/actions/workflows";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,7 +42,7 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
 
   const basePath = `/dashboard/crm/${entityType === "client" ? "clients" : "companies"}/${entityId}/internal/workflows`;
 
-  const percent = workflowPercentComplete(workflow.steps);
+  const percent = workflow.percentComplete ?? workflowPercentComplete(workflow.steps);
   const allStepsDone = workflow.steps.length > 0 && workflow.steps.every((s) => s.completedAt);
   const isCompleted = !!workflow.completedAt;
 
@@ -51,11 +51,50 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
 
     setPendingStepId(step.id);
     try {
-      const result = await setWorkflowStepCompletion(step.id, completed);
+      const result = completed ? await completeWorkflowStep(step.id) : await reopenWorkflowStep(step.id);
+
       if (result.success) {
         router.refresh();
       } else {
         toast.error(result.error || "Failed to update step");
+      }
+    } catch (_error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setPendingStepId(null);
+    }
+  };
+
+  const handleCompleteStep = async (step: WorkflowInstanceStep, outcomeId: string) => {
+    if (pendingStepId) return;
+
+    setPendingStepId(step.id);
+    try {
+      const result = await completeWorkflowStep(step.id, outcomeId);
+      if (result.success) {
+        toast.success("Step completed");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Failed to complete step");
+      }
+    } catch (_error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setPendingStepId(null);
+    }
+  };
+
+  const handleReopenStep = async (step: WorkflowInstanceStep) => {
+    if (pendingStepId) return;
+
+    setPendingStepId(step.id);
+    try {
+      const result = await reopenWorkflowStep(step.id);
+      if (result.success) {
+        toast.success("Step reopened. Subsequent steps removed.");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Failed to reopen step");
       }
     } catch (_error) {
       toast.error("An unexpected error occurred");
@@ -133,7 +172,7 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
             <span className="shrink-0 font-semibold text-sm tabular-nums">{percent}%</span>
           </div>
           <p className="text-muted-foreground text-xs">
-            {workflow.steps.filter((s) => s.completedAt).length} of {workflow.steps.length} steps completed
+            {workflow.steps.filter((s) => s.completedAt).length} steps completed
           </p>
           {workflow.description && (
             <div
@@ -194,7 +233,19 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                     <div className="ml-auto flex items-center gap-2">
                       {isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : (
+                      ) : isDone ? (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <span>Completed {step.selectedOutcome ? `(${step.selectedOutcome.name})` : ""}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => handleReopenStep(step)}
+                          >
+                            <RotateCcw className="mr-1 h-3 w-3" /> Reopen
+                          </Button>
+                        </div>
+                      ) : (step.outcomes || []).length <= 1 ? (
                         <label
                           htmlFor={`step-complete-${step.id}`}
                           className="flex cursor-pointer items-center gap-2 text-muted-foreground text-sm"
@@ -208,6 +259,10 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                           />
                           {isDone ? "Completed" : "Mark complete"}
                         </label>
+                      ) : (
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Awaiting outcome selection...
+                        </span>
                       )}
                     </div>
                   </div>
@@ -226,8 +281,28 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                     />
                   )}
 
+                  {!isDone && (step.outcomes || []).length > 1 && (
+                    <div className="border-t pt-3 space-y-2">
+                      <p className="text-xs font-semibold text-muted-foreground">Select outcome to complete step:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {step.outcomes.map((outcome) => (
+                          <Button
+                            key={outcome.id}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs font-semibold hover:bg-primary hover:text-primary-foreground border-primary/40 text-primary shadow-sm hover:scale-[1.02] active:scale-95 transition-all"
+                            onClick={() => handleCompleteStep(step, outcome.id)}
+                            disabled={!!pendingStepId}
+                          >
+                            {outcome.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {(step.attachments ?? []).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 border-t pt-3">
                       {step.attachments.map((attachment) => (
                         <a
                           key={attachment.id}

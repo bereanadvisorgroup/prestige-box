@@ -107,7 +107,7 @@ export function WorkflowList({ entityType, entityId, workflows }: WorkflowListPr
       ) : (
         <div className="space-y-3">
           {filtered.map((workflow) => {
-            const percent = workflowPercentComplete(workflow.steps);
+            const percent = workflow.percentComplete ?? workflowPercentComplete(workflow.steps);
             const doneSteps = workflow.steps.filter((s) => s.completedAt).length;
 
             return (
