@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
-import type { WorkflowEntityType, WorkflowInstance, WorkflowInstanceStep } from "@/types/workflows";
+import type {
+  WorkflowDueDateBase,
+  WorkflowEntityType,
+  WorkflowInstance,
+  WorkflowInstanceStep,
+} from "@/types/workflows";
 
 const INSTANCES_TABLE = "workflow_instances";
 const INSTANCE_STEPS_TABLE = "workflow_instance_steps";
@@ -49,6 +54,87 @@ function addDays(base: Date, days: number) {
   const result = new Date(base);
   result.setDate(result.getDate() + days);
   return result.toISOString();
+}
+
+type ProjectableStep = {
+  setDueDate: boolean;
+  dueDays: number | null;
+  dueDateBase: WorkflowDueDateBase | null;
+  completedAt: string | null;
+};
+
+/**
+ * Project a due date for every step by cascading each step's `dueDays` forward.
+ *
+ * Steps are walked in order maintaining a running "anchor" date. A step based
+ * on the workflow start always resolves relative to `startDate`; every other
+ * step resolves relative to the anchor — the previous step's actual completion
+ * date if it's completed, otherwise the previous step's own projected due date.
+ * This gives a full projected timeline at creation and re-anchors downstream
+ * steps to reality as earlier steps are completed (or un-completed).
+ *
+ * Returns one due date (ISO string or null) per step, in the given order.
+ */
+function projectStepDueDates(startDate: Date, steps: ProjectableStep[]): (string | null)[] {
+  let anchor = startDate;
+  return steps.map((step) => {
+    let dueDate: string | null = null;
+    if (step.setDueDate && step.dueDays) {
+      const base = step.dueDateBase === "workflow_start" ? startDate : anchor;
+      dueDate = addDays(base, step.dueDays);
+    }
+
+    // Advance the anchor for the next step: prefer this step's actual
+    // completion, fall back to its projected due date, otherwise keep the
+    // previous anchor (a step with no due date doesn't move the timeline).
+    if (step.completedAt) {
+      anchor = new Date(step.completedAt);
+    } else if (dueDate) {
+      anchor = new Date(dueDate);
+    }
+
+    return dueDate;
+  });
+}
+
+/**
+ * Recompute and persist projected due dates for every incomplete step of an
+ * instance. Completed steps keep their recorded due date but still anchor the
+ * steps that follow them. Safe to call after any completion change.
+ */
+async function recomputeInstanceDueDates(instanceId: string, now: Date) {
+  const { data: instance } = await supabaseServer
+    .from(INSTANCES_TABLE)
+    .select("startDate")
+    .eq("id", instanceId)
+    .single();
+
+  if (!instance) return;
+
+  const { data: steps } = await supabaseServer
+    .from(INSTANCE_STEPS_TABLE)
+    .select("id, sortOrder, setDueDate, dueDays, dueDateBase, completedAt, dueDate")
+    .eq("instanceId", instanceId)
+    .order("sortOrder", { ascending: true });
+
+  if (!steps) return;
+
+  const projected = projectStepDueDates(new Date(instance.startDate), steps);
+
+  const toMs = (value: string | null) => (value ? new Date(value).getTime() : null);
+
+  await Promise.all(
+    steps.map((step, index) => {
+      const dueDate = projected[index];
+      // Leave completed steps' recorded due dates untouched; only update
+      // incomplete steps whose projected date actually changed.
+      if (step.completedAt || toMs(step.dueDate) === toMs(dueDate)) return null;
+      return supabaseServer
+        .from(INSTANCE_STEPS_TABLE)
+        .update({ dueDate, updatedAt: now.toISOString() })
+        .eq("id", step.id);
+    }),
+  );
 }
 
 /**
@@ -646,6 +732,111 @@ export async function reopenWorkflow(id: string) {
     return { success: true };
   } catch (error) {
     console.error("[reopenWorkflow] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Fetch all upcoming/outstanding workflow steps for a user, sorted by due date.
+ */
+export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5) {
+  try {
+    const [clientsResult, companiesResult] = await Promise.all([
+      supabaseServer.from("clients").select("id, personId").eq("advisorId", userId),
+      supabaseServer.from("companies").select("id, name").eq("advisorId", userId),
+    ]);
+
+    if (clientsResult.error) throw new Error(clientsResult.error.message);
+    if (companiesResult.error) throw new Error(companiesResult.error.message);
+
+    const clientIds = (clientsResult.data || []).map((c) => c.id);
+    const companyIds = (companiesResult.data || []).map((c) => c.id);
+    const allEntityIds = [...clientIds, ...companyIds];
+
+    if (allEntityIds.length === 0) {
+      return { success: true, steps: [] };
+    }
+
+    const { data: instances, error: instancesError } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .select("*, workflow_instance_steps(*)")
+      .in("entityId", allEntityIds)
+      .is("completedAt", null);
+
+    if (instancesError) throw new Error(instancesError.message);
+
+    // Resolve names
+    const entityNames = new Map<string, string>();
+    const personIds = [...new Set((clientsResult.data || []).map((c) => c.personId).filter(Boolean))];
+    const personNames = new Map<string, string>();
+
+    if (personIds.length > 0) {
+      const { data: persons, error: personsError } = await supabaseServer
+        .from("people")
+        .select("id, firstName, lastName")
+        .in("id", personIds);
+      if (personsError) throw new Error(personsError.message);
+
+      for (const p of persons || []) {
+        personNames.set(p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim());
+      }
+    }
+
+    for (const c of clientsResult.data || []) {
+      entityNames.set(`client:${c.id}`, personNames.get(c.personId) || "Unnamed Client");
+    }
+    for (const c of companiesResult.data || []) {
+      entityNames.set(`company:${c.id}`, c.name || "Unnamed Company");
+    }
+    // Flatten and filter outstanding steps
+    const steps: Array<
+      WorkflowInstanceStep & {
+        workflowId: string;
+        workflowName: string;
+        entityType: WorkflowEntityType;
+        entityId: string;
+        entityName: string;
+      }
+    > = [];
+
+    for (const w of instances || []) {
+      const entityName = entityNames.get(`${w.entityType}:${w.entityId}`) || "Unknown Entity";
+      const wSteps = (w.workflow_instance_steps || []) as WorkflowInstanceStep[];
+
+      // Only surface the next actionable step: steps are completed in order, so
+      // the "ready" step is the first incomplete one by sortOrder. Later steps
+      // aren't ready until their predecessors are done.
+      const nextStep = [...wSteps].sort((a, b) => a.sortOrder - b.sortOrder).find((s) => !s.completedAt);
+
+      if (nextStep) {
+        steps.push({
+          ...nextStep,
+          workflowId: w.id,
+          workflowName: w.name,
+          entityType: w.entityType,
+          entityId: w.entityId,
+          entityName,
+        });
+      }
+    }
+
+    // Sort outstanding steps:
+    // 1. Those with due date (ascending)
+    // 2. Those without due date (by createdAt ascending)
+    steps.sort((a, b) => {
+      if (a.dueDate && b.dueDate) {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+
+    const limitedSteps = steps.slice(0, limit);
+
+    return { success: true, steps: limitedSteps };
+  } catch (error) {
+    console.error("[getUpcomingWorkflowStepsForUser] Error:", error);
     return { success: false, error: (error as Error).message };
   }
 }

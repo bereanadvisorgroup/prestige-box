@@ -5,13 +5,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Briefcase, Building2, Fingerprint, Globe, MapPin, Phone, Plus, Trash2, TrendingUp, Users } from "lucide-react";
+import {
+  Briefcase,
+  Building2,
+  Fingerprint,
+  Globe,
+  MapPin,
+  Phone,
+  Plus,
+  Trash2,
+  TrendingUp,
+  UserCog,
+  Users,
+} from "lucide-react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
 import { createCompany, updateCompany } from "@/actions/companies";
 import { getPeople } from "@/actions/people";
+import { getAdvisors } from "@/actions/users";
 import { AddressSearchSelect } from "@/components/crm/address-search-select";
 import { LogoUpload } from "@/components/crm/logo-upload";
 import { Button } from "@/components/ui/button";
@@ -42,6 +55,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
+  const [advisors, setAdvisors] = useState<{ uid: string; name: string }[]>([]);
 
   const [personSearchQuery, setPersonSearchQuery] = useState("");
 
@@ -56,6 +70,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
           addressId: company.addressId,
           website: company.website,
           phone: company.phone,
+          advisorId: company.advisorId ?? null,
           logoUrl: company.logoUrl || null,
           socialMedia: (Array.isArray(company.socialMedia) ? company.socialMedia : []).map((sm: any) => ({
             id: sm.id || crypto.randomUUID(),
@@ -88,6 +103,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
           addressId: "",
           website: "",
           phone: "",
+          advisorId: null,
           logoUrl: null,
           socialMedia: [],
           owners: [],
@@ -135,12 +151,24 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const [peopleResult, addressesResult] = await Promise.all([getPeople(), getAddresses()]);
+      const [peopleResult, addressesResult, advisorsResult] = await Promise.all([
+        getPeople(),
+        getAddresses(),
+        getAdvisors(),
+      ]);
       if (peopleResult.success && peopleResult.people) {
         setAvailablePeople(peopleResult.people);
       }
       if (addressesResult.success && addressesResult.addresses) {
         setAvailableAddresses(addressesResult.addresses);
+      }
+      if (advisorsResult.success && advisorsResult.advisors) {
+        setAdvisors(
+          advisorsResult.advisors.map((a) => ({
+            uid: a.uid,
+            name: `${a.firstName} ${a.lastName}`.trim() || a.uid,
+          })),
+        );
       }
     }
     fetchData();
@@ -347,6 +375,37 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
                     />
                   </FormControl>
                   <FormDescription>Select from shared addresses. Leave blank if unknown.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="advisorId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="flex items-center gap-2">
+                    <UserCog className="h-4 w-4" />
+                    Assigned Advisor
+                  </FormLabel>
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select advisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {advisors.map((a) => (
+                        <SelectItem key={a.uid} value={a.uid}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>The admin or advisor responsible for this company.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

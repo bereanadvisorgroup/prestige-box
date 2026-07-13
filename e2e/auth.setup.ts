@@ -4,9 +4,14 @@ import path from "path";
 const adminFile = path.join(__dirname, "playwright/.auth/admin.json");
 const clientFile = path.join(__dirname, "playwright/.auth/client.json");
 
-setup("authenticate as admin", async ({ page }) => {
+setup("authenticate as admin", async ({ page, context }) => {
+  await context.addCookies([{ name: "is_e2e", value: "true", url: "http://localhost:3000" }]);
   // Perform authentication steps. Replace these actions with your own.
   await page.goto("/auth/v1/login");
+  await page.evaluate(() => {
+    document.cookie = "is_e2e=true; path=/";
+    localStorage.setItem("is_e2e", "true");
+  });
   await page.locator("input#email").fill("admin@prestigebox.dev");
   await page.locator("input#password").fill("password123");
   await page.locator('button[type="submit"]').click();
@@ -21,9 +26,14 @@ setup("authenticate as admin", async ({ page }) => {
   await page.context().storageState({ path: adminFile });
 });
 
-setup("authenticate as client", async ({ page }) => {
+setup("authenticate as client", async ({ page, context }) => {
+  await context.addCookies([{ name: "is_e2e", value: "true", url: "http://localhost:3000" }]);
   // Perform authentication steps. Replace these actions with your own.
   await page.goto("/auth/v1/login");
+  await page.evaluate(() => {
+    document.cookie = "is_e2e=true; path=/";
+    localStorage.setItem("is_e2e", "true");
+  });
   await page.locator("input#email").fill("client1@prestigebox.dev");
   await page.locator("input#password").fill("password123");
   await page.locator('button[type="submit"]').click();

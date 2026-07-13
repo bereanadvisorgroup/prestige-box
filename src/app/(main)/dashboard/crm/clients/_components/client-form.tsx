@@ -312,7 +312,7 @@ export function ClientForm({ client }: ClientFormProps) {
               name="advisorId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Owning Advisor</FormLabel>
+                  <FormLabel>Assigned Advisor</FormLabel>
                   <Select
                     value={field.value ?? "none"}
                     onValueChange={(val) => field.onChange(val === "none" ? null : val)}

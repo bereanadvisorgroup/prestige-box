@@ -148,6 +148,7 @@ export const companies = pgTable("companies", {
   addressId: uuid("addressId"),
   website: text("website"),
   phone: text("phone"),
+  advisorId: uuid("advisorId"), // users.uid of the advisor/admin assigned to this company
   situsRecords: jsonb("situsRecords").default(sql`'[]'::jsonb`),
   nexusRecords: jsonb("nexusRecords").default(sql`'[]'::jsonb`),
   paymentAccounts: jsonb("paymentAccounts").default(sql`'[]'::jsonb`),
@@ -156,6 +157,7 @@ export const companies = pgTable("companies", {
   ltcDocuments: jsonb("ltcDocuments").default(sql`'[]'::jsonb`),
   logoUrl: text("logoUrl"),
   socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
+  documentUrl: text("documentUrl"),
   estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),

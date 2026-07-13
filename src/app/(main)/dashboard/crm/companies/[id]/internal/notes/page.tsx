@@ -13,6 +13,7 @@ export default async function CompanyNotesPage({ params }: PageProps) {
         title="Notes"
         defaultAssociations={[{ entityType: "company", entityId: id }]}
         lockAssociations
+        useHeaderPortal={true}
       />
     </div>
   );

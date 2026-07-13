@@ -15,6 +15,7 @@ import type { Client, Person } from "@/types/crm";
 export type EnrichedClient = Client & {
   isLinked?: boolean;
   person?: Person | null;
+  advisorName?: string | null;
 };
 
 export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedClient>[] => [
@@ -62,6 +63,16 @@ export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedC
       const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number;
       if (!phone) return "-";
       return <span className="whitespace-nowrap text-sm">{formatPhoneNumber(phone)}</span>;
+    },
+  },
+  {
+    id: "assignedAdvisor",
+    accessorFn: (row) => row.advisorName ?? "",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Assigned Advisor" />,
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
+      const name = row.original.advisorName;
+      if (!name) return <span className="text-muted-foreground text-sm italic">Unassigned</span>;
+      return <span className="whitespace-nowrap text-sm">{name}</span>;
     },
   },
   {

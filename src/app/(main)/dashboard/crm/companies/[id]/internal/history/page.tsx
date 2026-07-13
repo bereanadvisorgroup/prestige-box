@@ -1,9 +1,11 @@
-import { AlertCircle, Clock } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 import { getEntityHistory } from "@/actions/history";
 import { HistoryTable } from "@/components/history/history-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ChangeHistoryWithEntity } from "@/types/crm";
+
+import { CompanyHeaderPortal } from "../../_components/company-header-portal";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -15,10 +17,7 @@ export default async function CompanyHistoryPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-2">
-        <Clock className="h-5 w-5 text-primary" />
-        <h2 className="font-semibold text-xl">Change History</h2>
-      </div>
+      <CompanyHeaderPortal sectionName="History" />
 
       {!result.success ? (
         <Alert variant="destructive">

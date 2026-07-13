@@ -8,6 +8,7 @@ import { getCompanies } from "@/actions/companies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getClientPolicies } from "@/actions/policies";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
+import { getAdvisors } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { ClientsTable } from "./_components/clients-table";
@@ -22,6 +23,7 @@ export default async function ClientsPage() {
     banksRes,
     propertyAndCasualtyFirmsRes,
     companiesRes,
+    advisorsRes,
   ] = await Promise.all([
     getClients(),
     getClientPolicies(),
@@ -31,6 +33,7 @@ export default async function ClientsPage() {
     getBanks(),
     getPropertyAndCasualtyFirms(),
     getCompanies(),
+    getAdvisors(),
   ]);
 
   if (!clientsRes.success) {
@@ -64,6 +67,10 @@ export default async function ClientsPage() {
       ? propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms
       : [];
   const companies = companiesRes.success && companiesRes.companies ? companiesRes.companies : [];
+  const advisors = advisorsRes.success && advisorsRes.advisors ? advisorsRes.advisors : [];
+  const advisorNameById = new Map(
+    advisors.map((a) => [a.uid, `${a.firstName} ${a.lastName}`.trim() || a.uid] as const),
+  );
 
   const clients = rawClients.map((client) => {
     const isLinked =
@@ -78,6 +85,7 @@ export default async function ClientsPage() {
     return {
       ...client,
       isLinked,
+      advisorName: client.advisorId ? (advisorNameById.get(client.advisorId) ?? null) : null,
     };
   });
 

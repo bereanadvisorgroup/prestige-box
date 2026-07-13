@@ -15,22 +15,24 @@ import type { Company } from "@/types/crm";
 export type EnrichedCompany = Company & {
   isLinked?: boolean;
   owners?: { id: string }[];
+  advisorName?: string | null;
 };
 
-export const columns = (onDelete: (company: Company) => void): ColumnDef<EnrichedCompany>[] => [
+export const columns = (onDelete: (company: Company) => void, role?: string): ColumnDef<EnrichedCompany>[] => [
   {
     accessorKey: "name",
     filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Company Name" />,
     cell: ({ row }: { row: Row<EnrichedCompany> }) => {
       const company = row.original;
+      const isInternal = role === "admin" || role === "advisor";
+      const href = isInternal
+        ? `/dashboard/crm/companies/${company.id}/internal`
+        : `/dashboard/crm/companies/${company.id}`;
       return (
         <div className="flex items-center gap-2">
           <FirmLogo logoUrl={getCompanyLogoUrl(company)} name={company.name} className="h-6 w-6" />
-          <Link
-            href={`/dashboard/crm/companies/${company.id}`}
-            className="flex items-center gap-1 font-medium text-primary hover:underline"
-          >
+          <Link href={href} className="flex items-center gap-1 font-medium text-primary hover:underline">
             <span>{company.name}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
           </Link>
@@ -69,6 +71,16 @@ export const columns = (onDelete: (company: Company) => void): ColumnDef<Enriche
           <span className="whitespace-nowrap">{formatPhoneNumber(phone)}</span>
         </div>
       );
+    },
+  },
+  {
+    id: "assignedAdvisor",
+    accessorFn: (row) => row.advisorName ?? "",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Assigned Advisor" />,
+    cell: ({ row }: { row: Row<EnrichedCompany> }) => {
+      const name = row.original.advisorName;
+      if (!name) return <span className="text-muted-foreground text-sm italic">Unassigned</span>;
+      return <span className="whitespace-nowrap text-sm">{name}</span>;
     },
   },
   {

@@ -11,8 +11,10 @@ import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
 import { getTasks } from "@/actions/tasks";
 import { getAdvisors } from "@/actions/users";
+import { getWorkflows } from "@/actions/workflows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { AdvisorDropdown } from "../_components/advisor-dropdown";
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
@@ -21,6 +23,7 @@ import { ReferralTreeCard } from "../_components/referral-tree-card";
 import { ReferredByCard } from "../_components/referred-by-card";
 import { SportsTeamsCard } from "../_components/sports-teams-card";
 import { TasksCard } from "../_components/tasks-card";
+import { WorkflowStepsCard } from "../_components/workflow-steps-card";
 
 interface ClientPageProps {
   params: Promise<{
@@ -51,6 +54,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     referralTypesResult,
     eventsResult,
     advisorsResult,
+    workflowsResult,
   ] = await Promise.all([
     getClients(),
     getTasks({ clientId: id }),
@@ -60,6 +64,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     getReferralTypes(),
     getEvents(),
     getAdvisors(),
+    getWorkflows("client", id),
   ]);
 
   const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
@@ -70,9 +75,30 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const allReferralTypes = referralTypesResult.success ? referralTypesResult.referralTypes || [] : [];
   const allEvents = eventsResult.success ? eventsResult.events || [] : [];
   const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
+  const workflows = workflowsResult.success && workflowsResult.workflows ? workflowsResult.workflows : [];
 
   const person = clientResult.person;
   const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
+
+  // Filter and sort outstanding steps
+  const outstandingSteps = workflows.flatMap((w) =>
+    (w.steps || [])
+      .filter((s) => !s.completedAt)
+      .map((s) => ({
+        ...s,
+        workflowName: w.name,
+        workflowId: w.id,
+      })),
+  );
+
+  outstandingSteps.sort((a, b) => {
+    if (a.dueDate && b.dueDate) {
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 
   // Fetch news for each sports team
   const teamsNews = await Promise.all(
@@ -85,6 +111,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
   return (
     <div className="space-y-6 py-4">
       <ClientHeaderPortal sectionName="Overview">
+        <AdvisorDropdown client={client} advisors={allAdvisors} />
         <DocumentsButton client={client} />
       </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -92,6 +119,9 @@ export default async function ClientPage({ params }: ClientPageProps) {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:col-span-2">
           <TasksCard clientId={id} initialTasks={tasks} />
           <NotesCard clientId={id} initialNotes={notes} />
+          <div className="md:col-span-2">
+            <WorkflowStepsCard clientId={id} steps={outstandingSteps} />
+          </div>
           <InterestsCard client={client} />
           <SportsTeamsCard client={client} />
           <ReferredByCard
