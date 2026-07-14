@@ -194,8 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           pathname.startsWith("/dashboard/crm") ||
           pathname.startsWith("/dashboard/admin") ||
           pathname.startsWith("/dashboard/reports") ||
-          pathname.startsWith("/dashboard/finance") ||
-          pathname.startsWith("/dashboard/crm-pipeline")
+          pathname.startsWith("/dashboard/finance")
         ) {
           router.replace("/dashboard/default");
         }

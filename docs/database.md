@@ -191,6 +191,109 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
+    
+    WORKFLOW_TEMPLATES ||--o{ WORKFLOW_TEMPLATE_STEPS : "contains"
+    WORKFLOW_TEMPLATES ||--o{ WORKFLOW_INSTANCES : "instantiates"
+    WORKFLOW_INSTANCES ||--o{ WORKFLOW_INSTANCE_STEPS : "contains"
+    OPPORTUNITY_PIPELINES ||--o{ OPPORTUNITY_PIPELINE_STAGES : "contains"
+    OPPORTUNITY_PIPELINES ||--o{ OPPORTUNITIES : "contains"
+    OPPORTUNITY_PIPELINE_STAGES ||--o{ OPPORTUNITIES : "tracks stage of"
+    CLIENTS ||--o{ OPPORTUNITIES : "associated with"
+    COMPANIES ||--o{ OPPORTUNITIES : "associated with"
+
+    WORKFLOW_TEMPLATES {
+        uuid id PK
+        string name
+        string description
+        uuid createdBy FK "References users"
+        jsonb graph
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    WORKFLOW_TEMPLATE_STEPS {
+        uuid id PK
+        uuid templateId FK
+        string name
+        integer sortOrder
+        boolean setDueDate
+        integer dueDays
+        string dueDateBase "workflow_start | after_last_step"
+        string priority "None | Low | Medium | High"
+        string description
+        string responsibility "advisor | client"
+        jsonb attachments
+        jsonb outcomes
+        numeric positionX
+        numeric positionY
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    WORKFLOW_INSTANCES {
+        uuid id PK
+        uuid templateId FK
+        string name
+        string description
+        string entityType "client | company"
+        uuid entityId
+        timestamp startDate
+        uuid createdBy FK
+        timestamp completedAt
+        uuid completedBy FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    WORKFLOW_INSTANCE_STEPS {
+        uuid id PK
+        uuid instanceId FK
+        string name
+        integer sortOrder
+        boolean setDueDate
+        integer dueDays
+        string dueDateBase
+        string priority
+        string description
+        string responsibility
+        jsonb attachments
+        timestamp dueDate
+        timestamp completedAt
+        uuid completedBy FK
+        uuid templateStepId FK
+        jsonb outcomes
+        jsonb selectedOutcome
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    OPPORTUNITY_PIPELINES {
+        uuid id PK
+        string name
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    OPPORTUNITY_PIPELINE_STAGES {
+        uuid id PK
+        uuid pipelineId FK
+        string name
+        integer order
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    OPPORTUNITIES {
+        uuid id PK
+        uuid clientId FK
+        uuid companyId FK
+        numeric amount
+        timestamp targetCloseDate
+        uuid pipelineId FK
+        uuid stageId FK
+        integer probabilityWin
+        string notes
+        string resultStatus "TRASH | WON | LOST"
+        string resultNotes
+        uuid updatedById FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
 ```
 
 ## Core Entities
@@ -238,6 +341,23 @@ erDiagram
 ### `change_history`
 - System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks).
 - Logs the semantic sub-type (e.g. Profile, Life Insurance, Valuation), action (`created`, `updated`, `added`, `removed`, `deleted`), specific changed fields with machine and human-readable names (`fieldName`, `fieldLabel`), before/after string snapshots (`oldValue`, `newValue`), a custom text `summary`, and details of the actor (`actorId`, `actorName`) and timestamp.
+
+### `workflow_templates` & `workflow_template_steps`
+- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
+- **Template Steps**: The individual task definitions making up a template. Tracks `sortOrder`, due date calculation rules (`setDueDate`, `dueDays`, and `dueDateBase` as `workflow_start` or `after_last_step`), priority, responsibility (`advisor` or `client`), rich descriptions, attachments, outcomes (JSONB metadata mapping path branches), and editor positions (`positionX`, `positionY`).
+
+### `workflow_instances` & `workflow_instance_steps`
+- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks overall completion dates, creators, and progress.
+- **Instance Steps**: Snapshot of the template step with completion tracking. Resolves the due date using the cascading completion timeline (`dueDate`), tracks when and who completed the step, and logs `outcomes` and `selectedOutcome` configurations.
+
+### `opportunity_pipelines` & `opportunity_pipeline_stages`
+- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle).
+- **Pipeline Stages**: The stages making up a pipeline, ordered by `order`.
+
+### `opportunities`
+- Represents a sales, onboarding, or policy lifecycle deal. Maps to a client or company.
+- Tracks `amount` (numeric), `targetCloseDate`, `probabilityWin` (integer), `notes`, `resultStatus` (`TRASH`, `WON`, `LOST`), and `resultNotes`.
+- Enforces database constraints pointing to the active pipeline (`pipelineId`) and stage (`stageId`).
 
 ---
 

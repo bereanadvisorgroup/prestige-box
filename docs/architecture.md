@@ -38,8 +38,13 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 - **Server Actions**: Mutations (e.g., submitting forms, updating database records) are executed via Next.js Server Actions rather than traditional API routes, streamlining the developer experience.
 
 ### Route Structure
-- `src/app/(external)`: Root landing page.
-- `src/app/(main)`: Authentication flow routes (Login, Password Reset, MFA enrollment/verification) and the core application dashboard and features.
+- `src/app/(external)`: Public landing page and marketing entry points.
+- `src/app/(main)`: Core authenticated portal. Contains:
+  - `auth/`: Authentication flow routes (Login, Password Reset, MFA enrollment and verification).
+  - `dashboard/crm/`: Client Relationship Management dashboards (Overview, Notes, Tasks, Opportunities, and Workflows) and CRM registries (Households, Clients, Companies, People, Addresses, Policies, Professional Services).
+  - `dashboard/admin/`: Admin panels (User settings, Workflow template visual graph designer, and Opportunity Pipeline stages setup).
+  - `dashboard/reports/`: Analytical charts (expected Benefit Payments report, Relationship Graph SVG, and audit History Report).
+  - `dashboard/finance/`: Client asset/liability listings and insurance policies overview.
 
 ## Backend: Supabase
 
