@@ -69,16 +69,24 @@ erDiagram
     COMPANIES {
         uuid id PK
         string name
+        string dba
         string ein
-        uuid[] clientIds
+        uuid addressId FK
         string website
         string phone
-        jsonb addressSitus
-        jsonb addressNexus
+        uuid advisorId FK "References users"
+        jsonb situsRecords
+        jsonb nexusRecords
         jsonb paymentAccounts
         jsonb lifeDocuments
         jsonb disabilityDocuments
         jsonb ltcDocuments
+        string logoUrl
+        jsonb socialMedia
+        string documentUrl
+        numeric estimatedValue
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANY_VALUATION_HISTORY {
         uuid id PK
@@ -321,7 +329,8 @@ erDiagram
 
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
 - Tracks general corporate clients and business entities.
-- Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- Upgraded with fields for corporate details (situs/nexus records as JSONB `situsRecords` and `nexusRecords`, website, phone, payment accounts, dba, estimatedValue, logoUrl, socialMedia, documentUrl) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- Tethers to an assigned advisor (`advisorId` referencing `users.uid`).
 - **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
 - **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
 
