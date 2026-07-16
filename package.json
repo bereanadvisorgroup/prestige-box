@@ -1,6 +1,7 @@
 {
   "name": "@bereanadivsorgroup/prestige-box",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.13.0",
   "private": true,
   "engines": {
     "node": ">=24"
