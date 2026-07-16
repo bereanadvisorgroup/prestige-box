@@ -35,6 +35,17 @@ Reserved for system administrators.
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
 - **Portal Settings**: Global portal-wide configuration parameters.
+- **Lookup Lists & Dropdowns**: Centralized management of dropdown options, lookup values, and entity lists:
+  - **Account Types (`/dashboard/admin/financial-account-types`)**: Configuration values for financial account categories.
+  - **Custodians (`/dashboard/admin/custodians`)**: Options for custodians.
+  - **Referral Types (`/dashboard/admin/referral-types`)**: Specific categories of referral routes.
+  - **Events (`/dashboard/admin/events`)**: Events tracked as potential referral triggers.
+- **Vendor Registries**: Central directories for external institutions and servicing entities:
+  - **Life Insurance (`/dashboard/admin/life-insurance-companies`)**
+  - **Disability Insurance (`/dashboard/admin/disability-insurance-companies`)**
+  - **Long Term Care (`/dashboard/admin/long-term-care-insurance`)**
+  - **Money Managers (`/dashboard/admin/money-managers`)**
+  - **Record Keepers (`/dashboard/admin/record-keepers`)**
 - **Workflow Templates (`/dashboard/admin/workflows`)**: Flow designer and form builder to define visual multi-step workflow graphs with custom branches and outcomes.
 - **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages.
 
@@ -121,6 +132,7 @@ Dynamic reporting and analytical views.
 - **Benefit Payments (`/dashboard/reports/payments`)**: Tracks expected premium payments, collections, and forecasts.
 - **Relationship Graph (`/dashboard/reports/relationship-graph`)**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
 - **History Report (`/dashboard/reports/history`)**: Global feed of audit history logs tracking mutations (insert/updates/deletions) across CRM entities.
+- **Referrals (`/dashboard/reports/referrals`)**: Interactive referral tree diagram mapping referrers to the clients they referred, plus referral-type mix pie charts and time-series trends.
 
 ### 8. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
 Personal configuration pages for the authenticated user.

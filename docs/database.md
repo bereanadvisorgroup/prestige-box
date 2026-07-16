@@ -44,27 +44,80 @@ erDiagram
     USERS {
         uuid uid PK "References auth.users"
         string email
-        string role "Admin | Advisor | Client"
         string firstName
         string lastName
+        string role "Admin | Advisor | Client"
+        string photoURL
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ADDRESSES {
+        uuid id PK
+        string street1
+        string street2
+        string city
+        string state
+        string zipCode
+        string country
+        timestamp createdAt
+        timestamp updatedAt
     }
     PEOPLE {
         uuid id PK
+        string prefix
         string firstName
+        string middleName
         string lastName
+        string suffix
+        string photoUrl
         jsonb emails
         jsonb phones
+        jsonb socialMedia
+        jsonb addresses
+        uuid[] addressIds
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    HOUSEHOLDS {
+        uuid id PK
+        string name
+        uuid addressId FK
+        jsonb memberIds
+        timestamp createdAt
+        timestamp updatedAt
     }
     CLIENTS {
         uuid id PK
         uuid personId FK
         uuid advisorId FK "References users"
+        uuid referredById FK
+        string referredByType
+        uuid referredByCompanyId FK
+        uuid referredByPersonId FK
+        uuid referredByReferralTypeId FK
+        uuid referredByEventId FK
+        uuid referredByAdvisorId FK
+        string[] hobbies
+        string[] favoriteSportsTeams
+        jsonb paymentAccounts
+        jsonb familyMembers
         jsonb employments
-        jsonb liabilities
         jsonb pcDocuments
         jsonb lifeDocuments
         jsonb ltcDocuments
         jsonb estateDocuments
+        jsonb lifePolicies
+        jsonb disabilityPolicies
+        jsonb ltcPolicies
+        jsonb moneyManagerAccounts
+        jsonb recordKeeperAccounts
+        jsonb liabilities
+        jsonb mortgages
+        jsonb driversLicense
+        jsonb pii
+        string documentUrl
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANIES {
         uuid id PK
@@ -91,14 +144,55 @@ erDiagram
     COMPANY_VALUATION_HISTORY {
         uuid id PK
         uuid companyId FK
-        numeric valuation
-        timestamp recordedAt
+        numeric value
+        timestamp valuationDate
+        timestamp createdAt
+        timestamp updatedAt
     }
     COMPANY_OWNERS {
         uuid id PK
         uuid companyId FK
         uuid personId FK
         numeric ownershipPercentage
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    CLIENT_POLICIES {
+        uuid id PK
+        uuid clientId FK
+        uuid lifeInsuranceCompanyId FK
+        uuid disabilityInsuranceCompanyId FK
+        uuid longTermCareInsuranceId FK
+        string paymentAccountId
+        string policyName
+        string policyNumber
+        numeric premiumAmount
+        timestamp effectiveDate
+        timestamp renewalDate
+        string paymentSchedule
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ASSETS {
+        uuid id PK
+        uuid clientId FK
+        string name
+        string category
+        string subType
+        numeric currentValue
+        string currency
+        boolean isAutomated
+        string institutionName
+        uuid addressId FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    ASSET_HISTORY {
+        uuid id PK
+        uuid assetId FK
+        numeric value
+        timestamp recordedAt
+        timestamp createdAt
     }
     TASKS {
         uuid id PK
@@ -313,9 +407,19 @@ erDiagram
 ### `people`
 - A master record of a physical person. Tracks names, contact information (JSONB arrays), PII, and household associations.
 
+### `addresses`
+- Centralized store for physical addresses linked to people, households, companies, and assets.
+
+### `households`
+- Groups individuals/people into family/household units to track aggregated net worth, familial links, and shared addresses.
+
 ### `clients`
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
 - Stores deep financial profiles (employment, liabilities) and insurance files.
+
+### `assets` & `asset_history`
+- **Assets**: Tracks client assets (e.g., Real Estate, Vehicles, Valuables, Financial accounts) detailing categories, current values, and institution details.
+- **Asset History**: Chronological log of value updates for each asset, enabling historical valuation tracking and Net Worth timeline visualizations.
 - **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
   - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
   - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).
