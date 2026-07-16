@@ -26,7 +26,6 @@ import {
   ShieldAlert,
   StickyNote,
   TrendingUp,
-  User,
   Users,
   Workflow,
 } from "lucide-react";
@@ -34,6 +33,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { getClientAssociationCounts } from "@/actions/clients";
 import { getCompanyAssociationCounts } from "@/actions/companies";
+import { getBusinessContact } from "@/actions/settings";
 import {
   Sidebar,
   SidebarContent,
@@ -43,7 +43,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { APP_CONFIG } from "@/config/app-config";
+import { getSocialAvatarUrl } from "@/lib/social";
 import type { NavGroup } from "@/navigation/sidebar/sidebar-items";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
 import { useAuthStore } from "@/stores/auth.store";
@@ -373,6 +373,46 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isCompanyView = isCrmStaff && companyId;
 
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [companyDetails, setCompanyDetails] = useState<{
+    name: string;
+    logoUrl: string;
+  }>({
+    name: "Prestige Box",
+    logoUrl: "",
+  });
+
+  useEffect(() => {
+    getBusinessContact().then((res) => {
+      if (res.success) {
+        let resolvedLogoUrl = res.logoUrl || "";
+        try {
+          const socialMedia = JSON.parse(res.socialMediaRaw || "[]") as {
+            id: string;
+            type: string;
+            url: string;
+            isPrimary: boolean;
+            useProfilePhoto: boolean;
+          }[];
+          if (Array.isArray(socialMedia) && socialMedia.length > 0) {
+            const useSocialPhoto = socialMedia.find((sm) => sm.useProfilePhoto);
+            if (useSocialPhoto) {
+              const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
+              if (socialAvatar) {
+                resolvedLogoUrl = socialAvatar;
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse social media in sidebar:", e);
+        }
+
+        setCompanyDetails({
+          name: res.companyName || "Prestige Box",
+          logoUrl: resolvedLogoUrl,
+        });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const _path = pathname;
@@ -414,8 +454,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link prefetch={false} href={isCrmStaff ? "/dashboard/crm" : "/dashboard/default"}>
-                <Command />
-                <span className="font-semibold text-base">{APP_CONFIG.name}</span>
+                {companyDetails.logoUrl ? (
+                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded bg-muted/40 border border-muted/20">
+                    {/* biome-ignore lint/performance/noImgElement: Sidebar dynamic company logo */}
+                    <img
+                      src={companyDetails.logoUrl}
+                      alt={companyDetails.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <Command />
+                )}
+                <span className="font-semibold text-base truncate">{companyDetails.name}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
