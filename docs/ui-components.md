@@ -26,8 +26,9 @@ Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesth
 ### 3. Lucide React
 All iconography is sourced exclusively from the `lucide-react` library.
 
-### 4. Recharts
-The responsive charting library used for data visualizations (e.g., net worth graphs and corporate valuation curves). Charts use theme-based CSS variables to coordinate with light/dark modes and custom presets.
+### 4. Recharts & D3.js (Data Visualizations)
+- **Recharts**: The responsive charting library used for timeline trends (e.g., client net worth graphs, corporate valuation curves). Charts use theme-based CSS variables to coordinate with light/dark modes.
+- **D3.js**: Used for the interactive **Referrals Network Graph**. Implements a custom D3 force-directed simulation with drag-and-drop nodes, smooth zoom/pan controls, custom node coloring based on entity type, and direct navigation links to CRM profiles.
 
 ### 5. Rich Text Editor (Tiptap)
 For notes and task descriptions, the project integrates Tiptap:
