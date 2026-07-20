@@ -24,7 +24,19 @@ export function getSocialAvatarUrl(type: string, url: string): string | null {
     let username = "";
     const typeLower = type.toLowerCase();
 
-    if (typeLower === "linkedin") {
+    if (typeLower === "facebook") {
+      const setVal = parsedUrl.searchParams.get("set") || "";
+      const setMatch = setVal.match(/^a\.(\d+)/);
+      if (setMatch) {
+        username = setMatch[1];
+      } else if (parsedUrl.searchParams.has("id")) {
+        username = parsedUrl.searchParams.get("id") || "";
+      } else if (parsedUrl.searchParams.has("fbid")) {
+        username = parsedUrl.searchParams.get("fbid") || "";
+      } else {
+        username = parts[0];
+      }
+    } else if (typeLower === "linkedin") {
       // LinkedIn URLs can be like linkedin.com/in/username or linkedin.com/company/username
       if (parts[0] === "in" || parts[0] === "company") {
         username = parts[1] || "";
@@ -58,6 +70,10 @@ export function getSocialAvatarUrl(type: string, url: string): string | null {
       linkedin: "linkedin",
       youtube: "youtube",
     };
+
+    if (typeLower === "facebook") {
+      return `https://graph.facebook.com/${username}/picture?type=large`;
+    }
 
     const provider = providerMap[typeLower] || typeLower;
     return `https://unavatar.io/${provider}/${username}`;

@@ -7,6 +7,7 @@ import {
   Clock,
   Database,
   DollarSign,
+  Settings,
   ShieldCheck,
   Tag,
   Users,
@@ -16,8 +17,7 @@ import { getBusinessContact } from "@/actions/settings";
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { PortalSettingsCard } from "./_components/portal-settings-card";
+import { getSocialAvatarUrl } from "@/lib/social";
 
 export default async function AdminDashboardPage() {
   const [usersResult, contactResult] = await Promise.all([getUsers(), getBusinessContact()]);
@@ -26,7 +26,7 @@ export default async function AdminDashboardPage() {
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
-          <h1 className="font-bold text-3xl tracking-tight">Admin Panel</h1>
+          <h1 className="font-bold text-3xl tracking-tight">Admin Settings</h1>
           <p className="mt-2 text-muted-foreground">Error loading admin dashboard.</p>
         </div>
         <Alert variant="destructive">
@@ -48,14 +48,42 @@ export default async function AdminDashboardPage() {
 
   const initialEmail = contactResult.success ? contactResult.email : "info@prestigeadvisors360.com";
   const initialPhone = contactResult.success ? contactResult.phone : "941-799-3300";
+  const initialWebsite = contactResult.success ? contactResult.website || "" : "";
+  const initialLogoUrl = contactResult.success ? contactResult.logoUrl || "" : "";
+  const initialCompanyName = contactResult.success
+    ? contactResult.companyName || "Prestige Advisors"
+    : "Prestige Advisors";
+  const initialSocialMediaRaw = contactResult.success ? contactResult.socialMediaRaw || "[]" : "[]";
+
+  let effectiveLogoUrl = initialLogoUrl;
+  interface SocialAccount {
+    id: string;
+    type: string;
+    url: string;
+    isPrimary: boolean;
+    useProfilePhoto: boolean;
+  }
+  let primarySocialMedia: SocialAccount | null = null;
+  try {
+    const socialMedia = JSON.parse(initialSocialMediaRaw) as SocialAccount[];
+    if (Array.isArray(socialMedia) && socialMedia.length > 0) {
+      const useSocialPhoto = socialMedia.find((sm) => sm.useProfilePhoto);
+      if (useSocialPhoto) {
+        const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
+        if (socialAvatar) {
+          effectiveLogoUrl = socialAvatar;
+        }
+      }
+      primarySocialMedia = socialMedia.find((sm) => sm.isPrimary) || socialMedia[0] || null;
+    }
+  } catch (e) {
+    console.error("Failed to parse social media on dashboard:", e);
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
       <div>
-        <h1 className="font-bold text-3xl tracking-tight">Admin Panel</h1>
-        <p className="mt-2 text-muted-foreground">
-          Centralized controls for system settings, user roles, and security policies.
-        </p>
+        <h1 className="font-bold text-3xl tracking-tight">Admin Settings</h1>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -124,7 +152,61 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <PortalSettingsCard initialEmail={initialEmail} initialPhone={initialPhone} />
+        <Link href="/dashboard/admin/portal-settings" className="group block h-full">
+          <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="space-y-1.5 pr-4">
+                <CardTitle className="flex items-center gap-1.5 font-bold text-xl transition-colors group-hover:text-primary">
+                  {initialCompanyName || "Portal Settings"}
+                  <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
+                </CardTitle>
+              </div>
+              <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <Settings className="h-6 w-6" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-muted-foreground text-sm">
+                Configure contact details, website links, and company branding for the client portal.
+              </p>
+              <div className="mt-4 space-y-2 border-t border-muted/40 pt-4 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Email:</span>
+                  <span className="truncate font-semibold text-foreground">{initialEmail}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Phone:</span>
+                  <span className="truncate font-semibold text-foreground">{initialPhone}</span>
+                </div>
+                {initialWebsite && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Website:</span>
+                    <span className="truncate font-semibold text-foreground max-w-[150px]">
+                      {initialWebsite.replace(/^https?:\/\//, "")}
+                    </span>
+                  </div>
+                )}
+                {primarySocialMedia && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Social:</span>
+                    <span className="truncate font-semibold text-foreground max-w-[150px]">
+                      {primarySocialMedia.type}: {primarySocialMedia.url.replace(/^https?:\/\/(www\.)?/, "")}
+                    </span>
+                  </div>
+                )}
+                {effectiveLogoUrl && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Logo:</span>
+                    <div className="relative h-6 w-16 overflow-hidden rounded bg-muted/30 border border-muted/20">
+                      {/* biome-ignore lint/performance/noImgElement: User uploaded logo, dynamic source */}
+                      <img src={effectiveLogoUrl} alt="Company Logo" className="h-full w-full object-contain" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/dashboard/admin/financial-account-types" className="group block h-full">
           <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
