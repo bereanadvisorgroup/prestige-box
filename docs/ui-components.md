@@ -40,6 +40,11 @@ Used for task management and pipeline staging columns:
 - **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
 - **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
 
+### 7. Workflow Graph Canvas (@xyflow/react)
+Used for the admin visual template builder to construct, view, and modify workflow configurations.
+- **Node-Based Editor**: Renders workflow steps as node cards on an infinite grid, supporting zoom, pan, and custom layout arrangements.
+- **Outcomes & Edges**: Renders connection lines between nodes representing outcomes that lead to the next step, allowing branching paths to be designed visually.
+
 ## Strict Data Tables Standard
 
 All Data Tables across the application (`/dashboard/crm`, `/dashboard/finance`, etc.) must strictly adhere to the following UI constraints:

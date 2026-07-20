@@ -56,9 +56,9 @@ erDiagram
     USERS {
         uuid uid PK "References auth.users"
         string email
-        string role "Admin | Advisor | Client"
         string firstName
         string lastName
+        string role "Admin | Advisor | Client"
         string photoURL
         timestamp createdAt
         timestamp updatedAt
@@ -84,8 +84,7 @@ erDiagram
         string photoUrl
         jsonb emails
         jsonb phones
-        jsonb driversLicense
-        jsonb pii
+        jsonb socialMedia
         jsonb addresses
         uuid[] addressIds
         timestamp createdAt
@@ -94,44 +93,8 @@ erDiagram
     HOUSEHOLDS {
         uuid id PK
         string name
-        uuid addressId FK "References addresses"
+        uuid addressId FK
         jsonb memberIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    LIFE_INSURANCE_COMPANIES {
-        uuid id PK
-        string name
-        string websiteUrl
-        string[] policyNames
-        string phone
-        uuid[] personIds
-        uuid[] companyIds
-        uuid[] clientIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    DISABILITY_INSURANCE_COMPANIES {
-        uuid id PK
-        string name
-        string websiteUrl
-        string[] policyNames
-        string phone
-        uuid[] personIds
-        uuid[] companyIds
-        uuid[] clientIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    LONG_TERM_CARE_INSURANCE {
-        uuid id PK
-        string name
-        string websiteUrl
-        string[] policyNames
-        string phone
-        uuid[] personIds
-        uuid[] companyIds
-        uuid[] clientIds
         timestamp createdAt
         timestamp updatedAt
     }
@@ -139,11 +102,13 @@ erDiagram
         uuid id PK
         uuid personId FK "References people"
         uuid advisorId FK "References users"
-        uuid referredById FK "Self-referencing parent client"
+        uuid referredById FK
         string referredByType
-        uuid referredByCompanyId FK "References companies"
-        uuid referredByPersonId FK "References people"
-        uuid referredByReferralTypeId FK "References referral_types"
+        uuid referredByCompanyId FK
+        uuid referredByPersonId FK
+        uuid referredByReferralTypeId FK
+        uuid referredByEventId FK
+        uuid referredByAdvisorId FK
         string[] hobbies
         string[] favoriteSportsTeams
         jsonb paymentAccounts
@@ -160,6 +125,9 @@ erDiagram
         jsonb recordKeeperAccounts
         jsonb liabilities
         jsonb mortgages
+        jsonb driversLicense
+        jsonb pii
+        string documentUrl
         timestamp createdAt
         timestamp updatedAt
     }
@@ -168,22 +136,26 @@ erDiagram
         string name
         string dba
         string ein
-        uuid addressId FK "References addresses"
+        uuid addressId FK
         string website
         string phone
+        uuid advisorId FK "References users"
         jsonb situsRecords
         jsonb nexusRecords
         jsonb paymentAccounts
         jsonb lifeDocuments
         jsonb disabilityDocuments
         jsonb ltcDocuments
+        string logoUrl
+        jsonb socialMedia
+        string documentUrl
         numeric estimatedValue
         timestamp createdAt
         timestamp updatedAt
     }
     COMPANY_VALUATION_HISTORY {
         uuid id PK
-        uuid companyId FK "References companies"
+        uuid companyId FK
         numeric value
         timestamp valuationDate
         timestamp createdAt
@@ -199,10 +171,10 @@ erDiagram
     }
     CLIENT_POLICIES {
         uuid id PK
-        uuid clientId FK "References clients"
-        uuid lifeInsuranceCompanyId FK "References life_insurance_companies"
-        uuid disabilityInsuranceCompanyId FK "References disability_insurance_companies"
-        uuid longTermCareInsuranceId FK "References long_term_care_insurance"
+        uuid clientId FK
+        uuid lifeInsuranceCompanyId FK
+        uuid disabilityInsuranceCompanyId FK
+        uuid longTermCareInsuranceId FK
         string paymentAccountId
         string policyName
         string policyNumber
@@ -213,69 +185,9 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
-    LAW_FIRMS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    ACCOUNTING_FIRMS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    ACTUARIAL_FIRMS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    BANKS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    PROPERTY_AND_CASUALTY_FIRMS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
     ASSETS {
         uuid id PK
-        uuid clientId FK "References clients"
+        uuid clientId FK
         string name
         string category
         string subType
@@ -283,22 +195,16 @@ erDiagram
         string currency
         boolean isAutomated
         string institutionName
-        uuid addressId FK "References addresses"
+        uuid addressId FK
         timestamp createdAt
         timestamp updatedAt
     }
     ASSET_HISTORY {
         uuid id PK
-        uuid assetId FK "References assets"
+        uuid assetId FK
         numeric value
         timestamp recordedAt
         timestamp createdAt
-    }
-    KEYVALS {
-        string id PK
-        string value
-        timestamp createdAt
-        timestamp updatedAt
     }
     TASKS {
         uuid id PK
@@ -399,100 +305,179 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
-    MONEY_MANAGERS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    RECORD_KEEPERS {
-        uuid id PK
-        uuid[] personIds FK "References people"
-        string firmName
-        uuid firmAddressId FK "References addresses"
-        string website
-        string phone
-        uuid[] clientIds
-        uuid[] companyIds
-        timestamp createdAt
-        timestamp updatedAt
-    }
-    FINANCIAL_ACCOUNT_TYPES {
+    
+    WORKFLOW_TEMPLATES ||--o{ WORKFLOW_TEMPLATE_STEPS : "contains"
+    WORKFLOW_TEMPLATES ||--o{ WORKFLOW_INSTANCES : "instantiates"
+    WORKFLOW_INSTANCES ||--o{ WORKFLOW_INSTANCE_STEPS : "contains"
+    OPPORTUNITY_PIPELINES ||--o{ OPPORTUNITY_PIPELINE_STAGES : "contains"
+    OPPORTUNITY_PIPELINES ||--o{ OPPORTUNITIES : "contains"
+    OPPORTUNITY_PIPELINE_STAGES ||--o{ OPPORTUNITIES : "tracks stage of"
+    CLIENTS ||--o{ OPPORTUNITIES : "associated with"
+    COMPANIES ||--o{ OPPORTUNITIES : "associated with"
+
+    WORKFLOW_TEMPLATES {
         uuid id PK
         string name
+        string description
+        uuid createdBy FK "References users"
+        jsonb graph
         timestamp createdAt
         timestamp updatedAt
     }
-    CUSTODIANS {
+    WORKFLOW_TEMPLATE_STEPS {
+        uuid id PK
+        uuid templateId FK
+        string name
+        integer sortOrder
+        boolean setDueDate
+        integer dueDays
+        string dueDateBase "workflow_start | after_last_step"
+        string priority "None | Low | Medium | High"
+        string description
+        string responsibility "advisor | client"
+        jsonb attachments
+        jsonb outcomes
+        numeric positionX
+        numeric positionY
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    WORKFLOW_INSTANCES {
+        uuid id PK
+        uuid templateId FK
+        string name
+        string description
+        string entityType "client | company"
+        uuid entityId
+        timestamp startDate
+        uuid createdBy FK
+        timestamp completedAt
+        uuid completedBy FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    WORKFLOW_INSTANCE_STEPS {
+        uuid id PK
+        uuid instanceId FK
+        string name
+        integer sortOrder
+        boolean setDueDate
+        integer dueDays
+        string dueDateBase
+        string priority
+        string description
+        string responsibility
+        jsonb attachments
+        timestamp dueDate
+        timestamp completedAt
+        uuid completedBy FK
+        uuid templateStepId FK
+        jsonb outcomes
+        jsonb selectedOutcome
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    OPPORTUNITY_PIPELINES {
         uuid id PK
         string name
+        boolean isActive
         timestamp createdAt
         timestamp updatedAt
     }
-    REFERRAL_TYPES {
+    OPPORTUNITY_PIPELINE_STAGES {
         uuid id PK
+        uuid pipelineId FK
         string name
+        integer order
         timestamp createdAt
         timestamp updatedAt
     }
-```
+    OPPORTUNITIES {
+        uuid id PK
+        uuid clientId FK
+        uuid companyId FK
+        numeric amount
+        timestamp targetCloseDate
+        uuid pipelineId FK
+        uuid stageId FK
+        integer probabilityWin
+        string notes
+        string resultStatus "TRASH | WON | LOST"
+        string resultNotes
+        uuid updatedById FK
+        timestamp createdAt
+        timestamp updatedAt
+    }
 ```
 
 ## Core Entities
 
 ### `users`
+
 - Maps to Supabase's internal `auth.users` table.
 - Stores custom application-specific roles (`admin`, `advisor`, `client`) and basic profile details like name, phone, and profile photo URL.
 
 ### `people`
+
 - A master record of a physical person. Tracks names, contact information (JSONB arrays), PII, and household associations.
 
+### `addresses`
+
+- Centralized store for physical addresses linked to people, households, companies, and assets.
+
+### `households`
+
+- Groups individuals/people into family/household units to track aggregated net worth, familial links, and shared addresses.
+
 ### `clients`
+
 - Represents a customer relationship. Maps to exactly one `person` (`personId`), and tracks advisor assignments (`advisorId` referencing `users.uid`).
-- Stores deep financial profiles (employment, liabilities), assets, and insurance files.
-- **Interests**: `hobbies` and `favoriteSportsTeams` stored as string arrays.
-- **Client Referrals**: Supports multi-type referrals tracking via `referredById` (self-referencing client), `referredByType` (`'client' | 'company' | 'person' | 'referral_type'`), `referredByCompanyId` (references `companies.id`), `referredByPersonId` (references `people.id`), and `referredByReferralTypeId` (references `referral_types.id`).
-- **Insurance Policies JSONB**: `lifePolicies`, `disabilityPolicies`, and `ltcPolicies` are stored as JSONB arrays of policy objects containing policy numbers, renewal dates, beneficiary lists, and uploaded documents.
-- **Managed Accounts JSONB**: `moneyManagerAccounts` and `recordKeeperAccounts` are stored as JSONB arrays of account objects containing values, account numbers, and relationships to Money Managers, Record Keepers, Custodians, and Financial Account Types.
-- **Estate Planning Documents**: The `estateDocuments` column is a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
+- Stores deep financial profiles (employment, liabilities) and insurance files.
+
+### `assets` & `asset_history`
+
+- **Assets**: Tracks client assets (e.g., Real Estate, Vehicles, Valuables, Financial accounts) detailing categories, current values, and institution details.
+- **Asset History**: Chronological log of value updates for each asset, enabling historical valuation tracking and Net Worth timeline visualizations.
+- **Estate Planning Documents**: The `estateDocuments` column has been upgraded to a structured JSONB repository supporting multiple estate planning document types with specific schema fields:
   - **Types**: Supports `Will`, `Revocable Trust`, `Irrevocable Trust`, and `Other`.
   - **Will Schema**: Tracks `effectiveDate` (YYYY-MM-DD), `beneficiaries` (text), and a `files` array of documents (`id`, `name`, `url`, `uploadedAt`).
   - **Trust Schema**: Tracks the `trustName`, `effectiveDate`, `amendmentDate`, `attorneyFirmId` (linking to a law firm), `grantor` and `trustees` (party reference objects with `kind` as `person` or `company` and `id` linking to their record), `beneficiaries` (text), and the `files` array.
   - **Other Schema**: Tracks custom `description` (text) and the `files` array.
 
 ### `client_policies` & `insurance_vendors`
+
 - **Policies**: `client_policies` tracks a client's Life, Disability, and Long-Term Care policies, detailing policy numbers, premium amounts, effective and renewal dates, and payment schedules (used for global dashboards and relationship mapping).
 - **Vendors**: Tracks insurance companies (`life_insurance_companies`, `disability_insurance_companies`, `long_term_care_insurance`) with name, website, phone contacts, and relationships to individuals and corporate clients.
 
 ### `money_managers` & `record_keepers`
+
 - Tracks external asset management firms and record keeper companies.
 - Includes references to associated contact persons (`personIds` referencing `people.id`), addresses (`firmAddressId`), websites, phone numbers, and arrays of associated client IDs and company IDs.
 
 ### `financial_account_types`, `custodians`, & `referral_types`
+
 - Global administrator-managed lookup tables.
 - **`financial_account_types`**: Stores investment account categories (e.g. 401(k), IRA, Taxable).
 - **`custodians`**: Stores custodians (e.g. Charles Schwab, Fidelity).
 - **`referral_types`**: Stores types of referral channels (e.g. CPA, Attorney, Web Search).
 
 ### `companies` & sub-tables (`company_valuation_history`, `company_owners`)
+
 - Tracks general corporate clients and business entities.
-- Upgraded with fields for corporate details (situs/nexus address, website, phone, payment accounts) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- Upgraded with fields for corporate details (situs/nexus records as JSONB `situsRecords` and `nexusRecords`, website, phone, payment accounts, dba, estimatedValue, logoUrl, socialMedia, documentUrl) and document categories (`lifeDocuments`, `disabilityDocuments`, `ltcDocuments`).
+- Tethers to an assigned advisor (`advisorId` referencing `users.uid`).
 - **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
 - **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
 
 ### `tasks` & sub-tables (`task_assignees`, `task_associations`)
+
 - Manages standard advisory workflows.
 - Idempotency is strictly guarded via a unique database index: `uq_tasks_auto_anchor` (`sourceType`, `sourceRefId`), preventing duplicate generation of birthday, anniversary, or policy renewal tasks.
 - **Assignees**: Links multiple active users to a single task via `task_assignees`.
 - **Contextual Links**: Connects a task to clients or companies using `task_associations`.
 
 ### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
+
 - reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
@@ -500,8 +485,30 @@ erDiagram
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
 
 ### `change_history`
+
 - System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks).
 - Logs the semantic sub-type (e.g. Profile, Life Insurance, Valuation), action (`created`, `updated`, `added`, `removed`, `deleted`), specific changed fields with machine and human-readable names (`fieldName`, `fieldLabel`), before/after string snapshots (`oldValue`, `newValue`), a custom text `summary`, and details of the actor (`actorId`, `actorName`) and timestamp.
+
+### `workflow_templates` & `workflow_template_steps`
+
+- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
+- **Template Steps**: The individual task definitions making up a template. Tracks `sortOrder`, due date calculation rules (`setDueDate`, `dueDays`, and `dueDateBase` as `workflow_start` or `after_last_step`), priority, responsibility (`advisor` or `client`), rich descriptions, attachments, outcomes (JSONB metadata mapping path branches), and editor positions (`positionX`, `positionY`).
+
+### `workflow_instances` & `workflow_instance_steps`
+
+- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks overall completion dates, creators, and progress.
+- **Instance Steps**: Snapshot of the template step with completion tracking. Resolves the due date using the cascading completion timeline (`dueDate`), tracks when and who completed the step, and logs `outcomes` and `selectedOutcome` configurations.
+
+### `opportunity_pipelines` & `opportunity_pipeline_stages`
+
+- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle).
+- **Pipeline Stages**: The stages making up a pipeline, ordered by `order`.
+
+### `opportunities`
+
+- Represents a sales, onboarding, or policy lifecycle deal. Maps to a client or company.
+- Tracks `amount` (numeric), `targetCloseDate`, `probabilityWin` (integer), `notes`, `resultStatus` (`TRASH`, `WON`, `LOST`), and `resultNotes`.
+- Enforces database constraints pointing to the active pipeline (`pipelineId`) and stage (`stageId`).
 
 ---
 
@@ -510,10 +517,12 @@ erDiagram
 The schema is defined in TypeScript at `src/db/schema.ts`. Drizzle Kit is used to generate SQL migrations.
 
 ### Migrations & Pushing
+
 - Schema updates are applied via `pnpm drizzle-kit push` or `pnpm drizzle-kit generate` depending on the environment.
 - The `src/db/migrate.ts` file handles automated migration execution.
 
 ### Local Seeding
+
 - To spin up a local environment quickly, a seeding script is provided at `src/db/seed.ts`.
 - Generates realistic records across all tables (People, Companies, Policies, Notes, Tasks, and Valuations).
 - Run the seeder with: `pnpm run db:seed`.
@@ -528,4 +537,3 @@ All database access from the client side requires explicit Row Level Security po
 - **Collaborative Modules RLS**: Tables like `notes`, `tasks`, `change_history`, and their related tables allow read/write access to all `authenticated` users. More granular business logic validation (e.g., preventing a client from reading internal notes) is enforced at the application level to support rich team collaboration.
 - **Subquery Cache Optimization**: RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
 - **Service Role**: The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.
-

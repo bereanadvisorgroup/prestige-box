@@ -12,13 +12,15 @@ flowchart LR
     Dashboard --> CRM[CRM Module]
     Dashboard --> Notes[Notes Dashboard]
     Dashboard --> Tasks[Tasks Dashboard]
-    Dashboard --> Pipeline[Pipeline Module]
+    Dashboard --> Opportunities[Opportunities Board]
+    Dashboard --> Workflows[Workflows Dashboard]
     Dashboard --> Finance[Finance Module]
     Dashboard --> Reports[Reports Center]
     
     CRM --> ClientProfile[Client Details]
     CRM --> CompanyProfile[Company Details]
-    Pipeline --> StageView[Kanban / Stage View]
+    Admin --> AdminOpps[Admin Opportunities / Pipelines]
+    Admin --> AdminWorkflows[Admin Workflows / Templates]
     Reports --> RelGraph[Relationship Graph]
     Reports --> BenPayment[Benefit Payments]
     Reports --> AudHistory[Audit History Log]
@@ -33,9 +35,19 @@ Reserved for system administrators.
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
 - **Portal Settings**: Global portal-wide configuration parameters.
-- **Financial Account Types (`/dashboard/admin/financial-account-types`)**: Manage categories of client financial accounts (e.g. 401(k), IRA, Taxable).
-- **Custodians (`/dashboard/admin/custodians`)**: Manage a registry of asset custodians (e.g. Schwab, Fidelity).
-- **Referral Types (`/dashboard/admin/referral-types`)**: Manage types of client referral channels (e.g. CPA, Attorney).
+- **Lookup Lists & Dropdowns**: Centralized management of dropdown options, lookup values, and entity lists:
+  - **Account Types (`/dashboard/admin/financial-account-types`)**: Configuration values for financial account categories.
+  - **Custodians (`/dashboard/admin/custodians`)**: Options for custodians.
+  - **Referral Types (`/dashboard/admin/referral-types`)**: Specific categories of referral routes.
+  - **Events (`/dashboard/admin/events`)**: Events tracked as potential referral triggers.
+- **Vendor Registries**: Central directories for external institutions and servicing entities:
+  - **Life Insurance (`/dashboard/admin/life-insurance-companies`)**
+  - **Disability Insurance (`/dashboard/admin/disability-insurance-companies`)**
+  - **Long Term Care (`/dashboard/admin/long-term-care-insurance`)**
+  - **Money Managers (`/dashboard/admin/money-managers`)**
+  - **Record Keepers (`/dashboard/admin/record-keepers`)**
+- **Workflow Templates (`/dashboard/admin/workflows`)**: Flow designer and form builder to define visual multi-step workflow graphs with custom branches and outcomes.
+- **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages.
 
 ### 2. CRM Module (`/dashboard/crm`)
 The core relationship management suite.
@@ -44,6 +56,8 @@ The core relationship management suite.
   - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
   - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications.
   - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
+  - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban and list view for deals, onboarding, and policy transitions.
+  - **Workflows Dashboard (`/dashboard/crm/workflows`)**: Central hub listing active and completed workflow instances assigned to clients or companies.
   - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
   - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
@@ -73,6 +87,7 @@ The core relationship management suite.
   - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, and audit logs:
     - **Internal Notes (`/dashboard/crm/clients/[id]/internal/notes`)**: Collaborative client logs.
     - **Internal Tasks (`/dashboard/crm/clients/[id]/internal/tasks`)**: Tasks associated with this client.
+    - **Internal Opportunities (`/dashboard/crm/clients/[id]/internal/opportunities`)**: Sales and onboarding opportunities linked to this client.
     - **Internal History (`/dashboard/crm/clients/[id]/internal/history`)**: Chronological audit trail of changes made to the client's profile.
 
 - **Company Profile & Contextual Navigation**: Selecting a company dynamically switches the sidebar to a tailored company-centric navigation menu containing:
@@ -81,7 +96,7 @@ The core relationship management suite.
   - **Payment Accounts & Documents Tab**: Managed tab for company-specific premium payment accounts, and documents folders (Life, Disability, LTC) with file upload capability.
   - **Professional Services**: Link and manage associated service firms specific to that company (Accounting, Actuarial, Banks, Law, Property & Casualty).
   - **Vendors**: Manage company-linked vendors (Life, Disability, LTC insurance companies, Money Managers, Record Keepers).
-  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), and Audit History logs (`/history`).
+  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), Company Opportunities (`/opportunities`), and Audit History logs (`/history`).
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.
@@ -99,10 +114,12 @@ A workflows board and spreadsheet view to track advisory deliverables and automa
   - **Policy Renewals**: Tripped by an active insurance policy's next renewal date.
 - **Assignee Routing**: Auto-tasks route directly to the client's assigned advisor (`advisorId`). Unassigned tasks flag on the global board for team pickup.
 
-### 5. CRM Pipeline (`/dashboard/crm-pipeline`)
-A visual management tool for tracking sales, onboarding, or policy lifecycles.
-- Tracks prospects through distinct stages of acquisition.
-- Smooth transitions from prospect to active client.
+### 5. CRM Opportunities & Pipelines (`/dashboard/crm/opportunities`)
+An interactive deal tracking board and table view to manage sales pipelines, client onboarding cycles, and policy transitions.
+- **Interactive Kanban Stage-View**: Visualizes all active deals/opportunities categorized into columns matching their pipeline stage. Drag-and-drop actions automatically trigger stage transitions.
+- **Pipeline and Stage Settings**: Admins can customize pipelines and order stages under the Admin Panel (`/dashboard/admin/opportunities`).
+- **Associations**: Opportunities are mapped directly to either a Client or a Company.
+- **Outcome Statuses**: Track won/lost status with win probabilities, estimated amounts, close dates, and WYSIWYG notes detailing the outcome.
 
 ### 6. Finance Module (`/dashboard/finance`)
 Dedicated space for managing overall corporate numbers and client insurance policies.
@@ -115,7 +132,7 @@ Dynamic reporting and analytical views.
 - **Benefit Payments (`/dashboard/reports/payments`)**: Tracks expected premium payments, collections, and forecasts.
 - **Relationship Graph (`/dashboard/reports/relationship-graph`)**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
 - **History Report (`/dashboard/reports/history`)**: Global feed of audit history logs tracking mutations (insert/updates/deletions) across CRM entities.
-- **Referrals Report (`/dashboard/reports/referrals`)**: Visualizes referral network trees, tracks referral volume over time, and shows breakdowns by referral type.
+- **Referrals (`/dashboard/reports/referrals`)**: Interactive referral tree diagram mapping referrers to the clients they referred, plus referral-type mix pie charts and time-series trends.
 
 ### 8. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
 Personal configuration pages for the authenticated user.
@@ -138,3 +155,10 @@ The application provides modern, secure access control via multiple options:
 - **Credential Sign-In & Sign-Up**: Secure login (`/login`) and account registration (`/login/create-account`) backed by strict validation and database status checks.
 - **Passwordless Device Passkeys**: Users can register and sign in seamlessly using native WebAuthn Passkeys (FaceID, TouchID, or hardware security keys) bypassing passwords entirely.
 - **Social OAuth Integration**: Quick authentication using third-party identity providers (Google and Microsoft Azure AD) for unified corporate identity.
+
+### 12. Workflow Automation Engine (`/dashboard/crm/workflows`)
+A Visual Graph-based automation system for orchestrating complex client onboarding, insurance placements, and annual review procedures.
+- **Visual Builder (`/dashboard/admin/workflows`)**: Admins can visually design templates with step nodes and directional connection edges. Relies on `@xyflow/react` for custom drag-and-drop canvas configurations, layouts, and branching paths.
+- **Cascading Step Due Dates**: Step deadlines cascades forward dynamically. Completed steps automatically anchor and project next step deadlines relative to their `dueDays` and `dueDateBase`.
+- **Progress Tracking**: Computes progress completion percentages dynamically using a Breadth-First Search (BFS) algorithm to calculate step distance to the "end" node in the workflow graph template.
+- **Assigned Contexts**: Workflow instances are copy-snapshotted from templates and assigned to a specific Client or Company. Runs advisor-only or client-focused actions (defined via step responsibility settings).
