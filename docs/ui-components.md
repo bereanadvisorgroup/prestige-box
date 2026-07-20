@@ -5,6 +5,7 @@ This document outlines the design philosophy, UI components, and strict guidelin
 ## Design Philosophy
 
 Prestige Box adheres to an **Avant-Garde, Intentional Minimalism** philosophy.
+
 - **Anti-Generic**: Standard bootstrapped layouts are rejected. The application strives for bespoke layouts, distinctive typography, and perfect spacing.
 - **Dynamic UX**: The interface must feel alive. Hover effects, subtle micro-animations (e.g., via `tw-animate-css` or Framer Motion), and polished transitions are required.
 - **Harmonious Palettes**: Curated color palettes with a robust, sleek Dark Mode are implemented via Tailwind CSS variables.
@@ -14,34 +15,53 @@ Prestige Box adheres to an **Avant-Garde, Intentional Minimalism** philosophy.
 The application's component architecture strictly relies on established primitives rather than building complex interactive elements from scratch.
 
 ### 1. Base UI & Radix UI
+
 The foundational primitives for accessible, unstyled interactive components (e.g., Modals, Dropdowns, Tabs, Accordions).
+
 - **Combobox & Selection Picker**: Features interactive, searchable comboboxes built on the Base UI (`@base-ui/react`) `Combobox` primitives, custom styled for single/multi-selection tags (e.g., choosing associated grantors, trustees, or law firms in estate planning forms).
 
-
 ### 2. Shadcn UI
-Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesthetic. 
+
+Prestige Box utilizes Shadcn UI components tailored to fit the Avant-Garde aesthetic.
+
 - **Rule**: If a component exists in the Shadcn registry, it *must* be used. Custom implementations of standard primitives are prohibited.
 - **Styling**: Components are styled using Tailwind CSS and the `cn()` utility (`clsx` + `tailwind-merge`) to handle conditional class merging safely.
 
 ### 3. Lucide React
+
 All iconography is sourced exclusively from the `lucide-react` library.
 
 ### 4. Recharts & D3.js (Data Visualizations)
+
 - **Recharts**: The responsive charting library used for timeline trends (e.g., client net worth graphs, corporate valuation curves). Charts use theme-based CSS variables to coordinate with light/dark modes.
 - **D3.js**: Used for the interactive **Referrals Network Graph**. Implements a custom D3 force-directed simulation with drag-and-drop nodes, smooth zoom/pan controls, custom node coloring based on entity type, and direct navigation links to CRM profiles.
 
-### 5. Rich Text Editor (Tiptap)
+### 5. D3.js (Force-Directed Graphs)
+
+Used for rendering complex network systems such as the interactive **Referral Tree** in `/dashboard/reports/referrals`:
+
+- **Force Simulation**: Employs charge, link distance, center, and collision force parameters to simulate nodes dynamically.
+- **Node Configuration**: Node colors map to standard CSS theme variables (e.g. `var(--chart-1)`, `var(--chart-2)`) based on entity type (Client, Company, Person). Radius is computed proportionally to the node's out-degree (the number of direct referrals initiated).
+- **Interactions**: Nodes support drag gestures to modify the force simulation layout, zoom/pan capabilities, and double-click routing to navigate directly to the entity's dashboard profile.
+
+### 6. Rich Text Editor (Tiptap)
+
 For notes and task descriptions, the project integrates Tiptap:
+
 - **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
 - **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
 
-### 6. Drag & Drop Primitives (@dnd-kit)
+### 7. Drag & Drop Primitives (@dnd-kit)
+
 Used for task management and pipeline staging columns:
+
 - **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
 - **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
 
 ### 7. Workflow Graph Canvas (@xyflow/react)
+
 Used for the admin visual template builder to construct, view, and modify workflow configurations.
+
 - **Node-Based Editor**: Renders workflow steps as node cards on an infinite grid, supporting zoom, pan, and custom layout arrangements.
 - **Outcomes & Edges**: Renders connection lines between nodes representing outcomes that lead to the next step, allowing branching paths to be designed visually.
 
@@ -59,5 +79,6 @@ All Data Tables across the application (`/dashboard/crm`, `/dashboard/finance`, 
 ## Forms & Validation
 
 Complex user inputs and forms are managed using a strict, type-safe pipeline:
+
 - **React Hook Form**: Handles form state, rendering performance, and submission.
 - **Zod**: Acts as the schema validation layer. Zod resolvers ensure that the form cannot submit invalid data to the Next.js Server Actions.

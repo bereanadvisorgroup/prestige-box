@@ -8,7 +8,8 @@ Prestige Box is a comprehensive, modern web application designed to manage compl
 
 - **Framework**: Next.js 16 (App Router) & React 19
 - **Backend & Auth**: Supabase (PostgreSQL)
-- **Strict MFA & Passkeys**: Multi-Factor Authentication (TOTP) and WebAuthn Passkeys integrated via Supabase Auth, strictly enforced at the Next.js Proxy layer and PostgreSQL Row Level Security (RLS) policies for financial data.
+- **Strict MFA & Passkeys**: Multi-Factor Authentication (TOTP) and WebAuthn Passkeys integrated via Supabase Auth, strictly enforced at the Next.js Proxy layer and PostgreSQL Row Level Security (RLS) policies for financial data (with test bypass capabilities).
+- **Workflows & Templates**: Reusable template definitions with custom steps, responsibilities (advisor vs. client), deadlines, priority, and attachments, which can be instantiated and tracked for specific client or company portfolios.
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand (Client) & TanStack React Query (Server)
@@ -28,25 +29,30 @@ Comprehensive documentation covering the architecture, database schema, applicat
 ## Quickstart
 
 1. **Install Dependencies**
+
    ```bash
    pnpm install
    ```
 
 2. **Environment Variables**
    Copy `.env.example` to `.env.local` and fill in your Supabase connection details:
+
    ```bash
    cp .env.example .env.local
    ```
 
 3. **Database Setup**
    Push the Drizzle schema to your Supabase database and run the seeder to generate realistic dummy data:
+
    ```bash
    pnpm drizzle-kit push
    pnpm run db:seed
    ```
 
 4. **Run the Development Server**
+
    ```bash
    pnpm run dev
    ```
+
    Open [http://localhost:3000](http://localhost:3000) in your browser.

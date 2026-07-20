@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isDashboardRoute && !user) {
       router.replace("/login");
     } else if (isDashboardRoute && user) {
-      // Verify AAL level client-side, bypassing if user has a registered Passkey
+      // Verify AAL level client-side, bypassing if user has a registered Passkey or MFA bypass is active
       Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), supabase.auth.passkey.list()]).then(
         ([{ data: aalData, error: aalError }, { data: passkeys, error: passkeyError }]) => {
           const isPlaywright =
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isPlaywright) return;
 
           const hasPasskey = !passkeyError && passkeys && passkeys.length > 0;
-          if (hasPasskey) return; // Passkey satisfies secure login factor
+          if (hasPasskey || process.env.NEXT_PUBLIC_BYPASS_MFA === "true") return; // Passkey or bypass satisfies secure login factor
 
           if (aalError || !aalData) return;
 

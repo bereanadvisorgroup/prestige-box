@@ -469,12 +469,38 @@ erDiagram
 - **Valuation History**: Logs historical valuation snapshots in `company_valuation_history` to build valuation curves.
 - **Ownership Equity**: Tracks cap table records in `company_owners` tying physical individuals (`people.id`) to corporate entities with decimal ownership percentages.
 
+### `money_managers` & `record_keepers` (Professional Service Vendors)
+
+- **Money Managers**: Table tracking money manager firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`). Includes `logoUrl` and a `personTitles` JSONB column (mapping linked person IDs to their respective title/role within the firm).
+- **Record Keepers**: Table tracking record keeper firms. Links to people (`personIds`), clients (`clientIds`), and companies (`companyIds`). Includes `logoUrl` and a `personTitles` JSONB column (mapping linked person IDs to their respective title/role within the firm).
+
+### `events` (Client Referral Events)
+
+- **Events**: Table tracking events that served as a source of client referrals. Contains title, address, startDate, and endDate, and maps to the `clients` table via `referredByEventId`.
+
+### `custodians` & `financial_account_types` (Managed Account Parameters)
+
+- **Custodians**: Stores institutions acting as custodians (e.g. Charles Schwab, Fidelity, Pershing) for money manager accounts.
+- **Financial Account Types**: Defines various account categories (e.g., Traditional IRA, Roth IRA, 401(k), Taxable Brokerage) to tag and organize client managed/record keeper accounts.
+
+### `referral_types` (Referral Channels)
+
+- **Referral Types**: Stores custom referral categories (e.g. CPA, Attorney, Client, Event) to attribute incoming client leads.
+
 ### `tasks` & sub-tables (`task_assignees`, `task_associations`)
 
 - Manages standard advisory workflows.
 - Idempotency is strictly guarded via a unique database index: `uq_tasks_auto_anchor` (`sourceType`, `sourceRefId`), preventing duplicate generation of birthday, anniversary, or policy renewal tasks.
 - **Assignees**: Links multiple active users to a single task via `task_assignees`.
 - **Contextual Links**: Connects a task to clients or companies using `task_associations`.
+
+### `workflows` & sub-tables (`workflow_templates`, `workflow_template_steps`, `workflow_instances`, `workflow_instance_steps`)
+
+- Manages custom, structured sequence-of-steps processes that can be reused and assigned.
+- **Templates**: Reusable master definitions created/managed by system administrators (`workflow_templates`).
+- **Template Steps**: Ordered sequence of steps belonging to a template (`workflow_template_steps`), defining sort order, set due date (offset by days and based on start date or previous step), priority, responsibility (advisor or client), and reference attachments.
+- **Instances**: Active instances of a workflow assigned to a Client or Company (`workflow_instances`).
+- **Instance Steps**: Snapshot copy of template steps instantiated to track active completion, custom resolved due dates, and completion actors (`workflow_instance_steps`).
 
 ### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
 
@@ -535,5 +561,7 @@ All database access from the client side requires explicit Row Level Security po
 
 - **MFA (AAL2) Enforcement**: Access to highly sensitive tables (e.g., `assets` and `asset_history`) requires strict Multi-Factor Authentication. Policies verify that the Authenticator Assurance Level (`aal`) claim in the session JWT is `'aal2'`: `USING (((SELECT auth.jwt() ->> 'aal') = 'aal2'))`. Requests made with only single-factor authentication (`aal1`) are rejected at the database level.
 - **Collaborative Modules RLS**: Tables like `notes`, `tasks`, `change_history`, and their related tables allow read/write access to all `authenticated` users. More granular business logic validation (e.g., preventing a client from reading internal notes) is enforced at the application level to support rich team collaboration.
+- **Events RLS**: Read access is allowed to all `authenticated` users (`TO authenticated USING (true)`). Full write/modify access is restricted only to system administrators.
+- **Workflows & Templates RLS**: Read access is allowed to all `authenticated` users to support cross-entity tracking. Administrative write access to templates is restricted to users with the `admin` role, while workflow instance tracking (creation, status update, completion) is restricted to users with `admin` or `advisor` roles.
 - **Subquery Cache Optimization**: RLS rules avoid raw `auth.uid()` checks directly in the `USING` clause, instead preferring wrapped subqueries (e.g., `USING ((SELECT auth.uid()) = user_id)`) to enforce query caching.
 - **Service Role**: The Supabase Service Role key is strictly reserved for secure Edge Functions or Next.js server actions that require administrative bypass. It is never exposed to the client bundle.

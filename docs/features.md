@@ -24,6 +24,9 @@ flowchart LR
     Reports --> RelGraph[Relationship Graph]
     Reports --> BenPayment[Benefit Payments]
     Reports --> AudHistory[Audit History Log]
+    Reports --> RefRep[Referral Network]
+    Admin --> UsersMgmt[Users & Roles]
+    Admin --> SystemParams[System Parameters]
 ```
 
 ## Dashboard (`/dashboard`)
@@ -31,7 +34,9 @@ flowchart LR
 The main entry point for authenticated users. It serves as a central hub navigating to all distinct business verticals of Prestige Box.
 
 ### 1. Admin Panel (`/dashboard/admin`)
+
 Reserved for system administrators.
+
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
 - **Portal Settings**: Global portal-wide configuration parameters.
@@ -50,6 +55,7 @@ Reserved for system administrators.
 - **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages.
 
 ### 2. CRM Module (`/dashboard/crm`)
+
 The core relationship management suite.
 
 - **General CRM Dashboards**:
@@ -66,7 +72,9 @@ The core relationship management suite.
   - **Policies (`/dashboard/crm/policies`)**: Central registry for all Life, Disability, and Long-Term Care insurance policies, detailing premiums, effective dates, and payment schedules.
 
 - **Client Profile & Contextual Navigation**: Selecting a client dynamically switches the sidebar to a tailored client-centric navigation menu containing:
-  - **Overview & Profile (`/dashboard/crm/clients/[id]`)**: Contact details card, personal info (hobbies, sports teams), and interactive Net Worth timeline graph.
+  - **Overview & Profile (`/dashboard/crm/clients/[id]/overview`)**: Contact details card, personal info card (demographics, SSN, biological gender, birth date, driver's license), interactive Net Worth timeline graph, and referrals integration:
+    - **Referral Source Card (`referred-by-card`)**: View and assign the specific entity that referred the client (supports linking to a Person, Client, Company, custom Referral Type, Event, or Advisor).
+    - **Referral Tree Card (`referral-tree-card`)**: Visual diagram showing the network of clients referred by this individual.
   - **Family Tab (`/dashboard/crm/clients/[id]/family`)**: Structure family connections (spouse, parent, child, etc.) and link them directly to system profiles.
   - **Employment (`/dashboard/crm/clients/[id]/employment`)**: Manage employment records, employers, compensation, and active statuses.
   - **Estate Planning (`/dashboard/crm/clients/[id]/estate-planning`)**: Tracks estate planning instruments (Wills, Revocable/Irrevocable Trusts, and other custom documents) in a structured metadata repository. Integrates a searchable autocomplete picker (built on Radix/Base UI Combobox primitives) to link grantors and trustees (either individuals/people or corporate entities/companies) and external legal advisors (law firms). Supports multi-file uploads per repository.
@@ -82,9 +90,9 @@ The core relationship management suite.
     - Life Insurance (`/dashboard/crm/clients/[id]/life-insurance`)
     - Disability Insurance (`/dashboard/crm/clients/[id]/disability-insurance`)
     - Long-Term Care (`/dashboard/crm/clients/[id]/long-term-care`)
-    - Money Managers (`/dashboard/crm/clients/[id]/money-managers`)
-    - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`)
-  - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, and audit logs:
+    - Money Managers (`/dashboard/crm/clients/[id]/money-managers`): Manage accounts linked to Money Managers, including account numbers, balances, inception dates, custodians, and primary/contingent beneficiaries. Balances automatically project as virtual assets contributing to Net Worth.
+    - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`): Manage record keeper accounts, account numbers, and balances. Balances automatically project as virtual assets contributing to Net Worth.
+  - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, workflows, and audit logs:
     - **Internal Notes (`/dashboard/crm/clients/[id]/internal/notes`)**: Collaborative client logs.
     - **Internal Tasks (`/dashboard/crm/clients/[id]/internal/tasks`)**: Tasks associated with this client.
     - **Internal Opportunities (`/dashboard/crm/clients/[id]/internal/opportunities`)**: Sales and onboarding opportunities linked to this client.
@@ -99,13 +107,17 @@ The core relationship management suite.
   - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), Company Opportunities (`/opportunities`), and Audit History logs (`/history`).
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
+
 A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.
+
 - **Hierarchical Threads**: Supports multi-depth notes (up to 2 levels: note, reply, sub-reply) with denormalized thread retrieval.
 - **Rich Context**: Supports Tiptap WYSIWYG editor for body composing, custom emoji picking, files and Google Drive link previews, upvoting/downvoting (aggregating scores), and user mentions (`@username`).
 - **Notification Inbox**: Triggers real-time and persistent alerts (mention, reply) in the user's notification bell.
 
 ### 4. Task Management System (`/dashboard/crm/tasks`)
+
 A workflows board and spreadsheet view to track advisory deliverables and automate standard client events.
+
 - **Interactive Kanban**: Task Board (`/dashboard/crm/tasks`) organizes tasks into status columns (New, In Process, Waiting Input, Complete) with drag-and-drop triggers.
 - **Client & Company Links**: Tasks can be linked to multiple CRM entities for direct contextual lookup.
 - **Auto-Generation Engine**: Performs daily idempotent background sync (via `/api/cron/sync-tasks`) to auto-create and renew recurring tasks:
@@ -115,49 +127,79 @@ A workflows board and spreadsheet view to track advisory deliverables and automa
 - **Assignee Routing**: Auto-tasks route directly to the client's assigned advisor (`advisorId`). Unassigned tasks flag on the global board for team pickup.
 
 ### 5. CRM Opportunities & Pipelines (`/dashboard/crm/opportunities`)
+
 An interactive deal tracking board and table view to manage sales pipelines, client onboarding cycles, and policy transitions.
+
 - **Interactive Kanban Stage-View**: Visualizes all active deals/opportunities categorized into columns matching their pipeline stage. Drag-and-drop actions automatically trigger stage transitions.
 - **Pipeline and Stage Settings**: Admins can customize pipelines and order stages under the Admin Panel (`/dashboard/admin/opportunities`).
 - **Associations**: Opportunities are mapped directly to either a Client or a Company.
 - **Outcome Statuses**: Track won/lost status with win probabilities, estimated amounts, close dates, and WYSIWYG notes detailing the outcome.
 
 ### 6. Finance Module (`/dashboard/finance`)
+
 Dedicated space for managing overall corporate numbers and client insurance policies.
+
 - **Policies**: Overall management of Life, Disability, and Long Term Care insurance policies.
 - **Premiums & Renewals**: Premium schedules, critical renewal dates, and payment history.
 - **Liabilities & Mortgages**: Visualizations of client liabilities.
 
 ### 7. Reports Center (`/dashboard/reports`)
+
 Dynamic reporting and analytical views.
+
 - **Benefit Payments (`/dashboard/reports/payments`)**: Tracks expected premium payments, collections, and forecasts.
 - **Relationship Graph (`/dashboard/reports/relationship-graph`)**: Interactive SVG representation mapping the connections between a Client, their companies, and associated professional service firms.
+- **Referral Network (`/dashboard/reports/referrals`)**: Interactive force-directed network tree visualization built using D3.js. Shows client-to-client referral connections, referral source channel breakdowns (using Recharts Pie charts), and acquisition trends over time.
 - **History Report (`/dashboard/reports/history`)**: Global feed of audit history logs tracking mutations (insert/updates/deletions) across CRM entities.
 - **Referrals (`/dashboard/reports/referrals`)**: Interactive referral tree diagram mapping referrers to the clients they referred, plus referral-type mix pie charts and time-series trends.
 
 ### 8. User Settings & Security (`/dashboard/settings`, `/dashboard/profile`)
+
 Personal configuration pages for the authenticated user.
+
 - **Profile (`/dashboard/profile`)**: Updates for photos, name, and demographic info.
 - **Security Settings (`/dashboard/settings`)**: View active authentication factors, enroll in Two-Factor Authentication (TOTP), and register native WebAuthn Passkeys for secure passwordless login.
 
 ### 9. Multi-Factor Authentication (MFA) Flows
+
 Strict authentication gates using Supabase MFA.
+
 - **Enrollment (`/auth/mfa-enroll`)**: Screen for generating and enrolling a TOTP factor. Displays a dynamic QR code and manual setup key, demanding a 6-digit confirmation code from the authenticator app to activate the factor.
 - **Verification (`/auth/mfa-verify`)**: Mandatory challenge page for users with verified factors who are at the single-factor level (`aal1`), requiring a 6-digit TOTP code to elevate their session to `aal2`.
+- **E2E Test Bypass**: Supplying `NEXT_PUBLIC_BYPASS_MFA=true` as an environment variable (e.g. in Playwright config) skips the AAL2 MFA TOTP verification challenge, facilitating automated front-end testing.
+
+### 12. Workflow Automation & Tracking
+
+Prestige Box implements a complete workflow engine that allows firms to formalize, instantiate, and track complex sequences of client or corporate advisory steps.
+
+- **Template Definition**: Admins define master workflows containing a set of ordered steps. Each step specifies:
+  - **Responsibility**: Designated to either the `advisor` (internal staff) or `client` (external action).
+  - **Relative Deadlines**: Configured via a relative offset (1-7 days) from the start of the workflow or after the completion of the preceding step.
+  - **Priority & description**: Priorities range from Low to High, and descriptions support Tiptap WYSIWYG rich text formatting.
+  - **Attachments**: Standard reference files uploaded directly to Supabase storage can be pinned to any step.
+- **Active Instances**: Templates can be instantiated and assigned to a Client or Company. The system clones the template steps, computes the absolute due dates based on the start date, and registers the active instance.
+- **Progress Tracking**: Interactive boards render progress percentage bars calculated dynamically by checking the ratio of completed steps. Staff can view step descriptions, download attachments, and mark steps complete directly in the UI.
 
 ### 10. Client Onboarding Setup Flow (`/auth/v1/client-setup`)
+
 Secure client-specific onboarding pathway.
+
 - Custom setup page to welcome new clients and verify identity.
 - Enforces strict application password requirements (length, special characters).
 - Authenticated logger tracking onboarding flow completions.
 
 ### 11. Authentication & Registration Entrypoints
+
 The application provides modern, secure access control via multiple options:
+
 - **Credential Sign-In & Sign-Up**: Secure login (`/login`) and account registration (`/login/create-account`) backed by strict validation and database status checks.
 - **Passwordless Device Passkeys**: Users can register and sign in seamlessly using native WebAuthn Passkeys (FaceID, TouchID, or hardware security keys) bypassing passwords entirely.
 - **Social OAuth Integration**: Quick authentication using third-party identity providers (Google and Microsoft Azure AD) for unified corporate identity.
 
 ### 12. Workflow Automation Engine (`/dashboard/crm/workflows`)
+
 A Visual Graph-based automation system for orchestrating complex client onboarding, insurance placements, and annual review procedures.
+
 - **Visual Builder (`/dashboard/admin/workflows`)**: Admins can visually design templates with step nodes and directional connection edges. Relies on `@xyflow/react` for custom drag-and-drop canvas configurations, layouts, and branching paths.
 - **Cascading Step Due Dates**: Step deadlines cascades forward dynamically. Completed steps automatically anchor and project next step deadlines relative to their `dueDays` and `dueDateBase`.
 - **Progress Tracking**: Computes progress completion percentages dynamically using a Breadth-First Search (BFS) algorithm to calculate step distance to the "end" node in the workflow graph template.
