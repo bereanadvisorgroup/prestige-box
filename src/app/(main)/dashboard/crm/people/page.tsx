@@ -131,7 +131,7 @@ export default async function PeoplePage() {
       actuarialFirms.some((act) => !!person.id && act.personIds?.includes(person.id)) ||
       banks.some((b) => !!person.id && b.personIds?.includes(person.id)) ||
       propertyAndCasualtyFirms.some((pc) => !!person.id && pc.personIds?.includes(person.id)) ||
-      households.some((h) => h.memberIds?.some((m) => m.personId === person.id)) ||
+      households.some((h) => h.members?.some((m) => m.clientId === person.id)) ||
       clients.some((c) => c.familyMembers?.some((m) => m.personId === person.id)) ||
       companies.some((comp) => comp.owners?.some((o) => o.personId === person.id)) ||
       moneyManagers.some((m) => !!person.id && m.personIds?.includes(person.id)) ||
@@ -234,7 +234,7 @@ export default async function PeoplePage() {
 
     // Households
     for (const h of households) {
-      if (h.memberIds?.some((m) => m.personId === person.id)) {
+      if (h.members?.some((m) => m.clientId === person.id)) {
         relations.push({
           type: "Household",
           name: h.name,

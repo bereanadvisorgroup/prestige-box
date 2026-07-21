@@ -31,6 +31,7 @@ const NOTIFICATIONS = "note_notifications";
 
 export interface NoteFilter {
   clientId?: string;
+  clientIds?: string[];
   companyId?: string;
   personId?: string;
 }
@@ -126,7 +127,16 @@ export async function getNotes(filter: NoteFilter = {}) {
   try {
     let rootIds: string[] | null = null;
 
-    if (filter.clientId || filter.companyId || filter.personId) {
+    if (filter.clientIds && filter.clientIds.length > 0) {
+      const { data, error } = await supabaseServer
+        .from(ASSOCIATIONS)
+        .select("noteId")
+        .eq("entityType", "client")
+        .in("entityId", filter.clientIds);
+      if (error) throw new Error(error.message);
+      rootIds = Array.from(new Set((data || []).map((r) => r.noteId)));
+      if (rootIds.length === 0) return { success: true, notes: [] as NoteSummary[] };
+    } else if (filter.clientId || filter.companyId || filter.personId) {
       const entityType = filter.clientId ? "client" : filter.companyId ? "company" : "person";
       const entityId = (filter.clientId ?? filter.companyId ?? filter.personId) as string;
       const { data, error } = await supabaseServer

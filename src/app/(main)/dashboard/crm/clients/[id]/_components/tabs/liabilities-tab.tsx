@@ -109,6 +109,8 @@ export function LiabilitiesTab({ client, associatedBanks = [], clientAssets = []
 
       const newLoan: LoanInfo = {
         id: crypto.randomUUID(),
+        ownerIds: client.id ? [client.id] : [],
+        ownershipType: "INDIVIDUAL",
         loanType: loanType as LoanInfo["loanType"],
         assetId: assetId || null,
         bankId: bankId || null,

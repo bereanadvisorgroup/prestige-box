@@ -14,6 +14,7 @@ const TABLE = "opportunities";
 export async function getOpportunities(filters?: {
   pipelineId?: string;
   clientId?: string;
+  clientIds?: string[];
   companyId?: string;
   resultStatus?: string | null; // e.g. 'active' (to get non-closed ones) or specific result status
 }) {
@@ -33,7 +34,9 @@ export async function getOpportunities(filters?: {
     if (filters?.pipelineId) {
       query = query.eq("pipelineId", filters.pipelineId);
     }
-    if (filters?.clientId) {
+    if (filters?.clientIds && filters.clientIds.length > 0) {
+      query = query.in("clientId", filters.clientIds);
+    } else if (filters?.clientId) {
       query = query.eq("clientId", filters.clientId);
     }
     if (filters?.companyId) {
@@ -70,7 +73,7 @@ export async function getOpportunities(filters?: {
           );
 
           for (const opp of list) {
-            if (opp.client && opp.client.personId) {
+            if (opp.client?.personId) {
               opp.client.person = peopleMap[opp.client.personId] || null;
             }
           }
@@ -108,7 +111,7 @@ export async function getOpportunity(id: string) {
 
     if (error) throw new Error(error.message);
 
-    if (record && record.client && record.client.personId) {
+    if (record?.client?.personId) {
       const { data: person, error: personError } = await supabaseServer
         .from("people")
         .select("id, firstName, lastName")

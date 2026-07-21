@@ -229,3 +229,99 @@ export async function deleteHousehold(id: string) {
     return { success: false, error: (error as { message: string }).message };
   }
 }
+
+export async function getHouseholdActiveRollupClients(householdId: string) {
+  try {
+    const res = await getHousehold(householdId);
+    if (!res.success || !res.household) {
+      return { success: false, error: "Household not found", clientIds: [], activeMembers: [] };
+    }
+
+    const members = res.members || [];
+    const activeMembers = members.filter((m) => m.includeInFinancialRollup !== false);
+    const clientIds = Array.from(new Set(activeMembers.map((m) => m.clientId).filter(Boolean) as string[]));
+
+    return {
+      success: true,
+      household: res.household,
+      address: res.address,
+      members,
+      activeMembers,
+      clientIds,
+    };
+  } catch (error) {
+    console.error(`[getHouseholdActiveRollupClients] Error:`, error);
+    return { success: false, error: (error as { message: string }).message, clientIds: [], activeMembers: [] };
+  }
+}
+
+export async function getHouseholdAssociationCounts(householdId: string) {
+  try {
+    const activeRes = await getHouseholdActiveRollupClients(householdId);
+    if (!activeRes.success || activeRes.clientIds.length === 0) {
+      return {
+        success: true,
+        counts: {
+          accountingFirms: 0,
+          actuarialFirms: 0,
+          banks: 0,
+          lawFirms: 0,
+          propertyAndCasualty: 0,
+          moneyManagers: 0,
+          recordKeepers: 0,
+          lifeInsurance: 0,
+          disabilityInsurance: 0,
+          longTermCare: 0,
+        },
+      };
+    }
+
+    const clientIds: string[] = activeRes.clientIds;
+
+    const [
+      lawFirmsRes,
+      accountingFirmsRes,
+      actuarialFirmsRes,
+      banksRes,
+      propertyAndCasualtyRes,
+      moneyManagersRes,
+      recordKeepersRes,
+      lifeRes,
+      disabilityRes,
+      ltcRes,
+    ] = await Promise.all([
+      supabaseServer.from("law_firms").select("id, clientIds"),
+      supabaseServer.from("accounting_firms").select("id, clientIds"),
+      supabaseServer.from("actuarial_firms").select("id, clientIds"),
+      supabaseServer.from("banks").select("id, clientIds"),
+      supabaseServer.from("property_and_casualty_firms").select("id, clientIds"),
+      supabaseServer.from("money_managers").select("id, clientIds"),
+      supabaseServer.from("record_keepers").select("id, clientIds"),
+      supabaseServer.from("life_insurance_companies").select("id, clientIds"),
+      supabaseServer.from("disability_insurance_companies").select("id, clientIds"),
+      supabaseServer.from("long_term_care_insurance").select("id, clientIds"),
+    ]);
+
+    const filterByClientIds = (list: { clientIds?: string[] | null }[]) =>
+      list.filter((item) => item.clientIds?.some((id: string) => clientIds.includes(id))).length;
+
+    return {
+      success: true,
+      counts: {
+        accountingFirms: filterByClientIds(accountingFirmsRes.data || []),
+        actuarialFirms: filterByClientIds(actuarialFirmsRes.data || []),
+        banks: filterByClientIds(banksRes.data || []),
+        lawFirms: filterByClientIds(lawFirmsRes.data || []),
+        propertyAndCasualty: filterByClientIds(propertyAndCasualtyRes.data || []),
+        moneyManagers: filterByClientIds(moneyManagersRes.data || []),
+        recordKeepers: filterByClientIds(recordKeepersRes.data || []),
+        lifeInsurance: filterByClientIds(lifeRes.data || []),
+        disabilityInsurance: filterByClientIds(disabilityRes.data || []),
+        longTermCare: filterByClientIds(ltcRes.data || []),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching household association counts", error);
+    return { success: false, error: (error as Error).message };
+  }
+}

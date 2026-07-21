@@ -485,6 +485,8 @@ export function InsurancePolicyManager({
     const dateVal = form.anniversaryDate || form.renewalDate;
 
     return {
+      ownerIds: client.id ? [client.id] : [],
+      ownershipType: "INDIVIDUAL",
       companyId: form.companyId || undefined,
       policyNumber: form.policyNumber.trim() || undefined,
       policyName: form.policyName.trim() || undefined,

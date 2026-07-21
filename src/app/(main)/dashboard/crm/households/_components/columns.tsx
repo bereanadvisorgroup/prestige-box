@@ -59,8 +59,7 @@ export const columns = (onDelete: (household: Household) => void): ColumnDef<Hou
     id: "memberCount",
     header: "Total Members",
     cell: ({ row }: { row: Row<Household> }) => {
-      const count =
-        row.original.totalMembersCount ?? (row.original.members?.length || row.original.memberIds?.length || 0);
+      const count = row.original.totalMembersCount ?? (row.original.members?.length || 0);
       return (
         <div className="flex items-center gap-1 text-muted-foreground">
           <span>{count}</span>

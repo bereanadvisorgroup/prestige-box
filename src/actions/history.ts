@@ -9,14 +9,18 @@ const TABLE = "change_history";
  * Fetches the full change history for a single client or company,
  * sorted by change date descending.
  */
-export async function getEntityHistory(entityType: ChangeHistoryEntityType, entityId: string) {
+export async function getEntityHistory(entityType: ChangeHistoryEntityType, entityId: string | string[]) {
   try {
-    const { data, error } = await supabaseServer
-      .from(TABLE)
-      .select("*")
-      .eq("entityType", entityType)
-      .eq("entityId", entityId)
-      .order("changedAt", { ascending: false });
+    let query = supabaseServer.from(TABLE).select("*").eq("entityType", entityType);
+
+    if (Array.isArray(entityId)) {
+      if (entityId.length === 0) return { success: true, history: [] as ChangeHistory[] };
+      query = query.in("entityId", entityId);
+    } else {
+      query = query.eq("entityId", entityId);
+    }
+
+    const { data, error } = await query.order("changedAt", { ascending: false });
 
     if (error) throw new Error(error.message);
     return { success: true, history: (data || []) as ChangeHistory[] };

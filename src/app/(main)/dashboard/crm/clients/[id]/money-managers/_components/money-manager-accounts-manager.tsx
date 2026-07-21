@@ -421,6 +421,8 @@ export function MoneyManagerAccountsManager({
       return null;
     }
     return {
+      ownerIds: client.id ? [client.id] : [],
+      ownershipType: "INDIVIDUAL",
       moneyManagerId: form.moneyManagerId,
       financialTypeId: form.financialTypeId || undefined,
       accountNumber: form.accountNumber.trim() || undefined,

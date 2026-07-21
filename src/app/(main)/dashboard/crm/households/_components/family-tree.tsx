@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, DollarSign, Home, CheckCircle2, XCircle, Shield, UserCheck, Heart } from "lucide-react";
+
+import { ArrowUpRight, CheckCircle2, DollarSign, Heart, Home, Shield, UserCheck, XCircle } from "lucide-react";
 
 import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Household, Person } from "@/types/crm";
 import { calculateHouseholdNetWorth } from "@/lib/financial-rollup";
+import type { Household, Person } from "@/types/crm";
 
 interface FamilyTreeProps {
   household: Household;
@@ -114,7 +115,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                       photoUrl={m.person?.photoUrl}
                       firstName={m.person?.firstName}
                       lastName={m.person?.lastName}
-                      size="md"
+                      size="default"
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-sm">
@@ -144,7 +145,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
             {dependents.length > 0 && (
               <div className="relative flex flex-col items-center">
                 <div className="h-8 w-0.5 bg-border" />
-                <div className="rounded-full border bg-muted/20 px-3 py-1 text-[11px] text-muted-foreground font-medium">
+                <div className="rounded-full border bg-muted/20 px-3 py-1 font-medium text-[11px] text-muted-foreground">
                   Children & Dependents
                 </div>
                 <div className="h-8 w-0.5 bg-border" />

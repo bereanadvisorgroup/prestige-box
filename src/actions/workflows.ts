@@ -102,7 +102,7 @@ function projectStepDueDates(startDate: Date, steps: ProjectableStep[]): (string
  * instance. Completed steps keep their recorded due date but still anchor the
  * steps that follow them. Safe to call after any completion change.
  */
-async function recomputeInstanceDueDates(instanceId: string, now: Date) {
+async function _recomputeInstanceDueDates(instanceId: string, now: Date) {
   const { data: instance } = await supabaseServer
     .from(INSTANCES_TABLE)
     .select("startDate")
@@ -141,7 +141,7 @@ async function recomputeInstanceDueDates(instanceId: string, now: Date) {
  * BFS algorithm to find shortest path distance to the "end" node.
  */
 function getShortestPathToEnd(graph: any, startNodeId: string): number {
-  if (!graph || !graph.nodes || !graph.edges) return 0;
+  if (!graph?.nodes || !graph.edges) return 0;
   const edges = graph.edges || [];
   const queue: [string, number][] = [[startNodeId, 0]];
   const visited = new Set<string>([startNodeId]);
@@ -197,7 +197,7 @@ async function enrichWorkflowsWithProgress(instances: any[]) {
       const sortedSteps = [...steps].sort((a, b) => b.sortOrder - a.sortOrder);
       const activeStep = sortedSteps.find((s) => !s.completedAt);
 
-      if (activeStep && activeStep.templateStepId && w.templateId) {
+      if (activeStep?.templateStepId && w.templateId) {
         const graph = templateGraphs.get(w.templateId);
         if (graph) {
           const dist = getShortestPathToEnd(graph, activeStep.templateStepId);
@@ -301,14 +301,21 @@ export async function createWorkflowFromTemplate(templateId: string, entityType:
 /**
  * Fetch all workflows for a client or company, with steps for progress display.
  */
-export async function getWorkflows(entityType: WorkflowEntityType, entityId: string) {
+export async function getWorkflows(entityType: WorkflowEntityType, entityId: string | string[]) {
   try {
-    const { data: list, error } = await supabaseServer
+    let query = supabaseServer
       .from(INSTANCES_TABLE)
       .select("*, workflow_instance_steps(*)")
-      .eq("entityType", entityType)
-      .eq("entityId", entityId)
-      .order("createdAt", { ascending: false });
+      .eq("entityType", entityType);
+
+    if (Array.isArray(entityId)) {
+      if (entityId.length === 0) return { success: true, workflows: [] as WorkflowInstance[] };
+      query = query.in("entityId", entityId);
+    } else {
+      query = query.eq("entityId", entityId);
+    }
+
+    const { data: list, error } = await query.order("createdAt", { ascending: false });
 
     if (error) throw new Error((error as { message: string }).message);
 
@@ -601,7 +608,7 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
  */
 export async function reopenWorkflowStep(stepId: string) {
   try {
-    const user = await verifyStaff();
+    const _user = await verifyStaff();
 
     const { data: step, error: stepError } = await supabaseServer
       .from(INSTANCE_STEPS_TABLE)

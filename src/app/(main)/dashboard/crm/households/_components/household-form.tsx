@@ -248,7 +248,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                             name={`members.${index}.isPrimaryHousehold`}
                             render={({ field }) => (
                               <FormItem className="flex items-center justify-between rounded-md border bg-background p-2">
-                                <FormLabel className="text-xs font-normal">Primary Household</FormLabel>
+                                <FormLabel className="font-normal text-xs">Primary Household</FormLabel>
                                 <FormControl>
                                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                                 </FormControl>
@@ -261,7 +261,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                             name={`members.${index}.includeInFinancialRollup`}
                             render={({ field }) => (
                               <FormItem className="flex items-center justify-between rounded-md border bg-background p-2">
-                                <FormLabel className="text-xs font-normal">Financial Rollup</FormLabel>
+                                <FormLabel className="font-normal text-xs">Financial Rollup</FormLabel>
                                 <FormControl>
                                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                                 </FormControl>
