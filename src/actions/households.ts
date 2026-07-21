@@ -13,7 +13,82 @@ export async function getHouseholds() {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, households: households as Household[] };
+    // Collect all member client/person IDs to resolve names
+    const allMemberIds: string[] = [];
+    for (const h of households || []) {
+      const memberList = h.members || h.memberIds || [];
+      for (const m of memberList) {
+        const id = m.clientId || m.personId;
+        if (id) allMemberIds.push(id);
+      }
+    }
+
+    const uniqueIds = Array.from(new Set(allMemberIds));
+    const personNameMap: Record<string, string> = {};
+
+    if (uniqueIds.length > 0) {
+      const { data: clientsData } = await supabaseServer.from("clients").select("id, personId").in("id", uniqueIds);
+
+      const clientToPersonMap: Record<string, string> = {};
+      const personIdsToFetch = new Set<string>();
+
+      for (const c of clientsData || []) {
+        clientToPersonMap[c.id] = c.personId;
+        personIdsToFetch.add(c.personId);
+      }
+
+      for (const id of uniqueIds) {
+        if (!clientToPersonMap[id]) {
+          personIdsToFetch.add(id);
+        }
+      }
+
+      const { data: peopleData } = await supabaseServer
+        .from("people")
+        .select("id, firstName, lastName")
+        .in("id", Array.from(personIdsToFetch));
+
+      for (const p of peopleData || []) {
+        personNameMap[p.id] = `${p.firstName} ${p.lastName}`;
+      }
+
+      for (const [cId, pId] of Object.entries(clientToPersonMap)) {
+        if (personNameMap[pId]) {
+          personNameMap[cId] = personNameMap[pId];
+        }
+      }
+    }
+
+    const enrichedHouseholds = (households || []).map((h) => {
+      const memberList = (h.members || h.memberIds || []) as any[];
+      const head = memberList.find((m) => m.role === "HEAD" || m.role === "home_owner");
+      const spouse = memberList.find((m) => m.role === "SPOUSE" || m.role === "PARTNER");
+      const dependents = memberList.filter((m) => m.role === "DEPENDENT" || m.role === "dependent");
+
+      const headName = head ? personNameMap[head.clientId || head.personId] : undefined;
+      const spouseName = spouse ? personNameMap[spouse.clientId || spouse.personId] : undefined;
+
+      let headAndSpouse = "—";
+      if (headName && spouseName) {
+        headAndSpouse = `${headName} & ${spouseName}`;
+      } else if (headName) {
+        headAndSpouse = headName;
+      } else if (spouseName) {
+        headAndSpouse = spouseName;
+      }
+
+      return {
+        ...h,
+        members: memberList,
+        headName,
+        spouseName,
+        headAndSpouse,
+        dependentCount: dependents.length,
+        totalMembersCount: memberList.length,
+      };
+    });
+
+    return { success: true, households: enrichedHouseholds as Household[] };
   } catch (error) {
     console.error(`[getHouseholds] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -41,27 +116,54 @@ export async function getHousehold(id: string) {
     }
 
     // Fetch details for members
-    let members: { person: Person | null; role: string }[] = [];
-    if (household.memberIds && household.memberIds.length > 0) {
-      const personIds = household.memberIds.map((m: { personId: string }) => m.personId);
-      const { data: peopleData, error: peopleError } = await supabaseServer
+    let members: {
+      person: Person | null;
+      clientId: string;
+      role: string;
+      isPrimaryHousehold: boolean;
+      includeInFinancialRollup: boolean;
+      familyRelationship?: string;
+    }[] = [];
+    const memberList = household.members || household.memberIds || [];
+    if (memberList.length > 0) {
+      const clientIds = memberList.map((m: { clientId?: string; personId?: string }) => m.clientId || m.personId);
+      const { data: clientsData } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);
+
+      const personIdsFromClients = (clientsData || []).map((c) => c.personId).filter(Boolean);
+      const { data: peopleData } = await supabaseServer
         .from("people")
         .select("*")
-        .in("id", personIds);
+        .in("id", [...personIdsFromClients, ...clientIds]);
 
-      if (!peopleError && peopleData) {
+      if (peopleData) {
         const peopleMap = peopleData.reduce(
           (acc, person) => {
             acc[person.id] = person;
             return acc;
           },
-          {} as Record<string, (typeof peopleData)[number]>,
+          {} as Record<string, Person>,
         );
 
-        members = household.memberIds.map((m: { personId: string; role: string }) => ({
-          person: peopleMap[m.personId] || null,
-          role: m.role,
-        }));
+        const clientToPersonMap = (clientsData || []).reduce(
+          (acc, client) => {
+            acc[client.id] = peopleMap[client.personId] || null;
+            return acc;
+          },
+          {} as Record<string, Person | null>,
+        );
+
+        members = memberList.map((m: any) => {
+          const cId = m.clientId || m.personId;
+          const person = clientToPersonMap[cId] || peopleMap[cId] || null;
+          return {
+            person,
+            clientId: cId,
+            role: m.role || "MEMBER",
+            isPrimaryHousehold: m.isPrimaryHousehold ?? false,
+            includeInFinancialRollup: m.includeInFinancialRollup ?? true,
+            familyRelationship: m.familyRelationship,
+          };
+        });
       }
     }
 

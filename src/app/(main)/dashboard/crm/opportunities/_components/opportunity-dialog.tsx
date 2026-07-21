@@ -163,8 +163,8 @@ export function OpportunityDialog({
     try {
       const payload = {
         ...values,
-        clientId: associationType === "client" ? (values.clientId || null) : null,
-        companyId: associationType === "company" ? (values.companyId || null) : null,
+        clientId: associationType === "client" ? values.clientId || null : null,
+        companyId: associationType === "company" ? values.companyId || null : null,
       };
 
       if (!payload.clientId && !payload.companyId) {
@@ -233,11 +233,7 @@ export function OpportunityDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold">Client</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                      disabled={isSaving || isEditing}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isSaving || isEditing}>
                       <FormControl>
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Select a Client" />
@@ -262,11 +258,7 @@ export function OpportunityDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold">Company</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ""}
-                      disabled={isSaving || isEditing}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value || ""} disabled={isSaving || isEditing}>
                       <FormControl>
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="Select a Company" />

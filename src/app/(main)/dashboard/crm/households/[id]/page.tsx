@@ -50,12 +50,20 @@ export default async function HouseholdPage({ params }: HouseholdPageProps) {
             </p>
           </div>
         </div>
-        <Link href={`/dashboard/crm/households/${household.id}/edit`}>
-          <Button>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit Household
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href={`/dashboard/crm/households/${household.id}/family`}>
+            <Button variant="outline">
+              <Users className="mr-2 h-4 w-4 text-primary" />
+              View Family & Rollups
+            </Button>
+          </Link>
+          <Link href={`/dashboard/crm/households/${household.id}/edit`}>
+            <Button>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Household
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

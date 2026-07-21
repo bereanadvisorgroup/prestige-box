@@ -335,15 +335,18 @@ async function main() {
       const randomAddressId = faker.helpers.arrayElement(addressIds);
       const randomPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 2, max: 5 }));
       const members = randomPeopleIds.map((pId, idx) => ({
-        personId: pId,
-        role: idx === 0 ? "home_owner" : "dependent",
+        clientId: pId,
+        role: idx === 0 ? "HEAD" : idx === 1 ? "SPOUSE" : "DEPENDENT",
+        isPrimaryHousehold: true,
+        includeInFinancialRollup: true,
+        familyRelationship: idx === 0 ? "Head of Household" : idx === 1 ? "Spouse" : "Child",
       }));
 
       householdData.push({
         id: faker.string.uuid(),
         name: `${faker.person.lastName()} Household`,
         addressId: randomAddressId,
-        memberIds: members,
+        members: members,
       });
     }
     await db.insert(households).values(householdData);

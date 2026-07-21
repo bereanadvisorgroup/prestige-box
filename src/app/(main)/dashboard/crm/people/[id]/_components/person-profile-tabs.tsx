@@ -420,11 +420,7 @@ export function PersonProfileTabs({
               </div>
 
               <div className="space-y-6">
-                <PersonNotesCard
-                  personId={person.id!}
-                  initialNotes={notes}
-                  onNoteClick={() => setActiveTab("notes")}
-                />
+                <PersonNotesCard personId={person.id!} initialNotes={notes} onNoteClick={() => setActiveTab("notes")} />
               </div>
             </div>
           </TabsContent>

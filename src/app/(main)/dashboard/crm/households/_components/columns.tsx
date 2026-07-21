@@ -31,13 +31,38 @@ export const columns = (onDelete: (household: Household) => void): ColumnDef<Hou
     },
   },
   {
-    id: "memberCount",
-    header: "Members",
+    accessorKey: "headAndSpouse",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Head & Spouse" />,
     cell: ({ row }: { row: Row<Household> }) => {
-      const count = row.original.memberIds.length;
+      const text = row.original.headAndSpouse || "—";
       return (
-        <div className="flex items-center gap-1">
-          <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-1.5 font-medium text-sm">
+          <Users className="h-4 w-4 shrink-0 text-primary/70" />
+          <span>{text}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "dependentCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Dependents" />,
+    cell: ({ row }: { row: Row<Household> }) => {
+      const count = row.original.dependentCount ?? 0;
+      return (
+        <div className="flex items-center gap-1 font-medium text-sm">
+          <span>{count}</span>
+        </div>
+      );
+    },
+  },
+  {
+    id: "memberCount",
+    header: "Total Members",
+    cell: ({ row }: { row: Row<Household> }) => {
+      const count =
+        row.original.totalMembersCount ?? (row.original.members?.length || row.original.memberIds?.length || 0);
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground">
           <span>{count}</span>
         </div>
       );

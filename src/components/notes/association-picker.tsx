@@ -32,11 +32,7 @@ export function AssociationPicker({ value, onChange }: AssociationPickerProps) {
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [clientsRes, companiesRes, peopleRes] = await Promise.all([
-        getClients(),
-        getCompanies(),
-        getPeople(),
-      ]);
+      const [clientsRes, companiesRes, peopleRes] = await Promise.all([getClients(), getCompanies(), getPeople()]);
       if (cancelled) return;
       const opts: Option[] = [];
       if (clientsRes.success) {

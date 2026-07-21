@@ -40,9 +40,7 @@ export function PipelineForm({ pipeline }: PipelineFormProps) {
       : {
           name: "",
           isActive: true,
-          stages: [
-            { name: "", order: 0 },
-          ],
+          stages: [{ name: "", order: 0 }],
         },
   });
 

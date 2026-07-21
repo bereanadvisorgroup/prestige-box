@@ -91,7 +91,10 @@ export function OpportunitiesListView({
   const getResultStatusBadge = (status?: string | null) => {
     if (!status) {
       return (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300">
+        <Badge
+          variant="outline"
+          className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300"
+        >
           Active
         </Badge>
       );
@@ -99,16 +102,15 @@ export function OpportunitiesListView({
     switch (status) {
       case "WON":
         return (
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300"
+          >
             WON
           </Badge>
         );
       case "LOST":
-        return (
-          <Badge variant="destructive">
-            LOST
-          </Badge>
-        );
+        return <Badge variant="destructive">LOST</Badge>;
       case "TRASH":
         return (
           <Badge variant="secondary" className="bg-amber-600 text-white">

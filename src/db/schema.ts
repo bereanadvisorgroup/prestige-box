@@ -49,7 +49,7 @@ export const households = pgTable("households", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   addressId: uuid("addressId"),
-  memberIds: jsonb("memberIds").default(sql`'[]'::jsonb`),
+  members: jsonb("memberIds").default(sql`'[]'::jsonb`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

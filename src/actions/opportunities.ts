@@ -52,13 +52,7 @@ export async function getOpportunities(filters?: {
 
     if (list && list.length > 0) {
       // Map people details for client associations manually
-      const personIds = Array.from(
-        new Set(
-          list
-            .map((o) => o.client?.personId)
-            .filter(Boolean)
-        )
-      );
+      const personIds = Array.from(new Set(list.map((o) => o.client?.personId).filter(Boolean)));
 
       if (personIds.length > 0) {
         const { data: people, error: peopleError } = await supabaseServer
@@ -67,10 +61,13 @@ export async function getOpportunities(filters?: {
           .in("id", personIds);
 
         if (!peopleError && people) {
-          const peopleMap = people.reduce((acc, p) => {
-            acc[p.id] = p;
-            return acc;
-          }, {} as Record<string, any>);
+          const peopleMap = people.reduce(
+            (acc, p) => {
+              acc[p.id] = p;
+              return acc;
+            },
+            {} as Record<string, any>,
+          );
 
           for (const opp of list) {
             if (opp.client && opp.client.personId) {
