@@ -31,10 +31,10 @@ export async function createUser(data: {
     };
 
     const { error: preDbError } = await supabaseServer.from("users").insert(tempProfile);
-    if (preDbError) throw new Error("Failed to pre-create user profile: " + preDbError.message);
+    if (preDbError) throw new Error(`Failed to pre-create user profile: ${preDbError.message}`);
 
     // 2. Create User in Supabase Auth via Admin API
-    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10) + "A1!";
+    const randomPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
     const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
       email: cleanEmail,
       password: data.password || randomPassword,
@@ -205,7 +205,7 @@ export async function deleteUser(uid: string) {
 
 export async function getUser(uid: string) {
   try {
-    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).single();
+    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).maybeSingle();
 
     if (error) throw new Error(error.message);
     if (!dbUser) return { success: false, error: "User not found" };

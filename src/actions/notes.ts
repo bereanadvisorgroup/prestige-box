@@ -32,6 +32,7 @@ const NOTIFICATIONS = "note_notifications";
 export interface NoteFilter {
   clientId?: string;
   companyId?: string;
+  personId?: string;
 }
 
 // --- internal helpers -------------------------------------------------------
@@ -60,12 +61,13 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
   const names = new Map<string, string>(); // key: `${entityType}:${entityId}`
   const clientIds = Array.from(new Set(rows.filter((r) => r.entityType === "client").map((r) => r.entityId)));
   const companyIds = Array.from(new Set(rows.filter((r) => r.entityType === "company").map((r) => r.entityId)));
+  const personIds = Array.from(new Set(rows.filter((r) => r.entityType === "person").map((r) => r.entityId)));
 
   if (clientIds.length > 0) {
     const { data: clients } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);
-    const personIds = Array.from(new Set((clients || []).map((c) => c.personId)));
-    const { data: people } = personIds.length
-      ? await supabaseServer.from("people").select("id, firstName, lastName").in("id", personIds)
+    const clientPersonIds = Array.from(new Set((clients || []).map((c) => c.personId)));
+    const { data: people } = clientPersonIds.length
+      ? await supabaseServer.from("people").select("id, firstName, lastName").in("id", clientPersonIds)
       : { data: [] };
     const peopleMap = new Map((people || []).map((p) => [p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim()]));
     for (const c of clients || []) {
@@ -76,6 +78,13 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
   if (companyIds.length > 0) {
     const { data: companies } = await supabaseServer.from("companies").select("id, name").in("id", companyIds);
     for (const c of companies || []) names.set(`company:${c.id}`, c.name || "Unknown company");
+  }
+
+  if (personIds.length > 0) {
+    const { data: people } = await supabaseServer.from("people").select("id, firstName, lastName").in("id", personIds);
+    for (const p of people || []) {
+      names.set(`person:${p.id}`, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown person");
+    }
   }
 
   return names;
@@ -117,9 +126,9 @@ export async function getNotes(filter: NoteFilter = {}) {
   try {
     let rootIds: string[] | null = null;
 
-    if (filter.clientId || filter.companyId) {
-      const entityType = filter.clientId ? "client" : "company";
-      const entityId = (filter.clientId ?? filter.companyId) as string;
+    if (filter.clientId || filter.companyId || filter.personId) {
+      const entityType = filter.clientId ? "client" : filter.companyId ? "company" : "person";
+      const entityId = (filter.clientId ?? filter.companyId ?? filter.personId) as string;
       const { data, error } = await supabaseServer
         .from(ASSOCIATIONS)
         .select("noteId")
@@ -492,6 +501,11 @@ export async function createNote(values: NoteFormValues, origin?: string) {
       );
     }
 
+    for (const a of parsed.associations) {
+      if (a.entityType === "person") {
+        revalidatePath(`/dashboard/crm/people/${a.entityId}`);
+      }
+    }
     revalidatePath("/dashboard/crm/notes");
     revalidatePath("/dashboard/crm");
     return { success: true, id: inserted.id as string };

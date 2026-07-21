@@ -30,6 +30,7 @@ import { getMoneyManagers } from "@/actions/money-managers";
 import { getPerson } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
+import { getNotes } from "@/actions/notes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   const person = result.person;
 
-  // Fetch roles/associations
+  // Fetch roles/associations and notes
   const [
     clientsRes,
     lawFirmsRes,
@@ -66,6 +67,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     ltcRes,
     moneyRes,
     recordRes,
+    notesRes,
   ] = await Promise.all([
     getClients(),
     getLawFirms(),
@@ -78,6 +80,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getLongTermCareInsurances(),
     getMoneyManagers(),
     getRecordKeepers(),
+    getNotes({ personId: id }),
   ]);
 
   const associatedClient =
@@ -137,6 +140,8 @@ export default async function PersonPage({ params }: PersonPageProps) {
     associatedLtc.length > 0 ||
     associatedMoneyManagers.length > 0 ||
     associatedRecordKeepers.length > 0;
+
+  const notes = notesRes.success && notesRes.notes ? notesRes.notes : [];
 
   return (
     <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
@@ -268,6 +273,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
         associatedLtc={associatedLtc}
         associatedMoneyManagers={associatedMoneyManagers}
         associatedRecordKeepers={associatedRecordKeepers}
+        notes={notes}
       />
     </div>
   );

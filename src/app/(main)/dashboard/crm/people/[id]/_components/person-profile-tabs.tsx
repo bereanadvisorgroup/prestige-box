@@ -1,6 +1,11 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+
+import { NotesView } from "@/components/notes/notes-view";
+import type { NoteSummary } from "@/types/notes";
+import { PersonNotesCard } from "./person-notes-card";
 
 import {
   ArrowUpRight,
@@ -61,6 +66,7 @@ interface PersonProfileTabsProps {
   associatedLtc: LongTermCareInsurance[];
   associatedMoneyManagers: MoneyManager[];
   associatedRecordKeepers: RecordKeeper[];
+  notes: NoteSummary[];
 }
 
 function AssociationCardList({
@@ -147,10 +153,13 @@ export function PersonProfileTabs({
   associatedLtc,
   associatedMoneyManagers,
   associatedRecordKeepers,
+  notes,
 }: PersonProfileTabsProps) {
+  const [activeTab, setActiveTab] = React.useState("general");
+
   return (
     <div className="fade-in col-span-1 w-full animate-in duration-500">
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="hide-scrollbar -mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
           <TabsList className="inline-flex h-12 min-w-max items-center justify-start rounded-lg border bg-muted/50 p-1.5 text-muted-foreground shadow-inner">
             <TabsTrigger
@@ -247,6 +256,12 @@ export function PersonProfileTabs({
                 Record Keepers
               </TabsTrigger>
             )}
+            <TabsTrigger
+              value="notes"
+              className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              Notes
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -348,11 +363,9 @@ export function PersonProfileTabs({
                     </div>
                   </CardContent>
                 </Card>
-              </div>
 
-              {/* Associated Locations */}
-              <div className="space-y-6">
-                <Card className="h-full border-none shadow-md">
+                {/* Associated Locations */}
+                <Card className="border-none shadow-md">
                   <CardHeader className="border-b bg-muted/10 pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <MapPin className="h-5 w-5 text-primary" /> Associated Locations
@@ -404,6 +417,14 @@ export function PersonProfileTabs({
                     )}
                   </CardContent>
                 </Card>
+              </div>
+
+              <div className="space-y-6">
+                <PersonNotesCard
+                  personId={person.id!}
+                  initialNotes={notes}
+                  onNoteClick={() => setActiveTab("notes")}
+                />
               </div>
             </div>
           </TabsContent>
@@ -726,6 +747,19 @@ export function PersonProfileTabs({
               />
             </TabsContent>
           )}
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="m-0 border-0 outline-none">
+            <div className="p-6">
+              <NotesView
+                scope={{ personId: person.id }}
+                title="Notes"
+                defaultAssociations={[{ entityType: "person", entityId: person.id! }]}
+                lockAssociations
+                useHeaderPortal={false}
+              />
+            </div>
+          </TabsContent>
         </div>
       </Tabs>
     </div>

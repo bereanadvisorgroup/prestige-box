@@ -15,6 +15,7 @@ import {
   Search,
   StickyNote,
   TrendingUp,
+  User,
 } from "lucide-react";
 
 import { getNotes, type NoteFilter } from "@/actions/notes";
@@ -67,7 +68,13 @@ function NoteSummaryCard({ note }: { note: NoteSummary }) {
             <div className="mt-2 flex flex-wrap gap-1.5">
               {note.associations.map((a) => (
                 <Badge key={`${a.entityType}:${a.entityId}`} variant="secondary" className="gap-1">
-                  {a.entityType === "client" ? <Briefcase className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
+                  {a.entityType === "client" ? (
+                    <Briefcase className="h-3 w-3" />
+                  ) : a.entityType === "person" ? (
+                    <User className="h-3 w-3" />
+                  ) : (
+                    <Building2 className="h-3 w-3" />
+                  )}
                   {a.name}
                 </Badge>
               ))}
@@ -124,7 +131,7 @@ export function NotesView({
     const res = await getNotes(scope ?? {});
     if (res.success) setNotes(res.notes || []);
     setLoading(false);
-  }, [scope?.clientId, scope?.companyId]);
+  }, [scope?.clientId, scope?.companyId, scope?.personId]);
 
   React.useEffect(() => {
     load();

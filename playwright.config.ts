@@ -95,12 +95,10 @@ export default defineConfig({
     command: "pnpm dev",
     env: {
       NEXT_PUBLIC_IS_E2E: "true",
+      NEXT_PUBLIC_BYPASS_MFA: "true",
     },
     url: "http://localhost:3000",
     reuseExistingServer: false,
     timeout: 120 * 1000,
-    env: {
-      NEXT_PUBLIC_BYPASS_MFA: "true",
-    },
   },
 });

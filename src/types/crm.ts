@@ -545,7 +545,7 @@ export const CompanyValuationHistorySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task"]);
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task", "person"]);
 export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
 
 export const ChangeHistorySchema = z.object({
@@ -592,10 +592,10 @@ export const ClientPolicySchema = z.object({
 
 export const LawFirmSchema = z.object({
   id: z.string().optional(),
-  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personIds: z.array(z.string()).default([]),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -610,7 +610,7 @@ export const AccountingFirmSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -625,7 +625,7 @@ export const ActuarialFirmSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -640,7 +640,7 @@ export const BankSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Bank name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -655,7 +655,7 @@ export const PropertyAndCasualtyFirmSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -670,7 +670,7 @@ export const MoneyManagerSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Money manager name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
@@ -685,7 +685,7 @@ export const RecordKeeperSchema = z.object({
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Record keeper name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z.string().nullable().optional().transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
