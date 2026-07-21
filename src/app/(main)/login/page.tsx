@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { checkUserStatus } from "@/actions/auth-flow";
-import { deleteUser } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -101,11 +100,17 @@ export default function LoginPage() {
     const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("uid", userId).single();
 
     if (fetchError || !userData) {
+      if (fetchError) {
+        console.error("Profile fetch error on login redirect:", fetchError);
+        toast.error("Could not load your profile. Please try signing in again.");
+      } else {
+        console.warn("No whitelisted profile row found for user:", userId);
+        toast.error("Account profile not found. Please contact support.");
+      }
       const {
         data: { user },
       } = await supabase.auth.getUser();
       const userEmail = user?.email || "";
-      deleteUser(userId).catch((err) => console.error("Failed to delete unauthorized user:", err));
       await supabase.auth.signOut();
       router.push(`/login/no-account?email=${encodeURIComponent(userEmail)}`);
       return;
