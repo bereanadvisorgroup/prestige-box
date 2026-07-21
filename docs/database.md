@@ -289,6 +289,19 @@ erDiagram
         boolean isRead
         timestamp createdAt
     }
+    NOTE_ASSOCIATIONS {
+        uuid id PK
+        uuid noteId FK
+        string entityType "client | company | person"
+        uuid entityId
+        timestamp createdAt
+    }
+    KEYVALS {
+        string id PK
+        string value
+        timestamp createdAt
+        timestamp updatedAt
+    }
     CHANGE_HISTORY {
         uuid id PK
         string entityType "client | company | task"
@@ -502,13 +515,19 @@ erDiagram
 - **Instances**: Active instances of a workflow assigned to a Client or Company (`workflow_instances`).
 - **Instance Steps**: Snapshot copy of template steps instantiated to track active completion, custom resolved due dates, and completion actors (`workflow_instance_steps`).
 
-### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
+### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`, `note_associations`)
 
-- reddit-style nested threaded workspace.
+- Reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
+- **Entity Associations**: `note_associations` connects notes to clients, companies, or individual people (`person`).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
 - **Community Ratings**: Tracks up/down voting scores through `note_votes` (using the `value` column) and emoji counts in `note_reactions`.
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
+
+### `keyvals`
+
+- Centralized key-value table for global portal configurations and administrative branding parameters.
+- Stores key-value items such as `BUSINESS_EMAIL`, `BUSINESS_PHONE`, `BUSINESS_WEBSITE`, `COMPANY_LOGO_URL`, `COMPANY_NAME`, and `PORTAL_SOCIAL_MEDIA`.
 
 ### `change_history`
 

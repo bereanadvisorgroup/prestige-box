@@ -39,7 +39,7 @@ Reserved for system administrators.
 
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
-- **Portal Settings**: Global portal-wide configuration parameters.
+- **Portal Settings (`/dashboard/admin/portal-settings`)**: Customization of global portal parameters, uploading corporate/website logos, setting company names, contact email/phone, and managing portal social media links.
 - **Lookup Lists & Dropdowns**: Centralized management of dropdown options, lookup values, and entity lists:
   - **Account Types (`/dashboard/admin/financial-account-types`)**: Configuration values for financial account categories.
   - **Custodians (`/dashboard/admin/custodians`)**: Options for custodians.
@@ -60,11 +60,11 @@ The core relationship management suite.
 
 - **General CRM Dashboards**:
   - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
-  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications.
+  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client, company, and person notes, replies, mentions, and notifications.
   - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
   - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban and list view for deals, onboarding, and policy transitions.
   - **Workflows Dashboard (`/dashboard/crm/workflows`)**: Central hub listing active and completed workflow instances assigned to clients or companies.
-  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
+  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and tabbed profile navigation including personal info and associated internal notes (`PersonNotesCard`).
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
   - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
   - **Clients (`/dashboard/crm/clients`)**: Advisor-focused portfolio view of all active clients.
@@ -108,9 +108,10 @@ The core relationship management suite.
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 
-A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.
+A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client, company, and individual person matters.
 
 - **Hierarchical Threads**: Supports multi-depth notes (up to 2 levels: note, reply, sub-reply) with denormalized thread retrieval.
+- **Multi-Entity Associations**: Notes can be associated directly with Clients, Companies, or individual People (`person`). Notes tagged with a Person appear automatically on that profile's internal notes tab.
 - **Rich Context**: Supports Tiptap WYSIWYG editor for body composing, custom emoji picking, files and Google Drive link previews, upvoting/downvoting (aggregating scores), and user mentions (`@username`).
 - **Notification Inbox**: Triggers real-time and persistent alerts (mention, reply) in the user's notification bell.
 

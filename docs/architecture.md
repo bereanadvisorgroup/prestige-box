@@ -43,8 +43,8 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 - `src/app/(external)`: Public landing page and marketing entry points.
 - `src/app/(main)`: Core authenticated portal. Contains:
   - `auth/`: Authentication flow routes (Login, Password Reset, MFA enrollment and verification).
-  - `dashboard/crm/`: Client Relationship Management dashboards (Overview, Notes, Tasks, Opportunities, and Workflows) and CRM registries (Households, Clients, Companies, People, Addresses, Policies, Professional Services).
-  - `dashboard/admin/`: Admin panels (User settings, Workflow template visual graph designer, and Opportunity Pipeline stages setup).
+  - `dashboard/crm/`: Client Relationship Management dashboards (Overview, Notes, Tasks, Opportunities, and Workflows) and CRM registries (Households, Clients, Companies, People with integrated notes tabs at `/dashboard/crm/people/[id]`, Addresses, Policies, Professional Services).
+  - `dashboard/admin/`: Admin panels (User settings, Portal branding & settings at `/dashboard/admin/portal-settings`, Workflow template visual graph designer, and Opportunity Pipeline stages setup).
   - `dashboard/reports/`: Analytical charts (expected Benefit Payments report, Relationship Graph SVG, audit History Report, and interactive Referrals report tree).
   - `dashboard/finance/`: Client asset/liability listings and insurance policies overview.
 
