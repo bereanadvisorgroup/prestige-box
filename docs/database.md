@@ -427,7 +427,8 @@ erDiagram
 
 ### `households`
 
-- Groups individuals/people into family/household units to track aggregated net worth, familial links, and shared addresses.
+- Groups individuals/people into family/household units to track aggregated net worth, familial links (Head of Household, Spouse, Children, Dependents, and custom node relationships), and shared addresses.
+- Integrates with financial calculation engines (`src/lib/financial-rollup.ts` and `src/lib/portfolio-rollup.ts`) to compute total household net worth, liquid assets, total debt, debt-to-income ratio, and asset allocation breakdown across all members and projected managed accounts.
 
 ### `clients`
 

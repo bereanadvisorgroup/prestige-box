@@ -106,6 +106,17 @@ The core relationship management suite.
   - **Vendors**: Manage company-linked vendors (Life, Disability, LTC insurance companies, Money Managers, Record Keepers).
   - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), Company Opportunities (`/opportunities`), and Audit History logs (`/history`).
 
+- **Household Profile & Contextual Navigation**: Selecting a household dynamically switches the sidebar to a tailored household-centric navigation menu containing:
+  - **Overview & Profile (`/dashboard/crm/households/[id]/overview`)**: Dynamic header portal (`household-header-portal.tsx`), aggregate Net Worth growth timeline (`household-net-worth-chart.tsx`), portfolio rollup statistics (`portfolio-rollup.ts`), and key household member summary cards.
+  - **Family & Tree Tab (`/dashboard/crm/households/[id]/family`)**: Interactive visual family tree (`family-tree.tsx`) managing head of household, spouse, children, dependents, and custom relational links.
+  - **Assets & Liabilities (`/dashboard/crm/households/[id]/assets`, `/dashboard/crm/households/[id]/liabilities`)**: Aggregated wealth, real estate, liquid accounts, mortgages, and debts across all household members.
+  - **Estate Planning (`/dashboard/crm/households/[id]/estate-planning`)**: Repository for household Wills, Revocable Trusts, and Irrevocable Trusts with grantor/trustee pickers and legal firm links.
+  - **Insurance Policies**: Sub-routes for Life Insurance (`/life-insurance`), Disability Insurance (`/disability-insurance`), Long-Term Care (`/long-term-care`), and Property & Casualty (`/property-and-casualty`).
+  - **Managed Accounts & Institutions**: Sub-routes for Banks (`/banks`), Money Managers (`/money-managers`), and Record Keepers (`/record-keepers`), with balances automatically projecting into household portfolio rollups.
+  - **Professional Associations**: Servicing firm links for Law (`/law-firms`), Accounting (`/accounting-firms`), and Actuarial (`/actuarial-firms`).
+  - **Employment (`/dashboard/crm/households/[id]/employment`)**: Tracks employment details, employers, and compensation for household members.
+  - **Internal Workspace (`/dashboard/crm/households/[id]/internal`)**: Private advisor workspace featuring sub-tabs for Household Notes (`/notes`), Household Tasks (`/tasks`), Household Opportunities (`/opportunities`), Household Workflows (`/workflows`), and Audit History (`/history`).
+
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 
 A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.

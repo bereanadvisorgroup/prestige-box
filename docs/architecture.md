@@ -43,7 +43,8 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 - `src/app/(external)`: Public landing page and marketing entry points.
 - `src/app/(main)`: Core authenticated portal. Contains:
   - `auth/`: Authentication flow routes (Login, Password Reset, MFA enrollment and verification).
-  - `dashboard/crm/`: Client Relationship Management dashboards (Overview, Notes, Tasks, Opportunities, and Workflows) and CRM registries (Households, Clients, Companies, People, Addresses, Policies, Professional Services).
+  - `dashboard/crm/`: Client Relationship Management dashboards (Overview, Notes, Tasks, Opportunities, and Workflows) and CRM registries (Households, Clients, Companies, People, Addresses, Policies, Professional Services). Selecting a Client (`/dashboard/crm/clients/[id]`), Company (`/dashboard/crm/companies/[id]`), or Household (`/dashboard/crm/households/[id]`) dynamically switches the sidebar to a tailored contextual navigation menu.
+  - `dashboard/crm/households/[id]`: Household detail workspace containing Overview (net worth timeline & portfolio rollup chart), Family Tree (interactive visual family hierarchy), Assets, Liabilities, Estate Planning, Policy categories (Life, Disability, LTC, P&C), Managed Accounts & Servicing Institutions (Banks, Money Managers, Record Keepers), Professional Associations (Law, Accounting, Actuarial), Employment, and Internal workspace (Notes, Tasks, Opportunities, Workflows, History).
   - `dashboard/admin/`: Admin panels (User settings, Workflow template visual graph designer, and Opportunity Pipeline stages setup).
   - `dashboard/reports/`: Analytical charts (expected Benefit Payments report, Relationship Graph SVG, audit History Report, and interactive Referrals report tree).
   - `dashboard/finance/`: Client asset/liability listings and insurance policies overview.
@@ -56,7 +57,7 @@ The application heavily utilizes the **Next.js App Router (`src/app`)**, which e
 
 Authentication and MFA are handled by Supabase Auth.
 
-- Next.js **Proxy** (`src/proxy.ts`) intercepts requests to `/dashboard` and `/api` to ensure security. It parses the Supabase authentication cookie (`sb-*-auth-token`), decodes the JWT, and inspects the `aal` (Authenticator Assurance Level) claim.
+- Next.js **Proxy** (`src/proxy.ts`) intercepts requests to `/dashboard` and `/api` to ensure security. It parses the Supabase authentication cookie (`sb-*-auth-token`), decodes the JWT, and inspects the `aal` (Authenticator Assurance Level) claim. Authentication and user lookups enforce case-insensitive email synchronization (`src/db/migrations/20260721152236_case_insensitive_user_sync.sql`).
 - **Strict MFA Gate**: If the user is unauthenticated, they are redirected to `/login`. If the session is active but the current level is `aal1` (single factor authenticated) and the user has a verified MFA factor enrolled, the proxy redirects them to the `/auth/mfa-verify` page to enter their TOTP token. Access to dashboard routes and protected APIs is only granted once `aal2` (multi-factor authenticated) is achieved.
 - **MFA Test Bypass**: For automated Playwright E2E tests and local dev sandbox validation, a bypass is supported via the environment variable `NEXT_PUBLIC_BYPASS_MFA=true`. When active, it bypasses the AAL2 / TOTP checks at the callback page, login flow, and client-side auth provider layers, allowing smooth automated browser flows.
 - Sessions are managed via cookies, allowing server components to safely read the user's authentication state on initial load.
@@ -102,12 +103,13 @@ Prestige Box enforces strict security boundaries at multiple layers:
 
 ## Asset History & Net Worth Visualization
 
-To support advisor insights and client financial planning, the application tracks historical asset values:
+To support advisor insights and client/household financial planning, the application tracks historical asset values and aggregates multi-entity portfolios:
 
 - **Snapshots**: Every time an asset is created or its value is updated, a historical record is automatically appended to `asset_history` via backend Server Actions.
-- **Virtual Asset Integration**: To keep client Net Worth data complete and accurate, money manager accounts and record keeper accounts managed under a client are automatically projected as read-only virtual assets. Their values contribute to the chronological Net Worth calculation and are rendered dynamically alongside physical assets.
-- **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for each client by merging overlapping asset values on shared dates.
-- **Rendering**: Recharts is used on the client-side to render an interactive, beautiful area chart showing net worth growth and individual asset category distributions over time.
+- **Financial & Portfolio Rollup Engines (`src/lib/financial-rollup.ts` & `src/lib/portfolio-rollup.ts`)**: Core financial calculation modules that derive total net worth, liquid assets, total debt, debt-to-income ratio, and asset allocation breakdown (Equities, Fixed Income, Real Estate, Cash, Insurance, etc.). Computations aggregate wealth across physical assets, liabilities, and managed accounts for both individual clients and household units.
+- **Virtual Asset Integration**: To keep client and household Net Worth data complete and accurate, money manager accounts and record keeper accounts managed under clients or household members are automatically projected as read-only virtual assets. Their values contribute to chronological Net Worth calculations and portfolio rollups alongside physical assets.
+- **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for clients and households by merging overlapping asset values on shared dates.
+- **Rendering**: Recharts is used on the client-side to render interactive, beautiful area charts showing net worth growth and individual asset category distributions over time (`household-net-worth-chart.tsx`).
 
 ## Deployment & CI/CD Pipelines
 

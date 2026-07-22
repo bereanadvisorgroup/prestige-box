@@ -58,12 +58,31 @@ Used for task management and pipeline staging columns:
 - **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
 - **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
 
-### 7. Workflow Graph Canvas (@xyflow/react)
+### 8. Workflow Graph Canvas (@xyflow/react)
 
 Used for the admin visual template builder to construct, view, and modify workflow configurations.
 
 - **Node-Based Editor**: Renders workflow steps as node cards on an infinite grid, supporting zoom, pan, and custom layout arrangements.
 - **Outcomes & Edges**: Renders connection lines between nodes representing outcomes that lead to the next step, allowing branching paths to be designed visually.
+
+### 9. Family Tree Visualizer (`<FamilyTree />`)
+
+Used in Household management views (`src/app/(main)/dashboard/crm/households/_components/family-tree.tsx`):
+
+- **Hierarchical Layout**: Renders interactive familial tree nodes displaying head of household, spouse, children, dependents, and extended relationships.
+- **Node Management**: Facilitates direct editing, member role assignment, and navigation to member profile details.
+
+### 10. Household Net Worth Chart (`<HouseholdNetWorthChart />`)
+
+Used in Household overview screens (`src/app/(main)/dashboard/crm/households/[id]/_components/household-net-worth-chart.tsx`):
+
+- **Recharts Integration**: Plots historical household net worth growth timelines alongside asset class breakdown distributions (Equities, Fixed Income, Real Estate, Cash, Managed Accounts).
+
+### 11. Contextual Sidebar Navigation
+
+Implemented in `src/app/(main)/dashboard/_components/sidebar/app-sidebar.tsx`:
+
+- **Dynamic Context Switching**: Selecting a specific Client (`/clients/[id]`), Company (`/companies/[id]`), or Household (`/households/[id]`) seamlessly updates the primary sidebar menu to show entity-specific sub-navigation (Overview, Family/Cap Table, Assets, Liabilities, Insurance, Managed Accounts, Servicing Firms, and Internal Workspace).
 
 ## Strict Data Tables Standard
 
