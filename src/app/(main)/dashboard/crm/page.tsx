@@ -13,8 +13,13 @@ export default async function CRMOverviewPage() {
           <DashboardTasksCard />
         </div>
       </div>
-      <div>
-        <MyWorkflowTasksCard />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div>
+          <MyWorkflowTasksCard />
+        </div>
+        <div className="space-y-6">
+          MY Opportunity Card HERE
+        </div>
       </div>
     </div>
   );

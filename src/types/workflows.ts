@@ -12,8 +12,8 @@ export const WORKFLOW_DUE_DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 export const WORKFLOW_PRIORITIES = ["None", "Low", "Medium", "High"] as const;
 export type WorkflowPriority = (typeof WORKFLOW_PRIORITIES)[number];
 
-export const WORKFLOW_RESPONSIBILITIES = ["advisor", "client"] as const;
-export type WorkflowResponsibility = (typeof WORKFLOW_RESPONSIBILITIES)[number];
+export const WORKFLOW_RESPONSIBILITIES = ["advisor", "client", "client_company"] as const;
+export type WorkflowResponsibility = string;
 
 export const WORKFLOW_ENTITY_TYPES = ["client", "company"] as const;
 export type WorkflowEntityType = (typeof WORKFLOW_ENTITY_TYPES)[number];
@@ -22,6 +22,25 @@ export const DUE_DATE_BASE_LABELS: Record<WorkflowDueDateBase, string> = {
   workflow_start: "Workflow Start Date",
   after_last_step: "After last step completed",
 };
+
+/**
+ * Format workflow step responsibility string into a human-readable label.
+ */
+export function formatResponsibilityLabel(responsibility: string, teams?: Array<{ id: string; name: string }>): string {
+  if (
+    !responsibility ||
+    responsibility === "client" ||
+    responsibility === "client_company" ||
+    responsibility === "advisor"
+  ) {
+    return "Client / Company";
+  }
+  if (teams && teams.length > 0) {
+    const match = teams.find((t) => t.id === responsibility);
+    if (match) return match.name;
+  }
+  return "Client / Company";
+}
 
 // ---------------------------------------------------------------------------
 // Attachments (uploaded to Supabase Storage; metadata stored as JSONB)
@@ -63,7 +82,7 @@ export const WorkflowTemplateStepSchema = z.object({
   dueDateBase: z.enum(WORKFLOW_DUE_DATE_BASES).optional().nullable(),
   priority: z.enum(WORKFLOW_PRIORITIES).default("None"),
   description: z.string().optional().nullable(),
-  responsibility: z.enum(WORKFLOW_RESPONSIBILITIES).default("advisor"),
+  responsibility: z.string().min(1).default("client_company"),
   attachments: z.array(WorkflowAttachmentSchema).default([]),
   outcomes: z.array(WorkflowOutcomeSchema).default([]),
   positionX: z.number().optional().nullable().default(0),

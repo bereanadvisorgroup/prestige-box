@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
+import { formatResponsibilityLabel } from "@/types/workflows";
 
 interface WorkflowStepExtended {
   id: string;
@@ -23,6 +24,7 @@ interface WorkflowStepExtended {
   entityName: string;
   priority: string;
   responsibility: string;
+  responsibilityLabel?: string;
   dueDate: string | null;
   createdAt: string;
 }
@@ -123,7 +125,7 @@ export function MyWorkflowTasksCard() {
                         className="gap-1 bg-white px-2 py-0.5 font-normal text-[11px] dark:bg-zinc-950"
                       >
                         <User className="h-3 w-3" />
-                        {step.responsibility === "advisor" ? "Advisor" : "Client"}
+                        {step.responsibilityLabel || formatResponsibilityLabel(step.responsibility)}
                       </Badge>
 
                       {step.priority && step.priority !== "None" && (

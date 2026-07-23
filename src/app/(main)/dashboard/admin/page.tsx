@@ -14,13 +14,18 @@ import {
 } from "lucide-react";
 
 import { getBusinessContact } from "@/actions/settings";
+import { getTeams } from "@/actions/teams";
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSocialAvatarUrl } from "@/lib/social";
 
 export default async function AdminDashboardPage() {
-  const [usersResult, contactResult] = await Promise.all([getUsers(), getBusinessContact()]);
+  const [usersResult, contactResult, teamsResult] = await Promise.all([
+    getUsers(),
+    getBusinessContact(),
+    getTeams(),
+  ]);
 
   if (!usersResult.success) {
     return (
@@ -204,6 +209,51 @@ export default async function AdminDashboardPage() {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/admin/teams" className="group block h-full">
+          <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="space-y-1.5 pr-4">
+                <CardTitle className="flex items-center gap-1.5 font-bold text-xl transition-colors group-hover:text-primary">
+                  Teams
+                  <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
+                </CardTitle>
+              </div>
+              <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <Users className="h-6 w-6" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              {teamsResult.success && teamsResult.teams && teamsResult.teams.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-between border-b border-muted/40 pb-2">
+                    <span className="font-extrabold text-2xl tracking-tight">{teamsResult.teams.length}</span>
+                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      {teamsResult.teams.length === 1 ? "Active Team" : "Active Teams"}
+                    </span>
+                  </div>
+                  <div className="space-y-1 pt-1">
+                    {teamsResult.teams.slice(0, 3).map((t) => (
+                      <div key={t.id} className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground truncate max-w-[140px]">{t.name}</span>
+                        <span className="text-muted-foreground">{t.memberCount} members</span>
+                      </div>
+                    ))}
+                    {teamsResult.teams.length > 3 && (
+                      <p className="text-[11px] text-muted-foreground italic pt-0.5">
+                        +{teamsResult.teams.length - 3} more teams
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Create and manage advisor & admin teams for workflow step assignment.
+                </p>
+              )}
             </CardContent>
           </Card>
         </Link>

@@ -236,15 +236,16 @@ export const NexusSchema = z.object({
 export const CompanySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Company name is required"),
-  dba: z.string().optional(),
+  dba: z.string().optional().nullable(),
   ein: z
     .string()
     .regex(/^\d{2}-\d{7}$/, "EIN must be in XX-XXXXXXX format")
     .optional()
-    .or(z.literal("")),
-  addressId: z.string().optional(),
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
-  phone: z.string().optional(),
+    .or(z.literal(""))
+    .nullable(),
+  addressId: z.string().optional().nullable(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")).nullable(),
+  phone: z.string().optional().nullable(),
   advisorId: z.string().optional().nullable(),
   situsRecords: z.array(SitusSchema).default([]),
   nexusRecords: z.array(NexusSchema).default([]),
@@ -288,6 +289,7 @@ export const CompanySchema = z.object({
   logoUrl: z.string().optional().nullable(),
   socialMedia: z.array(SocialMediaAccountSchema).default([]),
   documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -525,6 +527,7 @@ export const ClientSchema = z.object({
   driversLicense: DriversLicenseSchema.optional(),
   pii: PiiSchema.optional(),
   documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

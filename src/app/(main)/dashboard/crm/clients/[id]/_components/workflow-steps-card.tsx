@@ -5,7 +5,7 @@ import { ArrowUpRight, Calendar, Clock, User, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { WorkflowInstanceStep } from "@/types/workflows";
+import { formatResponsibilityLabel, type WorkflowInstanceStep } from "@/types/workflows";
 
 interface OutstandingStep extends WorkflowInstanceStep {
   workflowName: string;
@@ -15,6 +15,7 @@ interface OutstandingStep extends WorkflowInstanceStep {
 interface WorkflowStepsCardProps {
   clientId: string;
   steps: OutstandingStep[];
+  teams?: Array<{ id: string; name: string }>;
 }
 
 const PRIORITY_BADGE_CLASSES: Record<string, string> = {
@@ -24,7 +25,7 @@ const PRIORITY_BADGE_CLASSES: Record<string, string> = {
   None: "bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-400 border-none",
 };
 
-export function WorkflowStepsCard({ clientId, steps }: WorkflowStepsCardProps) {
+export function WorkflowStepsCard({ clientId, steps, teams }: WorkflowStepsCardProps) {
   const basePath = `/dashboard/crm/clients/${clientId}/internal/workflows`;
 
   return (
@@ -71,7 +72,7 @@ export function WorkflowStepsCard({ clientId, steps }: WorkflowStepsCardProps) {
                       className="gap-1 bg-white px-2 py-0.5 font-normal text-xs dark:bg-zinc-950"
                     >
                       <User className="h-3 w-3" />
-                      {step.responsibility === "advisor" ? "Advisor" : "Client"}
+                      {formatResponsibilityLabel(step.responsibility, teams)}
                     </Badge>
 
                     {/* Priority Badge */}

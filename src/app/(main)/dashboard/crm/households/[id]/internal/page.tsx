@@ -11,6 +11,7 @@ import { getPeople } from "@/actions/people";
 import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
 import { getTasks } from "@/actions/tasks";
+import { getTeams } from "@/actions/teams";
 import { getAdvisors } from "@/actions/users";
 import { getWorkflows } from "@/actions/workflows";
 import { InterestsCard } from "@/app/(main)/dashboard/crm/clients/[id]/_components/interests-card";
@@ -52,6 +53,7 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
     eventsResult,
     advisorsResult,
     workflowsResult,
+    teamsResult,
   ] = await Promise.all([
     getClients(),
     getTasks({ clientIds }),
@@ -62,6 +64,7 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
     getEvents(),
     getAdvisors(),
     getWorkflows("client", clientIds),
+    getTeams(),
   ]);
 
   const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
@@ -73,6 +76,7 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
   const allEvents = eventsResult.success ? eventsResult.events || [] : [];
   const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
   const workflows = workflowsResult.success && workflowsResult.workflows ? workflowsResult.workflows : [];
+  const teams = teamsResult.success ? teamsResult.teams || [] : [];
 
   // Filter and sort outstanding workflow steps across active rollup clients
   const outstandingSteps = workflows.flatMap((w) =>
@@ -117,7 +121,7 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
           <TasksCard clientId={primaryClientId} initialTasks={tasks} />
           <NotesCard clientId={primaryClientId} initialNotes={notes} />
           <div className="md:col-span-2">
-            <WorkflowStepsCard clientId={primaryClientId} steps={outstandingSteps} />
+            <WorkflowStepsCard clientId={primaryClientId} steps={outstandingSteps} teams={teams} />
           </div>
           <InterestsCard
             client={{

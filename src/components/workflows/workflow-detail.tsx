@@ -20,6 +20,7 @@ import {
   type WorkflowEntityType,
   type WorkflowInstance,
   type WorkflowInstanceStep,
+  formatResponsibilityLabel,
   workflowPercentComplete,
 } from "@/types/workflows";
 
@@ -33,9 +34,10 @@ interface WorkflowDetailProps {
   entityType: WorkflowEntityType;
   entityId: string;
   workflow: WorkflowInstance;
+  teams?: Array<{ id: string; name: string }>;
 }
 
-export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetailProps) {
+export function WorkflowDetail({ entityType, entityId, workflow, teams }: WorkflowDetailProps) {
   const router = useRouter();
   const [pendingStepId, setPendingStepId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -219,7 +221,7 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                     {step.priority !== "None" && (
                       <Badge className={cn("border-0", PRIORITY_BADGE_CLASSES[step.priority])}>{step.priority}</Badge>
                     )}
-                    <Badge variant="outline">{step.responsibility === "advisor" ? "Advisor" : "Client"}</Badge>
+                    <Badge variant="outline">{formatResponsibilityLabel(step.responsibility, teams)}</Badge>
                     {step.dueDate && (
                       <Badge
                         variant="outline"

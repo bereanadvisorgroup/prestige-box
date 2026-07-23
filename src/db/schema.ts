@@ -135,6 +135,7 @@ export const clients = pgTable("clients", {
   driversLicense: jsonb("driversLicense").default(sql`'{}'::jsonb`),
   pii: jsonb("pii").default(sql`'{}'::jsonb`),
   documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -158,6 +159,7 @@ export const companies = pgTable("companies", {
   logoUrl: text("logoUrl"),
   socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
@@ -649,3 +651,24 @@ export const opportunities = pgTable("opportunities", {
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
+
+// 34. Teams Table
+export const teams = pgTable("teams", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 35. Team Members Table (Junction table between teams and users)
+export const teamMembers = pgTable("team_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teamId: uuid("teamId")
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => users.uid, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+});
+
