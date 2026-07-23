@@ -1046,6 +1046,9 @@ export const OpportunityPipelineSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Pipeline name is required"),
   isActive: z.boolean().default(true),
+  hasFlatFee: z.boolean().default(false),
+  hasAum: z.boolean().default(false),
+  hasLifeInsurance: z.boolean().default(false),
   stages: z.array(OpportunityPipelineStageSchema).min(1, "At least one stage is required"),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -1057,6 +1060,22 @@ export const OpportunitySchema = z.object({
   clientId: z.string().nullable().optional(),
   companyId: z.string().nullable().optional(),
   amount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  flatFee: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  aumAmount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  aumPercentage: z
+    .string()
+    .regex(/^\d+(\.\d{1,4})?$/, "Must be a valid percentage")
+    .default("0.00"),
+  lifeInsurance: z
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
     .default("0.00"),

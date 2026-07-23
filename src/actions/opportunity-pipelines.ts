@@ -135,6 +135,9 @@ export async function createOpportunityPipeline(data: Partial<OpportunityPipelin
       .insert({
         name: validated.name,
         isActive: validated.isActive,
+        hasFlatFee: validated.hasFlatFee,
+        hasAum: validated.hasAum,
+        hasLifeInsurance: validated.hasLifeInsurance,
       })
       .select()
       .single();
@@ -184,6 +187,9 @@ export async function updateOpportunityPipeline(id: string, data: Partial<Opport
       .update({
         name: validated.name,
         isActive: validated.isActive,
+        hasFlatFee: validated.hasFlatFee,
+        hasAum: validated.hasAum,
+        hasLifeInsurance: validated.hasLifeInsurance,
         updatedAt: new Date().toISOString(),
       })
       .eq("id", id);

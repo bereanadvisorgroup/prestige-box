@@ -4,11 +4,12 @@ import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, formatDistanceStrict } from "date-fns";
-import { DollarSign, FileText, Loader2 } from "lucide-react";
+import { DollarSign, FileText, Loader2, Percent } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createOpportunity, getOpportunityHistory, updateOpportunity } from "@/actions/opportunities";
+import { getDefaultAumPerc } from "@/actions/opportunity-pipelines";
 import { RichTextEditor } from "@/components/tasks/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,15 @@ export function OpportunityDialog({
   const [activeTab, setActiveTab] = React.useState("details");
   const [history, setHistory] = React.useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+  const [defaultAumPerc, setDefaultAumPerc] = React.useState<number>(1);
+
+  React.useEffect(() => {
+    getDefaultAumPerc().then((res) => {
+      if (res.success && res.value !== undefined) {
+        setDefaultAumPerc(res.value);
+      }
+    });
+  }, []);
 
   const form = useForm({
     resolver: zodResolver(OpportunitySchema),
@@ -69,6 +79,10 @@ export function OpportunityDialog({
       clientId: null,
       companyId: null,
       amount: "0.00",
+      flatFee: "0.00",
+      aumAmount: "0.00",
+      aumPercentage: "0.00",
+      lifeInsurance: "0.00",
       targetCloseDate: todayInput(),
       pipelineId: "",
       stageId: "",
@@ -84,6 +98,31 @@ export function OpportunityDialog({
   // Watch pipelineId to dynamically show/update stages
   const selectedPipelineId = form.watch("pipelineId");
 
+  const selectedPipeline = React.useMemo(() => {
+    return pipelines.find((p) => p.id === selectedPipelineId);
+  }, [selectedPipelineId, pipelines]);
+
+  const watchedFlatFee = form.watch("flatFee");
+  const watchedAumAmount = form.watch("aumAmount");
+  const watchedAumPercentage = form.watch("aumPercentage");
+  const watchedLifeInsurance = form.watch("lifeInsurance");
+
+  React.useEffect(() => {
+    const flatFeeVal = selectedPipeline?.hasFlatFee
+      ? Number.parseFloat(String(watchedFlatFee || "0").replace(/,/g, "")) || 0
+      : 0;
+    const aumAmountVal = selectedPipeline?.hasAum
+      ? Number.parseFloat(String(watchedAumAmount || "0").replace(/,/g, "")) || 0
+      : 0;
+    const aumPercentageVal = selectedPipeline?.hasAum ? Number.parseFloat(String(watchedAumPercentage || "0")) || 0 : 0;
+    const lifeInsuranceVal = selectedPipeline?.hasLifeInsurance
+      ? Number.parseFloat(String(watchedLifeInsurance || "0").replace(/,/g, "")) || 0
+      : 0;
+
+    const total = flatFeeVal + aumAmountVal * (aumPercentageVal / 100) + lifeInsuranceVal;
+    form.setValue("amount", total.toFixed(2));
+  }, [watchedFlatFee, watchedAumAmount, watchedAumPercentage, watchedLifeInsurance, selectedPipeline, form.setValue]);
+
   const amountStr = form.watch("amount");
   const probabilityWin = form.watch("probabilityWin");
 
@@ -93,9 +132,8 @@ export function OpportunityDialog({
   }, [amountStr, probabilityWin]);
 
   const pipelineStages = React.useMemo(() => {
-    const pipe = pipelines.find((p) => p.id === selectedPipelineId);
-    return pipe?.stages || [];
-  }, [selectedPipelineId, pipelines]);
+    return selectedPipeline?.stages || [];
+  }, [selectedPipeline]);
 
   const prevResultStatusRef = React.useRef<string | null | undefined>(null);
 
@@ -115,6 +153,10 @@ export function OpportunityDialog({
         clientId: opportunity.clientId || null,
         companyId: opportunity.companyId || null,
         amount: opportunity.amount ? String(opportunity.amount) : "0.00",
+        flatFee: opportunity.flatFee ? String(opportunity.flatFee) : "0.00",
+        aumAmount: opportunity.aumAmount ? String(opportunity.aumAmount) : "0.00",
+        aumPercentage: opportunity.aumPercentage ? String(opportunity.aumPercentage) : String(defaultAumPerc),
+        lifeInsurance: opportunity.lifeInsurance ? String(opportunity.lifeInsurance) : "0.00",
         targetCloseDate: opportunity.targetCloseDate ? opportunity.targetCloseDate.slice(0, 10) : todayInput(),
         pipelineId: opportunity.pipelineId || "",
         stageId: opportunity.stageId || "",
@@ -144,6 +186,10 @@ export function OpportunityDialog({
         clientId: defaultClientId || null,
         companyId: defaultCompanyId || null,
         amount: "0.00",
+        flatFee: "0.00",
+        aumAmount: "0.00",
+        aumPercentage: String(defaultAumPerc),
+        lifeInsurance: "0.00",
         targetCloseDate: todayInput(),
         pipelineId: pipeId,
         stageId: stgId,
@@ -161,7 +207,17 @@ export function OpportunityDialog({
         setAssociationType("client");
       }
     }
-  }, [open, opportunity, pipelines, defaultPipelineId, defaultStageId, defaultClientId, defaultCompanyId, form.reset]);
+  }, [
+    open,
+    opportunity,
+    pipelines,
+    defaultPipelineId,
+    defaultStageId,
+    defaultClientId,
+    defaultCompanyId,
+    form.reset,
+    defaultAumPerc,
+  ]);
 
   // Load history when dialog is open in edit mode
   React.useEffect(() => {
@@ -317,11 +373,6 @@ export function OpportunityDialog({
             <FileText className="h-5 w-5 text-primary" />
             {isEditing ? "Edit Opportunity" : "New Opportunity"}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Update details, progress stages, or finalize this opportunity."
-              : "Create a new opportunity and place it in a pipeline."}
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -351,8 +402,6 @@ export function OpportunityDialog({
                 </div>
 
                 <TabsContent value="details" className="mt-0 space-y-5 focus-visible:outline-none">
-
-
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     {associationType === "client" ? (
                       <FormField
@@ -485,6 +534,111 @@ export function OpportunityDialog({
                     />
                   )}
 
+                  {/* Financial Value Stream Fields */}
+                  {(selectedPipeline?.hasFlatFee || selectedPipeline?.hasAum || selectedPipeline?.hasLifeInsurance) && (
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      {selectedPipeline?.hasFlatFee && (
+                        <FormField
+                          control={form.control}
+                          name="flatFee"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">Flat Fee</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="text"
+                                    placeholder="0.00"
+                                    disabled={isSaving}
+                                    className="bg-background pl-9"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {selectedPipeline?.hasAum && (
+                        <FormField
+                          control={form.control}
+                          name="aumAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">AUM Amount</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="text"
+                                    placeholder="0.00"
+                                    disabled={isSaving}
+                                    className="bg-background pl-9"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {selectedPipeline?.hasAum && (
+                        <FormField
+                          control={form.control}
+                          name="aumPercentage"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">AUM Percentage</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    type="text"
+                                    placeholder="0.00"
+                                    disabled={isSaving}
+                                    className="bg-background pr-9"
+                                    {...field}
+                                  />
+                                  <Percent className="absolute top-2.5 right-3 h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {selectedPipeline?.hasLifeInsurance && (
+                        <FormField
+                          control={form.control}
+                          name="lifeInsurance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">Life Insurance</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="text"
+                                    placeholder="0.00"
+                                    disabled={isSaving}
+                                    className="bg-background pl-9"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+
                   {/* Amount and PWin */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <FormField
@@ -492,15 +646,16 @@ export function OpportunityDialog({
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold">Opportunity Amount</FormLabel>
+                          <FormLabel className="font-semibold">Total Opportunity</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                               <Input
                                 type="text"
                                 placeholder="0.00"
+                                readOnly
                                 disabled={isSaving}
-                                className="bg-background pl-9"
+                                className="bg-muted pl-9 cursor-not-allowed"
                                 {...field}
                               />
                             </div>
@@ -867,6 +1022,110 @@ export function OpportunityDialog({
                     )}
                   />
                 </div>
+                {/* Financial Value Stream Fields */}
+                {(selectedPipeline?.hasFlatFee || selectedPipeline?.hasAum || selectedPipeline?.hasLifeInsurance) && (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    {selectedPipeline?.hasFlatFee && (
+                      <FormField
+                        control={form.control}
+                        name="flatFee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold">Flat Fee</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="0.00"
+                                  disabled={isSaving}
+                                  className="bg-background pl-9"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {selectedPipeline?.hasAum && (
+                      <FormField
+                        control={form.control}
+                        name="aumAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold">AUM Amount</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="0.00"
+                                  disabled={isSaving}
+                                  className="bg-background pl-9"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {selectedPipeline?.hasAum && (
+                      <FormField
+                        control={form.control}
+                        name="aumPercentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold">AUM Percentage</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  type="text"
+                                  placeholder="0.00"
+                                  disabled={isSaving}
+                                  className="bg-background pr-9"
+                                  {...field}
+                                />
+                                <Percent className="absolute top-2.5 right-3 h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {selectedPipeline?.hasLifeInsurance && (
+                      <FormField
+                        control={form.control}
+                        name="lifeInsurance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-semibold">Life Insurance</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="0.00"
+                                  disabled={isSaving}
+                                  className="bg-background pl-9"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Amount and PWin */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -875,15 +1134,16 @@ export function OpportunityDialog({
                     name="amount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-semibold">Opportunity Amount</FormLabel>
+                        <FormLabel className="font-semibold">Total Opportunity</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <DollarSign className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
                             <Input
                               type="text"
                               placeholder="0.00"
+                              readOnly
                               disabled={isSaving}
-                              className="bg-background pl-9"
+                              className="bg-muted pl-9 cursor-not-allowed"
                               {...field}
                             />
                           </div>

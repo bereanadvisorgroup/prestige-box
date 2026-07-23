@@ -614,6 +614,9 @@ export const opportunityPipelines = pgTable("opportunity_pipelines", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   isActive: boolean("isActive").notNull().default(true),
+  hasFlatFee: boolean("hasFlatFee").notNull().default(false),
+  hasAum: boolean("hasAum").notNull().default(false),
+  hasLifeInsurance: boolean("hasLifeInsurance").notNull().default(false),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -636,6 +639,10 @@ export const opportunities = pgTable("opportunities", {
   clientId: uuid("clientId").references(() => clients.id, { onDelete: "cascade" }),
   companyId: uuid("companyId").references(() => companies.id, { onDelete: "cascade" }),
   amount: numeric("amount").notNull().default("0.00"),
+  flatFee: numeric("flatFee").notNull().default("0.00"),
+  aumAmount: numeric("aumAmount").notNull().default("0.00"),
+  aumPercentage: numeric("aumPercentage").notNull().default("0.00"),
+  lifeInsurance: numeric("lifeInsurance").notNull().default("0.00"),
   targetCloseDate: timestamp("targetCloseDate", { withTimezone: true }),
   pipelineId: uuid("pipelineId")
     .notNull()
