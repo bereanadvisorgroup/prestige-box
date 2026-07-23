@@ -60,11 +60,11 @@ The core relationship management suite.
 
 - **General CRM Dashboards**:
   - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
-  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications.
+  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client, company, and person notes, replies, mentions, and notifications.
   - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
   - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban and list view for deals, onboarding, and policy transitions.
   - **Workflows Dashboard (`/dashboard/crm/workflows`)**: Central hub listing active and completed workflow instances assigned to clients or companies.
-  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
+  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and detailed profile navigation (`/dashboard/crm/people/[id]`). Includes contact info, addresses, client linkage, professional firm associations, a `PersonNotesCard` summary widget, and a dedicated Notes tab (`<NotesView scope={{ personId }} />`).
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
   - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
   - **Clients (`/dashboard/crm/clients`)**: Advisor-focused portfolio view of all active clients.
@@ -119,9 +119,10 @@ The core relationship management suite.
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 
-A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client/company matters.
+A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client, company, and individual/person matters.
 
 - **Hierarchical Threads**: Supports multi-depth notes (up to 2 levels: note, reply, sub-reply) with denormalized thread retrieval.
+- **Multi-Entity Associations**: Notes can be linked to Clients, Companies, or individual People profiles (`personId`), supporting standalone or multi-entity contextual tracking across the application.
 - **Rich Context**: Supports Tiptap WYSIWYG editor for body composing, custom emoji picking, files and Google Drive link previews, upvoting/downvoting (aggregating scores), and user mentions (`@username`).
 - **Notification Inbox**: Triggers real-time and persistent alerts (mention, reply) in the user's notification bell.
 

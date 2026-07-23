@@ -249,6 +249,13 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
+    NOTE_ASSOCIATIONS {
+        uuid id PK
+        uuid noteId FK "References notes"
+        string entityType "client | company | person"
+        uuid entityId
+        timestamp createdAt
+    }
     NOTE_ATTACHMENTS {
         uuid id PK
         uuid noteId FK
@@ -503,10 +510,11 @@ erDiagram
 - **Instances**: Active instances of a workflow assigned to a Client or Company (`workflow_instances`).
 - **Instance Steps**: Snapshot copy of template steps instantiated to track active completion, custom resolved due dates, and completion actors (`workflow_instance_steps`).
 
-### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
+### `notes` & sub-tables (`note_associations`, `note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
 
 - reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
+- **Multi-Entity Associations**: Maps notes to CRM entities (`client`, `company`, `person`) via `note_associations`. Allows notes to be linked to and rendered within Client profiles, Company profiles, and Person profiles (`/dashboard/crm/people/[id]`).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
 - **Community Ratings**: Tracks up/down voting scores through `note_votes` (using the `value` column) and emoji counts in `note_reactions`.
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.

@@ -44,12 +44,14 @@ Used for rendering complex network systems such as the interactive **Referral Tr
 - **Node Configuration**: Node colors map to standard CSS theme variables (e.g. `var(--chart-1)`, `var(--chart-2)`) based on entity type (Client, Company, Person). Radius is computed proportionally to the node's out-degree (the number of direct referrals initiated).
 - **Interactions**: Nodes support drag gestures to modify the force simulation layout, zoom/pan capabilities, and double-click routing to navigate directly to the entity's dashboard profile.
 
-### 6. Rich Text Editor (Tiptap)
+### 6. Rich Text Editor & Threaded Notes Components (Tiptap & Notes Suite)
 
-For notes and task descriptions, the project integrates Tiptap:
+For notes and task descriptions, the project integrates Tiptap alongside specialized notes components:
 
 - **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
 - **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
+- **Multi-Entity Association Picker**: Combobox primitive (`src/components/notes/association-picker.tsx`) allowing users to select and associate notes across Clients, Companies, and individual People.
+- **Person Notes Summary Card (`<PersonNotesCard />`)**: Component (`src/app/(main)/dashboard/crm/people/[id]/_components/person-notes-card.tsx`) rendered on Person profile pages, displaying recent notes associated with the individual with direct creation triggers and navigation to the full Notes tab.
 
 ### 7. Drag & Drop Primitives (@dnd-kit)
 

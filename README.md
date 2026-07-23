@@ -10,7 +10,8 @@ Prestige Box is a comprehensive, modern web application designed to manage compl
 - **Backend & Auth**: Supabase (PostgreSQL)
 - **Strict MFA & Passkeys**: Multi-Factor Authentication (TOTP) and WebAuthn Passkeys integrated via Supabase Auth, strictly enforced at the Next.js Proxy layer and PostgreSQL Row Level Security (RLS) policies for financial data (with test bypass capabilities).
 - **Household Profile & Navigation**: Dynamic contextual navigation suite for family/household management (`/dashboard/crm/households/[id]`), interactive visual family tree hierarchy, multi-member asset/liability rollups, estate planning, and policy views.
-- **Financial & Portfolio Rollup Engines**: Derives net worth growth curves, liquid assets, debt ratios, and asset allocation distributions across physical assets and virtual managed account projections (`portfolio-rollup.ts`).
+- **Financial & Portfolio Rollup Engines**: Derives net worth growth curves, liquid assets, debt ratios, and asset allocation distributions across physical assets and virtual managed account projections (`src/lib/financial-rollup.ts` & `src/lib/portfolio-rollup.ts`).
+- **Threaded Notes & Multi-Entity Links**: Threaded collaboration space supporting WYSIWYG editing, file attachments, link previews, notifications, and multi-entity associations linking notes across Clients, Companies, and People profiles (`/dashboard/crm/people/[id]`).
 - **Workflows & Templates**: Reusable template definitions with custom steps, responsibilities (advisor vs. client), deadlines, priority, and attachments, which can be instantiated and tracked for specific client or company portfolios.
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS 4
