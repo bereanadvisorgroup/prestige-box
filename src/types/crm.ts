@@ -1067,8 +1067,23 @@ export const OpportunitySchema = z.object({
   notes: z.string().nullable().optional(),
   resultStatus: z.enum(["TRASH", "WON", "LOST"]).nullable().optional(),
   resultNotes: z.string().nullable().optional(),
+  closeDate: z.string().nullable().optional(),
+  changeReason: z.string().nullable().optional(),
   updatedById: z.string().nullable().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 export type Opportunity = z.infer<typeof OpportunitySchema>;
+
+export const OpportunityHistorySchema = z.object({
+  id: z.string().optional(),
+  opportunityId: z.string(),
+  type: z.string(),
+  oldValue: z.string().nullable().optional(),
+  newValue: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  actorId: z.string().nullable().optional(),
+  actorName: z.string(),
+  createdAt: z.string().optional(),
+});
+export type OpportunityHistory = z.infer<typeof OpportunityHistorySchema>;

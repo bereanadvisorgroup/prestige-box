@@ -21,11 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSocialAvatarUrl } from "@/lib/social";
 
 export default async function AdminDashboardPage() {
-  const [usersResult, contactResult, teamsResult] = await Promise.all([
-    getUsers(),
-    getBusinessContact(),
-    getTeams(),
-  ]);
+  const [usersResult, contactResult, teamsResult] = await Promise.all([getUsers(), getBusinessContact(), getTeams()]);
 
   if (!usersResult.success) {
     return (

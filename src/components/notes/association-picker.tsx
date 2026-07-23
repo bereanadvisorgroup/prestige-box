@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Briefcase, Building2, Plus, X, User } from "lucide-react";
+import { Briefcase, Building2, Plus, User, X } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";

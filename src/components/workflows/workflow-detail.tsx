@@ -17,10 +17,10 @@ import { Progress } from "@/components/ui/progress";
 import { sanitizeNoteHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 import {
+  formatResponsibilityLabel,
   type WorkflowEntityType,
   type WorkflowInstance,
   type WorkflowInstanceStep,
-  formatResponsibilityLabel,
   workflowPercentComplete,
 } from "@/types/workflows";
 

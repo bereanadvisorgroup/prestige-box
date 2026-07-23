@@ -1,5 +1,6 @@
 import type { Client, Household, Person } from "@/types/crm";
-import { type AnyFinancialItem } from "./financial-rollup";
+
+import type { AnyFinancialItem } from "./financial-rollup";
 
 export interface CategoryBreakdown {
   key: string;
@@ -316,8 +317,7 @@ export function calculatePortfolioRollups(
     if (householdOwners.length === 0) continue;
 
     // Check if Joint
-    const isJoint =
-      item.ownershipType === "JOINT_TENANTS" || householdOwners.length > 1;
+    const isJoint = item.ownershipType === "JOINT_TENANTS" || householdOwners.length > 1;
 
     if (isJoint) {
       jointBucket.items.push(item);

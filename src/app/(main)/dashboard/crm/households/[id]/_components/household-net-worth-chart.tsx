@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
 import type { HouseholdNetWorthOverviewData } from "@/lib/portfolio-rollup";
 
 interface HouseholdNetWorthChartProps {

@@ -1,4 +1,5 @@
 import { RecentNotesCard } from "@/components/notes/recent-notes-card";
+import { AssignedOpportunitiesCard } from "@/components/opportunities/assigned-opportunities-card";
 import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
 import { MyWorkflowTasksCard } from "@/components/workflows/my-workflow-tasks-card";
 
@@ -18,7 +19,7 @@ export default async function CRMOverviewPage() {
           <MyWorkflowTasksCard />
         </div>
         <div className="space-y-6">
-          MY Opportunity Card HERE
+          <AssignedOpportunitiesCard />
         </div>
       </div>
     </div>

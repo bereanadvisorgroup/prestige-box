@@ -1,14 +1,14 @@
 import { AlertCircle } from "lucide-react";
 
-import { getOpportunityPipelines } from "@/actions/opportunity-pipelines";
+import { getDefaultAumPerc, getOpportunityPipelines } from "@/actions/opportunity-pipelines";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { PipelinesTable } from "./_components/pipelines-table";
 
 export default async function OpportunitiesPage() {
-  const result = await getOpportunityPipelines();
+  const [pipelinesResult, aumResult] = await Promise.all([getOpportunityPipelines(), getDefaultAumPerc()]);
 
-  if (!result.success) {
+  if (!pipelinesResult.success) {
     return (
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6">
         <div>
@@ -19,18 +19,19 @@ export default async function OpportunitiesPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            {result.error || "Failed to fetch pipelines from the server. Check server logs."}
+            {pipelinesResult.error || "Failed to fetch pipelines from the server. Check server logs."}
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const pipelines = result.pipelines || [];
+  const pipelines = pipelinesResult.pipelines || [];
+  const defaultAumPerc = aumResult.success ? aumResult.value : 1;
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6">
-      <PipelinesTable data={pipelines} />
+      <PipelinesTable data={pipelines} defaultAumPerc={defaultAumPerc} />
     </div>
   );
 }

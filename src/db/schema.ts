@@ -647,6 +647,7 @@ export const opportunities = pgTable("opportunities", {
   notes: text("notes"), // WYSIWYG
   resultStatus: text("resultStatus"), // 'TRASH' | 'WON' | 'LOST' | null/empty for active
   resultNotes: text("resultNotes"), // WYSIWYG
+  closeDate: timestamp("closeDate", { withTimezone: true }),
   updatedById: uuid("updatedById").references(() => users.uid, { onDelete: "set null" }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
@@ -672,3 +673,17 @@ export const teamMembers = pgTable("team_members", {
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// 36. Opportunity History Table
+export const opportunityHistory = pgTable("opportunity_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  opportunityId: uuid("opportunityId")
+    .notNull()
+    .references(() => opportunities.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'created' | 'target_close_date_change'
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  reason: text("reason"),
+  actorId: uuid("actorId").references(() => users.uid, { onDelete: "set null" }),
+  actorName: text("actorName").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+});
