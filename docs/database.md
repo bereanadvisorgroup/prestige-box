@@ -300,7 +300,7 @@ erDiagram
     }
     CHANGE_HISTORY {
         uuid id PK
-        string entityType "client | company | task"
+        string entityType "client | company | task | team"
         uuid entityId
         string subType "Profile | Life Insurance | etc"
         string action "created | updated | added | removed | deleted"
@@ -314,6 +314,24 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
+    TEAMS ||--o{ TEAM_MEMBERS : "has members"
+    USERS ||--o{ TEAM_MEMBERS : "belongs to"
+    TEAMS ||--o{ WORKFLOW_TEMPLATES : "owns template"
+    TEAMS ||--o{ WORKFLOW_INSTANCES : "owns instance"
+    
+    TEAMS {
+        uuid id PK
+        string name
+        string description
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    TEAM_MEMBERS {
+        uuid id PK
+        uuid teamId FK "References teams"
+        uuid userId FK "References users"
+        timestamp createdAt
+    }
     
     WORKFLOW_TEMPLATES ||--o{ WORKFLOW_TEMPLATE_STEPS : "contains"
     WORKFLOW_TEMPLATES ||--o{ WORKFLOW_INSTANCES : "instantiates"
@@ -323,12 +341,14 @@ erDiagram
     OPPORTUNITY_PIPELINE_STAGES ||--o{ OPPORTUNITIES : "tracks stage of"
     CLIENTS ||--o{ OPPORTUNITIES : "associated with"
     COMPANIES ||--o{ OPPORTUNITIES : "associated with"
+    USERS ||--o{ OPPORTUNITIES : "assigned advisor"
 
     WORKFLOW_TEMPLATES {
         uuid id PK
         string name
         string description
         uuid createdBy FK "References users"
+        uuid teamId FK "References teams"
         jsonb graph
         timestamp createdAt
         timestamp updatedAt
@@ -360,6 +380,7 @@ erDiagram
         uuid entityId
         timestamp startDate
         uuid createdBy FK
+        uuid teamId FK "References teams"
         timestamp completedAt
         uuid completedBy FK
         timestamp createdAt
@@ -390,6 +411,7 @@ erDiagram
         uuid id PK
         string name
         boolean isActive
+        numeric defaultAumPerc
         timestamp createdAt
         timestamp updatedAt
     }
@@ -406,6 +428,13 @@ erDiagram
         uuid clientId FK
         uuid companyId FK
         numeric amount
+        numeric aumAmount
+        numeric aumPercentage
+        numeric annualFee
+        numeric oneTimeFee
+        string opportunityType "AUM | ANNUAL_FEE | ONE_TIME_FEE"
+        string valueCalculationType "EXPLICIT | DERIVED"
+        uuid assignedUserId FK "References users"
         timestamp targetCloseDate
         uuid pipelineId FK
         uuid stageId FK
@@ -521,29 +550,37 @@ erDiagram
 - **Community Ratings**: Tracks up/down voting scores through `note_votes` (using the `value` column) and emoji counts in `note_reactions`.
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
 
+### `teams` & `team_members`
+
+- **`teams`**: Master directory of advisory and servicing teams within the firm (`id`, `name`, `description`, timestamps).
+- **`team_members`**: Junction table tying user accounts (`userId` referencing `users.uid`) to a team (`teamId`). Supports drag-and-drop team member management (`/dashboard/admin/teams`).
+- **Workflow Integration**: Both `workflow_templates` and `workflow_instances` feature an optional `teamId` foreign key referencing `teams.id`, allowing workflow ownership to be assigned at the team level.
+
 ### `change_history`
 
-- System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks).
+- System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks, teams).
 - Logs the semantic sub-type (e.g. Profile, Life Insurance, Valuation), action (`created`, `updated`, `added`, `removed`, `deleted`), specific changed fields with machine and human-readable names (`fieldName`, `fieldLabel`), before/after string snapshots (`oldValue`, `newValue`), a custom text `summary`, and details of the actor (`actorId`, `actorName`) and timestamp.
 
 ### `workflow_templates` & `workflow_template_steps`
 
-- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
+- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, team ownership (`teamId`), and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
 - **Template Steps**: The individual task definitions making up a template. Tracks `sortOrder`, due date calculation rules (`setDueDate`, `dueDays`, and `dueDateBase` as `workflow_start` or `after_last_step`), priority, responsibility (`advisor` or `client`), rich descriptions, attachments, outcomes (JSONB metadata mapping path branches), and editor positions (`positionX`, `positionY`).
 
 ### `workflow_instances` & `workflow_instance_steps`
 
-- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks overall completion dates, creators, and progress.
+- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks team ownership (`teamId`), overall completion dates, creators, and progress.
 - **Instance Steps**: Snapshot of the template step with completion tracking. Resolves the due date using the cascading completion timeline (`dueDate`), tracks when and who completed the step, and logs `outcomes` and `selectedOutcome` configurations.
 
 ### `opportunity_pipelines` & `opportunity_pipeline_stages`
 
-- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle).
+- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle). Configurable with `defaultAumPerc` (`numeric(5,2)`, default 1.00%) configured via the admin AUM dialog.
 - **Pipeline Stages**: The stages making up a pipeline, ordered by `order`.
 
 ### `opportunities`
 
 - Represents a sales, onboarding, or policy lifecycle deal. Maps to a client or company.
+- **Financial Modeling**: Tracks deal value via flexible revenue modes (`opportunityType` as `AUM`, `ANNUAL_FEE`, or `ONE_TIME_FEE`), value calculation mode (`valueCalculationType` as `EXPLICIT` or `DERIVED`), `aumAmount`, `aumPercentage`, `annualFee`, and `oneTimeFee`.
+- **Advisor Routing**: Assigned to an individual advisor via `assignedUserId` (referencing `users.uid`) and surfaced via `<AssignedOpportunitiesCard />`.
 - Tracks `amount` (numeric), `targetCloseDate`, `probabilityWin` (integer), `notes`, `resultStatus` (`TRASH`, `WON`, `LOST`), and `resultNotes`.
 - Enforces database constraints pointing to the active pipeline (`pipelineId`) and stage (`stageId`).
 

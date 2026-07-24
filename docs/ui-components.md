@@ -55,10 +55,10 @@ For notes and task descriptions, the project integrates Tiptap alongside special
 
 ### 7. Drag & Drop Primitives (@dnd-kit)
 
-Used for task management and pipeline staging columns:
+Used for task management, pipeline staging columns, and team member management:
 
-- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
-- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
+- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns and team member assignment lists (`<DragDropTeamMembers />`).
+- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status or membership assignment to the server with smooth transition animations.
 
 ### 8. Workflow Graph Canvas (@xyflow/react)
 
@@ -80,7 +80,26 @@ Used in Household overview screens (`src/app/(main)/dashboard/crm/households/[id
 
 - **Recharts Integration**: Plots historical household net worth growth timelines alongside asset class breakdown distributions (Equities, Fixed Income, Real Estate, Cash, Managed Accounts).
 
-### 11. Contextual Sidebar Navigation
+### 11. Notebook Launcher Buttons (`<NotebookButton />` & `<CompanyNotebookButton />`)
+
+Used on Client and Company internal workspace pages (`src/app/(main)/dashboard/crm/clients/[id]/_components/notebook-button.tsx` & `src/app/(main)/dashboard/crm/companies/[id]/_components/company-notebook-button.tsx`):
+
+- **OneNote Integration**: Provides direct single-click navigation launcher to external OneNote notebooks (`notebook_url`) stored on client and company profiles.
+
+### 12. Assigned Opportunities Overview Card (`<AssignedOpportunitiesCard />`)
+
+Used on the primary CRM Overview dashboard (`src/components/opportunities/assigned-opportunities-card.tsx`):
+
+- **Personal Pipeline Deals Widget**: Renders summary metrics and active pipeline deals assigned directly to the authenticated advisor (`assignedUserId`), enabling quick status updates and navigation.
+
+### 13. Opportunity Management & AUM Dialogs (`<OpportunityDialog />` & `<AumDialog />`)
+
+Used in CRM Opportunities and Admin Pipeline Settings:
+
+- **AUM Configuration Modal (`<AumDialog />`)**: Admin modal dialog (`src/app/(main)/dashboard/admin/opportunities/_components/aum-dialog.tsx`) to set default AUM percentage ratios per pipeline.
+- **Opportunity Dialog (`<OpportunityDialog />`)**: Comprehensive deal modal (`src/app/(main)/dashboard/crm/opportunities/_components/opportunity-dialog.tsx`) supporting revenue calculation toggles (AUM, Annual Fee, One-Time Fee), explicit vs derived calculation modes, advisor assignee selection, and real-time fee calculation.
+
+### 14. Contextual Sidebar Navigation
 
 Implemented in `src/app/(main)/dashboard/_components/sidebar/app-sidebar.tsx`:
 

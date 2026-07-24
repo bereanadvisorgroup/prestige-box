@@ -13,6 +13,9 @@ Prestige Box is a comprehensive, modern web application designed to manage compl
 - **Financial & Portfolio Rollup Engines**: Derives net worth growth curves, liquid assets, debt ratios, and asset allocation distributions across physical assets and virtual managed account projections (`src/lib/financial-rollup.ts` & `src/lib/portfolio-rollup.ts`).
 - **Threaded Notes & Multi-Entity Links**: Threaded collaboration space supporting WYSIWYG editing, file attachments, link previews, notifications, and multi-entity associations linking notes across Clients, Companies, and People profiles (`/dashboard/crm/people/[id]`).
 - **Workflows & Templates**: Reusable template definitions with custom steps, responsibilities (advisor vs. client), deadlines, priority, and attachments, which can be instantiated and tracked for specific client or company portfolios.
+- **Admin Teams Management**: Team creation, editing, detail views, drag-and-drop member assignment (`/dashboard/admin/teams`), and workflow template/instance team assignments.
+- **External Notebook Integration**: Client and company internal profile launcher (`<NotebookButton />` / `<CompanyNotebookButton />`) connecting directly to `notebook_url` OneNote links.
+- **Advanced Opportunity Valuation Engine**: Deal financial modeling with AUM %, fee structures (AUM, Annual Fee, One-Time Fee), explicit vs derived value calculations, default stage AUM %, and advisor opportunity assignment widgets (`<AssignedOpportunitiesCard />`).
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand (Client) & TanStack React Query (Server)
