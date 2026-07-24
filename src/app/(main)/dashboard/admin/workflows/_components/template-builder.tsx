@@ -20,9 +20,10 @@ import { FlowEditor } from "./flow-editor";
 
 interface TemplateBuilderProps {
   template?: WorkflowTemplate;
+  teams?: Array<{ id: string; name: string }>;
 }
 
-export function TemplateBuilder({ template }: TemplateBuilderProps) {
+export function TemplateBuilder({ template, teams = [] }: TemplateBuilderProps) {
   const router = useRouter();
   const [name, setName] = useState(template?.name ?? "");
   const [description, setDescription] = useState(template?.description ?? "");
@@ -211,7 +212,7 @@ export function TemplateBuilder({ template }: TemplateBuilderProps) {
           <h2 className="font-semibold text-xl">Workflow Graph Editor</h2>
         </div>
 
-        <FlowEditor initialGraph={initialGraph} steps={stepsRef.current} onChange={handleFlowChange} />
+        <FlowEditor initialGraph={initialGraph} steps={stepsRef.current} teams={teams} onChange={handleFlowChange} />
       </div>
     </div>
   );

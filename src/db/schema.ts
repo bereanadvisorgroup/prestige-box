@@ -135,6 +135,7 @@ export const clients = pgTable("clients", {
   driversLicense: jsonb("driversLicense").default(sql`'{}'::jsonb`),
   pii: jsonb("pii").default(sql`'{}'::jsonb`),
   documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -158,6 +159,7 @@ export const companies = pgTable("companies", {
   logoUrl: text("logoUrl"),
   socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   estimatedValue: numeric("estimatedValue").notNull().default("0.00"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
@@ -612,6 +614,9 @@ export const opportunityPipelines = pgTable("opportunity_pipelines", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   isActive: boolean("isActive").notNull().default(true),
+  hasFlatFee: boolean("hasFlatFee").notNull().default(false),
+  hasAum: boolean("hasAum").notNull().default(false),
+  hasLifeInsurance: boolean("hasLifeInsurance").notNull().default(false),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -634,6 +639,10 @@ export const opportunities = pgTable("opportunities", {
   clientId: uuid("clientId").references(() => clients.id, { onDelete: "cascade" }),
   companyId: uuid("companyId").references(() => companies.id, { onDelete: "cascade" }),
   amount: numeric("amount").notNull().default("0.00"),
+  flatFee: numeric("flatFee").notNull().default("0.00"),
+  aumAmount: numeric("aumAmount").notNull().default("0.00"),
+  aumPercentage: numeric("aumPercentage").notNull().default("0.00"),
+  lifeInsurance: numeric("lifeInsurance").notNull().default("0.00"),
   targetCloseDate: timestamp("targetCloseDate", { withTimezone: true }),
   pipelineId: uuid("pipelineId")
     .notNull()
@@ -645,7 +654,43 @@ export const opportunities = pgTable("opportunities", {
   notes: text("notes"), // WYSIWYG
   resultStatus: text("resultStatus"), // 'TRASH' | 'WON' | 'LOST' | null/empty for active
   resultNotes: text("resultNotes"), // WYSIWYG
+  closeDate: timestamp("closeDate", { withTimezone: true }),
   updatedById: uuid("updatedById").references(() => users.uid, { onDelete: "set null" }),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 34. Teams Table
+export const teams = pgTable("teams", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 35. Team Members Table (Junction table between teams and users)
+export const teamMembers = pgTable("team_members", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  teamId: uuid("teamId")
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => users.uid, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// 36. Opportunity History Table
+export const opportunityHistory = pgTable("opportunity_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  opportunityId: uuid("opportunityId")
+    .notNull()
+    .references(() => opportunities.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // 'created' | 'target_close_date_change'
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  reason: text("reason"),
+  actorId: uuid("actorId").references(() => users.uid, { onDelete: "set null" }),
+  actorName: text("actorName").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
 });

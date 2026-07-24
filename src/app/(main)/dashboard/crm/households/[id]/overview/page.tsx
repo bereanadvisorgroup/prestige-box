@@ -10,7 +10,7 @@ import { PersonAvatar } from "@/components/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type AnyFinancialItem } from "@/lib/financial-rollup";
+import type { AnyFinancialItem } from "@/lib/financial-rollup";
 import { calculatePortfolioRollups } from "@/lib/portfolio-rollup";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { Address } from "@/types/crm";

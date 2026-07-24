@@ -129,15 +129,22 @@ export async function createCompany(data: any) {
 
     const { owners, ...companyData } = validated;
 
-    const { data: inserted, error } = await supabaseServer
-      .from(TABLE)
-      .insert({
-        ...companyData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const insertData = {
+      ...companyData,
+      addressId: companyData.addressId || null,
+      advisorId: companyData.advisorId || null,
+      dba: companyData.dba || null,
+      ein: companyData.ein || null,
+      website: companyData.website || null,
+      phone: companyData.phone || null,
+      logoUrl: companyData.logoUrl || null,
+      documentUrl: companyData.documentUrl || null,
+      notebookUrl: companyData.notebookUrl || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(insertData).select().single();
 
     if (error) throw new Error((error as { message: string }).message);
 
@@ -221,6 +228,15 @@ export async function updateCompany(id: string, data: any) {
 
     const updateData = {
       ...companyData,
+      addressId: companyData.addressId || null,
+      advisorId: companyData.advisorId || null,
+      dba: companyData.dba || null,
+      ein: companyData.ein || null,
+      website: companyData.website || null,
+      phone: companyData.phone || null,
+      logoUrl: companyData.logoUrl || null,
+      documentUrl: companyData.documentUrl || null,
+      notebookUrl: companyData.notebookUrl || null,
       updatedAt: new Date().toISOString(),
     };
 

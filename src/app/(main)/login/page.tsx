@@ -96,8 +96,38 @@ export default function LoginPage() {
   });
 
   const handleAuthRedirect = async (userId: string) => {
-    // Fetch profile
-    const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("uid", userId).single();
+    // 1. Primary lookup by uid
+    let { data: userData, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("uid", userId)
+      .maybeSingle();
+
+    // 2. Fallback lookup by email if uid was not synced
+    if (!userData) {
+      const { data: userRecord } = await supabase.auth.getUser();
+      const userEmail = userRecord?.user?.email;
+      if (userEmail) {
+        const { data: emailUser, error: emailError } = await supabase
+          .from("users")
+          .select("*")
+          .ilike("email", userEmail)
+          .maybeSingle();
+
+        if (emailUser) {
+          userData = emailUser;
+          fetchError = null;
+          if (emailUser.uid !== userId) {
+            await supabase
+              .from("users")
+              .update({ uid: userId, updatedAt: new Date().toISOString() })
+              .eq("id", emailUser.id);
+          }
+        } else if (emailError) {
+          fetchError = emailError;
+        }
+      }
+    }
 
     if (fetchError || !userData) {
       if (fetchError) {

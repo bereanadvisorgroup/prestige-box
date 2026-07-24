@@ -17,7 +17,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { format } from "date-fns";
+import { differenceInCalendarDays, format, startOfDay } from "date-fns";
 import { ArrowUpRight, DollarSign, GitFork, GripVertical, Percent, Plus, Trash2, Trophy, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,10 +57,28 @@ function OpportunityCard({
     currency: "USD",
   }).format(Number.parseFloat(opportunity.amount || "0"));
 
+  let dateStatus: "error" | "warning" | "none" = "none";
+  if (opportunity.targetCloseDate && !opportunity.resultStatus) {
+    const today = startOfDay(new Date());
+    const targetDate = startOfDay(new Date(opportunity.targetCloseDate));
+    const diffDays = differenceInCalendarDays(targetDate, today);
+
+    if (diffDays <= 0) {
+      dateStatus = "error";
+    } else if (diffDays <= 7) {
+      dateStatus = "warning";
+    }
+  }
+
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-4 shadow-sm transition-shadow hover:shadow-md select-none relative",
+        "rounded-lg border p-4 shadow-sm transition-all hover:shadow-md select-none relative",
+        dateStatus === "error" &&
+          "bg-rose-50/90 border-rose-300 text-rose-950 dark:bg-rose-950/40 dark:border-rose-800/70 dark:text-rose-100",
+        dateStatus === "warning" &&
+          "bg-amber-50/90 border-amber-300 text-amber-950 dark:bg-amber-950/40 dark:border-amber-800/70 dark:text-amber-100",
+        dateStatus === "none" && "bg-card border-border",
         dragging && "opacity-50 border-primary/40 shadow-inner",
       )}
     >
@@ -102,7 +120,18 @@ function OpportunityCard({
 
       <div className="mt-4 flex items-baseline justify-between">
         <span className="font-extrabold text-sm text-foreground">{formattedAmount}</span>
-        {closeDate && <span className="text-[10px] text-muted-foreground">{closeDate}</span>}
+        {closeDate && (
+          <span
+            className={cn(
+              "text-[10px]",
+              dateStatus === "error" && "font-semibold text-rose-700 dark:text-rose-400",
+              dateStatus === "warning" && "font-semibold text-amber-700 dark:text-amber-400",
+              dateStatus === "none" && "text-muted-foreground",
+            )}
+          >
+            {closeDate}
+          </span>
+        )}
       </div>
     </div>
   );

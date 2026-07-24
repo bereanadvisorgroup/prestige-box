@@ -1,5 +1,6 @@
-import { type Household, type Client } from "@/types/crm";
-import { calculateHouseholdNetWorth, type AnyFinancialItem } from "./financial-rollup";
+import type { Client, Household } from "@/types/crm";
+
+import { type AnyFinancialItem, calculateHouseholdNetWorth } from "./financial-rollup";
 
 function runTests() {
   console.log("--- Starting Financial Rollup Unit Tests (Rules 1-4) ---");

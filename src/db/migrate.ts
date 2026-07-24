@@ -1,10 +1,13 @@
-// src/db/migrate.ts
+import dotenv from "dotenv";
 import { DefaultLogger, type LogWriter } from "drizzle-orm/logger";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
 import path from "node:path";
+
+dotenv.config({ path: ".env.local" });
+dotenv.config();
 
 // 1. Reuse your exact connection string logic
 function sanitizeConnectionString(url: string): string {

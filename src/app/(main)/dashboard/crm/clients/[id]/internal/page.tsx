@@ -10,6 +10,7 @@ import { getPeople } from "@/actions/people";
 import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
 import { getTasks } from "@/actions/tasks";
+import { getTeams } from "@/actions/teams";
 import { getAdvisors } from "@/actions/users";
 import { getWorkflows } from "@/actions/workflows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import { AdvisorDropdown } from "../_components/advisor-dropdown";
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
+import { NotebookButton } from "../_components/notebook-button";
 import { NotesCard } from "../_components/notes-card";
 import { ReferralTreeCard } from "../_components/referral-tree-card";
 import { ReferredByCard } from "../_components/referred-by-card";
@@ -55,6 +57,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     eventsResult,
     advisorsResult,
     workflowsResult,
+    teamsResult,
   ] = await Promise.all([
     getClients(),
     getTasks({ clientId: id }),
@@ -65,6 +68,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
     getEvents(),
     getAdvisors(),
     getWorkflows("client", id),
+    getTeams(),
   ]);
 
   const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
@@ -76,6 +80,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const allEvents = eventsResult.success ? eventsResult.events || [] : [];
   const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
   const workflows = workflowsResult.success && workflowsResult.workflows ? workflowsResult.workflows : [];
+  const teams = teamsResult.success ? teamsResult.teams || [] : [];
 
   const person = clientResult.person;
   const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
@@ -113,6 +118,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
       <ClientHeaderPortal sectionName="Overview">
         <AdvisorDropdown client={client} advisors={allAdvisors} />
         <DocumentsButton client={client} />
+        <NotebookButton client={client} />
       </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Six Cards Grid in 3x2 Layout */}
@@ -120,7 +126,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
           <TasksCard clientId={id} initialTasks={tasks} />
           <NotesCard clientId={id} initialNotes={notes} />
           <div className="md:col-span-2">
-            <WorkflowStepsCard clientId={id} steps={outstandingSteps} />
+            <WorkflowStepsCard clientId={id} steps={outstandingSteps} teams={teams} />
           </div>
           <InterestsCard client={client} />
           <SportsTeamsCard client={client} />

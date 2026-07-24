@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { differenceInCalendarDays, startOfDay } from "date-fns";
 import { AlertCircle, Calendar, DollarSign, Edit, Percent, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -88,6 +89,38 @@ export function OpportunitiesListView({
     window.location.reload();
   };
 
+  const getTargetCloseDateBadge = (targetCloseDate?: string | Date | null, isClosed?: boolean) => {
+    if (!targetCloseDate) return <span className="text-muted-foreground">-</span>;
+    const formatted = new Date(targetCloseDate).toLocaleDateString();
+    if (isClosed) return <span className="text-muted-foreground">{formatted}</span>;
+
+    const today = startOfDay(new Date());
+    const targetDate = startOfDay(new Date(targetCloseDate));
+    const diffDays = differenceInCalendarDays(targetDate, today);
+
+    if (diffDays <= 0) {
+      return (
+        <Badge
+          variant="outline"
+          className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 font-semibold"
+        >
+          {formatted}
+        </Badge>
+      );
+    }
+    if (diffDays <= 7) {
+      return (
+        <Badge
+          variant="outline"
+          className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 font-semibold"
+        >
+          {formatted}
+        </Badge>
+      );
+    }
+    return <span className="text-muted-foreground">{formatted}</span>;
+  };
+
   const getResultStatusBadge = (status?: string | null) => {
     if (!status) {
       return (
@@ -164,8 +197,21 @@ export function OpportunitiesListView({
                   currency: "USD",
                 }).format(Number.parseFloat(opp.amount || "0"));
 
+                let rowBgClass = "";
+                if (opp.targetCloseDate && !opp.resultStatus) {
+                  const today = startOfDay(new Date());
+                  const targetDate = startOfDay(new Date(opp.targetCloseDate));
+                  const diffDays = differenceInCalendarDays(targetDate, today);
+
+                  if (diffDays <= 0) {
+                    rowBgClass = "bg-rose-50/80 hover:bg-rose-100/80 dark:bg-rose-950/30 dark:hover:bg-rose-950/50";
+                  } else if (diffDays <= 7) {
+                    rowBgClass = "bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/30 dark:hover:bg-amber-950/50";
+                  }
+                }
+
                 return (
-                  <TableRow key={opp.id}>
+                  <TableRow key={opp.id} className={rowBgClass}>
                     <TableCell className="font-semibold">{opp.pipeline?.name || "N/A"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal">
@@ -176,9 +222,7 @@ export function OpportunitiesListView({
                     <TableCell className="text-right">
                       <span className="text-sm font-medium text-muted-foreground">{opp.probabilityWin}%</span>
                     </TableCell>
-                    <TableCell>
-                      {opp.targetCloseDate ? new Date(opp.targetCloseDate).toLocaleDateString() : "-"}
-                    </TableCell>
+                    <TableCell>{getTargetCloseDateBadge(opp.targetCloseDate, !!opp.resultStatus)}</TableCell>
                     <TableCell>{getResultStatusBadge(opp.resultStatus)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       <div>{updatedByStr}</div>

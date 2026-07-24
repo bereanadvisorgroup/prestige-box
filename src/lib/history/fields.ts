@@ -23,6 +23,8 @@ export const COMPANY_PROFILE_FIELDS: FieldConfig[] = [
   { name: "ltcDocuments", label: "LTC Documents" },
   { name: "logoUrl", label: "Logo" },
   { name: "socialMedia", label: "Social Media Accounts" },
+  { name: "documentUrl", label: "Document URL" },
+  { name: "notebookUrl", label: "Notebook URL" },
 ];
 
 // Client (clients table) fields. Tracked under the "Profile" subtype.
@@ -46,6 +48,7 @@ export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "ltcDocuments", label: "LTC Documents" },
   { name: "estateDocuments", label: "Estate Documents" },
   { name: "documentUrl", label: "Document URL" },
+  { name: "notebookUrl", label: "Notebook URL" },
   { name: "driversLicense", label: "Driver's License" },
   { name: "pii", label: "PII" },
 ];
