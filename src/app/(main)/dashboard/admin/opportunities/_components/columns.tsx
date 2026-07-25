@@ -61,7 +61,11 @@ export const columns = (onDelete: (pipeline: OpportunityPipeline) => void): Colu
       return (
         <Badge
           variant={isActive ? "outline" : "secondary"}
-          className={isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300" : ""}
+          className={
+            isActive
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300"
+              : ""
+          }
         >
           {isActive ? "Active" : "Inactive"}
         </Badge>

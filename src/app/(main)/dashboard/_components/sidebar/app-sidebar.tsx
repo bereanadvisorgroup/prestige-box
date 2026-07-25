@@ -33,7 +33,167 @@ import { useShallow } from "zustand/react/shallow";
 
 import { getClientAssociationCounts } from "@/actions/clients";
 import { getCompanyAssociationCounts } from "@/actions/companies";
+import { getHouseholdAssociationCounts } from "@/actions/households";
 import { getBusinessContact } from "@/actions/settings";
+
+// ... keep previous code
+const getHouseholdSidebarItems = (householdId: string, counts: Record<string, number>): NavGroup[] => [
+  {
+    id: 30,
+    items: [
+      {
+        title: "Back to Households",
+        url: "/dashboard/crm/households",
+        icon: ArrowLeft,
+      },
+    ],
+  },
+  {
+    id: 31,
+    label: "Internal",
+    items: [
+      {
+        title: "Overview",
+        url: `/dashboard/crm/households/${householdId}/internal`,
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Notes",
+        url: `/dashboard/crm/households/${householdId}/internal/notes`,
+        icon: StickyNote,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/households/${householdId}/internal/tasks`,
+        icon: ListTodo,
+      },
+      {
+        title: "Opportunities",
+        url: `/dashboard/crm/households/${householdId}/internal/opportunities`,
+        icon: DollarSign,
+      },
+      {
+        title: "Workflows",
+        url: `/dashboard/crm/households/${householdId}/internal/workflows`,
+        icon: Workflow,
+      },
+      {
+        title: "History",
+        url: `/dashboard/crm/households/${householdId}/internal/history`,
+        icon: Clock,
+      },
+    ],
+  },
+  {
+    id: 32,
+    label: "General Info",
+    items: [
+      {
+        title: "Overview",
+        url: `/dashboard/crm/households/${householdId}/overview`,
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Family",
+        url: `/dashboard/crm/households/${householdId}/family`,
+        icon: Users,
+      },
+      {
+        title: "Employment",
+        url: `/dashboard/crm/households/${householdId}/employment`,
+        icon: Briefcase,
+      },
+      {
+        title: "Estate Planning",
+        url: `/dashboard/crm/households/${householdId}/estate-planning`,
+        icon: FileText,
+      },
+      {
+        title: "Assets",
+        url: `/dashboard/crm/households/${householdId}/assets`,
+        icon: Home,
+      },
+      {
+        title: "Liabilities",
+        url: `/dashboard/crm/households/${householdId}/liabilities`,
+        icon: DollarSign,
+      },
+    ],
+  },
+  {
+    id: 33,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/households/${householdId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/households/${householdId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/households/${householdId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/households/${householdId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/households/${householdId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+    ],
+  },
+  {
+    id: 34,
+    label: "Vendors",
+    items: [
+      {
+        title: "Life Insurance",
+        url: `/dashboard/crm/households/${householdId}/life-insurance`,
+        icon: HeartHandshake,
+        badge: counts.lifeInsurance || 0,
+      },
+      {
+        title: "Disability Insurance",
+        url: `/dashboard/crm/households/${householdId}/disability-insurance`,
+        icon: ShieldAlert,
+        badge: counts.disabilityInsurance || 0,
+      },
+      {
+        title: "Long Term Care",
+        url: `/dashboard/crm/households/${householdId}/long-term-care`,
+        icon: HeartPulse,
+        badge: counts.longTermCare || 0,
+      },
+      {
+        title: "Money Managers",
+        url: `/dashboard/crm/households/${householdId}/money-managers`,
+        icon: TrendingUp,
+        badge: counts.moneyManagers || 0,
+      },
+      {
+        title: "Record Keepers",
+        url: `/dashboard/crm/households/${householdId}/record-keepers`,
+        icon: Database,
+        badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+];
+
 import {
   Sidebar,
   SidebarContent,
@@ -369,8 +529,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const companyMatch = pathname.match(/^\/dashboard\/crm\/companies\/([a-zA-Z0-9-]+)/);
   const companyId = companyMatch && companyMatch[1] !== "new" && companyMatch[1] !== "edit" ? companyMatch[1] : null;
 
+  const householdMatch = pathname.match(/^\/dashboard\/crm\/households\/([a-zA-Z0-9-]+)/);
+  const householdId =
+    householdMatch && householdMatch[1] !== "new" && householdMatch[1] !== "edit" ? householdMatch[1] : null;
+
   const isClientView = isCrmStaff && clientId;
   const isCompanyView = isCrmStaff && companyId;
+  const isHouseholdView = isCrmStaff && householdId;
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [companyDetails, setCompanyDetails] = useState<{
@@ -429,6 +594,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             setCounts(res.counts);
           }
         });
+      } else if (householdId) {
+        getHouseholdAssociationCounts(householdId).then((res) => {
+          if (res.success && res.counts) {
+            setCounts(res.counts);
+          }
+        });
       }
     };
 
@@ -438,14 +609,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => {
       window.removeEventListener("association-change", fetchCounts);
     };
-  }, [clientId, companyId, pathname]);
+  }, [clientId, companyId, householdId, pathname]);
 
-  // Filter sidebar items based on user role or client/company context
+  // Filter sidebar items based on user role or client/company/household context
   const filteredSidebarItems = isClientView
     ? getClientSidebarItems(clientId, counts)
-    : isCompanyView
-      ? getCompanySidebarItems(companyId, counts)
-      : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
+    : isHouseholdView
+      ? getHouseholdSidebarItems(householdId, counts)
+      : isCompanyView
+        ? getCompanySidebarItems(companyId, counts)
+        : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
 
   return (
     <Sidebar {...props} variant={variant} collapsible={collapsible}>
@@ -455,7 +628,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton asChild>
               <Link prefetch={false} href={isCrmStaff ? "/dashboard/crm" : "/dashboard/default"}>
                 {companyDetails.logoUrl ? (
-                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded bg-muted/40 border border-muted/20">
+                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded border border-muted/20 bg-muted/40">
                     {/* biome-ignore lint/performance/noImgElement: Sidebar dynamic company logo */}
                     <img
                       src={companyDetails.logoUrl}
@@ -466,7 +639,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 ) : (
                   <Command />
                 )}
-                <span className="font-semibold text-base truncate">{companyDetails.name}</span>
+                <span className="truncate font-semibold text-base">{companyDetails.name}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -20,6 +20,7 @@ const ASSOCIATIONS = "task_associations";
 
 export interface TaskFilter {
   clientId?: string;
+  clientIds?: string[];
   companyId?: string;
   assigneeId?: string;
 }
@@ -120,7 +121,15 @@ export async function getTasks(filter: TaskFilter = {}) {
   try {
     let taskIds: string[] | null = null;
 
-    if (filter.clientId || filter.companyId) {
+    if (filter.clientIds && filter.clientIds.length > 0) {
+      const { data, error } = await supabaseServer
+        .from(ASSOCIATIONS)
+        .select("taskId")
+        .eq("entityType", "client")
+        .in("entityId", filter.clientIds);
+      if (error) throw new Error(error.message);
+      taskIds = Array.from(new Set((data || []).map((r) => r.taskId)));
+    } else if (filter.clientId || filter.companyId) {
       const entityType = filter.clientId ? "client" : "company";
       const entityId = (filter.clientId ?? filter.companyId) as string;
       const { data, error } = await supabaseServer

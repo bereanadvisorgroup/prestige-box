@@ -135,6 +135,9 @@ export async function createOpportunityPipeline(data: Partial<OpportunityPipelin
       .insert({
         name: validated.name,
         isActive: validated.isActive,
+        hasFlatFee: validated.hasFlatFee,
+        hasAum: validated.hasAum,
+        hasLifeInsurance: validated.hasLifeInsurance,
       })
       .select()
       .single();
@@ -184,6 +187,9 @@ export async function updateOpportunityPipeline(id: string, data: Partial<Opport
       .update({
         name: validated.name,
         isActive: validated.isActive,
+        hasFlatFee: validated.hasFlatFee,
+        hasAum: validated.hasAum,
+        hasLifeInsurance: validated.hasLifeInsurance,
         updatedAt: new Date().toISOString(),
       })
       .eq("id", id);
@@ -291,6 +297,56 @@ export async function deleteOpportunityPipeline(id: string) {
     return { success: true };
   } catch (error) {
     console.error("[deleteOpportunityPipeline] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Fetch the Default AUM % from keyvals.
+ */
+export async function getDefaultAumPerc() {
+  try {
+    const { data, error } = await supabaseServer.from("keyvals").select("value").eq("id", "DEFAULT_AUM_PERC").single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Not found, return default of 1
+        return { success: true, value: 1 };
+      }
+      throw error;
+    }
+
+    const value = data ? Number.parseFloat(data.value) : 1;
+    return { success: true, value: Number.isNaN(value) ? 1 : value };
+  } catch (error) {
+    console.error("[getDefaultAumPerc] Error:", error);
+    return { success: false, error: (error as Error).message, value: 1 };
+  }
+}
+
+/**
+ * Update the Default AUM % in keyvals. Admin-only.
+ */
+export async function updateDefaultAumPerc(value: number) {
+  try {
+    await verifyAdmin();
+
+    if (Number.isNaN(value) || value < 0) {
+      throw new Error("Invalid AUM percentage value.");
+    }
+
+    const { error } = await supabaseServer.from("keyvals").upsert({
+      id: "DEFAULT_AUM_PERC",
+      value: value.toString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/admin/opportunities");
+    return { success: true };
+  } catch (error) {
+    console.error("[updateDefaultAumPerc] Error:", error);
     return { success: false, error: (error as Error).message };
   }
 }

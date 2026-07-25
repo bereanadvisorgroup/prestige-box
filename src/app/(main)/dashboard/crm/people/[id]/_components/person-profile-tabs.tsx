@@ -1,11 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 
-import { NotesView } from "@/components/notes/notes-view";
-import type { NoteSummary } from "@/types/notes";
-import { PersonNotesCard } from "./person-notes-card";
+import Link from "next/link";
 
 import {
   ArrowUpRight,
@@ -31,6 +28,7 @@ import {
   User,
 } from "lucide-react";
 
+import { NotesView } from "@/components/notes/notes-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +49,9 @@ import type {
   PropertyAndCasualtyFirm,
   RecordKeeper,
 } from "@/types/crm";
+import type { NoteSummary } from "@/types/notes";
+
+import { PersonNotesCard } from "./person-notes-card";
 
 interface PersonProfileTabsProps {
   person: Person;
@@ -420,11 +421,7 @@ export function PersonProfileTabs({
               </div>
 
               <div className="space-y-6">
-                <PersonNotesCard
-                  personId={person.id!}
-                  initialNotes={notes}
-                  onNoteClick={() => setActiveTab("notes")}
-                />
+                <PersonNotesCard personId={person.id!} initialNotes={notes} onNoteClick={() => setActiveTab("notes")} />
               </div>
             </div>
           </TabsContent>

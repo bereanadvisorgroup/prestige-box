@@ -102,7 +102,7 @@ function projectStepDueDates(startDate: Date, steps: ProjectableStep[]): (string
  * instance. Completed steps keep their recorded due date but still anchor the
  * steps that follow them. Safe to call after any completion change.
  */
-async function recomputeInstanceDueDates(instanceId: string, now: Date) {
+async function _recomputeInstanceDueDates(instanceId: string, now: Date) {
   const { data: instance } = await supabaseServer
     .from(INSTANCES_TABLE)
     .select("startDate")
@@ -141,7 +141,7 @@ async function recomputeInstanceDueDates(instanceId: string, now: Date) {
  * BFS algorithm to find shortest path distance to the "end" node.
  */
 function getShortestPathToEnd(graph: any, startNodeId: string): number {
-  if (!graph || !graph.nodes || !graph.edges) return 0;
+  if (!graph?.nodes || !graph.edges) return 0;
   const edges = graph.edges || [];
   const queue: [string, number][] = [[startNodeId, 0]];
   const visited = new Set<string>([startNodeId]);
@@ -197,7 +197,7 @@ async function enrichWorkflowsWithProgress(instances: any[]) {
       const sortedSteps = [...steps].sort((a, b) => b.sortOrder - a.sortOrder);
       const activeStep = sortedSteps.find((s) => !s.completedAt);
 
-      if (activeStep && activeStep.templateStepId && w.templateId) {
+      if (activeStep?.templateStepId && w.templateId) {
         const graph = templateGraphs.get(w.templateId);
         if (graph) {
           const dist = getShortestPathToEnd(graph, activeStep.templateStepId);
@@ -301,14 +301,21 @@ export async function createWorkflowFromTemplate(templateId: string, entityType:
 /**
  * Fetch all workflows for a client or company, with steps for progress display.
  */
-export async function getWorkflows(entityType: WorkflowEntityType, entityId: string) {
+export async function getWorkflows(entityType: WorkflowEntityType, entityId: string | string[]) {
   try {
-    const { data: list, error } = await supabaseServer
+    let query = supabaseServer
       .from(INSTANCES_TABLE)
       .select("*, workflow_instance_steps(*)")
-      .eq("entityType", entityType)
-      .eq("entityId", entityId)
-      .order("createdAt", { ascending: false });
+      .eq("entityType", entityType);
+
+    if (Array.isArray(entityId)) {
+      if (entityId.length === 0) return { success: true, workflows: [] as WorkflowInstance[] };
+      query = query.in("entityId", entityId);
+    } else {
+      query = query.eq("entityId", entityId);
+    }
+
+    const { data: list, error } = await query.order("createdAt", { ascending: false });
 
     if (error) throw new Error((error as { message: string }).message);
 
@@ -601,7 +608,7 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
  */
 export async function reopenWorkflowStep(stepId: string) {
   try {
-    const user = await verifyStaff();
+    const _user = await verifyStaff();
 
     const { data: step, error: stepError } = await supabaseServer
       .from(INSTANCE_STEPS_TABLE)
@@ -737,58 +744,54 @@ export async function reopenWorkflow(id: string) {
 }
 
 /**
- * Fetch all upcoming/outstanding workflow steps for a user, sorted by due date.
+ * Fetch all upcoming/outstanding workflow steps assigned to any team the user belongs to.
  */
 export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5) {
   try {
-    const [clientsResult, companiesResult] = await Promise.all([
-      supabaseServer.from("clients").select("id, personId").eq("advisorId", userId),
-      supabaseServer.from("companies").select("id, name").eq("advisorId", userId),
+    // 1. Fetch user's team memberships and all teams for name resolution
+    const [userMembershipsRes, allTeamsRes, clientsRes, companiesRes] = await Promise.all([
+      supabaseServer.from("team_members").select("teamId").eq("userId", userId),
+      supabaseServer.from("teams").select("id, name"),
+      supabaseServer.from("clients").select("id, personId"),
+      supabaseServer.from("companies").select("id, name"),
     ]);
 
-    if (clientsResult.error) throw new Error(clientsResult.error.message);
-    if (companiesResult.error) throw new Error(companiesResult.error.message);
-
-    const clientIds = (clientsResult.data || []).map((c) => c.id);
-    const companyIds = (companiesResult.data || []).map((c) => c.id);
-    const allEntityIds = [...clientIds, ...companyIds];
-
-    if (allEntityIds.length === 0) {
-      return { success: true, steps: [] };
+    const userTeamIds = new Set((userMembershipsRes.data || []).map((m) => m.teamId));
+    const teamsMap = new Map<string, string>();
+    for (const t of allTeamsRes.data || []) {
+      teamsMap.set(t.id, t.name);
     }
 
-    const { data: instances, error: instancesError } = await supabaseServer
-      .from(INSTANCES_TABLE)
-      .select("*, workflow_instance_steps(*)")
-      .in("entityId", allEntityIds)
-      .is("completedAt", null);
-
-    if (instancesError) throw new Error(instancesError.message);
-
-    // Resolve names
-    const entityNames = new Map<string, string>();
-    const personIds = [...new Set((clientsResult.data || []).map((c) => c.personId).filter(Boolean))];
+    // 2. Fetch person names for client entities
+    const personIds = [...new Set((clientsRes.data || []).map((c) => c.personId).filter(Boolean))];
     const personNames = new Map<string, string>();
-
     if (personIds.length > 0) {
-      const { data: persons, error: personsError } = await supabaseServer
+      const { data: persons } = await supabaseServer
         .from("people")
         .select("id, firstName, lastName")
         .in("id", personIds);
-      if (personsError) throw new Error(personsError.message);
 
       for (const p of persons || []) {
         personNames.set(p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim());
       }
     }
 
-    for (const c of clientsResult.data || []) {
+    const entityNames = new Map<string, string>();
+    for (const c of clientsRes.data || []) {
       entityNames.set(`client:${c.id}`, personNames.get(c.personId) || "Unnamed Client");
     }
-    for (const c of companiesResult.data || []) {
+    for (const c of companiesRes.data || []) {
       entityNames.set(`company:${c.id}`, c.name || "Unnamed Company");
     }
-    // Flatten and filter outstanding steps
+
+    // 3. Fetch active workflow instances
+    const { data: instances, error: instancesError } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .select("*, workflow_instance_steps(*)")
+      .is("completedAt", null);
+
+    if (instancesError) throw new Error(instancesError.message);
+
     const steps: Array<
       WorkflowInstanceStep & {
         workflowId: string;
@@ -796,6 +799,7 @@ export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5)
         entityType: WorkflowEntityType;
         entityId: string;
         entityName: string;
+        responsibilityLabel: string;
       }
     > = [];
 
@@ -803,26 +807,30 @@ export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5)
       const entityName = entityNames.get(`${w.entityType}:${w.entityId}`) || "Unknown Entity";
       const wSteps = (w.workflow_instance_steps || []) as WorkflowInstanceStep[];
 
-      // Only surface the next actionable step: steps are completed in order, so
-      // the "ready" step is the first incomplete one by sortOrder. Later steps
-      // aren't ready until their predecessors are done.
+      // Surface the next incomplete step
       const nextStep = [...wSteps].sort((a, b) => a.sortOrder - b.sortOrder).find((s) => !s.completedAt);
 
       if (nextStep) {
-        steps.push({
-          ...nextStep,
-          workflowId: w.id,
-          workflowName: w.name,
-          entityType: w.entityType,
-          entityId: w.entityId,
-          entityName,
-        });
+        const resp = nextStep.responsibility;
+        // Check if the step is assigned to a team the user belongs to, or legacy 'advisor'
+        const isUserResponsible = userTeamIds.has(resp) || resp === "advisor";
+
+        if (isUserResponsible) {
+          const respLabel = teamsMap.get(resp) || (resp === "advisor" ? "Advisor" : "Client / Company");
+          steps.push({
+            ...nextStep,
+            workflowId: w.id,
+            workflowName: w.name,
+            entityType: w.entityType,
+            entityId: w.entityId,
+            entityName,
+            responsibilityLabel: respLabel,
+          });
+        }
       }
     }
 
-    // Sort outstanding steps:
-    // 1. Those with due date (ascending)
-    // 2. Those without due date (by createdAt ascending)
+    // Sort steps: due date ascending first, then createdAt ascending
     steps.sort((a, b) => {
       if (a.dueDate && b.dueDate) {
         return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
@@ -837,6 +845,76 @@ export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5)
     return { success: true, steps: limitedSteps };
   } catch (error) {
     console.error("[getUpcomingWorkflowStepsForUser] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Fetch entity documentUrl and name for a client or company.
+ */
+export async function getEntityDocumentUrl(entityType: WorkflowEntityType, entityId: string) {
+  try {
+    if (entityType === "client") {
+      const { data: client } = await supabaseServer
+        .from("clients")
+        .select("id, documentUrl, personId")
+        .eq("id", entityId)
+        .single();
+
+      let name = "Client";
+      if (client?.personId) {
+        const { data: person } = await supabaseServer
+          .from("people")
+          .select("firstName, lastName")
+          .eq("id", client.personId)
+          .single();
+        if (person) {
+          name = `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "Client";
+        }
+      }
+      return { success: true, documentUrl: client?.documentUrl || null, name };
+    }
+
+    const { data: company } = await supabaseServer
+      .from("companies")
+      .select("id, documentUrl, name")
+      .eq("id", entityId)
+      .single();
+
+    return {
+      success: true,
+      documentUrl: company?.documentUrl || null,
+      name: company?.name || "Company",
+    };
+  } catch (error) {
+    console.error("[getEntityDocumentUrl] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Update a workflow instance's description.
+ */
+export async function updateWorkflowDescription(workflowId: string, description: string) {
+  try {
+    await verifyStaff();
+
+    const { data: instance, error } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .update({ description, updatedAt: new Date().toISOString() })
+      .eq("id", workflowId)
+      .select("entityType, entityId")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (instance) {
+      revalidateWorkflowPaths(instance.entityType as WorkflowEntityType, instance.entityId, workflowId);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("[updateWorkflowDescription] Error:", error);
     return { success: false, error: (error as Error).message };
   }
 }

@@ -44,6 +44,7 @@ import { supabase } from "@/lib/supabase.client";
 import { cn } from "@/lib/utils";
 import {
   DUE_DATE_BASE_LABELS,
+  formatResponsibilityLabel,
   WORKFLOW_DUE_DATE_BASES,
   WORKFLOW_DUE_DAYS,
   WORKFLOW_PRIORITIES,
@@ -64,15 +65,12 @@ const PRIORITY_BADGE_CLASSES: Record<string, string> = {
 // ---------------------------------------------------------------------------
 function StartNode() {
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 font-bold text-white text-xs shadow-md border-2 border-emerald-600">
-      Start
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="default"
-        className="w-3 h-3 bg-emerald-700 border-emerald-500"
-      />
-    </div>
+    <Card className="w-36 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/30 shadow-sm text-center">
+      <CardContent className="p-2.5">
+        <span className="font-semibold text-xs text-emerald-700 dark:text-emerald-300">Start Workflow</span>
+      </CardContent>
+      <Handle type="source" position={Position.Right} id="start" className="w-2.5 h-2.5 bg-emerald-500" />
+    </Card>
   );
 }
 
@@ -81,10 +79,12 @@ function StartNode() {
 // ---------------------------------------------------------------------------
 function EndNode() {
   return (
-    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 font-bold text-white text-xs shadow-md border-2 border-red-600">
-      End
-      <Handle type="target" position={Position.Left} id="default" className="w-3 h-3 bg-red-700 border-red-500" />
-    </div>
+    <Card className="w-36 border-slate-500/50 bg-slate-50/50 dark:bg-slate-900/30 shadow-sm text-center">
+      <Handle type="target" position={Position.Left} id="end" className="w-2.5 h-2.5 bg-slate-500" />
+      <CardContent className="p-2.5">
+        <span className="font-semibold text-xs text-slate-700 dark:text-slate-300">End Workflow</span>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -134,8 +134,8 @@ function StepNode({ data, selected }: any) {
         </div>
         <div className="flex justify-between items-center">
           <span>Assignee:</span>
-          <Badge variant="outline" className="px-1.5 py-0 text-[10px] capitalize">
-            {step.responsibility === "advisor" ? "Advisor" : "Client"}
+          <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+            {formatResponsibilityLabel(step.responsibility, data?.teams)}
           </Badge>
         </div>
       </CardContent>
@@ -178,10 +178,11 @@ function StepNode({ data, selected }: any) {
 interface FlowEditorProps {
   initialGraph: { nodes: any[]; edges: any[] };
   steps: WorkflowTemplateStep[];
+  teams?: Array<{ id: string; name: string }>;
   onChange: (graph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => void;
 }
 
-export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
+export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialGraph.nodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialGraph.edges || []);
   const [editingStep, setEditingStep] = useState<WorkflowTemplateStep | null>(null);
@@ -344,6 +345,7 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
             data: {
               ...node.data,
               step: step || node.data.step,
+              teams,
               onEdit: () => startEditStep(node.id),
             },
           };
@@ -351,7 +353,7 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
         return node;
       }),
     );
-  }, [stepMap, startEditStep, setNodes]);
+  }, [stepMap, startEditStep, setNodes, teams]);
 
   // Add a new step to the canvas
   const handleAddStep = () => {
@@ -365,7 +367,7 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
       dueDateBase: "after_last_step",
       priority: "None",
       description: "",
-      responsibility: "advisor",
+      responsibility: "client_company",
       attachments: [],
       outcomes: [],
       positionX: 400,
@@ -385,6 +387,7 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
       data: {
         label: step.name,
         step,
+        teams,
         onEdit: () => startEditStep(newId),
       },
     };
@@ -629,25 +632,23 @@ export function FlowEditor({ initialGraph, steps, onChange }: FlowEditorProps) {
                 {/* Responsibility & Priority */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Responsibility</Label>
-                    <RadioGroup
+                    <Label htmlFor="step-responsibility">Responsibility</Label>
+                    <Select
                       value={editingStep.responsibility}
-                      onValueChange={(val) => updateEditingStep({ responsibility: val as any })}
-                      className="flex flex-col gap-2 pt-1"
+                      onValueChange={(val) => updateEditingStep({ responsibility: val })}
                     >
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="advisor" id="sheet-resp-advisor" />
-                        <Label htmlFor="sheet-resp-advisor" className="text-xs">
-                          Advisor
-                        </Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="client" id="sheet-resp-client" />
-                        <Label htmlFor="sheet-resp-client" className="text-xs">
-                          Client / Company
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                      <SelectTrigger id="step-responsibility" className="w-full">
+                        <SelectValue placeholder="Select Responsibility" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[120]">
+                        <SelectItem value="client_company">Client / Company</SelectItem>
+                        {teams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

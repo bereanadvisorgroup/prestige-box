@@ -173,6 +173,8 @@ export function RecordKeeperAccountsManager({
       return null;
     }
     return {
+      ownerIds: client.id ? [client.id] : [],
+      ownershipType: "INDIVIDUAL",
       recordKeeperId: form.recordKeeperId,
       financialTypeId: form.financialTypeId || undefined,
       accountNumber: form.accountNumber.trim() || undefined,

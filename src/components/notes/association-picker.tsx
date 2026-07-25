@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Briefcase, Building2, Plus, X, User } from "lucide-react";
+import { Briefcase, Building2, Plus, User, X } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
@@ -32,11 +32,7 @@ export function AssociationPicker({ value, onChange }: AssociationPickerProps) {
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [clientsRes, companiesRes, peopleRes] = await Promise.all([
-        getClients(),
-        getCompanies(),
-        getPeople(),
-      ]);
+      const [clientsRes, companiesRes, peopleRes] = await Promise.all([getClients(), getCompanies(), getPeople()]);
       if (cancelled) return;
       const opts: Option[] = [];
       if (clientsRes.success) {

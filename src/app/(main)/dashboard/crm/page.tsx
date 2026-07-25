@@ -1,4 +1,5 @@
 import { RecentNotesCard } from "@/components/notes/recent-notes-card";
+import { AssignedOpportunitiesCard } from "@/components/opportunities/assigned-opportunities-card";
 import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
 import { MyWorkflowTasksCard } from "@/components/workflows/my-workflow-tasks-card";
 
@@ -13,8 +14,13 @@ export default async function CRMOverviewPage() {
           <DashboardTasksCard />
         </div>
       </div>
-      <div>
-        <MyWorkflowTasksCard />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div>
+          <MyWorkflowTasksCard />
+        </div>
+        <div className="space-y-6">
+          <AssignedOpportunitiesCard />
+        </div>
       </div>
     </div>
   );

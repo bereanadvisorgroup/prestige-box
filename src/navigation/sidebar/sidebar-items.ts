@@ -96,14 +96,14 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Households",
-        url: "/dashboard/crm/households",
-        icon: Home,
-      },
-      {
         title: "Clients",
         url: "/dashboard/crm/clients",
         icon: Briefcase,
+      },
+      {
+        title: "Households",
+        url: "/dashboard/crm/households",
+        icon: Home,
       },
       {
         title: "Companies",

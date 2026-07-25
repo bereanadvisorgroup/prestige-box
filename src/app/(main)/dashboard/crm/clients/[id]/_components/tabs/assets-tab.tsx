@@ -726,6 +726,35 @@ export function AssetsTab({ client, initialAssets, initialHistoryData, initialAd
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="ownershipType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ownership Structure</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || "INDIVIDUAL"}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select ownership structure" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="INDIVIDUAL">Individual Owner</SelectItem>
+                        <SelectItem value="JOINT_TENANTS">Joint Tenants (Right of Survivorship)</SelectItem>
+                        <SelectItem value="TENANTS_IN_COMMON">Tenants in Common (Custom Split)</SelectItem>
+                        <SelectItem value="TRUST">Held in Trust</SelectItem>
+                        <SelectItem value="CORPORATE">Corporate / Entity Owned</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Address Section — only shown for real estate sub-types */}
               {isRealEstate && (
                 <div className="animate-in fade-in slide-in-from-top-1 space-y-3 rounded-lg border bg-muted/20 p-4 duration-200">

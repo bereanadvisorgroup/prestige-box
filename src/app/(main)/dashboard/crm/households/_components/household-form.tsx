@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   type Address,
   type Household,
@@ -46,18 +47,18 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
           id: household.id,
           name: household.name,
           addressId: household.addressId,
-          memberIds: household.memberIds,
+          members: household.members || [],
         }
       : {
           name: "",
           addressId: "",
-          memberIds: [],
+          members: [],
         },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "memberIds",
+    name: "members",
   });
 
   useEffect(() => {
@@ -75,8 +76,15 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   }, []);
 
   const handleAddMember = (personId: string) => {
-    if (!form.getValues("memberIds").some((m) => m.personId === personId)) {
-      append({ personId, role: "home_owner" });
+    const currentMembers = form.getValues("members") || [];
+    if (!currentMembers.some((m) => m.clientId === personId)) {
+      append({
+        clientId: personId,
+        role: currentMembers.length === 0 ? "HEAD" : "MEMBER",
+        isPrimaryHousehold: true,
+        includeInFinancialRollup: true,
+        familyRelationship: "",
+      });
     } else {
       toast.error("This person is already a member of this household");
     }
@@ -105,7 +113,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-3xl shadow-sm">
+    <Card className="mx-auto w-full max-w-4xl shadow-sm">
       <CardHeader>
         <CardTitle>{household ? "Edit Household" : "Add New Household"}</CardTitle>
       </CardHeader>
@@ -158,50 +166,30 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
 
               <div className="space-y-4">
                 {fields.map((field, index) => {
-                  const person = availablePeople.find((p) => p.id === field.personId);
+                  const person = availablePeople.find((p) => p.id === field.clientId);
                   return (
                     <div
                       key={field.id}
-                      className="flex flex-col items-start justify-between gap-4 rounded-md border bg-muted/10 p-4 md:flex-row md:items-center"
+                      className="flex flex-col items-start justify-between gap-4 rounded-md border bg-muted/10 p-4"
                     >
-                      <div className="flex items-center gap-3">
-                        <PersonAvatar
-                          photoUrl={person?.photoUrl}
-                          firstName={person?.firstName}
-                          lastName={person?.lastName}
-                          size="sm"
-                        />
-                        <div>
-                          <p className="font-medium text-sm">
-                            {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address}
-                          </p>
+                      <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <PersonAvatar
+                            photoUrl={person?.photoUrl}
+                            firstName={person?.firstName}
+                            lastName={person?.lastName}
+                            size="sm"
+                          />
+                          <div>
+                            <p className="font-medium text-sm">
+                              {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {person?.emails?.find((e) => e.isPrimary)?.address || person?.emails?.[0]?.address}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex w-full items-center gap-2 md:w-auto">
-                        <FormField
-                          control={form.control}
-                          name={`memberIds.${index}.role`}
-                          render={({ field }) => (
-                            <FormItem className="w-full md:w-40">
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="home_owner">Home Owner</SelectItem>
-                                  <SelectItem value="dependent">Dependent</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                         <Button
                           variant="ghost"
                           size="icon"
@@ -211,6 +199,76 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                      </div>
+
+                      <div className="grid w-full grid-cols-1 gap-4 pt-2 md:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name={`members.${index}.role`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Household Role</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="h-9 text-xs">
+                                    <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="HEAD">Head of Household</SelectItem>
+                                  <SelectItem value="SPOUSE">Spouse</SelectItem>
+                                  <SelectItem value="PARTNER">Partner</SelectItem>
+                                  <SelectItem value="DEPENDENT">Dependent</SelectItem>
+                                  <SelectItem value="TRUSTEE">Trustee</SelectItem>
+                                  <SelectItem value="MEMBER">Member</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`members.${index}.familyRelationship`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Relationship Description</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Spouse of Head, Daughter" className="h-9 text-xs" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="flex flex-col gap-2 pt-1">
+                          <FormField
+                            control={form.control}
+                            name={`members.${index}.isPrimaryHousehold`}
+                            render={({ field }) => (
+                              <FormItem className="flex items-center justify-between rounded-md border bg-background p-2">
+                                <FormLabel className="font-normal text-xs">Primary Household</FormLabel>
+                                <FormControl>
+                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`members.${index}.includeInFinancialRollup`}
+                            render={({ field }) => (
+                              <FormItem className="flex items-center justify-between rounded-md border bg-background p-2">
+                                <FormLabel className="font-normal text-xs">Financial Rollup</FormLabel>
+                                <FormControl>
+                                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -227,7 +285,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                   <FormLabel>Add Person to Household</FormLabel>
                   <PersonSearchSelect
                     people={availablePeople.filter(
-                      (p) => !form.getValues("memberIds").some((m) => m.personId === p.id),
+                      (p) => !(form.getValues("members") || []).some((m) => m.clientId === p.id),
                     )}
                     onValueChange={(val) => handleAddMember(val)}
                     onPersonCreated={(newPerson) => {
@@ -235,7 +293,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                       handleAddMember(newPerson.id!);
                     }}
                     placeholder="Search people by name..."
-                    value="" // We don't want to show a selected value here as it's an "adder"
+                    value="" // Adder input resets selection
                   />
                   <FormDescription>Select people to add them to this household group.</FormDescription>
                 </div>

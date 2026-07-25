@@ -128,6 +128,7 @@ erDiagram
         jsonb driversLicense
         jsonb pii
         string documentUrl
+        string notebookUrl
         timestamp createdAt
         timestamp updatedAt
     }
@@ -149,6 +150,7 @@ erDiagram
         string logoUrl
         jsonb socialMedia
         string documentUrl
+        string notebookUrl
         numeric estimatedValue
         timestamp createdAt
         timestamp updatedAt

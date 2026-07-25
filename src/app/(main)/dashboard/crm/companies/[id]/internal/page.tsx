@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { getCompany } from "@/actions/companies";
 import { getNotes } from "@/actions/notes";
 import { getTasks } from "@/actions/tasks";
+import { getTeams } from "@/actions/teams";
 import { getAdvisors } from "@/actions/users";
 import { getWorkflows } from "@/actions/workflows";
 
 import { CompanyAdvisorDropdown } from "../_components/company-advisor-dropdown";
 import { CompanyDocumentsButton } from "../_components/company-documents-button";
 import { CompanyHeaderPortal } from "../_components/company-header-portal";
+import { CompanyNotebookButton } from "../_components/company-notebook-button";
 import { CompanyNotesCard } from "../_components/company-notes-card";
 import { CompanyTasksCard } from "../_components/company-tasks-card";
 import { CompanyWorkflowStepsCard } from "../_components/company-workflow-steps-card";
@@ -30,17 +32,19 @@ export default async function CompanyInternalPage({ params }: PageProps) {
   const company = companyResult.company;
 
   // Fetch all required data for the Company Internal Overview dashboard
-  const [tasksResult, notesResult, advisorsResult, workflowsResult] = await Promise.all([
+  const [tasksResult, notesResult, advisorsResult, workflowsResult, teamsResult] = await Promise.all([
     getTasks({ companyId: id }),
     getNotes({ companyId: id }),
     getAdvisors(),
     getWorkflows("company", id),
+    getTeams(),
   ]);
 
   const tasks = tasksResult.success && tasksResult.tasks ? tasksResult.tasks : [];
   const notes = notesResult.success && notesResult.notes ? notesResult.notes : [];
   const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
   const workflows = workflowsResult.success && workflowsResult.workflows ? workflowsResult.workflows : [];
+  const teams = teamsResult.success ? teamsResult.teams || [] : [];
 
   // Filter and sort outstanding steps
   const outstandingSteps = workflows.flatMap((w) =>
@@ -67,13 +71,14 @@ export default async function CompanyInternalPage({ params }: PageProps) {
       <CompanyHeaderPortal sectionName="Overview">
         <CompanyAdvisorDropdown company={company} advisors={allAdvisors} />
         <CompanyDocumentsButton company={company} />
+        <CompanyNotebookButton company={company} />
       </CompanyHeaderPortal>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <CompanyTasksCard companyId={id} initialTasks={tasks} />
         <CompanyNotesCard companyId={id} initialNotes={notes} />
         <div className="md:col-span-2">
-          <CompanyWorkflowStepsCard companyId={id} steps={outstandingSteps} />
+          <CompanyWorkflowStepsCard companyId={id} steps={outstandingSteps} teams={teams} />
         </div>
       </div>
     </div>

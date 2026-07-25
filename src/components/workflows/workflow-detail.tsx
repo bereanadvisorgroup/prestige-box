@@ -1,14 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { ArrowLeft, Calendar, CheckCircle2, Circle, Loader2, Paperclip, RotateCcw, Trophy } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  Folder,
+  HardDrive,
+  Loader2,
+  Paperclip,
+  RotateCcw,
+  Trophy,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
-import { completeWorkflow, completeWorkflowStep, reopenWorkflow, reopenWorkflowStep } from "@/actions/workflows";
+import {
+  completeWorkflow,
+  completeWorkflowStep,
+  getEntityDocumentUrl,
+  reopenWorkflow,
+  reopenWorkflowStep,
+  updateWorkflowDescription,
+} from "@/actions/workflows";
+import { GoogleDrivePickerDialog } from "@/components/tasks/gdrive-picker-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +37,7 @@ import { Progress } from "@/components/ui/progress";
 import { sanitizeNoteHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 import {
+  formatResponsibilityLabel,
   type WorkflowEntityType,
   type WorkflowInstance,
   type WorkflowInstanceStep,
@@ -33,18 +54,162 @@ interface WorkflowDetailProps {
   entityType: WorkflowEntityType;
   entityId: string;
   workflow: WorkflowInstance;
+  teams?: Array<{ id: string; name: string }>;
 }
 
-export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetailProps) {
+interface DriveAttachment {
+  id: string;
+  name: string;
+  url: string;
+  isFolder: boolean;
+}
+
+function parseDriveAttachmentsFromDescription(rawDescription: string | null | undefined): {
+  cleanDescription: string;
+  attachments: DriveAttachment[];
+} {
+  if (!rawDescription?.trim()) {
+    return { cleanDescription: "", attachments: [] };
+  }
+
+  const sectionIdx = rawDescription.indexOf('<div class="gdrive-attachments-section');
+  if (sectionIdx !== -1) {
+    const cleanDescription = rawDescription.slice(0, sectionIdx).trim();
+    const sectionHtml = rawDescription.slice(sectionIdx);
+
+    const attachments: DriveAttachment[] = [];
+    const linkRegex = /<a href="([^"]+)"[^>]*>([^<]+)<\/a>/gi;
+    let match = linkRegex.exec(sectionHtml);
+    while (match !== null) {
+      const url = match[1];
+      const rawText = match[2].trim();
+      const isFolder = rawText.includes("📁") || url.includes("/folders/");
+      const name = rawText
+        .replace(/^[📁📄]\s*/u, "")
+        .replace(/\s*\(Google Drive\)$/, "")
+        .trim();
+      attachments.push({
+        id: crypto.randomUUID(),
+        name: name || "Google Drive Item",
+        url,
+        isFolder,
+      });
+      match = linkRegex.exec(sectionHtml);
+    }
+    return { cleanDescription, attachments };
+  }
+
+  return { cleanDescription: rawDescription, attachments: [] };
+}
+
+function buildDescriptionPayload(cleanDescription: string, attachments: DriveAttachment[]): string {
+  const baseDesc = cleanDescription ? cleanDescription.trim() : "";
+  if (!attachments || attachments.length === 0) {
+    return baseDesc;
+  }
+
+  const listItemsHtml = attachments
+    .map(
+      (a) =>
+        `<li data-gdrive-id="${a.id}" data-gdrive-folder="${a.isFolder}"><a href="${a.url}" target="_blank" rel="noreferrer" class="gdrive-link">${
+          a.isFolder ? "📁" : "📄"
+        } ${a.name} (Google Drive)</a></li>`,
+    )
+    .join("");
+
+  const sectionHtml = `<div class="gdrive-attachments-section mt-4 pt-3 border-t"><p class="font-semibold text-sm mb-2">Linked Google Drive Files:</p><ul>${listItemsHtml}</ul></div>`;
+
+  return baseDesc ? `${baseDesc}<br/>${sectionHtml}` : sectionHtml;
+}
+
+export function WorkflowDetail({ entityType, entityId, workflow, teams }: WorkflowDetailProps) {
   const router = useRouter();
   const [pendingStepId, setPendingStepId] = useState<string | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+
+  // Google Drive state
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [entityDocInfo, setEntityDocInfo] = useState<{ name: string; documentUrl: string | null } | null>(null);
+  const [driveAttachments, setDriveAttachments] = useState<DriveAttachment[]>([]);
+  const [isUpdatingAttachments, setIsUpdatingAttachments] = useState(false);
 
   const basePath = `/dashboard/crm/${entityType === "client" ? "clients" : "companies"}/${entityId}/internal/workflows`;
 
   const percent = workflow.percentComplete ?? workflowPercentComplete(workflow.steps);
   const allStepsDone = workflow.steps.length > 0 && workflow.steps.every((s) => s.completedAt);
   const isCompleted = !!workflow.completedAt;
+
+  useEffect(() => {
+    let cancelled = false;
+    getEntityDocumentUrl(entityType, entityId).then((res) => {
+      if (!cancelled && res.success) {
+        setEntityDocInfo({
+          name: res.name || "Entity",
+          documentUrl: res.documentUrl || null,
+        });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [entityType, entityId]);
+
+  useEffect(() => {
+    const { attachments } = parseDriveAttachmentsFromDescription(workflow.description);
+    setDriveAttachments(attachments);
+  }, [workflow.description]);
+
+  const handleDriveSelect = async (item: { name: string; url: string; isFolder: boolean }) => {
+    const newAttachment: DriveAttachment = {
+      id: crypto.randomUUID(),
+      name: item.name,
+      url: item.url,
+      isFolder: item.isFolder,
+    };
+    const updated = [...driveAttachments, newAttachment];
+    setDriveAttachments(updated);
+
+    const { cleanDescription } = parseDriveAttachmentsFromDescription(workflow.description);
+    const newPayload = buildDescriptionPayload(cleanDescription, updated);
+
+    setIsUpdatingAttachments(true);
+    try {
+      const res = await updateWorkflowDescription(workflow.id, newPayload);
+      if (res.success) {
+        toast.success(`Linked Google Drive ${item.isFolder ? "folder" : "file"}`);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to save link");
+      }
+    } catch (_err) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsUpdatingAttachments(false);
+    }
+  };
+
+  const removeDriveAttachment = async (id: string) => {
+    const updated = driveAttachments.filter((a) => a.id !== id);
+    setDriveAttachments(updated);
+
+    const { cleanDescription } = parseDriveAttachmentsFromDescription(workflow.description);
+    const newPayload = buildDescriptionPayload(cleanDescription, updated);
+
+    setIsUpdatingAttachments(true);
+    try {
+      const res = await updateWorkflowDescription(workflow.id, newPayload);
+      if (res.success) {
+        toast.success("Link removed");
+        router.refresh();
+      } else {
+        toast.error(res.error || "Failed to remove link");
+      }
+    } catch (_err) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsUpdatingAttachments(false);
+    }
+  };
 
   const handleToggleStep = async (step: WorkflowInstanceStep, completed: boolean) => {
     if (pendingStepId) return;
@@ -184,6 +349,85 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
         </CardContent>
       </Card>
 
+      {/* Linked Google Drive Files Section (just before the list of steps) */}
+      {(entityDocInfo?.documentUrl || driveAttachments.length > 0) && (
+        <Card className="border-emerald-200/60 bg-emerald-50/20 dark:border-emerald-900/40 dark:bg-emerald-950/10">
+          <CardContent className="space-y-3 py-3.5">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 font-semibold text-foreground text-sm">
+                <HardDrive className="h-4 w-4 text-emerald-600" />
+                Linked Google Drive Files ({driveAttachments.length})
+              </span>
+              {entityDocInfo?.documentUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPickerOpen(true)}
+                  disabled={isUpdatingAttachments}
+                  className="h-7 gap-1.5 border-emerald-300 text-emerald-700 text-xs hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                >
+                  <HardDrive className="h-3.5 w-3.5 text-emerald-600" />
+                  Link File
+                </Button>
+              )}
+            </div>
+
+            {driveAttachments.length === 0 ? (
+              <p className="text-muted-foreground text-xs italic">
+                No files linked yet. Click "Link File" to attach Google Drive documents or folders to this workflow.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {driveAttachments.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-sm"
+                  >
+                    {a.isFolder ? (
+                      <Folder className="h-4 w-4 shrink-0 text-amber-500" />
+                    ) : (
+                      <HardDrive className="h-4 w-4 shrink-0 text-emerald-600" />
+                    )}
+                    <a
+                      href={a.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 truncate font-medium hover:underline"
+                    >
+                      {a.name}
+                    </a>
+                    <span className="shrink-0 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      Google Drive
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => removeDriveAttachment(a.id)}
+                      disabled={isUpdatingAttachments}
+                      title="Remove link"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {entityDocInfo?.documentUrl && (
+        <GoogleDrivePickerDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          entityName={entityDocInfo.name}
+          documentUrl={entityDocInfo.documentUrl}
+          onSelect={handleDriveSelect}
+        />
+      )}
+
       <div>
         {workflow.steps.map((step, index) => {
           const isDone = !!step.completedAt;
@@ -219,7 +463,7 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                     {step.priority !== "None" && (
                       <Badge className={cn("border-0", PRIORITY_BADGE_CLASSES[step.priority])}>{step.priority}</Badge>
                     )}
-                    <Badge variant="outline">{step.responsibility === "advisor" ? "Advisor" : "Client"}</Badge>
+                    <Badge variant="outline">{formatResponsibilityLabel(step.responsibility, teams)}</Badge>
                     {step.dueDate && (
                       <Badge
                         variant="outline"
@@ -260,7 +504,7 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                           {isDone ? "Completed" : "Mark complete"}
                         </label>
                       ) : (
-                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                        <span className="font-semibold text-amber-600 text-xs dark:text-amber-400">
                           Awaiting outcome selection...
                         </span>
                       )}
@@ -282,15 +526,15 @@ export function WorkflowDetail({ entityType, entityId, workflow }: WorkflowDetai
                   )}
 
                   {!isDone && (step.outcomes || []).length > 1 && (
-                    <div className="border-t pt-3 space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground">Select outcome to complete step:</p>
+                    <div className="space-y-2 border-t pt-3">
+                      <p className="font-semibold text-muted-foreground text-xs">Select outcome to complete step:</p>
                       <div className="flex flex-wrap gap-2">
                         {step.outcomes.map((outcome) => (
                           <Button
                             key={outcome.id}
                             size="sm"
                             variant="outline"
-                            className="text-xs font-semibold hover:bg-primary hover:text-primary-foreground border-primary/40 text-primary shadow-sm hover:scale-[1.02] active:scale-95 transition-all"
+                            className="border-primary/40 font-semibold text-primary text-xs shadow-sm transition-all hover:scale-[1.02] hover:bg-primary hover:text-primary-foreground active:scale-95"
                             onClick={() => handleCompleteStep(step, outcome.id)}
                             disabled={!!pendingStepId}
                           >

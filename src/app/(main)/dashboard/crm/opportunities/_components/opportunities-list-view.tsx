@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { differenceInCalendarDays, startOfDay } from "date-fns";
 import { AlertCircle, Calendar, DollarSign, Edit, Percent, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { OpportunityDialog } from "./opportunity-dialog";
+import { PipelineSummarySection } from "./pipeline-summary-section";
 
 interface OpportunitiesListViewProps {
   opportunities: any[];
@@ -20,6 +22,7 @@ interface OpportunitiesListViewProps {
   companies: any[];
   clientId?: string;
   companyId?: string;
+  targetDateHistory?: any[];
 }
 
 export function OpportunitiesListView({
@@ -29,6 +32,7 @@ export function OpportunitiesListView({
   companies,
   clientId,
   companyId,
+  targetDateHistory = [],
 }: OpportunitiesListViewProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedOpp, setSelectedOpp] = React.useState<any | null>(null);
@@ -88,10 +92,45 @@ export function OpportunitiesListView({
     window.location.reload();
   };
 
+  const getTargetCloseDateBadge = (targetCloseDate?: string | Date | null, isClosed?: boolean) => {
+    if (!targetCloseDate) return <span className="text-muted-foreground">-</span>;
+    const formatted = new Date(targetCloseDate).toLocaleDateString();
+    if (isClosed) return <span className="text-muted-foreground">{formatted}</span>;
+
+    const today = startOfDay(new Date());
+    const targetDate = startOfDay(new Date(targetCloseDate));
+    const diffDays = differenceInCalendarDays(targetDate, today);
+
+    if (diffDays <= 0) {
+      return (
+        <Badge
+          variant="outline"
+          className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 font-semibold"
+        >
+          {formatted}
+        </Badge>
+      );
+    }
+    if (diffDays <= 7) {
+      return (
+        <Badge
+          variant="outline"
+          className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 font-semibold"
+        >
+          {formatted}
+        </Badge>
+      );
+    }
+    return <span className="text-muted-foreground">{formatted}</span>;
+  };
+
   const getResultStatusBadge = (status?: string | null) => {
     if (!status) {
       return (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300">
+        <Badge
+          variant="outline"
+          className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300"
+        >
           Active
         </Badge>
       );
@@ -99,16 +138,15 @@ export function OpportunitiesListView({
     switch (status) {
       case "WON":
         return (
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300"
+          >
             WON
           </Badge>
         );
       case "LOST":
-        return (
-          <Badge variant="destructive">
-            LOST
-          </Badge>
-        );
+        return <Badge variant="destructive">LOST</Badge>;
       case "TRASH":
         return (
           <Badge variant="secondary" className="bg-amber-600 text-white">
@@ -162,8 +200,21 @@ export function OpportunitiesListView({
                   currency: "USD",
                 }).format(Number.parseFloat(opp.amount || "0"));
 
+                let rowBgClass = "";
+                if (opp.targetCloseDate && !opp.resultStatus) {
+                  const today = startOfDay(new Date());
+                  const targetDate = startOfDay(new Date(opp.targetCloseDate));
+                  const diffDays = differenceInCalendarDays(targetDate, today);
+
+                  if (diffDays <= 0) {
+                    rowBgClass = "bg-rose-50/80 hover:bg-rose-100/80 dark:bg-rose-950/30 dark:hover:bg-rose-950/50";
+                  } else if (diffDays <= 7) {
+                    rowBgClass = "bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/30 dark:hover:bg-amber-950/50";
+                  }
+                }
+
                 return (
-                  <TableRow key={opp.id}>
+                  <TableRow key={opp.id} className={rowBgClass}>
                     <TableCell className="font-semibold">{opp.pipeline?.name || "N/A"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal">
@@ -174,9 +225,7 @@ export function OpportunitiesListView({
                     <TableCell className="text-right">
                       <span className="text-sm font-medium text-muted-foreground">{opp.probabilityWin}%</span>
                     </TableCell>
-                    <TableCell>
-                      {opp.targetCloseDate ? new Date(opp.targetCloseDate).toLocaleDateString() : "-"}
-                    </TableCell>
+                    <TableCell>{getTargetCloseDateBadge(opp.targetCloseDate, !!opp.resultStatus)}</TableCell>
                     <TableCell>{getResultStatusBadge(opp.resultStatus)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       <div>{updatedByStr}</div>
@@ -210,36 +259,12 @@ export function OpportunitiesListView({
         </div>
       )}
 
-      {/* Summary Footer Cards */}
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Card className="border bg-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <DollarSign className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Total Active Opportunity Amount
-              </p>
-              <h2 className="font-extrabold text-xl tracking-tight mt-0.5">{formattedTotalActive}</h2>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Percent className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Total Active Probability Win Amount
-              </p>
-              <h2 className="font-extrabold text-xl tracking-tight mt-0.5">{formattedTotalProb}</h2>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary Pipeline Section & Target Date Analytics */}
+      <PipelineSummarySection
+        opportunities={opportunities}
+        pipelines={pipelines}
+        targetDateHistory={targetDateHistory}
+      />
 
       <OpportunityDialog
         open={dialogOpen}

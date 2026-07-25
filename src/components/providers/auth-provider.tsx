@@ -4,9 +4,37 @@ import { type ReactNode, useEffect } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
-import { deleteUser } from "@/actions/users";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
+
+async function fetchUserProfile(userId: string, email?: string | null) {
+  // 1. Primary lookup by uid
+  const { data: userData, error } = await supabase.from("users").select("*").eq("uid", userId).maybeSingle();
+
+  if (userData) return { profileData: userData, error: null };
+
+  // 2. Fallback lookup by email if uid was not synced
+  if (!error && email) {
+    const { data: emailUser, error: emailErr } = await supabase
+      .from("users")
+      .select("*")
+      .ilike("email", email)
+      .maybeSingle();
+
+    if (emailUser) {
+      if (emailUser.uid !== userId) {
+        await supabase
+          .from("users")
+          .update({ uid: userId, updatedAt: new Date().toISOString() })
+          .eq("id", emailUser.id);
+      }
+      return { profileData: emailUser, error: null };
+    }
+    return { profileData: null, error: emailErr };
+  }
+
+  return { profileData: null, error };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, profile, isLoading, setUser, setProfile, setLoading } = useAuthStore();
@@ -15,42 +43,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1. Get initial session/user
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user ?? null;
       setUser(user);
       if (user) {
-        supabase
-          .from("users")
-          .select("*")
-          .eq("uid", user.id)
-          .maybeSingle()
-          .then(({ data: userData, error }) => {
-            if (userData) {
-              setProfile({
-                uid: user.id,
-                email: user.email ?? null,
-                role: userData.role,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                phone: userData.phone || "",
-                photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
-                createdAt: userData.createdAt,
-              });
-            } else if (!error) {
-              // Confirmed: this authenticated user has no whitelisted profile row.
-              deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
-              supabase.auth.signOut().then(() => {
-                setUser(null);
-                setProfile(null);
-                router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
-              });
-            } else {
-              // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
-              // Do NOT sign out or delete — that would bounce a valid session to /login.
-              console.error("Profile fetch error (non-fatal), keeping session:", error);
-            }
-            setLoading(false);
+        const { profileData, error } = await fetchUserProfile(user.id, user.email);
+        if (profileData) {
+          setProfile({
+            uid: user.id,
+            email: user.email ?? profileData.email ?? null,
+            role: profileData.role,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            phone: profileData.phone || "",
+            photoURL: profileData.photoURL || user.user_metadata?.avatar_url || "",
+            createdAt: profileData.createdAt,
           });
+        } else if (!error) {
+          // User authenticated but no profile row found in public.users.
+          // Sign out safely — NEVER delete the user account automatically.
+          await supabase.auth.signOut();
+          setUser(null);
+          setProfile(null);
+          router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
+        } else {
+          // Transient fetch error (e.g. JWT rotating during MFA upgrade).
+          // Do NOT sign out or delete — keep the session active.
+          console.error("Profile fetch error (non-fatal), keeping session:", error);
+        }
+        setLoading(false);
       } else {
         setLoading(false);
       }
@@ -65,29 +86,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         try {
-          const { data: userData, error } = await supabase.from("users").select("*").eq("uid", user.id).maybeSingle();
+          const { profileData, error } = await fetchUserProfile(user.id, user.email);
 
-          if (userData) {
+          if (profileData) {
             setProfile({
               uid: user.id,
-              email: user.email ?? null,
-              role: userData.role,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              phone: userData.phone || "",
-              photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
-              createdAt: userData.createdAt,
+              email: user.email ?? profileData.email ?? null,
+              role: profileData.role,
+              firstName: profileData.firstName,
+              lastName: profileData.lastName,
+              phone: profileData.phone || "",
+              photoURL: profileData.photoURL || user.user_metadata?.avatar_url || "",
+              createdAt: profileData.createdAt,
             });
           } else if (!error) {
-            // Confirmed: this authenticated user has no whitelisted profile row.
-            deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
+            // User authenticated but no profile row found in public.users.
+            // Sign out safely — NEVER delete the user account automatically.
             await supabase.auth.signOut();
             setUser(null);
             setProfile(null);
             router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
           } else {
-            // Transient fetch error (e.g. the JWT rotating during an MFA upgrade).
-            // Do NOT sign out or delete — that would bounce a valid session to /login.
+            // Transient fetch error — keep session.
             console.error("Profile fetch error (non-fatal), keeping session:", error);
           }
         } catch (error) {

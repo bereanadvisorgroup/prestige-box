@@ -13,6 +13,7 @@ import type * as z from "zod";
 import { createOpportunityPipeline, updateOpportunityPipeline } from "@/actions/opportunity-pipelines";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -35,14 +36,18 @@ export function PipelineForm({ pipeline }: PipelineFormProps) {
           id: pipeline.id,
           name: pipeline.name,
           isActive: pipeline.isActive,
+          hasFlatFee: pipeline.hasFlatFee || false,
+          hasAum: pipeline.hasAum || false,
+          hasLifeInsurance: pipeline.hasLifeInsurance || false,
           stages: pipeline.stages || [],
         }
       : {
           name: "",
           isActive: true,
-          stages: [
-            { name: "", order: 0 },
-          ],
+          hasFlatFee: false,
+          hasAum: false,
+          hasLifeInsurance: false,
+          stages: [{ name: "", order: 0 }],
         },
   });
 
@@ -141,6 +146,59 @@ export function PipelineForm({ pipeline }: PipelineFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-4 rounded-lg border p-4 shadow-sm bg-muted/10">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base font-semibold">Opportunity Value Streams</FormLabel>
+                    <FormDescription>
+                      Select which financial value fields should display when creating opportunities in this pipeline.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="hasFlatFee"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium cursor-pointer">Flat Fee</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hasAum"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium cursor-pointer">AUM</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="hasLifeInsurance"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium cursor-pointer">Life Insurance</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
 
                 <FormField
                   control={form.control}
