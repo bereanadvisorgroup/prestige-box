@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 
 import { OpportunityDialog } from "./opportunity-dialog";
+import { PipelineSummarySection } from "./pipeline-summary-section";
 import { ResultDialog } from "./result-dialog";
 
 // -------------------------------------------------------------
@@ -245,14 +246,23 @@ function ResultDropZone({
 // -------------------------------------------------------------
 // Main Kanban Board Component
 // -------------------------------------------------------------
+
 interface KanbanBoardProps {
   initialOpportunities: any[];
   pipelines: any[];
   clients: any[];
   companies: any[];
+  targetDateHistory?: any[];
 }
 
-export function KanbanBoard({ initialOpportunities, pipelines, clients, companies }: KanbanBoardProps) {
+export function KanbanBoard({
+  initialOpportunities,
+  pipelines,
+  clients,
+  companies,
+  targetDateHistory = [],
+}: KanbanBoardProps) {
+
   const router = useRouter();
   const [opportunities, setOpportunities] = React.useState(initialOpportunities);
   const [selectedPipelineId, setSelectedPipelineId] = React.useState<string>("");
@@ -506,36 +516,12 @@ export function KanbanBoard({ initialOpportunities, pipelines, clients, companie
         </div>
       </DndContext>
 
-      {/* Totals Summary Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 pt-4">
-        <Card className="border bg-gradient-to-br from-card to-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <DollarSign className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Total Active Amount
-              </p>
-              <h2 className="font-extrabold text-2xl tracking-tight mt-1">{formattedTotalActive}</h2>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-gradient-to-br from-card to-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Percent className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Probability Win Amount
-              </p>
-              <h2 className="font-extrabold text-2xl tracking-tight mt-1">{formattedTotalProb}</h2>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Pipeline Summary & Target Date Analytics */}
+      <PipelineSummarySection
+        opportunities={opportunities}
+        pipelines={pipelines}
+        targetDateHistory={targetDateHistory}
+      />
 
       {/* Opportunity Dialog */}
       <OpportunityDialog

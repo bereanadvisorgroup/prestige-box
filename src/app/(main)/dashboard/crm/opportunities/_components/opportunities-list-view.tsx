@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { OpportunityDialog } from "./opportunity-dialog";
+import { PipelineSummarySection } from "./pipeline-summary-section";
 
 interface OpportunitiesListViewProps {
   opportunities: any[];
@@ -21,6 +22,7 @@ interface OpportunitiesListViewProps {
   companies: any[];
   clientId?: string;
   companyId?: string;
+  targetDateHistory?: any[];
 }
 
 export function OpportunitiesListView({
@@ -30,6 +32,7 @@ export function OpportunitiesListView({
   companies,
   clientId,
   companyId,
+  targetDateHistory = [],
 }: OpportunitiesListViewProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedOpp, setSelectedOpp] = React.useState<any | null>(null);
@@ -256,36 +259,12 @@ export function OpportunitiesListView({
         </div>
       )}
 
-      {/* Summary Footer Cards */}
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Card className="border bg-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <DollarSign className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Total Active Opportunity Amount
-              </p>
-              <h2 className="font-extrabold text-xl tracking-tight mt-0.5">{formattedTotalActive}</h2>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-muted/20 shadow-sm">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Percent className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Total Active Probability Win Amount
-              </p>
-              <h2 className="font-extrabold text-xl tracking-tight mt-0.5">{formattedTotalProb}</h2>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary Pipeline Section & Target Date Analytics */}
+      <PipelineSummarySection
+        opportunities={opportunities}
+        pipelines={pipelines}
+        targetDateHistory={targetDateHistory}
+      />
 
       <OpportunityDialog
         open={dialogOpen}

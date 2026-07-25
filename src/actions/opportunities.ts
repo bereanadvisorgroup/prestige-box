@@ -352,6 +352,27 @@ export async function getOpportunityHistory(opportunityId: string) {
 }
 
 /**
+ * Fetch all target date change history entries across opportunities.
+ */
+export async function getOpportunityTargetDateHistory() {
+  try {
+    const { data, error } = await supabaseServer
+      .from("opportunity_history")
+      .select("*")
+      .eq("type", "target_close_date_change")
+      .order("createdAt", { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return { success: true, history: data || [] };
+  } catch (error) {
+    console.error("[getOpportunityTargetDateHistory] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+
+/**
  * Fetch open opportunities for clients assigned to a specific advisor/user.
  */
 export async function getAssignedActiveOpportunitiesForUser(userId: string) {
