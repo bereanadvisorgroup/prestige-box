@@ -262,7 +262,6 @@ export function KanbanBoard({
   companies,
   targetDateHistory = [],
 }: KanbanBoardProps) {
-
   const router = useRouter();
   const [opportunities, setOpportunities] = React.useState(initialOpportunities);
   const [selectedPipelineId, setSelectedPipelineId] = React.useState<string>("");

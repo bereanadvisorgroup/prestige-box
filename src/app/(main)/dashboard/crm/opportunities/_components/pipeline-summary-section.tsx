@@ -74,9 +74,7 @@ export function PipelineSummarySection({
     const totalChangesCount = openOppHistory.length;
     const oppsWithChangesCount = oppsWithChanges.size;
     const oppsSlippagePercent =
-      activeOpportunities.length > 0
-        ? Math.round((oppsWithChangesCount / activeOpportunities.length) * 100)
-        : 0;
+      activeOpportunities.length > 0 ? Math.round((oppsWithChangesCount / activeOpportunities.length) * 100) : 0;
 
     return {
       totalChangesCount,
@@ -123,9 +121,7 @@ export function PipelineSummarySection({
       );
 
       const avgWinPercent =
-        dealCount > 0
-          ? Math.round(pipelineOpps.reduce((sum, o) => sum + (o.probabilityWin || 0), 0) / dealCount)
-          : 0;
+        dealCount > 0 ? Math.round(pipelineOpps.reduce((sum, o) => sum + (o.probabilityWin || 0), 0) / dealCount) : 0;
 
       // Color accents for pipelines
       const colors = [
@@ -186,9 +182,7 @@ export function PipelineSummarySection({
                 Target Date Changes
               </p>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl font-extrabold tracking-tight">
-                  {targetDateMetrics.totalChangesCount}
-                </span>
+                <span className="text-2xl font-extrabold tracking-tight">{targetDateMetrics.totalChangesCount}</span>
                 <span className="text-xs text-muted-foreground">
                   ({targetDateMetrics.oppsWithChangesCount} open deals)
                 </span>
@@ -208,7 +202,10 @@ export function PipelineSummarySection({
               </p>
               <div className="flex items-baseline gap-2 mt-0.5">
                 <span className="text-2xl font-extrabold tracking-tight">
-                  {Number.parseFloat(targetDateMetrics.avgLength) > 0 ? `+${targetDateMetrics.avgLength}` : targetDateMetrics.avgLength} days
+                  {Number.parseFloat(targetDateMetrics.avgLength) > 0
+                    ? `+${targetDateMetrics.avgLength}`
+                    : targetDateMetrics.avgLength}{" "}
+                  days
                 </span>
                 <span className="text-xs text-muted-foreground">per adjustment</span>
               </div>
@@ -256,10 +253,18 @@ export function PipelineSummarySection({
               <TableRow className="hover:bg-transparent">
                 <TableHead className="font-bold text-xs uppercase tracking-wider">Pipeline</TableHead>
                 <TableHead className="text-center font-bold text-xs uppercase tracking-wider">Open Deals</TableHead>
-                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">Total Active Amount</TableHead>
-                <TableHead className="w-[200px] font-bold text-xs uppercase tracking-wider">Pipeline Contribution %</TableHead>
-                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">Weighted Probable Win ($)</TableHead>
-                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">Avg. Win Probability</TableHead>
+                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">
+                  Total Active Amount
+                </TableHead>
+                <TableHead className="w-[200px] font-bold text-xs uppercase tracking-wider">
+                  Pipeline Contribution %
+                </TableHead>
+                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">
+                  Weighted Probable Win ($)
+                </TableHead>
+                <TableHead className="text-right font-bold text-xs uppercase tracking-wider">
+                  Avg. Win Probability
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -282,7 +287,10 @@ export function PipelineSummarySection({
                       </div>
                       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                          className={cn("h-full rounded-full transition-all duration-500", row.colorStyle.split(" ")[0])}
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            row.colorStyle.split(" ")[0],
+                          )}
                           style={{ width: `${Math.min(100, Math.max(0, row.contributionPercent))}%` }}
                         />
                       </div>
@@ -301,12 +309,8 @@ export function PipelineSummarySection({
 
               {/* Total Summary Row */}
               <TableRow className="bg-muted/40 font-bold border-t-2">
-                <TableCell className="text-sm font-extrabold uppercase tracking-wider">
-                  Total Summary
-                </TableCell>
-                <TableCell className="text-center text-sm font-extrabold">
-                  {activeOpportunities.length}
-                </TableCell>
+                <TableCell className="text-sm font-extrabold uppercase tracking-wider">Total Summary</TableCell>
+                <TableCell className="text-center text-sm font-extrabold">{activeOpportunities.length}</TableCell>
                 <TableCell className="text-right text-base font-extrabold text-primary">
                   {currencyFormatter.format(overallActiveAmount)}
                 </TableCell>

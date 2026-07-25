@@ -371,7 +371,6 @@ export async function getOpportunityTargetDateHistory() {
   }
 }
 
-
 /**
  * Fetch open opportunities for clients assigned to a specific advisor/user.
  */
