@@ -298,6 +298,19 @@ erDiagram
         boolean isRead
         timestamp createdAt
     }
+    NOTE_ASSOCIATIONS {
+        uuid id PK
+        uuid noteId FK
+        string entityType "client | company | person"
+        uuid entityId
+        timestamp createdAt
+    }
+    KEYVALS {
+        string id PK
+        string value
+        timestamp createdAt
+        timestamp updatedAt
+    }
     CHANGE_HISTORY {
         uuid id PK
         string entityType "client | company | task | team"
@@ -543,7 +556,7 @@ erDiagram
 
 ### `notes` & sub-tables (`note_associations`, `note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
 
-- reddit-style nested threaded workspace.
+- Reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
 - **Multi-Entity Associations**: Maps notes to CRM entities (`client`, `company`, `person`) via `note_associations`. Allows notes to be linked to and rendered within Client profiles, Company profiles, and Person profiles (`/dashboard/crm/people/[id]`).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.

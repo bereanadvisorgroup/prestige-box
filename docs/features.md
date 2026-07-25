@@ -39,7 +39,7 @@ Reserved for system administrators.
 
 - **User Management**: Creating and disabling user accounts.
 - **Role Assignment**: Managing permissions between `admin` and `client` roles.
-- **Portal Settings**: Global portal-wide configuration parameters.
+- **Portal Settings (`/dashboard/admin/portal-settings`)**: Customization of global portal parameters, uploading corporate/website logos, setting company names, contact email/phone, and managing portal social media links.
 - **Lookup Lists & Dropdowns**: Centralized management of dropdown options, lookup values, and entity lists:
   - **Account Types (`/dashboard/admin/financial-account-types`)**: Configuration values for financial account categories.
   - **Custodians (`/dashboard/admin/custodians`)**: Options for custodians.
