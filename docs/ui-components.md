@@ -18,7 +18,7 @@ The application's component architecture strictly relies on established primitiv
 
 The foundational primitives for accessible, unstyled interactive components (e.g., Modals, Dropdowns, Tabs, Accordions).
 
-- **Combobox & Selection Picker**: Features interactive, searchable comboboxes built on the Base UI (`@base-ui/react`) `Combobox` primitives, custom styled for single/multi-selection tags (e.g., choosing associated grantors, trustees, or law firms in estate planning forms).
+- **Combobox & Selection Picker**: Features interactive, searchable comboboxes built on the Base UI (`@base-ui/react`) `Combobox` primitives, custom styled for single/multi-selection tags (e.g., choosing associated grantors, trustees, or law firms in estate planning forms, and selecting Clients, Companies, or People in note association pickers).
 
 ### 2. Shadcn UI
 
@@ -44,19 +44,21 @@ Used for rendering complex network systems such as the interactive **Referral Tr
 - **Node Configuration**: Node colors map to standard CSS theme variables (e.g. `var(--chart-1)`, `var(--chart-2)`) based on entity type (Client, Company, Person). Radius is computed proportionally to the node's out-degree (the number of direct referrals initiated).
 - **Interactions**: Nodes support drag gestures to modify the force simulation layout, zoom/pan capabilities, and double-click routing to navigate directly to the entity's dashboard profile.
 
-### 6. Rich Text Editor (Tiptap)
+### 6. Rich Text Editor & Threaded Notes Components (Tiptap & Notes Suite)
 
-For notes and task descriptions, the project integrates Tiptap:
+For notes and task descriptions, the project integrates Tiptap alongside specialized notes components:
 
 - **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
 - **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
+- **Multi-Entity Association Picker**: Combobox primitive (`src/components/notes/association-picker.tsx`) allowing users to select and associate notes across Clients, Companies, and individual People.
+- **Person Notes Summary Card (`<PersonNotesCard />`)**: Component (`src/app/(main)/dashboard/crm/people/[id]/_components/person-notes-card.tsx`) rendered on Person profile pages, displaying recent notes associated with the individual with direct creation triggers and navigation to the full Notes tab.
 
 ### 7. Drag & Drop Primitives (@dnd-kit)
 
-Used for task management and pipeline staging columns:
+Used for task management, pipeline staging columns, and team member management:
 
-- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
-- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
+- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns and team member assignment lists (`<DragDropTeamMembers />`).
+- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status or membership assignment to the server with smooth transition animations.
 
 ### 8. Workflow Graph Canvas (@xyflow/react)
 

@@ -251,6 +251,13 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
+    NOTE_ASSOCIATIONS {
+        uuid id PK
+        uuid noteId FK "References notes"
+        string entityType "client | company | person"
+        uuid entityId
+        timestamp createdAt
+    }
     NOTE_ATTACHMENTS {
         uuid id PK
         uuid noteId FK
@@ -291,9 +298,22 @@ erDiagram
         boolean isRead
         timestamp createdAt
     }
+    NOTE_ASSOCIATIONS {
+        uuid id PK
+        uuid noteId FK
+        string entityType "client | company | person"
+        uuid entityId
+        timestamp createdAt
+    }
+    KEYVALS {
+        string id PK
+        string value
+        timestamp createdAt
+        timestamp updatedAt
+    }
     CHANGE_HISTORY {
         uuid id PK
-        string entityType "client | company | task"
+        string entityType "client | company | task | team"
         uuid entityId
         string subType "Profile | Life Insurance | etc"
         string action "created | updated | added | removed | deleted"
@@ -307,6 +327,24 @@ erDiagram
         timestamp changedAt
         timestamp createdAt
     }
+    TEAMS ||--o{ TEAM_MEMBERS : "has members"
+    USERS ||--o{ TEAM_MEMBERS : "belongs to"
+    TEAMS ||--o{ WORKFLOW_TEMPLATES : "owns template"
+    TEAMS ||--o{ WORKFLOW_INSTANCES : "owns instance"
+    
+    TEAMS {
+        uuid id PK
+        string name
+        string description
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    TEAM_MEMBERS {
+        uuid id PK
+        uuid teamId FK "References teams"
+        uuid userId FK "References users"
+        timestamp createdAt
+    }
     
     WORKFLOW_TEMPLATES ||--o{ WORKFLOW_TEMPLATE_STEPS : "contains"
     WORKFLOW_TEMPLATES ||--o{ WORKFLOW_INSTANCES : "instantiates"
@@ -316,12 +354,14 @@ erDiagram
     OPPORTUNITY_PIPELINE_STAGES ||--o{ OPPORTUNITIES : "tracks stage of"
     CLIENTS ||--o{ OPPORTUNITIES : "associated with"
     COMPANIES ||--o{ OPPORTUNITIES : "associated with"
+    USERS ||--o{ OPPORTUNITIES : "assigned advisor"
 
     WORKFLOW_TEMPLATES {
         uuid id PK
         string name
         string description
         uuid createdBy FK "References users"
+        uuid teamId FK "References teams"
         jsonb graph
         timestamp createdAt
         timestamp updatedAt
@@ -353,6 +393,7 @@ erDiagram
         uuid entityId
         timestamp startDate
         uuid createdBy FK
+        uuid teamId FK "References teams"
         timestamp completedAt
         uuid completedBy FK
         timestamp createdAt
@@ -464,7 +505,8 @@ erDiagram
 
 ### `households`
 
-- Groups individuals/people into family/household units to track aggregated net worth, familial links, and shared addresses.
+- Groups individuals/people into family/household units to track aggregated net worth, familial links (Head of Household, Spouse, Children, Dependents, and custom node relationships), and shared addresses.
+- Integrates with financial calculation engines (`src/lib/financial-rollup.ts` and `src/lib/portfolio-rollup.ts`) to compute total household net worth, liquid assets, total debt, debt-to-income ratio, and asset allocation breakdown across all members and projected managed accounts.
 
 ### `clients`
 
@@ -539,27 +581,34 @@ erDiagram
 - **Instances**: Active instances of a workflow assigned to a Client or Company (`workflow_instances`).
 - **Instance Steps**: Snapshot copy of template steps instantiated to track active completion, custom resolved due dates, and completion actors (`workflow_instance_steps`).
 
-### `notes` & sub-tables (`note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
+### `notes` & sub-tables (`note_associations`, `note_attachments`, `note_reactions`, `note_votes`, `note_notifications`)
 
-- reddit-style nested threaded workspace.
+- Reddit-style nested threaded workspace.
 - **Hierarchical Self-References**: Each record points to a parent note (`parentId` for direct replies) and a root thread (`rootId` for depth-independent rendering).
+- **Multi-Entity Associations**: Maps notes to CRM entities (`client`, `company`, `person`) via `note_associations`. Allows notes to be linked to and rendered within Client profiles, Company profiles, and Person profiles (`/dashboard/crm/people/[id]`).
 - **Rich attachments**: Links static binary uploads or dynamic web-crawled/Google Drive links via `note_attachments`.
 - **Community Ratings**: Tracks up/down voting scores through `note_votes` (using the `value` column) and emoji counts in `note_reactions`.
 - **In-App Notifications**: Stores unread mention/reply triggers in `note_notifications` linked to user recipients.
 
+### `teams` & `team_members`
+
+- **`teams`**: Master directory of advisory and servicing teams within the firm (`id`, `name`, `description`, timestamps).
+- **`team_members`**: Junction table tying user accounts (`userId` referencing `users.uid`) to a team (`teamId`). Supports drag-and-drop team member management (`/dashboard/admin/teams`).
+- **Workflow Integration**: Both `workflow_templates` and `workflow_instances` feature an optional `teamId` foreign key referencing `teams.id`, allowing workflow ownership to be assigned at the team level.
+
 ### `change_history`
 
-- System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks).
+- System-wide audit log mapping all mutations across CRM entities (clients, companies, tasks, teams).
 - Logs the semantic sub-type (e.g. Profile, Life Insurance, Valuation), action (`created`, `updated`, `added`, `removed`, `deleted`), specific changed fields with machine and human-readable names (`fieldName`, `fieldLabel`), before/after string snapshots (`oldValue`, `newValue`), a custom text `summary`, and details of the actor (`actorId`, `actorName`) and timestamp.
 
 ### `workflow_templates` & `workflow_template_steps`
 
-- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
+- **Templates**: Tracks workflow designs created by admins. Stores the workflow name, description (Tiptap HTML), creator, team ownership (`teamId`), and the visual flow schema representation (stored as a React Flow JSONB `graph` object detailing node coordinates and edge connections).
 - **Template Steps**: The individual task definitions making up a template. Tracks `sortOrder`, due date calculation rules (`setDueDate`, `dueDays`, and `dueDateBase` as `workflow_start` or `after_last_step`), priority, responsibility (`advisor` or `client`), rich descriptions, attachments, outcomes (JSONB metadata mapping path branches), and editor positions (`positionX`, `positionY`).
 
 ### `workflow_instances` & `workflow_instance_steps`
 
-- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks overall completion dates, creators, and progress.
+- **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks team ownership (`teamId`), overall completion dates, creators, and progress.
 - **Instance Steps**: Snapshot of the template step with completion tracking. Resolves the due date using the cascading completion timeline (`dueDate`), tracks when and who completed the step, and logs `outcomes` and `selectedOutcome` configurations.
 
 ### `teams` & `team_members`
