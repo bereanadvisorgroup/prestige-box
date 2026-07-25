@@ -848,3 +848,73 @@ export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5)
     return { success: false, error: (error as Error).message };
   }
 }
+
+/**
+ * Fetch entity documentUrl and name for a client or company.
+ */
+export async function getEntityDocumentUrl(entityType: WorkflowEntityType, entityId: string) {
+  try {
+    if (entityType === "client") {
+      const { data: client } = await supabaseServer
+        .from("clients")
+        .select("id, documentUrl, personId")
+        .eq("id", entityId)
+        .single();
+
+      let name = "Client";
+      if (client?.personId) {
+        const { data: person } = await supabaseServer
+          .from("people")
+          .select("firstName, lastName")
+          .eq("id", client.personId)
+          .single();
+        if (person) {
+          name = `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "Client";
+        }
+      }
+      return { success: true, documentUrl: client?.documentUrl || null, name };
+    }
+
+    const { data: company } = await supabaseServer
+      .from("companies")
+      .select("id, documentUrl, name")
+      .eq("id", entityId)
+      .single();
+
+    return {
+      success: true,
+      documentUrl: company?.documentUrl || null,
+      name: company?.name || "Company",
+    };
+  } catch (error) {
+    console.error("[getEntityDocumentUrl] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+/**
+ * Update a workflow instance's description.
+ */
+export async function updateWorkflowDescription(workflowId: string, description: string) {
+  try {
+    await verifyStaff();
+
+    const { data: instance, error } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .update({ description, updatedAt: new Date().toISOString() })
+      .eq("id", workflowId)
+      .select("entityType, entityId")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (instance) {
+      revalidateWorkflowPaths(instance.entityType as WorkflowEntityType, instance.entityId, workflowId);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("[updateWorkflowDescription] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}

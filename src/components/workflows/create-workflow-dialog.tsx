@@ -56,7 +56,8 @@ export function CreateWorkflowDialog({ isOpen, onClose, entityType, entityId }: 
       if (result.success && result.id) {
         toast.success(`Workflow "${template.name}" created`);
         onClose();
-        router.refresh();
+        const segment = entityType === "client" ? "clients" : "companies";
+        router.push(`/dashboard/crm/${segment}/${entityId}/internal/workflows/${result.id}`);
       } else {
         toast.error(result.error || "Failed to create workflow");
       }
