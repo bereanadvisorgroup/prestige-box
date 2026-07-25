@@ -44,26 +44,66 @@ Used for rendering complex network systems such as the interactive **Referral Tr
 - **Node Configuration**: Node colors map to standard CSS theme variables (e.g. `var(--chart-1)`, `var(--chart-2)`) based on entity type (Client, Company, Person). Radius is computed proportionally to the node's out-degree (the number of direct referrals initiated).
 - **Interactions**: Nodes support drag gestures to modify the force simulation layout, zoom/pan capabilities, and double-click routing to navigate directly to the entity's dashboard profile.
 
-### 6. Rich Text Editor (Tiptap)
+### 6. Rich Text Editor & Threaded Notes Components (Tiptap & Notes Suite)
 
-For notes and task descriptions, the project integrates Tiptap:
+For notes and task descriptions, the project integrates Tiptap alongside specialized notes components:
 
 - **Rich Composing**: Supports core extensions (`StarterKit`, `Placeholder`, `Link`, and `Mention`).
 - **Interactive Mentions**: Provides an interactive suggestion popover using Radix/Base UI primitives for autocomplete user tagging (`@username`).
+- **Multi-Entity Association Picker**: Combobox primitive (`src/components/notes/association-picker.tsx`) allowing users to select and associate notes across Clients, Companies, and individual People.
+- **Person Notes Summary Card (`<PersonNotesCard />`)**: Component (`src/app/(main)/dashboard/crm/people/[id]/_components/person-notes-card.tsx`) rendered on Person profile pages, displaying recent notes associated with the individual with direct creation triggers and navigation to the full Notes tab.
 
 ### 7. Drag & Drop Primitives (@dnd-kit)
 
-Used for task management and pipeline staging columns:
+Used for task management, pipeline staging columns, and team member management:
 
-- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
-- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
+- **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns and team member assignment lists (`<DragDropTeamMembers />`).
+- **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status or membership assignment to the server with smooth transition animations.
 
-### 7. Workflow Graph Canvas (@xyflow/react)
+### 8. Workflow Graph Canvas (@xyflow/react)
 
 Used for the admin visual template builder to construct, view, and modify workflow configurations.
 
 - **Node-Based Editor**: Renders workflow steps as node cards on an infinite grid, supporting zoom, pan, and custom layout arrangements.
 - **Outcomes & Edges**: Renders connection lines between nodes representing outcomes that lead to the next step, allowing branching paths to be designed visually.
+
+### 9. Family Tree Visualizer (`<FamilyTree />`)
+
+Used in Household management views (`src/app/(main)/dashboard/crm/households/_components/family-tree.tsx`):
+
+- **Hierarchical Layout**: Renders interactive familial tree nodes displaying head of household, spouse, children, dependents, and extended relationships.
+- **Node Management**: Facilitates direct editing, member role assignment, and navigation to member profile details.
+
+### 10. Household Net Worth Chart (`<HouseholdNetWorthChart />`)
+
+Used in Household overview screens (`src/app/(main)/dashboard/crm/households/[id]/_components/household-net-worth-chart.tsx`):
+
+- **Recharts Integration**: Plots historical household net worth growth timelines alongside asset class breakdown distributions (Equities, Fixed Income, Real Estate, Cash, Managed Accounts).
+
+### 11. Notebook Launcher Buttons (`<NotebookButton />` & `<CompanyNotebookButton />`)
+
+Used on Client and Company internal workspace pages (`src/app/(main)/dashboard/crm/clients/[id]/_components/notebook-button.tsx` & `src/app/(main)/dashboard/crm/companies/[id]/_components/company-notebook-button.tsx`):
+
+- **OneNote Integration**: Provides direct single-click navigation launcher to external OneNote notebooks (`notebook_url`) stored on client and company profiles.
+
+### 12. Assigned Opportunities Overview Card (`<AssignedOpportunitiesCard />`)
+
+Used on the primary CRM Overview dashboard (`src/components/opportunities/assigned-opportunities-card.tsx`):
+
+- **Personal Pipeline Deals Widget**: Renders summary metrics and active pipeline deals assigned directly to the authenticated advisor (`assignedUserId`), enabling quick status updates and navigation.
+
+### 13. Opportunity Management & AUM Dialogs (`<OpportunityDialog />` & `<AumDialog />`)
+
+Used in CRM Opportunities and Admin Pipeline Settings:
+
+- **AUM Configuration Modal (`<AumDialog />`)**: Admin modal dialog (`src/app/(main)/dashboard/admin/opportunities/_components/aum-dialog.tsx`) to set default AUM percentage ratios per pipeline.
+- **Opportunity Dialog (`<OpportunityDialog />`)**: Comprehensive deal modal (`src/app/(main)/dashboard/crm/opportunities/_components/opportunity-dialog.tsx`) supporting revenue calculation toggles (AUM, Annual Fee, One-Time Fee), explicit vs derived calculation modes, advisor assignee selection, and real-time fee calculation.
+
+### 14. Contextual Sidebar Navigation
+
+Implemented in `src/app/(main)/dashboard/_components/sidebar/app-sidebar.tsx`:
+
+- **Dynamic Context Switching**: Selecting a specific Client (`/clients/[id]`), Company (`/companies/[id]`), or Household (`/households/[id]`) seamlessly updates the primary sidebar menu to show entity-specific sub-navigation (Overview, Family/Cap Table, Assets, Liabilities, Insurance, Managed Accounts, Servicing Firms, and Internal Workspace).
 
 ## Strict Data Tables Standard
 

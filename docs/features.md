@@ -51,20 +51,21 @@ Reserved for system administrators.
   - **Long Term Care (`/dashboard/admin/long-term-care-insurance`)**
   - **Money Managers (`/dashboard/admin/money-managers`)**
   - **Record Keepers (`/dashboard/admin/record-keepers`)**
-- **Workflow Templates (`/dashboard/admin/workflows`)**: Flow designer and form builder to define visual multi-step workflow graphs with custom branches and outcomes.
-- **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages.
+- **Workflow Templates (`/dashboard/admin/workflows`)**: Flow designer and form builder to define visual multi-step workflow graphs with custom branches, outcomes, and optional advisory team ownership (`teamId`).
+- **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages, plus set default AUM percentage ratios (`defaultAumPerc`) via `AumDialog`.
+- **Teams Management (`/dashboard/admin/teams`)**: Central management for advisory and servicing teams. Includes team creation (`/dashboard/admin/teams/new`), detail/editing views (`/dashboard/admin/teams/[id]`), and an interactive drag-and-drop member assignment interface (`DragDropTeamMembers`).
 
 ### 2. CRM Module (`/dashboard/crm`)
 
 The core relationship management suite.
 
 - **General CRM Dashboards**:
-  - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
+  - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards and the `<AssignedOpportunitiesCard />` showing personal active deals assigned to the advisor.
   - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client, company, and person notes, replies, mentions, and notifications.
   - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
   - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban and list view for deals, onboarding, and policy transitions.
   - **Workflows Dashboard (`/dashboard/crm/workflows`)**: Central hub listing active and completed workflow instances assigned to clients or companies.
-  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and tabbed profile navigation including personal info and associated internal notes (`PersonNotesCard`).
+  - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and detailed profile navigation (`/dashboard/crm/people/[id]`). Includes contact info, addresses, client linkage, professional firm associations, a `PersonNotesCard` summary widget, and a dedicated Notes tab (`<NotesView scope={{ personId }} />`).
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
   - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
   - **Clients (`/dashboard/crm/clients`)**: Advisor-focused portfolio view of all active clients.
@@ -93,6 +94,7 @@ The core relationship management suite.
     - Money Managers (`/dashboard/crm/clients/[id]/money-managers`): Manage accounts linked to Money Managers, including account numbers, balances, inception dates, custodians, and primary/contingent beneficiaries. Balances automatically project as virtual assets contributing to Net Worth.
     - Record Keepers (`/dashboard/crm/clients/[id]/record-keepers`): Manage record keeper accounts, account numbers, and balances. Balances automatically project as virtual assets contributing to Net Worth.
   - **Internal Workspace (`/dashboard/crm/clients/[id]/internal`)**: Private advisor notes, tasks, workflows, and audit logs:
+    - **Notebook Button (`<NotebookButton />`)**: Directly launches external OneNote or client notebook link (`notebookUrl`).
     - **Internal Notes (`/dashboard/crm/clients/[id]/internal/notes`)**: Collaborative client logs.
     - **Internal Tasks (`/dashboard/crm/clients/[id]/internal/tasks`)**: Tasks associated with this client.
     - **Internal Opportunities (`/dashboard/crm/clients/[id]/internal/opportunities`)**: Sales and onboarding opportunities linked to this client.
@@ -104,14 +106,25 @@ The core relationship management suite.
   - **Payment Accounts & Documents Tab**: Managed tab for company-specific premium payment accounts, and documents folders (Life, Disability, LTC) with file upload capability.
   - **Professional Services**: Link and manage associated service firms specific to that company (Accounting, Actuarial, Banks, Law, Property & Casualty).
   - **Vendors**: Manage company-linked vendors (Life, Disability, LTC insurance companies, Money Managers, Record Keepers).
-  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notes (`/notes`), Company Tasks (`/tasks`), Company Opportunities (`/opportunities`), and Audit History logs (`/history`).
+  - **Internal Workspace (`/dashboard/crm/companies/[id]/internal`)**: Private workspace containing Company Notebook link (`<CompanyNotebookButton />`), Company Notes (`/notes`), Company Tasks (`/tasks`), Company Opportunities (`/opportunities`), and Audit History logs (`/history`).
+
+- **Household Profile & Contextual Navigation**: Selecting a household dynamically switches the sidebar to a tailored household-centric navigation menu containing:
+  - **Overview & Profile (`/dashboard/crm/households/[id]/overview`)**: Dynamic header portal (`household-header-portal.tsx`), aggregate Net Worth growth timeline (`household-net-worth-chart.tsx`), portfolio rollup statistics (`portfolio-rollup.ts`), and key household member summary cards.
+  - **Family & Tree Tab (`/dashboard/crm/households/[id]/family`)**: Interactive visual family tree (`family-tree.tsx`) managing head of household, spouse, children, dependents, and custom relational links.
+  - **Assets & Liabilities (`/dashboard/crm/households/[id]/assets`, `/dashboard/crm/households/[id]/liabilities`)**: Aggregated wealth, real estate, liquid accounts, mortgages, and debts across all household members.
+  - **Estate Planning (`/dashboard/crm/households/[id]/estate-planning`)**: Repository for household Wills, Revocable Trusts, and Irrevocable Trusts with grantor/trustee pickers and legal firm links.
+  - **Insurance Policies**: Sub-routes for Life Insurance (`/life-insurance`), Disability Insurance (`/disability-insurance`), Long-Term Care (`/long-term-care`), and Property & Casualty (`/property-and-casualty`).
+  - **Managed Accounts & Institutions**: Sub-routes for Banks (`/banks`), Money Managers (`/money-managers`), and Record Keepers (`/record-keepers`), with balances automatically projecting into household portfolio rollups.
+  - **Professional Associations**: Servicing firm links for Law (`/law-firms`), Accounting (`/accounting-firms`), and Actuarial (`/actuarial-firms`).
+  - **Employment (`/dashboard/crm/households/[id]/employment`)**: Tracks employment details, employers, and compensation for household members.
+  - **Internal Workspace (`/dashboard/crm/households/[id]/internal`)**: Private advisor workspace featuring sub-tabs for Household Notes (`/notes`), Household Tasks (`/tasks`), Household Opportunities (`/opportunities`), Household Workflows (`/workflows`), and Audit History (`/history`).
 
 ### 3. Threaded Notes System (`/dashboard/crm/notes`)
 
-A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client, company, and individual person matters.
+A Reddit-style threaded collaboration space for admins and advisors to share knowledge and discuss client, company, and individual/person matters.
 
 - **Hierarchical Threads**: Supports multi-depth notes (up to 2 levels: note, reply, sub-reply) with denormalized thread retrieval.
-- **Multi-Entity Associations**: Notes can be associated directly with Clients, Companies, or individual People (`person`). Notes tagged with a Person appear automatically on that profile's internal notes tab.
+- **Multi-Entity Associations**: Notes can be linked to Clients, Companies, or individual People profiles (`personId`), supporting standalone or multi-entity contextual tracking across the application.
 - **Rich Context**: Supports Tiptap WYSIWYG editor for body composing, custom emoji picking, files and Google Drive link previews, upvoting/downvoting (aggregating scores), and user mentions (`@username`).
 - **Notification Inbox**: Triggers real-time and persistent alerts (mention, reply) in the user's notification bell.
 
