@@ -52,7 +52,7 @@ Reserved for system administrators.
   - **Money Managers (`/dashboard/admin/money-managers`)**
   - **Record Keepers (`/dashboard/admin/record-keepers`)**
 - **Workflow Templates (`/dashboard/admin/workflows`)**: Flow designer and form builder to define visual multi-step workflow graphs with custom branches and outcomes.
-- **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages.
+- **Opportunity Pipelines (`/dashboard/admin/opportunities`)**: Configuration settings to create, reorder, or disable pipelines and pipeline stages, configure default AUM fee percentages via the AUM dialog (`aum-dialog.tsx`), and customize stage parameters.
 
 ### 2. CRM Module (`/dashboard/crm`)
 
@@ -60,13 +60,13 @@ The core relationship management suite.
 
 - **General CRM Dashboards**:
   - **Overview Dashboard (`/dashboard/crm`)**: Summary stats of total profiles, households, clients, and monthly revenue projection, with quick navigation cards.
-  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications.
-  - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows.
-  - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban and list view for deals, onboarding, and policy transitions.
+  - **Notes Dashboard (`/dashboard/crm/notes`)**: Global registry of threaded client/company notes, replies, mentions, and notifications. Supports Google Drive document preview and attachment linking.
+  - **Tasks Dashboard (`/dashboard/crm/tasks`)**: Global Kanban board and spreadsheet list for managing all manual and auto-generated workflows, featuring local file upload and Google Drive picker integration (`GDrivePickerDialog`).
+  - **Opportunities Dashboard (`/dashboard/crm/opportunities`)**: Sales pipeline Kanban, tabular summary analytics section, and list view for deals, onboarding, and policy transitions.
   - **Workflows Dashboard (`/dashboard/crm/workflows`)**: Central hub listing active and completed workflow instances assigned to clients or companies.
   - **People (`/dashboard/crm/people`)**: Central directory of all individual profiles (clients, prospects, family members, professional contacts) with search, creation, and profile navigation.
   - **Addresses (`/dashboard/crm/addresses`)**: Manages physical address records linked to people, households, companies, and assets.
-  - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth and familial links.
+  - **Households (`/dashboard/crm/households`)**: Groups individuals into family/household units to track aggregate net worth (including interactive Household Net Worth timeline chart) and familial links.
   - **Clients (`/dashboard/crm/clients`)**: Advisor-focused portfolio view of all active clients.
   - **Companies (`/dashboard/crm/companies`)**: Tracks general corporate entities, employers, and client business associations.
   - **Policies (`/dashboard/crm/policies`)**: Central registry for all Life, Disability, and Long-Term Care insurance policies, detailing premiums, effective dates, and payment schedules.
@@ -119,6 +119,7 @@ A Reddit-style threaded collaboration space for admins and advisors to share kno
 A workflows board and spreadsheet view to track advisory deliverables and automate standard client events.
 
 - **Interactive Kanban**: Task Board (`/dashboard/crm/tasks`) organizes tasks into status columns (New, In Process, Waiting Input, Complete) with drag-and-drop triggers.
+- **Google Drive File Linking**: Integrates Google Drive file picker (`GDrivePickerDialog`) allowing users to attach cloud documents directly to tasks.
 - **Client & Company Links**: Tasks can be linked to multiple CRM entities for direct contextual lookup.
 - **Auto-Generation Engine**: Performs daily idempotent background sync (via `/api/cron/sync-tasks`) to auto-create and renew recurring tasks:
   - **Birthdays**: Tripped by a client profile's date of birth.
@@ -128,11 +129,17 @@ A workflows board and spreadsheet view to track advisory deliverables and automa
 
 ### 5. CRM Opportunities & Pipelines (`/dashboard/crm/opportunities`)
 
-An interactive deal tracking board and table view to manage sales pipelines, client onboarding cycles, and policy transitions.
+An interactive deal tracking board, pipeline summary analytics, and table view to manage sales pipelines, client onboarding cycles, and policy transitions.
 
+- **Pipeline Summary Section (`pipeline-summary-section.tsx`)**: High-level analytical overview rendered at the top of the Opportunities page. Displays:
+  - **Contribution Analytics**: Percentage of total pipeline volume contributed by each stage.
+  - **Average Win Probabilities**: Aggregated win probability calculation per pipeline stage.
+  - **Target Close Date Velocity**: Tracks target close date shifts, delays, and historical extension velocity (`opportunityHistory`).
+  - **Stage Totals & Weighted Value**: Calculates gross and weighted financial value per stage.
 - **Interactive Kanban Stage-View**: Visualizes all active deals/opportunities categorized into columns matching their pipeline stage. Drag-and-drop actions automatically trigger stage transitions.
-- **Pipeline and Stage Settings**: Admins can customize pipelines and order stages under the Admin Panel (`/dashboard/admin/opportunities`).
-- **Associations**: Opportunities are mapped directly to either a Client or a Company.
+- **Pipeline and Stage Settings**: Admins can customize pipelines, configure revenue parameters (Flat Fee, AUM %, Life Insurance), and order stages under the Admin Panel (`/dashboard/admin/opportunities`).
+- **Assigned Opportunities Widget (`assigned-opportunities-card.tsx`)**: Displays an advisor's assigned active deals across CRM pages.
+- **Associations & Drive Links**: Opportunities are mapped directly to a Client or Company and support attaching files and Google Drive links.
 - **Outcome Statuses**: Track won/lost status with win probabilities, estimated amounts, close dates, and WYSIWYG notes detailing the outcome.
 
 ### 6. Finance Module (`/dashboard/finance`)

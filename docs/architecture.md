@@ -69,6 +69,7 @@ Instead of using the Supabase Javascript Client to execute database queries dire
 ### Storage
 
 - **File & Asset Storage**: Logos, avatars, and documents are stored securely using Supabase Storage. Brand assets (such as Money Manager, Record Keeper, and corporate logos) are hosted in the `avatars` bucket, while sensitive client policy and estate planning files are uploaded to secure private storage folders.
+- **Google Drive Integration**: Direct integration with Google Drive via backend Server Actions (`src/actions/google-drive.ts`) and modal UI picker primitives (`src/components/tasks/gdrive-picker-dialog.tsx`). Users can search, view details, select, and link external Google Drive documents directly to Tasks, Workflow steps, Opportunities, and Threaded Notes without storing binary file duplicates.
 
 ## State Management
 
@@ -108,6 +109,14 @@ To support advisor insights and client financial planning, the application track
 - **Virtual Asset Integration**: To keep client Net Worth data complete and accurate, money manager accounts and record keeper accounts managed under a client are automatically projected as read-only virtual assets. Their values contribute to the chronological Net Worth calculation and are rendered dynamically alongside physical assets.
 - **Chronological Aggregation**: Server actions construct a unified chronological net worth timeline for each client by merging overlapping asset values on shared dates.
 - **Rendering**: Recharts is used on the client-side to render an interactive, beautiful area chart showing net worth growth and individual asset category distributions over time.
+
+## Opportunity Pipeline Analytics & Financial Modeling
+
+The CRM Opportunities module provides real-time pipeline aggregation and deal velocity analytics:
+
+- **Pipeline Summary Engine**: Server actions and React components (`src/components/crm/opportunities/_components/pipeline-summary-section.tsx`) aggregate raw opportunity records into multi-axis analytical summaries.
+- **Stage Metrics**: Computes gross pipeline value, weighted pipeline value (factoring probability win percentages), stage contribution percentage of total volume, average stage win probabilities, and target close date change velocity (tracking date extensions and shifts).
+- **Default Fee Configurations**: System administrators can configure default AUM fee percentages and stage parameters under `/dashboard/admin/opportunities`, enabling instant revenue projections across active deal stages.
 
 ## Deployment & CI/CD Pipelines
 

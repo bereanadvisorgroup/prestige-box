@@ -379,10 +379,29 @@ erDiagram
         timestamp createdAt
         timestamp updatedAt
     }
+    USERS ||--o{ TEAM_MEMBERS : "belongs to"
+    TEAMS ||--o{ TEAM_MEMBERS : "has members"
+    OPPORTUNITIES ||--o{ OPPORTUNITY_HISTORY : "tracks date/status changes in"
+
+    TEAMS {
+        uuid id PK
+        string name
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    TEAM_MEMBERS {
+        uuid id PK
+        uuid teamId FK
+        uuid userId FK
+        timestamp createdAt
+    }
     OPPORTUNITY_PIPELINES {
         uuid id PK
         string name
         boolean isActive
+        boolean hasFlatFee
+        boolean hasAum
+        boolean hasLifeInsurance
         timestamp createdAt
         timestamp updatedAt
     }
@@ -399,7 +418,12 @@ erDiagram
         uuid clientId FK
         uuid companyId FK
         numeric amount
+        numeric flatFee
+        numeric aumAmount
+        numeric aumPercentage
+        numeric lifeInsurance
         timestamp targetCloseDate
+        timestamp closeDate
         uuid pipelineId FK
         uuid stageId FK
         integer probabilityWin
@@ -409,6 +433,17 @@ erDiagram
         uuid updatedById FK
         timestamp createdAt
         timestamp updatedAt
+    }
+    OPPORTUNITY_HISTORY {
+        uuid id PK
+        uuid opportunityId FK
+        string type "created | target_close_date_change"
+        string oldValue
+        string newValue
+        string reason
+        uuid actorId FK
+        string actorName
+        timestamp createdAt
     }
 ```
 
@@ -527,16 +562,20 @@ erDiagram
 - **Instances**: Snapshot copies of a workflow template instantiated and assigned to a client or company. Tracks overall completion dates, creators, and progress.
 - **Instance Steps**: Snapshot of the template step with completion tracking. Resolves the due date using the cascading completion timeline (`dueDate`), tracks when and who completed the step, and logs `outcomes` and `selectedOutcome` configurations.
 
+### `teams` & `team_members`
+
+- **Teams**: Teams of users/advisors for group task assignment and permissions (`teams`).
+- **Team Members**: Junction table mapping users (`userId`) to teams (`teamId`).
+
 ### `opportunity_pipelines` & `opportunity_pipeline_stages`
 
-- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle).
-- **Pipeline Stages**: The stages making up a pipeline, ordered by `order`.
+- **Pipelines**: Tracks opportunity pipelines (e.g., onboarding, sales lifecycle). Configures boolean flags for custom revenue types (`hasFlatFee`, `hasAum`, `hasLifeInsurance`).
+- **Pipeline Stages**: The ordered stages making up a pipeline, defined by `order`.
 
-### `opportunities`
+### `opportunities` & `opportunity_history`
 
-- Represents a sales, onboarding, or policy lifecycle deal. Maps to a client or company.
-- Tracks `amount` (numeric), `targetCloseDate`, `probabilityWin` (integer), `notes`, `resultStatus` (`TRASH`, `WON`, `LOST`), and `resultNotes`.
-- Enforces database constraints pointing to the active pipeline (`pipelineId`) and stage (`stageId`).
+- **Opportunities**: Represents a sales, onboarding, or policy lifecycle deal mapped to a client or company. Tracks overall `amount`, `flatFee`, `aumAmount`, `aumPercentage`, `lifeInsurance`, `targetCloseDate`, `closeDate`, `probabilityWin` (0-100 integer), `notes` (WYSIWYG), `resultStatus` (`TRASH`, `WON`, `LOST`), `resultNotes`, and links to the active pipeline (`pipelineId`) and stage (`stageId`).
+- **Opportunity History**: Audit log table (`opportunity_history`) tracking date changes, stage updates, creation events, `oldValue`, `newValue`, `reason`, and `actorName`/`actorId`.
 
 ---
 

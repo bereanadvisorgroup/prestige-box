@@ -10,6 +10,8 @@ Prestige Box is a comprehensive, modern web application designed to manage compl
 - **Backend & Auth**: Supabase (PostgreSQL)
 - **Strict MFA & Passkeys**: Multi-Factor Authentication (TOTP) and WebAuthn Passkeys integrated via Supabase Auth, strictly enforced at the Next.js Proxy layer and PostgreSQL Row Level Security (RLS) policies for financial data (with test bypass capabilities).
 - **Workflows & Templates**: Reusable template definitions with custom steps, responsibilities (advisor vs. client), deadlines, priority, and attachments, which can be instantiated and tracked for specific client or company portfolios.
+- **Google Drive Integration**: Direct Google Drive file searching, picker modal dialog, and attachment linking for Tasks, Workflows, Opportunities, and Threaded Notes.
+- **Opportunity Pipeline Analytics**: Comprehensive pipeline summary analytics section featuring pipeline contribution percentages, average win probabilities, target close date change velocity, stage value weighting, and default AUM fee configs.
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand (Client) & TanStack React Query (Server)

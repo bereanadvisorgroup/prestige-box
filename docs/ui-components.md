@@ -58,12 +58,26 @@ Used for task management and pipeline staging columns:
 - **Sortable & Draggable Elements**: Implements `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/modifiers` for Kanban columns.
 - **Micro-Interactions**: Provides immediate drag feedback and auto-saves the updated status to the server with transition animations.
 
-### 7. Workflow Graph Canvas (@xyflow/react)
+### 8. Workflow Graph Canvas (@xyflow/react)
 
 Used for the admin visual template builder to construct, view, and modify workflow configurations.
 
 - **Node-Based Editor**: Renders workflow steps as node cards on an infinite grid, supporting zoom, pan, and custom layout arrangements.
 - **Outcomes & Edges**: Renders connection lines between nodes representing outcomes that lead to the next step, allowing branching paths to be designed visually.
+
+### 9. Google Drive Picker Dialog (`GDrivePickerDialog`)
+
+A modal asset selector component (`src/components/tasks/gdrive-picker-dialog.tsx`) enabling real-time Google Drive search and attachment linking:
+
+- **Search & Filter**: Interactive search input querying Google Drive files with live results rendering file icon, title, mimeType, and last modified date.
+- **Selection State**: Single or multi-file selection returning standardized attachment objects (`fileId`, `fileName`, `url`, `iconLink`, `mimeType`, `linkProvider: "google-drive"`).
+
+### 10. Pipeline Summary Section (`PipelineSummarySection`)
+
+A modern summary metrics component (`src/components/crm/opportunities/_components/pipeline-summary-section.tsx`) for the Opportunities page:
+
+- **Tabular Breakdown**: Displays stage-by-stage totals, weighted revenue values, pipeline contribution percentages, average win probabilities, and close date shift velocity metrics.
+- **Visual Indicators**: Styled progress bars and status badges indicating stage distribution across active sales and onboarding channels.
 
 ## Strict Data Tables Standard
 
