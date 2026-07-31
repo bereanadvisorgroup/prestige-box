@@ -32,6 +32,9 @@ export default async function HouseholdFamilyPage({ params }: HouseholdFamilyPag
     isPrimaryHousehold: boolean;
     includeInFinancialRollup: boolean;
     familyRelationship?: string;
+    parentage?: "BOTH" | "HEAD" | "SPOUSE";
+    relatedTo?: "HEAD" | "SPOUSE";
+    tags?: string[];
   }>;
 
   return (

@@ -77,8 +77,40 @@ export const PersonSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const HouseholdMemberRole = z.enum(["HEAD", "SPOUSE", "PARTNER", "DEPENDENT", "TRUSTEE", "MEMBER"]);
+export const HouseholdMemberRole = z.enum([
+  "HEAD",
+  "SPOUSE",
+  "PARTNER",
+  "SON",
+  "DAUGHTER",
+  "GRANDSON",
+  "GRANDDAUGHTER",
+  "GREAT_GRANDSON",
+  "GREAT_GRANDDAUGHTER",
+  "COUSIN",
+  "UNCLE",
+  "AUNT",
+  "NEPHEW",
+  "NIECE",
+  "BROTHER",
+  "SISTER",
+  "FATHER",
+  "MOTHER",
+  "GRANDFATHER",
+  "GRANDMOTHER",
+  "IN_LAW",
+  "OTHER",
+  "DEPENDENT",
+  "TRUSTEE",
+  "MEMBER",
+]);
 export type HouseholdMemberRole = z.infer<typeof HouseholdMemberRole>;
+
+export const HouseholdMemberParentageSchema = z.enum(["BOTH", "HEAD", "SPOUSE"]);
+export type HouseholdMemberParentage = z.infer<typeof HouseholdMemberParentageSchema>;
+
+export const HouseholdMemberRelatedToSchema = z.enum(["HEAD", "SPOUSE"]);
+export type HouseholdMemberRelatedTo = z.infer<typeof HouseholdMemberRelatedToSchema>;
 
 export const HouseholdMemberSchema = z.object({
   id: z.string().optional(),
@@ -88,6 +120,9 @@ export const HouseholdMemberSchema = z.object({
   isPrimaryHousehold: z.boolean().default(false),
   includeInFinancialRollup: z.boolean().default(true),
   familyRelationship: z.string().optional(),
+  parentage: HouseholdMemberParentageSchema.optional(),
+  relatedTo: HouseholdMemberRelatedToSchema.optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export const HouseholdSchema = z.object({

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { supabaseServer } from "@/lib/supabase.server";
-import { type Household, HouseholdSchema, type Person } from "@/types/crm";
+import { type Household, type HouseholdMember, HouseholdSchema, type Person } from "@/types/crm";
 
 const TABLE = "households";
 
@@ -16,9 +16,9 @@ export async function getHouseholds() {
     // Collect all member client/person IDs to resolve names
     const allMemberIds: string[] = [];
     for (const h of households || []) {
-      const memberList = h.members || h.memberIds || [];
+      const memberList = (h.members || h.memberIds || []) as HouseholdMember[];
       for (const m of memberList) {
-        const id = m.clientId || m.personId;
+        const id = m.clientId || (m as unknown as { personId?: string }).personId;
         if (id) allMemberIds.push(id);
       }
     }
@@ -60,13 +60,17 @@ export async function getHouseholds() {
     }
 
     const enrichedHouseholds = (households || []).map((h) => {
-      const memberList = (h.members || h.memberIds || []) as any[];
-      const head = memberList.find((m) => m.role === "HEAD" || m.role === "home_owner");
-      const spouse = memberList.find((m) => m.role === "SPOUSE" || m.role === "PARTNER");
-      const dependents = memberList.filter((m) => m.role === "DEPENDENT" || m.role === "dependent");
+      const memberList = (h.members || h.memberIds || []) as HouseholdMember[];
+      const head = memberList.find((m) => m.role === "HEAD" || (m.role as string) === "home_owner");
+      const spouse = memberList.find((m) => m.role === "SPOUSE" || (m.role as string) === "PARTNER");
+      const dependents = memberList.filter((m) => m.role === "DEPENDENT" || (m.role as string) === "dependent");
 
-      const headName = head ? personNameMap[head.clientId || head.personId] : undefined;
-      const spouseName = spouse ? personNameMap[spouse.clientId || spouse.personId] : undefined;
+      const headName = head
+        ? personNameMap[head.clientId || (head as unknown as { personId?: string }).personId || ""]
+        : undefined;
+      const spouseName = spouse
+        ? personNameMap[spouse.clientId || (spouse as unknown as { personId?: string }).personId || ""]
+        : undefined;
 
       let headAndSpouse = "—";
       if (headName && spouseName) {
@@ -123,6 +127,9 @@ export async function getHousehold(id: string) {
       isPrimaryHousehold: boolean;
       includeInFinancialRollup: boolean;
       familyRelationship?: string;
+      parentage?: "BOTH" | "HEAD" | "SPOUSE";
+      relatedTo?: "HEAD" | "SPOUSE";
+      tags?: string[];
     }[] = [];
     const memberList = household.members || household.memberIds || [];
     if (memberList.length > 0) {
@@ -152,8 +159,8 @@ export async function getHousehold(id: string) {
           {} as Record<string, Person | null>,
         );
 
-        members = memberList.map((m: any) => {
-          const cId = m.clientId || m.personId;
+        members = memberList.map((m: HouseholdMember & { personId?: string }) => {
+          const cId = m.clientId || m.personId || "";
           const person = clientToPersonMap[cId] || peopleMap[cId] || null;
           return {
             person,
@@ -162,12 +169,20 @@ export async function getHousehold(id: string) {
             isPrimaryHousehold: m.isPrimaryHousehold ?? false,
             includeInFinancialRollup: m.includeInFinancialRollup ?? true,
             familyRelationship: m.familyRelationship,
+            parentage: m.parentage,
+            relatedTo: m.relatedTo,
+            tags: m.tags || (m.role === "TRUSTEE" ? ["Trustee"] : []),
           };
         });
       }
     }
 
-    return { success: true, household: household as Household, address, members };
+    const enrichedHousehold = {
+      ...household,
+      members: memberList,
+    };
+
+    return { success: true, household: enrichedHousehold as Household, address, members };
   } catch (error) {
     console.error(`[getHousehold] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -181,7 +196,16 @@ export async function createHousehold(data: Partial<Household>) {
       createdAt: new Date().toISOString(),
     });
 
-    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
+    const fallbackMembers = (data as unknown as { memberIds?: HouseholdMember[] }).memberIds || [];
+    const dbPayload = {
+      name: validated.name,
+      addressId: validated.addressId || null,
+      memberIds: validated.members || fallbackMembers,
+      createdAt: validated.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const { data: inserted, error } = await supabaseServer.from(TABLE).insert(dbPayload).select().single();
 
     if (error) throw new Error((error as { message: string }).message);
 
@@ -196,12 +220,21 @@ export async function createHousehold(data: Partial<Household>) {
 
 export async function updateHousehold(id: string, data: Partial<Household>) {
   try {
-    const updateData = {
-      ...data,
+    const dbPayload: Record<string, unknown> = {
       updatedAt: new Date().toISOString(),
     };
 
-    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+    if (data.name !== undefined) dbPayload.name = data.name;
+    if (data.addressId !== undefined) dbPayload.addressId = data.addressId || null;
+
+    const rawMemberIds = (data as unknown as { memberIds?: HouseholdMember[] }).memberIds;
+    if (data.members !== undefined) {
+      dbPayload.memberIds = data.members;
+    } else if (rawMemberIds !== undefined) {
+      dbPayload.memberIds = rawMemberIds;
+    }
+
+    const { error } = await supabaseServer.from(TABLE).update(dbPayload).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
 
