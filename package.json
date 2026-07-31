@@ -7,11 +7,6 @@
     "node": ">=24"
   },
   "private": true,
-  "pnpm": {
-    "overrides": {
-      "postcss": "^8.5.25"
-    }
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
