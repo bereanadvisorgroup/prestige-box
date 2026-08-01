@@ -4,7 +4,10 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+import dns from "node:dns";
 import path from "node:path";
+
+dns.setDefaultResultOrder("ipv4first");
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
