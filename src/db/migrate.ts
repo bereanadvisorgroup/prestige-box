@@ -30,11 +30,43 @@ function sanitizeConnectionString(url: string): string {
 }
 
 const rawUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
-const url = rawUrl ? sanitizeConnectionString(rawUrl) : "";
+let url = rawUrl ? sanitizeConnectionString(rawUrl) : "";
 
 if (!url) {
   console.error("❌ Error: No database URL found in environment variables.");
   process.exit(1);
+}
+
+async function getIpv4CompatibleUrl(connectionUrl: string): Promise<string> {
+  try {
+    const parsed = new URL(connectionUrl);
+    const hostname = parsed.hostname;
+
+    try {
+      const addresses = await dns.promises.resolve4(hostname);
+      if (addresses && addresses.length > 0) {
+        return connectionUrl;
+      }
+    } catch (_err) {
+      // resolve4 threw ENODATA/ENOTFOUND -> IPv6-only host
+    }
+
+    const match = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
+    if (match) {
+      const ref = match[1];
+      console.warn(
+        `⚠️ Host ${hostname} is IPv6-only. Falling back to Supabase IPv4 Session Pooler (aws-0-us-east-1.pooler.supabase.com)...`,
+      );
+      if (!parsed.username.includes(".")) {
+        parsed.username = `${parsed.username}.${ref}`;
+      }
+      parsed.hostname = "aws-0-us-east-1.pooler.supabase.com";
+      return parsed.toString();
+    }
+  } catch (_e) {
+    // Ignore URL parse errors
+  }
+  return connectionUrl;
 }
 
 // 2. Setup the verbose console logger
@@ -48,6 +80,8 @@ const verboseLogger = new DefaultLogger({ writer: new VerboseLogWriter() });
 // 3. Run programmatic migration
 async function runMigration() {
   console.log("⏱️ Starting Supabase migrations with verbose logs...");
+
+  url = await getIpv4CompatibleUrl(url);
 
   // max: 1 is recommended for migrations to prevent locking issues
   const migrationClient = postgres(url, { max: 1 });
