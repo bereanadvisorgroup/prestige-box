@@ -37,6 +37,36 @@ if (!url) {
   process.exit(1);
 }
 
+async function detectSupabasePoolerHost(hostname: string): Promise<string> {
+  const regionMap: Record<string, string> = {
+    "2600:1f16": "aws-0-us-east-2.pooler.supabase.com",
+    "2600:1f18": "aws-0-us-east-1.pooler.supabase.com",
+    "2600:1f11": "aws-0-us-east-1.pooler.supabase.com",
+    "2600:1f14": "aws-0-us-west-2.pooler.supabase.com",
+    "2600:1f1e": "aws-0-us-west-1.pooler.supabase.com",
+    "2600:1f1c": "aws-0-eu-west-1.pooler.supabase.com",
+    "2600:1f1a": "aws-0-eu-central-1.pooler.supabase.com",
+    "2600:1f17": "aws-0-ca-central-1.pooler.supabase.com",
+    "2600:1f10": "aws-0-ap-southeast-1.pooler.supabase.com",
+    "2600:1f12": "aws-0-ap-northeast-1.pooler.supabase.com",
+  };
+
+  try {
+    const ipv6Addresses = await dns.promises.resolve6(hostname);
+    if (ipv6Addresses && ipv6Addresses.length > 0) {
+      const firstIp = ipv6Addresses[0].toLowerCase();
+      for (const [prefix, poolerHost] of Object.entries(regionMap)) {
+        if (firstIp.startsWith(prefix)) {
+          return poolerHost;
+        }
+      }
+    }
+  } catch (_e) {
+    // resolve6 threw error
+  }
+  return "aws-0-us-east-2.pooler.supabase.com";
+}
+
 async function getIpv4CompatibleUrl(connectionUrl: string): Promise<string> {
   try {
     const parsed = new URL(connectionUrl);
@@ -54,13 +84,14 @@ async function getIpv4CompatibleUrl(connectionUrl: string): Promise<string> {
     const match = hostname.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
     if (match) {
       const ref = match[1];
+      const poolerHost = await detectSupabasePoolerHost(hostname);
       console.warn(
-        `⚠️ Host ${hostname} is IPv6-only. Falling back to Supabase IPv4 Session Pooler (aws-0-us-east-1.pooler.supabase.com)...`,
+        `⚠️ Host ${hostname} is IPv6-only. Automatically falling back to Supabase IPv4 Session Pooler (${poolerHost})...`,
       );
       if (!parsed.username.includes(".")) {
         parsed.username = `${parsed.username}.${ref}`;
       }
-      parsed.hostname = "aws-0-us-east-1.pooler.supabase.com";
+      parsed.hostname = poolerHost;
       return parsed.toString();
     }
   } catch (_e) {
