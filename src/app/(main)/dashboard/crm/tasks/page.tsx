@@ -1,4 +1,4 @@
-import { TasksView } from "@/components/tasks/tasks-view";
+import { TasksView } from "@/components/features/tasks/tasks-view";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

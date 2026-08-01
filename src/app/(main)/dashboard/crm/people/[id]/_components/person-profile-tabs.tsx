@@ -28,7 +28,7 @@ import {
   User,
 } from "lucide-react";
 
-import { NotesView } from "@/components/notes/notes-view";
+import { NotesView } from "@/components/features/notes/notes-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

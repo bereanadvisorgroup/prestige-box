@@ -6,8 +6,8 @@ import type { ColumnDef, Row } from "@tanstack/react-table";
 import { Calendar, CreditCard, DollarSign, Shield } from "lucide-react";
 
 import type { ScheduledPayment } from "@/actions/payments";
-import { PersonAvatar } from "@/components/crm/person-avatar";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import type { PaymentSchedule } from "@/types/crm";
 

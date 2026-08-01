@@ -1,5 +1,5 @@
 import { getWorkflows } from "@/actions/workflows";
-import { WorkflowList } from "@/components/workflows/workflow-list";
+import { WorkflowList } from "@/components/features/workflows/workflow-list";
 
 interface WorkflowsPageProps {
   params: Promise<{ id: string }>;

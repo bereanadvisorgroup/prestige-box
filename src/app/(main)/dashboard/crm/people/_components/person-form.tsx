@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

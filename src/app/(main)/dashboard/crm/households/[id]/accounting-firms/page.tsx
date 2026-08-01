@@ -4,7 +4,7 @@ import { ReceiptText } from "lucide-react";
 
 import { getAccountingFirms, unlinkClientFromAccountingFirm } from "@/actions/accounting-firms";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

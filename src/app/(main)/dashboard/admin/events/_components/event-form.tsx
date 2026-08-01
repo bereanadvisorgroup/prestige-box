@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import type * as z from "zod";
 
 import { createEvent, updateEvent } from "@/actions/events";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

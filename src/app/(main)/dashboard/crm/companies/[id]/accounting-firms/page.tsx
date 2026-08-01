@@ -8,8 +8,8 @@ import {
   unlinkCompanyFromAccountingFirm,
 } from "@/actions/accounting-firms";
 import { getCompany } from "@/actions/companies";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
+import { LinkFirmDialog } from "@/components/features/crm/link-firm-dialog";
 
 interface Props {
   params: Promise<{ id: string }>;

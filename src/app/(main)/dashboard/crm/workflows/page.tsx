@@ -1,5 +1,5 @@
 import { getAllWorkflows } from "@/actions/workflows";
-import { AllWorkflowsList } from "@/components/workflows/all-workflows-list";
+import { AllWorkflowsList } from "@/components/features/workflows/all-workflows-list";
 
 export default async function WorkflowPage() {
   const result = await getAllWorkflows();

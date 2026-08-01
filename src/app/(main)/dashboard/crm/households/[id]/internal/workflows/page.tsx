@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getHouseholdActiveRollupClients } from "@/actions/households";
 import { getWorkflows } from "@/actions/workflows";
-import { WorkflowList } from "@/components/workflows/workflow-list";
+import { WorkflowList } from "@/components/features/workflows/workflow-list";
 
 import { HouseholdHeaderPortal } from "../../_components/household-header-portal";
 

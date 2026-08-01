@@ -4,7 +4,7 @@ import { Landmark } from "lucide-react";
 
 import { getBanks, unlinkClientFromBank } from "@/actions/banks";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

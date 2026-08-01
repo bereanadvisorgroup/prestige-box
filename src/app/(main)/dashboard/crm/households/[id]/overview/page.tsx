@@ -6,7 +6,7 @@ import { ArrowUpRight, Mail, MapPin, Pencil, Phone, User, Users } from "lucide-r
 import { getAssets } from "@/actions/assets";
 import { getClients } from "@/actions/clients";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
-import { PersonAvatar } from "@/components/crm/person-avatar";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
-import { FirmLogo } from "@/components/crm/firm-logo";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { RecordKeeper } from "@/types/crm";

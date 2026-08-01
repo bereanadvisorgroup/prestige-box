@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createAddress } from "@/actions/addresses";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

@@ -5,7 +5,7 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 
 import { updateOpportunity } from "@/actions/opportunities";
-import { RichTextEditor } from "@/components/tasks/rich-text-editor";
+import { RichTextEditor } from "@/components/features/tasks/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

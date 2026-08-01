@@ -9,7 +9,7 @@ import { getLifeInsuranceCompanies, unlinkClientFromLifeInsuranceCompany } from 
 import { getPeople } from "@/actions/people";
 import type { BeneficiaryParty } from "@/app/(main)/dashboard/crm/clients/[id]/_components/insurance-policy-manager";
 import { LifeInsuranceManager } from "@/app/(main)/dashboard/crm/clients/[id]/life-insurance/_components/life-insurance-manager";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

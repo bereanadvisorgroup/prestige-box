@@ -3,10 +3,11 @@ import { cookies } from "next/headers";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let client: SupabaseClient | null = null;
+let anonClient: SupabaseClient | null = null;
+let adminClient: SupabaseClient | null = null;
 
-function getClient() {
-  if (client) return client;
+function getServerClient() {
+  if (anonClient) return anonClient;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -17,18 +18,42 @@ function getClient() {
     );
   }
 
-  client = createClient(supabaseUrl, supabaseKey, {
+  anonClient = createClient(supabaseUrl, supabaseKey, {
     auth: {
       persistSession: false,
     },
   });
 
-  return client;
+  return anonClient;
 }
 
+function getAdminClient() {
+  if (adminClient) return adminClient;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Missing Supabase admin environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are configured.",
+    );
+  }
+
+  adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+    },
+  });
+
+  return adminClient;
+}
+
+/**
+ * User-scoped Supabase server client that respects Row Level Security (RLS).
+ */
 export const supabaseServer = new Proxy({} as unknown as SupabaseClient, {
   get(_target, prop, receiver) {
-    const activeClient = getClient();
+    const activeClient = getServerClient();
     const value = Reflect.get(activeClient, prop, receiver);
     if (typeof value === "function") {
       return value.bind(activeClient);
@@ -36,15 +61,41 @@ export const supabaseServer = new Proxy({} as unknown as SupabaseClient, {
     return value;
   },
   set(_target, prop, value, receiver) {
-    const activeClient = getClient();
+    const activeClient = getServerClient();
     return Reflect.set(activeClient, prop, value, receiver);
   },
   ownKeys(_target) {
-    const activeClient = getClient();
+    const activeClient = getServerClient();
     return Reflect.ownKeys(activeClient);
   },
   getOwnPropertyDescriptor(_target, prop) {
-    const activeClient = getClient();
+    const activeClient = getServerClient();
+    return Reflect.getOwnPropertyDescriptor(activeClient, prop);
+  },
+});
+
+/**
+ * Administrative Supabase server client using the service role key for elevated backend operations.
+ */
+export const supabaseAdmin = new Proxy({} as unknown as SupabaseClient, {
+  get(_target, prop, receiver) {
+    const activeClient = getAdminClient();
+    const value = Reflect.get(activeClient, prop, receiver);
+    if (typeof value === "function") {
+      return value.bind(activeClient);
+    }
+    return value;
+  },
+  set(_target, prop, value, receiver) {
+    const activeClient = getAdminClient();
+    return Reflect.set(activeClient, prop, value, receiver);
+  },
+  ownKeys(_target) {
+    const activeClient = getAdminClient();
+    return Reflect.ownKeys(activeClient);
+  },
+  getOwnPropertyDescriptor(_target, prop) {
+    const activeClient = getAdminClient();
     return Reflect.getOwnPropertyDescriptor(activeClient, prop);
   },
 });

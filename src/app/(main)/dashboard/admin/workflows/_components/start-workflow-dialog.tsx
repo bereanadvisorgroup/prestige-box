@@ -55,8 +55,8 @@ export function StartWorkflowDialog({ isOpen, onClose, templateId, templateName 
         }
         if (companiesResult.success) {
           setCompanies(
-            (companiesResult.companies || []).map((c: { id: string; name: string }) => ({
-              id: c.id,
+            (companiesResult.companies || []).map((c: { id?: string; name?: string }) => ({
+              id: c.id ?? "",
               name: c.name || "Unnamed Company",
               type: "company" as const,
             })),

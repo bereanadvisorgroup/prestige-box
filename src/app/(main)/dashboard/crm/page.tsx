@@ -1,7 +1,7 @@
-import { RecentNotesCard } from "@/components/notes/recent-notes-card";
-import { AssignedOpportunitiesCard } from "@/components/opportunities/assigned-opportunities-card";
-import { DashboardTasksCard } from "@/components/tasks/dashboard-tasks-card";
-import { MyWorkflowTasksCard } from "@/components/workflows/my-workflow-tasks-card";
+import { RecentNotesCard } from "@/components/features/notes/recent-notes-card";
+import { AssignedOpportunitiesCard } from "@/components/features/opportunities/assigned-opportunities-card";
+import { DashboardTasksCard } from "@/components/features/tasks/dashboard-tasks-card";
+import { MyWorkflowTasksCard } from "@/components/features/workflows/my-workflow-tasks-card";
 
 export default async function CRMOverviewPage() {
   return (

@@ -23,10 +23,12 @@ export default async function EventDetailsPage({ params }: EventDetailsPageProps
   }
 
   const { event } = result;
-  const address = event.address;
+  const address = event.address as
+    | { street1?: string; street2?: string; city?: string; state?: string; zipCode?: string; country?: string }
+    | undefined;
 
   const mapAddressString = address
-    ? `${address.street1}${address.street2 ? `, ${address.street2}` : ""}, ${address.city}, ${address.state} ${address.zipCode}`
+    ? `${address.street1 ?? ""}${address.street2 ? `, ${address.street2}` : ""}, ${address.city ?? ""}, ${address.state ?? ""} ${address.zipCode ?? ""}`
     : "";
 
   return (

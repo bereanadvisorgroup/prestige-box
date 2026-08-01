@@ -4,7 +4,7 @@ import { Calculator } from "lucide-react";
 
 import { getActuarialFirms, unlinkClientFromActuarialFirm } from "@/actions/actuarial-firms";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

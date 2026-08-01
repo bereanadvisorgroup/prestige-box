@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getWorkflow } from "@/actions/workflows";
-import { WorkflowDetail } from "@/components/workflows/workflow-detail";
+import { WorkflowDetail } from "@/components/features/workflows/workflow-detail";
 
 interface WorkflowPageProps {
   params: Promise<{ id: string; workflowId: string }>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { setValueToCookie } from "@/server/server-actions";
+import { setValueToCookie } from "@/actions/cookies";
 
 import { setClientCookie } from "../cookie.client";
 import { setLocalStorageValue } from "../local-storage.client";

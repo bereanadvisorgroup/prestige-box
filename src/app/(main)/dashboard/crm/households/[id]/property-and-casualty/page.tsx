@@ -4,7 +4,7 @@ import { Shield } from "lucide-react";
 
 import { getHouseholdActiveRollupClients } from "@/actions/households";
 import { getPropertyAndCasualtyFirms, unlinkClientFromPropertyAndCasualtyFirm } from "@/actions/property-and-casualty";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

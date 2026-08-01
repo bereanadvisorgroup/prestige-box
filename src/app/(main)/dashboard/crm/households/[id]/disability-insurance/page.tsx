@@ -12,7 +12,7 @@ import { getHouseholdActiveRollupClients } from "@/actions/households";
 import { getPeople } from "@/actions/people";
 import type { BeneficiaryParty } from "@/app/(main)/dashboard/crm/clients/[id]/_components/insurance-policy-manager";
 import { DisabilityInsuranceManager } from "@/app/(main)/dashboard/crm/clients/[id]/disability-insurance/_components/disability-insurance-manager";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

@@ -80,7 +80,7 @@ export default async function ClientsPage() {
       actuarialFirms.some((act) => act.clientIds?.includes(client.id!)) ||
       banks.some((b) => b.clientIds?.includes(client.id!)) ||
       propertyAndCasualtyFirms.some((pc) => pc.clientIds?.includes(client.id!)) ||
-      companies.some((comp) => comp.clientIds?.includes(client.id!));
+      companies.some((comp) => (comp as { clientIds?: string[] }).clientIds?.includes(client.id!));
 
     return {
       ...client,

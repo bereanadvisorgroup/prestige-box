@@ -9,7 +9,7 @@ import { getLongTermCareInsurances, unlinkClientFromLongTermCareInsurance } from
 import { getPeople } from "@/actions/people";
 import type { BeneficiaryParty } from "@/app/(main)/dashboard/crm/clients/[id]/_components/insurance-policy-manager";
 import { LongTermCareManager } from "@/app/(main)/dashboard/crm/clients/[id]/long-term-care/_components/long-term-care-manager";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

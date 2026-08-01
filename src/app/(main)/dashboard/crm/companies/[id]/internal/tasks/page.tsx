@@ -1,4 +1,4 @@
-import { TasksView } from "@/components/tasks/tasks-view";
+import { TasksView } from "@/components/features/tasks/tasks-view";
 
 interface PageProps {
   params: Promise<{ id: string }>;

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { updatePortalSettings } from "@/actions/settings";
-import { LogoUpload } from "@/components/crm/logo-upload";
+import { LogoUpload } from "@/components/features/crm/logo-upload";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

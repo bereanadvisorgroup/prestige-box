@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { ArrowLeft } from "lucide-react";
 
-import { NoteThread } from "@/components/notes/note-thread";
+import { NoteThread } from "@/components/features/notes/note-thread";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {

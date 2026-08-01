@@ -8,7 +8,7 @@ import { AlertTriangle, CheckCircle2, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { createWorkflowTemplate, updateWorkflowTemplate } from "@/actions/workflow-templates";
-import { RichTextEditor } from "@/components/tasks/rich-text-editor";
+import { RichTextEditor } from "@/components/features/tasks/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

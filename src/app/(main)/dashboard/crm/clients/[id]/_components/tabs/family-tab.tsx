@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { updateClient } from "@/actions/clients";
 import { getPeople } from "@/actions/people";
-import { PersonAvatar } from "@/components/crm/person-avatar";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Client, FamilyMember, Person } from "@/types/crm";

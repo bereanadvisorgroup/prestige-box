@@ -10,8 +10,8 @@ import { toast } from "sonner";
 
 import { createOpportunity, getOpportunityHistory, updateOpportunity } from "@/actions/opportunities";
 import { getDefaultAumPerc } from "@/actions/opportunity-pipelines";
-import { GoogleDrivePickerDialog } from "@/components/tasks/gdrive-picker-dialog";
-import { RichTextEditor } from "@/components/tasks/rich-text-editor";
+import { GoogleDrivePickerDialog } from "@/components/features/tasks/gdrive-picker-dialog";
+import { RichTextEditor } from "@/components/features/tasks/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

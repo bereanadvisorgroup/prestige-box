@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getHouseholdActiveRollupClients } from "@/actions/households";
-import { NotesView } from "@/components/notes/notes-view";
+import { NotesView } from "@/components/features/notes/notes-view";
 
 import { HouseholdHeaderPortal } from "../../_components/household-header-portal";
 

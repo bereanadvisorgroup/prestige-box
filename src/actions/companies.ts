@@ -18,7 +18,7 @@ export async function getCompanies() {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, companies: companies as any[] };
+    return { success: true, companies: (companies ?? []) as Company[] };
   } catch (error) {
     console.error(`[getCompanies] Error:`, error);
     return { success: false, error: (error as { message: string }).message };

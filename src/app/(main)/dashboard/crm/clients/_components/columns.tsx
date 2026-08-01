@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 
-import { PersonAvatar } from "@/components/crm/person-avatar";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";

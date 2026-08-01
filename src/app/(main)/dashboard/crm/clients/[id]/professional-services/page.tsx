@@ -8,7 +8,7 @@ import { getBanks } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
 import { getLawFirms } from "@/actions/law-firms";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 import { Card } from "@/components/ui/card";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";

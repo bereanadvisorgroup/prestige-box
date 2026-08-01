@@ -11,7 +11,7 @@ import { getMoneyManagers, unlinkClientFromMoneyManager } from "@/actions/money-
 import { getPeople } from "@/actions/people";
 import type { BeneficiaryParty } from "@/app/(main)/dashboard/crm/clients/[id]/_components/insurance-policy-manager";
 import { MoneyManagerAccountsManager } from "@/app/(main)/dashboard/crm/clients/[id]/money-managers/_components/money-manager-accounts-manager";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

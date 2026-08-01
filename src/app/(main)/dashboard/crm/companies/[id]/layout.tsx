@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Building2, Clock, Pencil } from "lucide-react";
 
 import { getCompany } from "@/actions/companies";
-import { FirmLogo } from "@/components/crm/firm-logo";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Button } from "@/components/ui/button";
 import { getCompanyLogoUrl } from "@/lib/social";
 

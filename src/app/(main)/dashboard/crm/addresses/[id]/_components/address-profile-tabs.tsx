@@ -27,7 +27,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { PersonAvatar } from "@/components/crm/person-avatar";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

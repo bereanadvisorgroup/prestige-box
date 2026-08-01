@@ -5,7 +5,7 @@ import { AlertCircle, ArrowLeft, Calendar, FileText, User } from "lucide-react";
 
 import { getClient } from "@/actions/clients";
 import { getClientPolicy } from "@/actions/policies";
-import { PersonAvatar } from "@/components/crm/person-avatar";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

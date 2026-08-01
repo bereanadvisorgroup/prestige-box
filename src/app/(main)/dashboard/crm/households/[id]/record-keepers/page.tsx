@@ -7,7 +7,7 @@ import { getFinancialAccountTypes } from "@/actions/financial-account-types";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
 import { getRecordKeepers, unlinkClientFromRecordKeeper } from "@/actions/record-keepers";
 import { RecordKeeperAccountsManager } from "@/app/(main)/dashboard/crm/clients/[id]/record-keepers/_components/record-keeper-accounts-manager";
-import { AssociationCardList } from "@/components/crm/association-card-list";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 

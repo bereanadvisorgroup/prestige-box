@@ -1,1 +1,0 @@
-ALTER TABLE "lawyers" DROP COLUMN "personId";

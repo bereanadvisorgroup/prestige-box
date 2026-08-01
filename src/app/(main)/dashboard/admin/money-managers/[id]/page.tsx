@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPi
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getMoneyManager } from "@/actions/money-managers";
-import { FirmLogo } from "@/components/crm/firm-logo";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

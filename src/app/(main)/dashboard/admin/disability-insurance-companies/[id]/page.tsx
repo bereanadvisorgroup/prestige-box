@@ -17,7 +17,7 @@ import {
 import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompany } from "@/actions/disability-insurance-companies";
 import { getClientPolicies } from "@/actions/policies";
-import { FirmLogo } from "@/components/crm/firm-logo";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

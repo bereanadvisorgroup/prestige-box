@@ -40,7 +40,7 @@ export async function getEvents() {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, events: (list || []) as any[] };
+    return { success: true, events: (list || []) as Event[] };
   } catch (error) {
     console.error("[getEvents] Error:", error);
     return { success: false, error: (error as Error).message };
@@ -60,7 +60,7 @@ export async function getEvent(id: string) {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, event: record as any };
+    return { success: true, event: record as (Event & { address?: Record<string, unknown> }) };
   } catch (error) {
     console.error("[getEvent] Error:", error);
     return { success: false, error: (error as Error).message };
