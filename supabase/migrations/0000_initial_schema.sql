@@ -539,7 +539,6 @@ CREATE TABLE "keyvals" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "assets" ADD COLUMN "addressId" uuid;--> statement-breakpoint
 ALTER TABLE "clients" ADD COLUMN "ltcDocuments" jsonb DEFAULT '[]'::jsonb;--> statement-breakpoint
 ALTER TABLE "companies" ADD COLUMN "estimatedValue" numeric DEFAULT '0.00' NOT NULL;--> statement-breakpoint
 ALTER TABLE "disability_insurance_companies" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
