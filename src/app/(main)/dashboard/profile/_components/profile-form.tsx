@@ -83,11 +83,6 @@ export function ProfileForm() {
     );
   }
 
-  // Check if a social (Google) login photo exists and is different from the current photoURL
-  const googlePhotoURL = user?.user_metadata?.avatar_url || "";
-  const hasGooglePhoto = !!googlePhotoURL;
-  const isUsingGooglePhoto = photoURL === googlePhotoURL;
-
   // Handle file uploads to Supabase Storage
   const handleFileUpload = async (file: File) => {
     if (!user) return;
@@ -161,12 +156,6 @@ export function ProfileForm() {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file) handleFileUpload(file);
-  };
-
-  // Use google/social login photo
-  const handleUseGooglePhoto = () => {
-    setPhotoURL(googlePhotoURL);
-    toast.success("Switched to social login photo! Save changes to persist.");
   };
 
   // Remove photo
@@ -290,19 +279,6 @@ export function ProfileForm() {
               Click the avatar to upload an image, or drag and drop a file (up to 2MB).
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
-              {hasGooglePhoto && !isUsingGooglePhoto && (
-                <Button
-                  id="use-social-photo-btn"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUseGooglePhoto}
-                  className="h-8 gap-2 border-primary/20 transition-all duration-300 hover:bg-primary/5 hover:text-primary"
-                >
-                  <UploadCloud className="h-3.5 w-3.5" />
-                  Use Google Photo
-                </Button>
-              )}
               {photoURL && (
                 <Button
                   id="remove-photo-btn"

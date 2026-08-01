@@ -162,17 +162,17 @@ export function PersonProfileTabs({
     <div className="fade-in col-span-1 w-full animate-in duration-500">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="hide-scrollbar -mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
-          <TabsList className="inline-flex h-12 min-w-max items-center justify-start rounded-lg border bg-muted/50 p-1.5 text-muted-foreground shadow-inner">
+          <TabsList className="inline-flex h-9 min-w-max items-center justify-start gap-1 rounded-lg border bg-muted/50 p-1 text-muted-foreground shadow-inner">
             <TabsTrigger
               value="general"
-              className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               General
             </TabsTrigger>
             {associatedClient && (
               <TabsTrigger
                 value="client"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Client Profile
               </TabsTrigger>
@@ -180,7 +180,7 @@ export function PersonProfileTabs({
             {associatedLawFirms.length > 0 && (
               <TabsTrigger
                 value="law-firm"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Law Firms
               </TabsTrigger>
@@ -188,7 +188,7 @@ export function PersonProfileTabs({
             {associatedAccountingFirms.length > 0 && (
               <TabsTrigger
                 value="accounting-firm"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Accounting Firms
               </TabsTrigger>
@@ -196,7 +196,7 @@ export function PersonProfileTabs({
             {associatedActuarialFirms.length > 0 && (
               <TabsTrigger
                 value="actuarial-firm"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Actuarial Firms
               </TabsTrigger>
@@ -204,7 +204,7 @@ export function PersonProfileTabs({
             {associatedBanks.length > 0 && (
               <TabsTrigger
                 value="bank"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Banks
               </TabsTrigger>
@@ -212,7 +212,7 @@ export function PersonProfileTabs({
             {associatedPropertyAndCasualties.length > 0 && (
               <TabsTrigger
                 value="property-casualty"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Property & Casualty
               </TabsTrigger>
@@ -220,7 +220,7 @@ export function PersonProfileTabs({
             {associatedLife.length > 0 && (
               <TabsTrigger
                 value="life-insurance"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Life Insurance
               </TabsTrigger>
@@ -228,7 +228,7 @@ export function PersonProfileTabs({
             {associatedDisability.length > 0 && (
               <TabsTrigger
                 value="disability-insurance"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Disability Insurance
               </TabsTrigger>
@@ -236,7 +236,7 @@ export function PersonProfileTabs({
             {associatedLtc.length > 0 && (
               <TabsTrigger
                 value="long-term-care"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Long Term Care
               </TabsTrigger>
@@ -244,7 +244,7 @@ export function PersonProfileTabs({
             {associatedMoneyManagers.length > 0 && (
               <TabsTrigger
                 value="money-manager"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Money Managers
               </TabsTrigger>
@@ -252,14 +252,14 @@ export function PersonProfileTabs({
             {associatedRecordKeepers.length > 0 && (
               <TabsTrigger
                 value="record-keeper"
-                className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Record Keepers
               </TabsTrigger>
             )}
             <TabsTrigger
               value="notes"
-              className="rounded-md px-4 py-2 font-medium text-sm transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               Notes
             </TabsTrigger>

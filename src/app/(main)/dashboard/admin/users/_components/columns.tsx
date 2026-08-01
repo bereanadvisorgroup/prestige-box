@@ -7,8 +7,11 @@ import { format } from "date-fns";
 import { ArrowUpRight, KeyRound, Pencil, Trash2, User } from "lucide-react";
 
 import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getUserPhotoUrl } from "@/lib/social";
+import { getInitials } from "@/lib/utils";
 import type { UserProfile } from "@/stores/auth.store";
 
 export const columns = (
@@ -21,18 +24,21 @@ export const columns = (
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }) => {
       const user = row.original;
+      const photoUrl = getUserPhotoUrl(user);
+      const initials = getInitials(user.userName || `${user.firstName || ""} ${user.lastName || ""}`);
       return (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <Link
-              href={`/dashboard/admin/users/${user.uid}`}
-              className="flex items-center gap-1 font-medium text-primary hover:underline"
-            >
-              <span>{user.userName}</span>
-              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-            </Link>
-          </div>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8 rounded-full border border-border">
+            <AvatarImage src={photoUrl || undefined} alt={user.userName} className="object-cover" />
+            <AvatarFallback className="bg-primary/5 text-xs font-semibold text-primary">{initials}</AvatarFallback>
+          </Avatar>
+          <Link
+            href={`/dashboard/admin/users/${user.uid}`}
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <span>{user.userName}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+          </Link>
         </div>
       );
     },

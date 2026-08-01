@@ -1,4 +1,5 @@
 import type { Company, Person } from "@/types/crm";
+import type { UserProfile } from "@/stores/auth.store";
 
 /**
  * Extracts the username/handle from a social media URL and returns the unavatar.io profile photo URL.
@@ -117,4 +118,34 @@ export function getCompanyLogoUrl(company?: Company | null): string | null {
   }
 
   return company.logoUrl || null;
+}
+
+export function getUserPhotoUrl(user?: UserProfile | null): string | null {
+  if (!user) return null;
+
+  // 1. Social media link with photo checked
+  if (user.socialMedia && user.socialMedia.length > 0) {
+    const useSocialPhoto = user.socialMedia.find((sm) => sm.useProfilePhoto);
+    if (useSocialPhoto) {
+      const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
+      if (socialAvatar) return socialAvatar;
+    }
+  }
+
+  // 2. Custom uploaded photo
+  if (user.photoURL && user.photoURL.trim() !== "") {
+    return user.photoURL;
+  }
+
+  // 3. Explicit Google / OAuth profile photo
+  if (user.googlePhotoURL && user.googlePhotoURL.trim() !== "") {
+    return user.googlePhotoURL;
+  }
+
+  // 4. Photo attached to Google / email address
+  if (user.email && user.email.trim() !== "") {
+    return `https://unavatar.io/google/${encodeURIComponent(user.email.trim())}`;
+  }
+
+  return null;
 }

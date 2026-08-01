@@ -49,6 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         const { profileData, error } = await fetchUserProfile(user.id, user.email);
         if (profileData) {
+          const isGoogle =
+            (user.app_metadata?.providers || []).includes("google") || user.app_metadata?.provider === "google";
+          const googlePhotoURL =
+            user.user_metadata?.avatar_url ||
+            user.user_metadata?.picture ||
+            (isGoogle && user.email ? `https://unavatar.io/google/${encodeURIComponent(user.email)}` : null);
+
           setProfile({
             uid: user.id,
             email: user.email ?? profileData.email ?? null,
@@ -56,7 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             firstName: profileData.firstName,
             lastName: profileData.lastName,
             phone: profileData.phone || "",
-            photoURL: profileData.photoURL || user.user_metadata?.avatar_url || "",
+            photoURL: profileData.photoURL || googlePhotoURL || "",
+            socialMedia: profileData.socialMedia || [],
+            googlePhotoURL,
+            providers: user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
             createdAt: profileData.createdAt,
           });
         } else if (!error) {
@@ -89,6 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { profileData, error } = await fetchUserProfile(user.id, user.email);
 
           if (profileData) {
+            const isGoogle =
+              (user.app_metadata?.providers || []).includes("google") || user.app_metadata?.provider === "google";
+            const googlePhotoURL =
+              user.user_metadata?.avatar_url ||
+              user.user_metadata?.picture ||
+              (isGoogle && user.email ? `https://unavatar.io/google/${encodeURIComponent(user.email)}` : null);
+
             setProfile({
               uid: user.id,
               email: user.email ?? profileData.email ?? null,
@@ -96,7 +113,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               firstName: profileData.firstName,
               lastName: profileData.lastName,
               phone: profileData.phone || "",
-              photoURL: profileData.photoURL || user.user_metadata?.avatar_url || "",
+              photoURL: profileData.photoURL || googlePhotoURL || "",
+              socialMedia: profileData.socialMedia || [],
+              googlePhotoURL,
+              providers: user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
               createdAt: profileData.createdAt,
             });
           } else if (!error) {

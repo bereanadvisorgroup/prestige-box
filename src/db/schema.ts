@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   lastName: text("lastName"),
   role: text("role").notNull().default("client"),
   photoURL: text("photoURL"),
+  socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
