@@ -12,6 +12,31 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
 jobs:
+  database-migration:
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Drizzle Production Migrations
+        env:
+          DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL_PROD }}
+          NODE_OPTIONS: "--dns-result-order=ipv4first"
+        run: pnpm dlx tsx src/db/migrate.ts
+
   vercel-deployment:
     runs-on: ubuntu-latest
     environment: preview
