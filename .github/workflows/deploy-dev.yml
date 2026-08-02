@@ -11,7 +11,7 @@ env:
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
-    environment: Dev
+    environment: dev
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4

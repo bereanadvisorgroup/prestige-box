@@ -14,7 +14,7 @@ env:
 jobs:
   vercel-deployment:
     runs-on: ubuntu-latest
-    environment: Preview
+    environment: preview
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
