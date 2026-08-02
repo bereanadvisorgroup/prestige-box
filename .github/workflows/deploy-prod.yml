@@ -41,9 +41,6 @@ jobs:
     needs: database-migration
     runs-on: ubuntu-latest
     environment: Production
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
