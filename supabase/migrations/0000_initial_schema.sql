@@ -411,10 +411,10 @@ USING (
 -- Migration 21/64: 0020_dazzling_mojo.sql
 -- ------------------------------------------------------------------------------
 
-ALTER TABLE "clients" ADD COLUMN "ltcDocuments" jsonb DEFAULT '[]'::jsonb;--> statement-breakpoint
-ALTER TABLE "disability_insurance_companies" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
-ALTER TABLE "life_insurance_companies" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
-ALTER TABLE "long_term_care_insurance" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];
+ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "ltcDocuments" jsonb DEFAULT '[]'::jsonb;--> statement-breakpoint
+ALTER TABLE "disability_insurance_companies" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
+ALTER TABLE "life_insurance_companies" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
+ALTER TABLE "long_term_care_insurance" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];
 
 -- ------------------------------------------------------------------------------
 -- Migration 22/64: 0020_enable_rls_all_tables.sql
@@ -539,11 +539,11 @@ CREATE TABLE "keyvals" (
 	"updatedAt" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "clients" ADD COLUMN "ltcDocuments" jsonb DEFAULT '[]'::jsonb;--> statement-breakpoint
-ALTER TABLE "companies" ADD COLUMN "estimatedValue" numeric DEFAULT '0.00' NOT NULL;--> statement-breakpoint
-ALTER TABLE "disability_insurance_companies" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
-ALTER TABLE "life_insurance_companies" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
-ALTER TABLE "long_term_care_insurance" ADD COLUMN "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
+ALTER TABLE "clients" ADD COLUMN IF NOT EXISTS "ltcDocuments" jsonb DEFAULT '[]'::jsonb;--> statement-breakpoint
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "estimatedValue" numeric DEFAULT '0.00' NOT NULL;--> statement-breakpoint
+ALTER TABLE "disability_insurance_companies" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
+ALTER TABLE "life_insurance_companies" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
+ALTER TABLE "long_term_care_insurance" ADD COLUMN IF NOT EXISTS "clientIds" uuid[] DEFAULT '{}'::uuid[];--> statement-breakpoint
 ALTER TABLE "company_valuation_history" ADD CONSTRAINT "company_valuation_history_companyId_companies_id_fk" FOREIGN KEY ("companyId") REFERENCES "public"."companies"("id") ON DELETE cascade ON UPDATE no action;
 
 -- ------------------------------------------------------------------------------
@@ -787,13 +787,13 @@ ON CONFLICT ("id") DO NOTHING;
 -- Migration 30/64: 0026_add_payment_accounts_to_companies.sql
 -- ------------------------------------------------------------------------------
 
-ALTER TABLE "companies" ADD COLUMN "paymentAccounts" jsonb DEFAULT '[]'::jsonb;
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "paymentAccounts" jsonb DEFAULT '[]'::jsonb;
 
 -- ------------------------------------------------------------------------------
 -- Migration 31/64: 0027_add_life_documents_to_companies.sql
 -- ------------------------------------------------------------------------------
 
-ALTER TABLE "companies" ADD COLUMN "lifeDocuments" jsonb DEFAULT '[]'::jsonb;
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "lifeDocuments" jsonb DEFAULT '[]'::jsonb;
 
 -- ------------------------------------------------------------------------------
 -- Migration 32/64: 0028_add_disability_documents_to_companies.sql
@@ -806,7 +806,7 @@ ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "ltcDocuments" jsonb DEFAULT '[
 -- Migration 33/64: 0029_add_ltc_documents_to_companies.sql
 -- ------------------------------------------------------------------------------
 
-ALTER TABLE "companies" ADD COLUMN "ltcDocuments" jsonb DEFAULT '[]'::jsonb;
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "ltcDocuments" jsonb DEFAULT '[]'::jsonb;
 
 -- ------------------------------------------------------------------------------
 -- Migration 34/64: 0030_create_change_history.sql
