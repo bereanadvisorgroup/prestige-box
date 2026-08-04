@@ -1,0 +1,460 @@
+{
+  "timestamp": "2026-08-04T22:04:10.283Z",
+  "durationSeconds": 1.74,
+  "counts": {
+    "people": 3,
+    "clients": 3,
+    "companies": 3,
+    "households": 3,
+    "addresses": 3,
+    "tagNotes": 3,
+    "totalNotes": 3,
+    "noteAssociations": 3,
+    "companyOwners": 0
+  },
+  "skippedCounts": {
+    "totalSkipped": 73,
+    "skippedNotes": 57,
+    "skippedComments": 16
+  },
+  "skippedItems": [
+    {
+      "type": "note",
+      "legacyId": 18846086,
+      "contentSnippet": "Jon Scott Wendel Deborah K Wendel Met with Jon and Deb yesterday via Zoom meeting along with Mark Cl",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846087,
+      "contentSnippet": "LMOM to open up trading account",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846088,
+      "contentSnippet": "LMOM",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846089,
+      "contentSnippet": "Met with Jon and Deborah via video meeting along with Mark Clark and Jordan KeenInvestments - review",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846090,
+      "contentSnippet": "LMOM to follow up on his message",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846091,
+      "contentSnippet": "Spoke to Jon about his portfolio.  Did a screen share and talked through the performance of his port",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846092,
+      "contentSnippet": "Larry Miller Met with Larry via Zoom meeting along with Mark Clark and Jordan\tDiscussed the Blacksto",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846093,
+      "contentSnippet": "dup",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846094,
+      "contentSnippet": "Larry Miller RMD calculations, waiting on balance of the BDA accountLinda Miller - $90,385.90 / 24.7",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846095,
+      "contentSnippet": "20200214 Meeting notes:\r\nAttendance ΓÇô Elaine and Mark Kennell, Mike McWhinnie, and Jordan Keen\r\nEl",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846096,
+      "contentSnippet": "Met with Mark and Elaine via zoom meeting along with Mark Clark and JordanReviewed charitable contri",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846101,
+      "contentSnippet": "Jt meeting with Sean Riley via go to meetingWe spent some time reviewing our strategy how we manage ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846104,
+      "contentSnippet": "Spoke to Mark Clark.  He met with Tony and he wanted to get the money in the trust invested in somet",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846105,
+      "contentSnippet": "20200330 Vandenoever Meeting Notes\r\nAttendees: Tony Vandenoever, Mark, Mike, and Jordan\r\nIntro to Mi",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846106,
+      "contentSnippet": "Jt phone meeting with Aramis we joined by video initially but then  moved to screen share.Reviewed o",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846107,
+      "contentSnippet": "Met with Kevin and Rita Faulkner via Zoom meeting along with Mark Clark and Jordan KeenWe discussed ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846108,
+      "contentSnippet": "Met with Kevin and Rita Faulkner via Zoom meeting along with Mark Clark and Jordan KeenWe discussed ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846109,
+      "contentSnippet": "Met with Danny via Zoom meeting along with Mark and JordanReviewed his quarterly report and performa",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846110,
+      "contentSnippet": "Met with Dr. David Solomon and Louise in virtual meeting along with Mark Clark and Jordan Keen.Intro",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846111,
+      "contentSnippet": "O David Solomon Today we will be selling the following individual stock positions today: CFG, WYND, ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846112,
+      "contentSnippet": "Met with Mark and Elaine via zoom meeting along with Mark Clark and JordanReviewed charitable contri",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846113,
+      "contentSnippet": "Met with Mark and Elaine Kennell via video conference meeting on Friday Oct. 18th.    We spent some ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846114,
+      "contentSnippet": "Joint meeting with Mark Clark on 11/6/18.  They were in Marks' office I joined by video conference. ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846115,
+      "contentSnippet": "Video conference with John and Deborah Wendel on 11/27/18   Joined with Mark Clark   We had introduc",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846116,
+      "contentSnippet": "Per my discussion with Mike, we sold positions in IBM and LQD in the Solomon Family trusts as they a",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846117,
+      "contentSnippet": "20200317 Call - Boeh\r\nJeff emailed Mark and asked for a phone call to discuss current market volatil",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846118,
+      "contentSnippet": "Attempted to reach out to Lisa, thru Mark and Jordan for annual review.  She did not answer.  This i",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846119,
+      "contentSnippet": "20200326 Phone Meeting Notes\r\nLisa, Mike, Mark, and Jordan\r\nLisa said she is doing okay, not working",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846126,
+      "contentSnippet": "Subject:\r\nRe: Lisa Manganiello ACH Out $2,400 from Acct x5877\r\nBody:\r\nHi Jordan,\t\t\t\tThis is complete",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846127,
+      "contentSnippet": "Subject:\r\nRE: Lisa Manganiello ACH Out $2,400 from Acct x5877\r\nBody:\r\nAwesome, thank you, Lindsay!\t\t",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846128,
+      "contentSnippet": "Subject:\r\nRE: Manganiello ACH Out $3,400\r\nBody:\r\nThis is complete!\t\t\tLindsay Eveler\tLegacy Financial",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846129,
+      "contentSnippet": "Subject:\r\nRE: Manganiello ACH Out $3,400\r\nBody:\r\nThank you!\t\tJordan Keen\tWhat We Do:Life In A Box Vi",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18846130,
+      "contentSnippet": "Subject:\r\nRE: Manganiello - ACH Request $2,700 Acct x5877\r\nBody:\r\nJordan, I'll sent cash per request",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18990664,
+      "contentSnippet": "<div><img src=\"blob:https://app.crmworkspace.com/eb8cd7a9-e9f9-4bb5-a680-1414c69501fb\" style=\"width:",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18990678,
+      "contentSnippet": "<div>Didn't mean to put that under Jeff Boeh...</div><div><br></div><div><img src=\"blob:https://app.",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18993207,
+      "contentSnippet": "<div>I have successfully added OneNote, ShareFile and Sharepoint links to Boeh's contact record. </d",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18993229,
+      "contentSnippet": "<div>This is a test from my iPhone. I don't want to keep this note after this test.┬á</div>",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 18997969,
+      "contentSnippet": "<div>I do not see the Fidelity account attached to <span class=\"atwho-inserted\" data-atwho-at-query=",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19186104,
+      "contentSnippet": "<div><span class=\"atwho-inserted\" data-atwho-at-query=\"@k\"><span class=\"atwho-inserted__name\" data-i",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19190035,
+      "contentSnippet": "<div>Mike - a New Account Statement came in for Larry from Blackstone Real Estate. ┬áI saved to the ",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19190247,
+      "contentSnippet": "<div>20200511 Meeting Notes:</div><p lang=\"EN-US\"><span data-contrast=\"auto\" lang=\"EN-US\">Attendance",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19251219,
+      "contentSnippet": "<div>20200513 Meeting Notes -┬á</div><div><br></div><p lang=\"EN-US\"><span data-contrast=\"auto\" lang=",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19252265,
+      "contentSnippet": "<div>Address Updated - also changed in FWC and BD</div>",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19405168,
+      "contentSnippet": "<div>\n<span class=\"atwho-inserted\" data-atwho-at-query=\"@todd\"><span class=\"atwho-inserted__name\" da",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19414726,
+      "contentSnippet": "<div>\n<span>Action Item - <span class=\"atwho-inserted\" data-atwho-at-query=\"@tod\"><span class=\"atwho",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19414755,
+      "contentSnippet": "<div>\n<span class=\"atwho-inserted\" data-atwho-at-query=\"@lee\"><span class=\"atwho-inserted__name\" dat",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19461595,
+      "contentSnippet": "<div>20200518 Meeting Notes</div><div><br></div><p lang=\"EN-US\"><span data-contrast=\"auto\" lang=\"EN-",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19574017,
+      "contentSnippet": "<div><u>Action Item</u></div><div><br></div><div>Mike, please review Fidelity and TD Ameritrade stat",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19664306,
+      "contentSnippet": "<div>I spoke with Stella from Penn Mutual this morning and was notified that the Donna's policy is n",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19757009,
+      "contentSnippet": "<div>Action Item:</div><div><br></div><div>Changing Todd Schleicher's life insurance premium to mont",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19757341,
+      "contentSnippet": "<div>Action Item:┬á</div><div><br></div><div>Mark, Larry was looking at his Midland annual statement",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19761998,
+      "contentSnippet": "<div>20200522 Meeting Notes:</div><div><br></div><p lang=\"EN-US\"><span data-contrast=\"auto\" lang=\"EN",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19763779,
+      "contentSnippet": "<div>Email address for JUST our office and Laura from Ellenton CPA to use: jmfdfinancials@gmail.com<",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19763840,
+      "contentSnippet": "<div>Action Item:</div><div><br></div><div>Per Keith's request, need to raise cash and then ACH $7,1",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19808698,
+      "contentSnippet": "<div>Action Item┬á</div><div>I spoke with Larry today about his surrender free Midland National poli",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19857506,
+      "contentSnippet": "<div>20200604 Meeting Notes:</div><p lang=\"EN-US\"><span data-contrast=\"auto\" lang=\"EN-US\">Larry, Mik",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "note",
+      "legacyId": 19857638,
+      "contentSnippet": "<div>\n<strong><u>Action item</u></strong> - please initiate DCA for 25k per month for a total of 5 p",
+      "reason": "No associated entity found in people/companies"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777018,
+      "contentSnippet": "Mike, Fidelity can only credit Larry's IRA BDA $50.  There aren't any other fees that were charged t",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186415)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777019,
+      "contentSnippet": "Mike, Fidelity was able to reimburse the Trusts $50 each.  The reimbursements to the IRA's nigo'd.  ",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186414)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777020,
+      "contentSnippet": "Mike - I talked with Fidelity.  The fees were trade commissions and came out during the ACAT.  Fidel",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186415)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777021,
+      "contentSnippet": "I called Fidelity today on this...still showing pending in good order. They are just waiting on TD t",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186416)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777022,
+      "contentSnippet": "I changed it for you.  You have click on edit in the ΓÇ£actionsΓÇ¥ drop down menu in the top right.",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186416)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777023,
+      "contentSnippet": "Mike, $75 was credited to Larry's JT account x8321 om 2/21/20, the remaining amount to reimburse the",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186415)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777024,
+      "contentSnippet": "David 12/31/2019 balance = $1,176,455.64Louise 12/31/2019 balance = $88,217.10",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186421)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777025,
+      "contentSnippet": "David RMD = 92,634.30 Louise RMD = 6,583.37",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186421)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777026,
+      "contentSnippet": "Are we transferring prorata I assume from all funds? Can Robby put together a spreadsheet?",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186412)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777027,
+      "contentSnippet": "Yes, we will transfer pro-rata as they will all end up in growth Model.  Robby, can you give us shar",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186412)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777028,
+      "contentSnippet": "I'll get the trades submitted, but bear in mind that in doing so the $5,000+ in losses that have bee",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186409)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2777029,
+      "contentSnippet": "Go ahead and trade today.  She is in the bottom tax bracket",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8186409)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2797285,
+      "contentSnippet": "<div>Awesome! I will take a look.</div>",
+      "reason": "No associated entity found for resource_type 'StatusUpdate' (id: 18993207)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2800751,
+      "contentSnippet": "<div>I believe you need to add the information on the first page of the insurance tab and save...the",
+      "reason": "No associated entity found for resource_type 'StatusUpdate' (id: 18997969)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2803986,
+      "contentSnippet": "Jordan can you call this one",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8241819)"
+    },
+    {
+      "type": "comment",
+      "legacyId": 2830698,
+      "contentSnippet": "<div>Added Growth BM</div>",
+      "reason": "No associated entity found for resource_type 'Task' (id: 8396553)"
+    }
+  ]
+}

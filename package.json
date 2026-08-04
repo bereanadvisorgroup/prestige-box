@@ -18,6 +18,7 @@
     "prepare": "husky",
     "generate:presets": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/scripts/generate-theme-presets.ts",
     "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts",
+    "db:migrate": "node --experimental-strip-types scripts/migrate-data.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
