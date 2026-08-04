@@ -1495,6 +1495,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "socialMedia": {
+          "name": "socialMedia",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",

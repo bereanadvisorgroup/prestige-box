@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"lastName" text,
 	"role" text DEFAULT 'client' NOT NULL,
 	"photoURL" text,
+	"socialMedia" jsonb DEFAULT '[]'::jsonb,
 	"createdAt" timestamp with time zone DEFAULT now(),
 	"updatedAt" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
