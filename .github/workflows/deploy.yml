@@ -108,18 +108,18 @@ jobs:
           node-version: 24
           cache: "pnpm"
 
-      - name: Install PostgreSQL Tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+      # - name: Install PostgreSQL Tools
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y postgresql-client
 
-      - name: Clone Prod Data into Test Database
-        env:
-          PROD_DB: ${{ secrets.SUPABASE_DIRECT_URL_PROD }}
-          TEST_DB: ${{ secrets.SUPABASE_DIRECT_URL }}
-        run: |
-          echo "Cloning Prod DB data to Test DB..."
-          pg_dump "$PROD_DB" --clean --no-owner --no-acl | psql "$TEST_DB"
+      # - name: Clone Prod Data into Test Database
+      #   env:
+      #     PROD_DB: ${{ secrets.SUPABASE_DIRECT_URL_PROD }}
+      #     TEST_DB: ${{ secrets.SUPABASE_DIRECT_URL }}
+      #   run: |
+      #     echo "Cloning Prod DB data to Test DB..."
+      #     pg_dump "$PROD_DB" --clean --no-owner --no-acl | psql "$TEST_DB"
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
@@ -135,6 +135,11 @@ jobs:
 
       - name: Pull & Deploy to Test Project
         env:
+          NEXT_PUBLIC_AXIOM_DATASET: ${{ secrets.NEXT_PUBLIC_AXIOM_DATASET }}
+          NEXT_PUBLIC_AXIOM_TOKEN: ${{ secrets.NEXT_PUBLIC_AXIOM_TOKEN }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -178,6 +183,11 @@ jobs:
 
       - name: Pull & Deploy to Production Project
         env:
+          NEXT_PUBLIC_AXIOM_DATASET: ${{ secrets.NEXT_PUBLIC_AXIOM_DATASET }}
+          NEXT_PUBLIC_AXIOM_TOKEN: ${{ secrets.NEXT_PUBLIC_AXIOM_TOKEN }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
