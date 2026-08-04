@@ -11,10 +11,10 @@ jobs:
     # ==========================================
     # DEV ENVIRONMENT
     # ==========================================
-    deploy-dev:
+    snyk-scan-dev:
         if: github.ref == 'refs/heads/dev'
         runs-on: ubuntu-latest
-        environment: Development
+        environment: Dev
 
         steps:
             - name: Checkout Codebase
@@ -38,6 +38,28 @@ jobs:
                   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
               with:
                   args: --all-projects --severity-threshold=high
+
+    deploy-dev:
+        if: github.ref == 'refs/heads/dev'
+        needs: snyk-scan-dev
+        runs-on: ubuntu-latest
+        environment: Dev
+
+        steps:
+            - name: Checkout Codebase
+              uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: "pnpm"
+
+            - name: Install Dependencies
+              run: pnpm install --frozen-lockfile
 
             - name: Run Dev Migrations & Seed Fake Data
               env:
