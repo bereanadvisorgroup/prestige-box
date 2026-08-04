@@ -129,7 +129,7 @@ export async function createUserAction(prevState: any, formData: FormData) {
 
 ## 🌐 Supabase Cloud Connection & Pooling Topology
 1. **Connection String Separation:** Maintain two distinct connection strings in `.env.local` to prevent multi-machine execution errors:
-   - `DATABASE_URL`: Set to the **Supabase Transaction Pooler** (Port `6543`, usually with `?pgbouncer=true` or Session Mode dependent on Supabase infrastructure). Use this *exclusively* for initializing your active runtime `db` client instance inside Next.js Server Actions.
+   - `SUPABASE_DIRECT_URL`: Set to the **Supabase Transaction Pooler** (Port `6543`, usually with `?pgbouncer=true` or Session Mode dependent on Supabase infrastructure). Use this *exclusively* for initializing your active runtime `db` client instance inside Next.js Server Actions.
    - `DIRECT_URL`: Set to the **Supabase Session Pooler** (Port `5432`) or direct AWS/Cloud PostgreSQL address. Use this *exclusively* inside `drizzle.config.ts` for running migrations from your terminal.
 2. **Runtime Client Initialization:** Enforce the following multi-environment database initialization pattern:
    ```typescript
@@ -137,7 +137,7 @@ export async function createUserAction(prevState: any, formData: FormData) {
    import postgres from "postgres";
 
    // Prevent creating multiple connections on hot-reload during local multi-machine development
-   const connectionString = process.env.DATABASE_URL!;
+   const connectionString = process.env.SUPABASE_DIRECT_URL!;
    
    const client = globalThis.supabaseClient || postgres(connectionString, { prepare: false });
    if (process.env.NODE_ENV !== "production") globalThis.supabaseClient = client;

@@ -29,9 +29,9 @@ function sanitizeConnectionString(url: string): string {
   return `${protocol}${username}:${encodedPassword}@${hostDb}${rest}`;
 }
 
-const rawConnectionString = process.env.DATABASE_URL;
+const rawConnectionString = process.env.SUPABASE_DIRECT_URL;
 if (!rawConnectionString) {
-  throw new Error("DATABASE_URL environment variable is missing.");
+  throw new Error("SUPABASE_DIRECT_URL environment variable is missing.");
 }
 
 const connectionString = sanitizeConnectionString(rawConnectionString);

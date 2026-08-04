@@ -29,7 +29,7 @@ function sanitizeConnectionString(url: string): string {
   return `${protocol}${username}:${encodedPassword}@${hostDb}${rest}`;
 }
 
-const rawUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+const rawUrl = process.env.DIRECT_URL || process.env.SUPABASE_DIRECT_URL || "";
 let url = rawUrl ? sanitizeConnectionString(rawUrl) : "";
 
 if (!url) {
