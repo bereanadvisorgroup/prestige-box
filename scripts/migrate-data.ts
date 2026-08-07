@@ -9,7 +9,10 @@ let dbUrl = "";
 
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, "utf8");
-  const activeLines = envContent.split("\n").map((l: string) => l.trim()).filter((l: string) => l && !l.startsWith("#"));
+  const activeLines = envContent
+    .split("\n")
+    .map((l: string) => l.trim())
+    .filter((l: string) => l && !l.startsWith("#"));
   const match = activeLines.find((l: string) => l.startsWith("SUPABASE_DIRECT_URL="));
   if (match) {
     dbUrl = match.split("=").slice(1).join("=").trim().replace(/^['"]|['"]$/g, "");
@@ -25,12 +28,17 @@ if (!dbUrl) {
   process.exit(1);
 }
 
-const sql = postgres(dbUrl, { max: 10 });
+// Enable connection resilience and pool options suitable for high-volume ingest
+const sql = postgres(dbUrl, {
+  max: 10,
+  idle_timeout: 30,
+  max_lifetime: 60 * 5,
+  connect_timeout: 30,
+});
 
 // Helper to extract shortened title from body content
 function getShortenedTitle(content: string | null | undefined): string {
   if (!content) return "Imported Note";
-  // Remove HTML tags and normalize whitespace
   const cleanStr = content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
   if (!cleanStr) return "Imported Note";
 
@@ -38,7 +46,6 @@ function getShortenedTitle(content: string | null | undefined): string {
   if (firstSentence.length <= 60) {
     return firstSentence;
   }
-  // Trim at word boundary up to 60 characters
   const trimmed = firstSentence.substring(0, 60);
   const lastSpace = trimmed.lastIndexOf(" ");
   if (lastSpace > 20) {
@@ -63,9 +70,22 @@ function parseHouseholdName(name: string): { lastName: string; firstNames: strin
   return { lastName, firstNames };
 }
 
+// Generic helper to flush array of rows in batches
+async function flushBatch<T>(
+  batch: T[],
+  batchSize: number,
+  insertFn: (chunk: T[]) => Promise<void>
+) {
+  for (let i = 0; i < batch.length; i += batchSize) {
+    const chunk = batch.slice(i, i + batchSize);
+    await insertFn(chunk);
+  }
+}
+
 async function runMigration() {
   const startTime = Date.now();
-  const jsonPathArg = process.argv[2] || "scripts/20260801_ClientList_PP_Sample.json";
+  const rawArg = process.argv[2] || "scripts/20260801_ClientList.json";
+  const jsonPathArg = rawArg.replace(/^['"]|['"]$/g, "");
   const jsonPath = path.resolve(process.cwd(), jsonPathArg);
 
   if (!fs.existsSync(jsonPath)) {
@@ -95,35 +115,35 @@ async function runMigration() {
   console.log(`JSON parsed successfully: ${contacts.length} contacts, ${notes.length} notes, ${comments.length} comments.`);
 
   // In-memory maps (Legacy ID -> New UUID)
-  const personIdMap = new Map<number, string>(); // legacy contact.id -> people.id UUID
-  const clientIdMap = new Map<number, string>(); // legacy contact.id -> clients.id UUID
-  const companyIdMap = new Map<number, string>(); // legacy contact.id -> companies.id UUID
-  const householdIdMap = new Map<number, string>(); // legacy contact.id -> households.id UUID
+  const personIdMap = new Map<number, string>();
+  const clientIdMap = new Map<number, string>();
+  const companyIdMap = new Map<number, string>();
+  const householdIdMap = new Map<number, string>();
 
-  // To support household matching
   const allPeople: Array<{ legacyId: number; personId: string; clientId: string; firstName: string; lastName: string }> = [];
 
-  let insertedAddressesCount = 0;
-  let insertedPeopleCount = 0;
-  let insertedClientsCount = 0;
-  let insertedCompaniesCount = 0;
-  let insertedHouseholdsCount = 0;
-  let insertedTagNotesCount = 0;
-  let insertedNotesCount = 0;
-  let insertedNoteAssocCount = 0;
-  let insertedCompanyOwnersCount = 0;
-
-  const skippedItems: Array<{ type: string; legacyId: number; contentSnippet: string; reason: string }> = [];
-
-  // Separate contact types
   const personContacts = contacts.filter((c: any) => c.type === "Person");
   const companyContacts = contacts.filter((c: any) => c.type === "Organization");
   const householdContacts = contacts.filter((c: any) => c.type === "Household");
 
   console.log(`\nFound ${personContacts.length} Person contacts, ${companyContacts.length} Organization contacts, ${householdContacts.length} Household contacts.`);
 
-  // --- STEP 3: Process Person Contacts ---
-  console.log("\n--- STEP 3: Ingesting Person Contacts & Addresses ---");
+  // Prepare batch buffers
+  const addressesRows: any[] = [];
+  const peopleRows: any[] = [];
+  const clientsRows: any[] = [];
+  const companiesRows: any[] = [];
+  const householdsRows: any[] = [];
+  const tagNotesRows: any[] = [];
+  const tagAssocRows: any[] = [];
+  const companyOwnersRows: any[] = [];
+  const notesRows: any[] = [];
+  const noteAssocRows: any[] = [];
+
+  const skippedItems: Array<{ type: string; legacyId: number; contentSnippet: string; reason: string }> = [];
+
+  // --- STEP 3: Build Person & Address Row Batches ---
+  console.log("\n--- STEP 3: Preparing Person Contacts & Addresses ---");
 
   for (const c of personContacts) {
     const personUuid = crypto.randomUUID();
@@ -143,7 +163,6 @@ async function runMigration() {
       lastName,
     });
 
-    // Process Addresses
     const addressIds: string[] = [];
     const peopleAddressesFormatted: any[] = [];
 
@@ -157,11 +176,18 @@ async function runMigration() {
         const zipCode = (addr.zip_code || "").trim() || "N/A";
         const country = (addr.country || "").trim() || "USA";
 
-        await sql`
-          INSERT INTO addresses (id, street1, street2, city, state, "zipCode", country, "createdAt", "updatedAt")
-          VALUES (${addrUuid}, ${street1}, ${street2}, ${city}, ${state}, ${zipCode}, ${country}, NOW(), NOW())
-        `;
-        insertedAddressesCount++;
+        addressesRows.push({
+          id: addrUuid,
+          street1,
+          street2,
+          city,
+          state,
+          zipCode,
+          country,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
         addressIds.push(addrUuid);
         peopleAddressesFormatted.push({
           id: addrUuid,
@@ -176,27 +202,26 @@ async function runMigration() {
       }
     }
 
-    // Process Social Media
     const socialMedia: any[] = [];
     if (c.twitter_name) socialMedia.push({ platform: "Twitter", handle: c.twitter_name });
     if (c.linkedin_url) socialMedia.push({ platform: "LinkedIn", url: c.linkedin_url });
 
-    // Insert People record
-    await sql`
-      INSERT INTO people (
-        id, prefix, "firstName", "middleName", "lastName", suffix,
-        emails, phones, "socialMedia", addresses, "addressIds",
-        "createdAt", "updatedAt"
-      )
-      VALUES (
-        ${personUuid}, ${c.prefix || null}, ${firstName}, ${c.middle_name || null}, ${lastName}, ${c.suffix || null},
-        ${sql.json(c.emails || [])}, ${sql.json(c.phones || [])}, ${sql.json(socialMedia)}, ${sql.json(peopleAddressesFormatted)}, ${sql.array(addressIds)}::uuid[],
-        ${c.created_at ? new Date(c.created_at) : new Date()}, ${c.updated_at ? new Date(c.updated_at) : new Date()}
-      )
-    `;
-    insertedPeopleCount++;
+    peopleRows.push({
+      id: personUuid,
+      prefix: c.prefix || null,
+      firstName,
+      middleName: c.middle_name || null,
+      lastName,
+      suffix: c.suffix || null,
+      emails: JSON.stringify(c.emails || []),
+      phones: JSON.stringify(c.phones || []),
+      socialMedia: JSON.stringify(socialMedia),
+      addresses: JSON.stringify(peopleAddressesFormatted),
+      addressIds,
+      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+    });
 
-    // Prepare Clients JSON fields
     const employments = c.job_title || c.occupation
       ? [{ title: c.job_title || c.occupation, startDate: c.occupation_start_date || null }]
       : [];
@@ -234,47 +259,48 @@ async function runMigration() {
       },
     };
 
-    const liabilities = c.liabilities ? [c.liabilities] : [];
+    clientsRows.push({
+      id: clientUuid,
+      personId: personUuid,
+      employments: JSON.stringify(employments),
+      driversLicense: JSON.stringify(driversLicense),
+      pii: JSON.stringify(pii),
+      liabilities: JSON.stringify(c.liabilities ? [c.liabilities] : []),
+      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+    });
 
-    // Insert Clients record
-    await sql`
-      INSERT INTO clients (
-        id, "personId", employments, "driversLicense", pii, liabilities, "createdAt", "updatedAt"
-      )
-      VALUES (
-        ${clientUuid}, ${personUuid}, ${sql.json(employments)}, ${sql.json(driversLicense)},
-        ${sql.json(pii)}, ${sql.json(liabilities)},
-        ${c.created_at ? new Date(c.created_at) : new Date()}, ${c.updated_at ? new Date(c.updated_at) : new Date()}
-      )
-    `;
-    insertedClientsCount++;
-
-    // Process Tags -> Add as Note linked to Person/Client
     if (c.tags && typeof c.tags === "string" && c.tags.trim() !== "") {
       const tagList = c.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
       for (const tag of tagList) {
         const noteUuid = crypto.randomUUID();
         const assocUuid = crypto.randomUUID();
-        const title = `Contact Tag: ${tag}`;
-        const body = `Imported Tag: ${tag}`;
 
-        await sql`
-          INSERT INTO notes (id, "parentId", "rootId", depth, title, body, "authorId", "createdAt", "updatedAt")
-          VALUES (${noteUuid}, NULL, ${noteUuid}, 0, ${title}, ${body}, NULL, ${c.created_at ? new Date(c.created_at) : new Date()}, NOW())
-        `;
-        await sql`
-          INSERT INTO note_associations (id, "noteId", "entityType", "entityId", "createdAt")
-          VALUES (${assocUuid}, ${noteUuid}, 'client', ${clientUuid}, NOW())
-        `;
-        insertedTagNotesCount++;
-        insertedNotesCount++;
-        insertedNoteAssocCount++;
+        tagNotesRows.push({
+          id: noteUuid,
+          parentId: null,
+          rootId: noteUuid,
+          depth: 0,
+          title: `Contact Tag: ${tag}`,
+          body: `Imported Tag: ${tag}`,
+          authorId: null,
+          createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+          updatedAt: new Date(),
+        });
+
+        tagAssocRows.push({
+          id: assocUuid,
+          noteId: noteUuid,
+          entityType: "client",
+          entityId: clientUuid,
+          createdAt: new Date(),
+        });
       }
     }
   }
 
-  // --- STEP 4: Process Organization Contacts ---
-  console.log("\n--- STEP 4: Ingesting Organization Contacts ---");
+  // --- STEP 4: Build Organization & Household Batches ---
+  console.log("\n--- STEP 4: Preparing Organizations & Households ---");
 
   for (const c of companyContacts) {
     const companyUuid = crypto.randomUUID();
@@ -291,26 +317,33 @@ async function runMigration() {
       const zipCode = (addr.zip_code || "").trim() || "N/A";
       const country = (addr.country || "").trim() || "USA";
 
-      await sql`
-        INSERT INTO addresses (id, street1, street2, city, state, "zipCode", country, "createdAt", "updatedAt")
-        VALUES (${addrUuid}, ${street1}, ${street2}, ${city}, ${state}, ${zipCode}, ${country}, NOW(), NOW())
-      `;
-      insertedAddressesCount++;
+      addressesRows.push({
+        id: addrUuid,
+        street1,
+        street2,
+        city,
+        state,
+        zipCode,
+        country,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       addressId = addrUuid;
     }
 
     const phone = c.phones && c.phones[0] ? c.phones[0].value : null;
     const website = c.websites && c.websites[0] ? c.websites[0].value : null;
 
-    await sql`
-      INSERT INTO companies (id, name, phone, website, "addressId", "createdAt", "updatedAt")
-      VALUES (${companyUuid}, ${c.name}, ${phone}, ${website}, ${addressId}, ${c.created_at ? new Date(c.created_at) : new Date()}, ${c.updated_at ? new Date(c.updated_at) : new Date()})
-    `;
-    insertedCompaniesCount++;
+    companiesRows.push({
+      id: companyUuid,
+      name: c.name,
+      phone,
+      website,
+      addressId,
+      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+    });
   }
-
-  // --- STEP 5: Process Household Contacts ---
-  console.log("\n--- STEP 5: Ingesting Household Contacts & Matching Members ---");
 
   for (const c of householdContacts) {
     const householdUuid = crypto.randomUUID();
@@ -327,15 +360,20 @@ async function runMigration() {
       const zipCode = (addr.zip_code || "").trim() || "N/A";
       const country = (addr.country || "").trim() || "USA";
 
-      await sql`
-        INSERT INTO addresses (id, street1, street2, city, state, "zipCode", country, "createdAt", "updatedAt")
-        VALUES (${addrUuid}, ${street1}, ${street2}, ${city}, ${state}, ${zipCode}, ${country}, NOW(), NOW())
-      `;
-      insertedAddressesCount++;
+      addressesRows.push({
+        id: addrUuid,
+        street1,
+        street2,
+        city,
+        state,
+        zipCode,
+        country,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       addressId = addrUuid;
     }
 
-    // Household name parsing and client member matching
     const { lastName: hLastName, firstNames: hFirstNames } = parseHouseholdName(c.name || "");
     const membersList: Array<{ clientId: string; role: string }> = [];
 
@@ -356,7 +394,6 @@ async function runMigration() {
         }
       }
 
-      // If first names didn't match directly but people exist with same last name
       if (membersList.length === 0 && matchingPeople.length > 0) {
         matchingPeople.forEach((p, idx) => {
           const role = idx === 0 ? "HEAD" : idx === 1 ? "SPOUSE" : "DEPENDENT";
@@ -365,66 +402,51 @@ async function runMigration() {
       }
     }
 
-    await sql`
-      INSERT INTO households (id, name, "addressId", "memberIds", "createdAt", "updatedAt")
-      VALUES (${householdUuid}, ${c.name}, ${addressId}, ${sql.json(membersList)}, ${c.created_at ? new Date(c.created_at) : new Date()}, ${c.updated_at ? new Date(c.updated_at) : new Date()})
-    `;
-    insertedHouseholdsCount++;
+    householdsRows.push({
+      id: householdUuid,
+      name: c.name,
+      addressId,
+      memberIds: JSON.stringify(membersList),
+      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+    });
   }
 
-  // --- STEP 6: Process Company-Client Relationships ---
-  console.log("\n--- STEP 6: Processing Company & Person Associations ---");
-
-  const companyClientMap = new Map<string, Set<string>>(); // companyUuid -> Set of clientUuids
-
-  // 1. Person contacts with organization_id
+  // Company Owner links
   for (const c of personContacts) {
     if (c.organization_id && companyIdMap.has(c.organization_id)) {
-      const companyUuid = companyIdMap.get(c.organization_id)!;
-      const personUuid = personIdMap.get(c.id)!;
-      const clientUuid = clientIdMap.get(c.id)!;
-
-      const ownerUuid = crypto.randomUUID();
-      await sql`
-        INSERT INTO company_owners (id, "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")
-        VALUES (${ownerUuid}, ${companyUuid}, ${personUuid}, 0.00, NOW(), NOW())
-      `;
-      insertedCompanyOwnersCount++;
-
-      if (!companyClientMap.has(companyUuid)) companyClientMap.set(companyUuid, new Set());
-      companyClientMap.get(companyUuid)!.add(clientUuid);
+      companyOwnersRows.push({
+        id: crypto.randomUUID(),
+        companyId: companyIdMap.get(c.organization_id)!,
+        personId: personIdMap.get(c.id)!,
+        ownershipPercentage: 0.0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     }
   }
 
-  // 2. Organization contacts with contact_related_contacts
   for (const c of companyContacts) {
     const companyUuid = companyIdMap.get(c.id)!;
     if (Array.isArray(c.contact_related_contacts)) {
       for (const rel of c.contact_related_contacts) {
         if (rel.related_contact_id && personIdMap.has(rel.related_contact_id)) {
-          const personUuid = personIdMap.get(rel.related_contact_id)!;
-          const clientUuid = clientIdMap.get(rel.related_contact_id)!;
-
-          const ownerUuid = crypto.randomUUID();
-          await sql`
-            INSERT INTO company_owners (id, "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")
-            VALUES (${ownerUuid}, ${companyUuid}, ${personUuid}, 0.00, NOW(), NOW())
-          `;
-          insertedCompanyOwnersCount++;
-
-          if (!companyClientMap.has(companyUuid)) companyClientMap.set(companyUuid, new Set());
-          companyClientMap.get(companyUuid)!.add(clientUuid);
+          companyOwnersRows.push({
+            id: crypto.randomUUID(),
+            companyId: companyUuid,
+            personId: personIdMap.get(rel.related_contact_id)!,
+            ownershipPercentage: 0.0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
         }
       }
     }
   }
 
+  // --- STEP 5: Prepare Notes & Comments Batches ---
+  console.log("\n--- STEP 5: Preparing Notes & Comments ---");
 
-
-  // --- STEP 7: Ingest Notes & Comments ---
-  console.log("\n--- STEP 7: Ingesting Notes & Comments ---");
-
-  // Ingest Notes
   for (const n of notes) {
     let targetEntityType: "client" | "company" | null = null;
     let targetEntityId: string | null = null;
@@ -448,19 +470,26 @@ async function runMigration() {
     if (targetEntityType && targetEntityId) {
       const noteUuid = crypto.randomUUID();
       const assocUuid = crypto.randomUUID();
-      const title = getShortenedTitle(n.content);
-      const body = n.content || "";
 
-      await sql`
-        INSERT INTO notes (id, "parentId", "rootId", depth, title, body, "authorId", "createdAt", "updatedAt")
-        VALUES (${noteUuid}, NULL, ${noteUuid}, 0, ${title}, ${body}, NULL, ${n.created_at ? new Date(n.created_at) : new Date()}, ${n.updated_at ? new Date(n.updated_at) : new Date()})
-      `;
-      await sql`
-        INSERT INTO note_associations (id, "noteId", "entityType", "entityId", "createdAt")
-        VALUES (${assocUuid}, ${noteUuid}, ${targetEntityType}, ${targetEntityId}, NOW())
-      `;
-      insertedNotesCount++;
-      insertedNoteAssocCount++;
+      notesRows.push({
+        id: noteUuid,
+        parentId: null,
+        rootId: noteUuid,
+        depth: 0,
+        title: getShortenedTitle(n.content),
+        body: n.content || "",
+        authorId: null,
+        createdAt: n.created_at ? new Date(n.created_at) : new Date(),
+        updatedAt: n.updated_at ? new Date(n.updated_at) : new Date(),
+      });
+
+      noteAssocRows.push({
+        id: assocUuid,
+        noteId: noteUuid,
+        entityType: targetEntityType,
+        entityId: targetEntityId,
+        createdAt: new Date(),
+      });
     } else {
       skippedItems.push({
         type: "note",
@@ -471,7 +500,6 @@ async function runMigration() {
     }
   }
 
-  // Ingest Comments
   for (const cm of comments) {
     let targetEntityType: "client" | "company" | null = null;
     let targetEntityId: string | null = null;
@@ -489,19 +517,26 @@ async function runMigration() {
     if (targetEntityType && targetEntityId) {
       const noteUuid = crypto.randomUUID();
       const assocUuid = crypto.randomUUID();
-      const title = getShortenedTitle(cm.content);
-      const body = cm.content || "";
 
-      await sql`
-        INSERT INTO notes (id, "parentId", "rootId", depth, title, body, "authorId", "createdAt", "updatedAt")
-        VALUES (${noteUuid}, NULL, ${noteUuid}, 0, ${title}, ${body}, NULL, ${cm.created_at ? new Date(cm.created_at) : new Date()}, ${cm.updated_at ? new Date(cm.updated_at) : new Date()})
-      `;
-      await sql`
-        INSERT INTO note_associations (id, "noteId", "entityType", "entityId", "createdAt")
-        VALUES (${assocUuid}, ${noteUuid}, ${targetEntityType}, ${targetEntityId}, NOW())
-      `;
-      insertedNotesCount++;
-      insertedNoteAssocCount++;
+      notesRows.push({
+        id: noteUuid,
+        parentId: null,
+        rootId: noteUuid,
+        depth: 0,
+        title: getShortenedTitle(cm.content),
+        body: cm.content || "",
+        authorId: null,
+        createdAt: cm.created_at ? new Date(cm.created_at) : new Date(),
+        updatedAt: cm.updated_at ? new Date(cm.updated_at) : new Date(),
+      });
+
+      noteAssocRows.push({
+        id: assocUuid,
+        noteId: noteUuid,
+        entityType: targetEntityType,
+        entityId: targetEntityId,
+        createdAt: new Date(),
+      });
     } else {
       skippedItems.push({
         type: "comment",
@@ -512,8 +547,93 @@ async function runMigration() {
     }
   }
 
-  // --- STEP 8: Generate Results JSON File ---
-  console.log("\n--- STEP 8: Writing Migration Summary JSON ---");
+  // --- STEP 6: Execute Fast Bulk Writes to Postgres ---
+  console.log("\n--- STEP 6: Executing Bulk Database Writes ---");
+
+  // 1. Addresses
+  if (addressesRows.length > 0) {
+    console.log(`Flushing ${addressesRows.length} addresses...`);
+    await flushBatch(addressesRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO addresses ${sql(chunk, "id", "street1", "street2", "city", "state", "zipCode", "country", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 2. People
+  if (peopleRows.length > 0) {
+    console.log(`Flushing ${peopleRows.length} people...`);
+    await flushBatch(peopleRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO people ${sql(chunk, "id", "prefix", "firstName", "middleName", "lastName", "suffix", "emails", "phones", "socialMedia", "addresses", "addressIds", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 3. Clients
+  if (clientsRows.length > 0) {
+    console.log(`Flushing ${clientsRows.length} clients...`);
+    await flushBatch(clientsRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO clients ${sql(chunk, "id", "personId", "employments", "driversLicense", "pii", "liabilities", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 4. Companies
+  if (companiesRows.length > 0) {
+    console.log(`Flushing ${companiesRows.length} companies...`);
+    await flushBatch(companiesRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO companies ${sql(chunk, "id", "name", "phone", "website", "addressId", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 5. Households
+  if (householdsRows.length > 0) {
+    console.log(`Flushing ${householdsRows.length} households...`);
+    await flushBatch(householdsRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO households ${sql(chunk, "id", "name", "addressId", "memberIds", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 6. Company Owners
+  if (companyOwnersRows.length > 0) {
+    console.log(`Flushing ${companyOwnersRows.length} company owners...`);
+    await flushBatch(companyOwnersRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO company_owners ${sql(chunk, "id", "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 7. Notes (Tag notes + Imported notes)
+  const allNotesRows = [...tagNotesRows, ...notesRows];
+  if (allNotesRows.length > 0) {
+    console.log(`Flushing ${allNotesRows.length} notes...`);
+    await flushBatch(allNotesRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO notes ${sql(chunk, "id", "parentId", "rootId", "depth", "title", "body", "authorId", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 8. Note Associations
+  const allNoteAssocRows = [...tagAssocRows, ...noteAssocRows];
+  if (allNoteAssocRows.length > 0) {
+    console.log(`Flushing ${allNoteAssocRows.length} note associations...`);
+    await flushBatch(allNoteAssocRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO note_associations ${sql(chunk, "id", "noteId", "entityType", "entityId", "createdAt")}
+      `;
+    });
+  }
+
+  // --- STEP 7: Generate Results JSON File ---
+  console.log("\n--- STEP 7: Writing Migration Summary JSON ---");
 
   const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
 
@@ -521,15 +641,15 @@ async function runMigration() {
     timestamp: new Date().toISOString(),
     durationSeconds: Number(durationSeconds),
     counts: {
-      people: insertedPeopleCount,
-      clients: insertedClientsCount,
-      companies: insertedCompaniesCount,
-      households: insertedHouseholdsCount,
-      addresses: insertedAddressesCount,
-      tagNotes: insertedTagNotesCount,
-      totalNotes: insertedNotesCount,
-      noteAssociations: insertedNoteAssocCount,
-      companyOwners: insertedCompanyOwnersCount,
+      people: peopleRows.length,
+      clients: clientsRows.length,
+      companies: companiesRows.length,
+      households: householdsRows.length,
+      addresses: addressesRows.length,
+      tagNotes: tagNotesRows.length,
+      totalNotes: allNotesRows.length,
+      noteAssociations: allNoteAssocRows.length,
+      companyOwners: companyOwnersRows.length,
     },
     skippedCounts: {
       totalSkipped: skippedItems.length,
@@ -544,14 +664,14 @@ async function runMigration() {
 
   console.log(`\n================ MIGRATION SUCCESSFUL ===============`);
   console.log(`Duration: ${durationSeconds} seconds`);
-  console.log(`People inserted: ${insertedPeopleCount}`);
-  console.log(`Clients inserted: ${insertedClientsCount}`);
-  console.log(`Companies inserted: ${insertedCompaniesCount}`);
-  console.log(`Households inserted: ${insertedHouseholdsCount}`);
-  console.log(`Addresses inserted: ${insertedAddressesCount}`);
-  console.log(`Notes inserted: ${insertedNotesCount} (including ${insertedTagNotesCount} tag notes)`);
-  console.log(`Note Associations inserted: ${insertedNoteAssocCount}`);
-  console.log(`Company Owners inserted: ${insertedCompanyOwnersCount}`);
+  console.log(`People inserted: ${peopleRows.length}`);
+  console.log(`Clients inserted: ${clientsRows.length}`);
+  console.log(`Companies inserted: ${companiesRows.length}`);
+  console.log(`Households inserted: ${householdsRows.length}`);
+  console.log(`Addresses inserted: ${addressesRows.length}`);
+  console.log(`Notes inserted: ${allNotesRows.length} (including ${tagNotesRows.length} tag notes)`);
+  console.log(`Note Associations inserted: ${allNoteAssocRows.length}`);
+  console.log(`Company Owners inserted: ${companyOwnersRows.length}`);
   console.log(`Skipped Notes/Comments: ${skippedItems.length}`);
   console.log(`Results saved to: ${resultsPath}`);
 
