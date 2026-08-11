@@ -5,7 +5,8 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, ExternalLink, Pencil, Phone, Trash2 } from "lucide-react";
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
 import type { RecordKeeper } from "@/types/crm";
@@ -22,13 +23,16 @@ export const columns = (onDelete: (recordKeeper: RecordKeeper) => void): ColumnD
     cell: ({ row }: { row: Row<RecordKeeper> }) => {
       const recordKeeper = row.original;
       return (
-        <Link
-          href={`/dashboard/admin/record-keepers/${recordKeeper.id}`}
-          className="flex items-center gap-1 font-medium text-primary hover:underline"
-        >
-          <span className="truncate">{recordKeeper.firmName}</span>
-          <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <FirmLogo logoUrl={recordKeeper.logoUrl} name={recordKeeper.firmName} className="h-6 w-6" />
+          <Link
+            href={`/dashboard/admin/record-keepers/${recordKeeper.id}`}
+            className="flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            <span className="truncate">{recordKeeper.firmName}</span>
+            <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
+          </Link>
+        </div>
       );
     },
   },

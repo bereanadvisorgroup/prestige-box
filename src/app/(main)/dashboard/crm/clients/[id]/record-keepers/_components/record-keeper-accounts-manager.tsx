@@ -173,6 +173,8 @@ export function RecordKeeperAccountsManager({
       return null;
     }
     return {
+      ownerIds: client.id ? [client.id] : [],
+      ownershipType: "INDIVIDUAL",
       recordKeeperId: form.recordKeeperId,
       financialTypeId: form.financialTypeId || undefined,
       accountNumber: form.accountNumber.trim() || undefined,
@@ -342,7 +344,7 @@ export function RecordKeeperAccountsManager({
                       <span>{group.keeperName}</span>
                       {group.keeperId && (
                         <Link
-                          href={`/dashboard/admin/record-keepers/${group.keeperId}`}
+                          href={`/dashboard/admin/record-keepers/${group.keeperId}?clientId=${client.id}`}
                           className="text-muted-foreground transition-colors hover:text-primary"
                         >
                           <ArrowUpRight className="inline h-4 w-4" />

@@ -7,11 +7,12 @@ import Link from "next/link";
 
 import { Plus, Search, X } from "lucide-react";
 
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { DataTable } from "@/components/features/data-table/data-table";
+import { DataTablePagination } from "@/components/features/data-table/data-table-pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Company } from "@/types/crm";
 
 import { columns } from "./columns";
@@ -24,8 +25,9 @@ interface CompaniesTableProps {
 export function CompaniesTable({ data }: CompaniesTableProps) {
   const [deleteCompany, setDeleteCompany] = useState<Company | null>(null);
   const [searchValue, setSearchValue] = useState("");
+  const { profile } = useAuthStore();
 
-  const tableColumns = useMemo(() => columns(setDeleteCompany), []);
+  const tableColumns = useMemo(() => columns(setDeleteCompany, profile?.role), [profile?.role]);
 
   const table = useDataTableInstance({
     data,

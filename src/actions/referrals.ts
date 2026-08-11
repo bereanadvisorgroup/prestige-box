@@ -2,7 +2,7 @@
 
 import { supabaseServer } from "@/lib/supabase.server";
 
-export type ReferralNodeType = "Client" | "Company" | "Person";
+export type ReferralNodeType = "Client" | "Company" | "Person" | "Advisor";
 
 export interface ReferralTreeNode {
   id: string;
@@ -34,6 +34,8 @@ interface ClientRow {
   referredByCompanyId: string | null;
   referredByPersonId: string | null;
   referredByReferralTypeId: string | null;
+  referredByEventId: string | null;
+  referredByAdvisorId: string | null;
   createdAt: string | null;
 }
 
@@ -42,19 +44,35 @@ interface ClientRow {
 const isReferred = (c: ClientRow) =>
   !!c.referredByType &&
   c.referredByType !== "none" &&
-  !!(c.referredById || c.referredByCompanyId || c.referredByPersonId || c.referredByReferralTypeId);
+  !!(
+    c.referredById ||
+    c.referredByCompanyId ||
+    c.referredByPersonId ||
+    c.referredByReferralTypeId ||
+    c.referredByEventId ||
+    c.referredByAdvisorId
+  );
 
 export async function getReferralsReportData() {
   try {
-    const [{ data: clients }, { data: people }, { data: companies }, { data: referralTypes }] = await Promise.all([
+    const [
+      { data: clients },
+      { data: people },
+      { data: companies },
+      { data: referralTypes },
+      { data: events },
+      { data: users },
+    ] = await Promise.all([
       supabaseServer
         .from("clients")
         .select(
-          "id, personId, referredById, referredByType, referredByCompanyId, referredByPersonId, referredByReferralTypeId, createdAt",
+          "id, personId, referredById, referredByType, referredByCompanyId, referredByPersonId, referredByReferralTypeId, referredByEventId, referredByAdvisorId, createdAt",
         ),
       supabaseServer.from("people").select("id, firstName, lastName"),
       supabaseServer.from("companies").select("id, name, dba"),
       supabaseServer.from("referral_types").select("id, name"),
+      supabaseServer.from("events").select("id, title"),
+      supabaseServer.from("users").select("uid, firstName, lastName, role"),
     ]);
 
     const clientRows = (clients || []) as ClientRow[];
@@ -62,6 +80,8 @@ export async function getReferralsReportData() {
     const peopleMap = new Map((people || []).map((p) => [p.id, p]));
     const companiesMap = new Map((companies || []).map((c) => [c.id, c]));
     const referralTypesMap = new Map((referralTypes || []).map((r) => [r.id, r]));
+    const eventsMap = new Map((events || []).map((e) => [e.id, e]));
+    const usersMap = new Map((users || []).map((u) => [u.uid, u]));
     const clientsMap = new Map(clientRows.map((c) => [c.id, c]));
 
     const personName = (p?: { firstName: string | null; lastName: string | null }) =>
@@ -98,6 +118,11 @@ export async function getReferralsReportData() {
         const pe = peopleMap.get(c.referredByPersonId)!;
         addNode({ id: pe.id, name: personName(pe), type: "Person", url: `/dashboard/crm/people/${pe.id}` });
         referrerId = pe.id;
+      } else if (c.referredByType === "advisor" && c.referredByAdvisorId && usersMap.has(c.referredByAdvisorId)) {
+        const u = usersMap.get(c.referredByAdvisorId)!;
+        const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Unknown Advisor";
+        addNode({ id: u.uid, name, type: "Advisor", url: `/dashboard/admin/users` });
+        referrerId = u.uid;
       }
 
       if (referrerId) {
@@ -108,12 +133,16 @@ export async function getReferralsReportData() {
 
     const treeNodes = Array.from(nodeMap.values());
 
-    // --- 2. Referral-type pie (clients sourced from the referral-type select list) ---
+    // --- 2. Referral-type pie (clients sourced from the referral-type select list or events) ---
     const typeCounts = new Map<string, number>();
     for (const c of clientRows) {
       if (c.referredByType === "referral_type" && c.referredByReferralTypeId) {
         const rt = referralTypesMap.get(c.referredByReferralTypeId);
         const name = rt?.name || "Unknown";
+        typeCounts.set(name, (typeCounts.get(name) || 0) + 1);
+      } else if (c.referredByType === "event" && c.referredByEventId) {
+        const ev = eventsMap.get(c.referredByEventId);
+        const name = ev ? `Event: ${ev.title}` : "Unknown Event";
         typeCounts.set(name, (typeCounts.get(name) || 0) + 1);
       }
     }

@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 
-import { PersonAvatar } from "@/components/crm/person-avatar";
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
@@ -15,6 +15,7 @@ import type { Client, Person } from "@/types/crm";
 export type EnrichedClient = Client & {
   isLinked?: boolean;
   person?: Person | null;
+  advisorName?: string | null;
 };
 
 export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedClient>[] => [
@@ -62,6 +63,16 @@ export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedC
       const phone = person.phones?.find((p) => p.isPrimary)?.number || person.phones?.[0]?.number;
       if (!phone) return "-";
       return <span className="whitespace-nowrap text-sm">{formatPhoneNumber(phone)}</span>;
+    },
+  },
+  {
+    id: "assignedAdvisor",
+    accessorFn: (row) => row.advisorName ?? "",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Assigned Advisor" />,
+    cell: ({ row }: { row: Row<EnrichedClient> }) => {
+      const name = row.original.advisorName;
+      if (!name) return <span className="text-muted-foreground text-sm italic">Unassigned</span>;
+      return <span className="whitespace-nowrap text-sm">{name}</span>;
     },
   },
   {

@@ -249,7 +249,8 @@ export function AddUserForm({ unlinkedClients = [] }: { unlinkedClients?: any[] 
                     if (!person || !person.emails || person.emails.length === 0) return null;
 
                     const primaryEmail =
-                      person.emails.find((e: any) => e.isPrimary)?.address || person.emails[0].address;
+                      person.emails.find((e: { address: string; isPrimary?: boolean }) => e.isPrimary)?.address ||
+                      person.emails[0].address;
                     const currentValue = selectedEmails[client.id] || primaryEmail;
 
                     return (
@@ -267,7 +268,7 @@ export function AddUserForm({ unlinkedClients = [] }: { unlinkedClients?: any[] 
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {person.emails.map((e: any) => (
+                                {person.emails.map((e: { id: string; address: string; isPrimary?: boolean }) => (
                                   <SelectItem key={e.id} value={e.address}>
                                     {e.address} {e.isPrimary && "(Primary)"}
                                   </SelectItem>

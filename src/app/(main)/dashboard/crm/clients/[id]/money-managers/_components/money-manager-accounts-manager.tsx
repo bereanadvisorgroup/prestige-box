@@ -421,6 +421,8 @@ export function MoneyManagerAccountsManager({
       return null;
     }
     return {
+      ownerIds: client.id ? [client.id] : [],
+      ownershipType: "INDIVIDUAL",
       moneyManagerId: form.moneyManagerId,
       financialTypeId: form.financialTypeId || undefined,
       accountNumber: form.accountNumber.trim() || undefined,
@@ -606,7 +608,7 @@ export function MoneyManagerAccountsManager({
                       <span>{group.managerName}</span>
                       {group.managerId && (
                         <Link
-                          href={`/dashboard/admin/money-managers/${group.managerId}`}
+                          href={`/dashboard/admin/money-managers/${group.managerId}?clientId=${client.id}`}
                           className="text-muted-foreground transition-colors hover:text-primary"
                         >
                           <ArrowUpRight className="inline h-4 w-4" />

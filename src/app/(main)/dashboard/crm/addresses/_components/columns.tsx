@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpRight, MapPin, Pencil, Trash2 } from "lucide-react";
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Address } from "@/types/crm";
 

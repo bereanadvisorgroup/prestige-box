@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SsnInput } from "@/components/ui/ssn-input";
+import { getSocialAvatarUrl } from "@/lib/social";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
 import { type Address, type Person, type PersonFormInput, PersonFormSchema, type PersonFormValues } from "@/types/crm";
@@ -33,7 +34,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
-  const [showSSN, setShowSSN] = useState(false);
   const [addressSearchQuery, setAddressSearchQuery] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +99,8 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     ? person.phones
     : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
 
+  const defaultSocialMedia = person?.socialMedia?.length ? person.socialMedia : [];
+
   const defaultAddresses = person?.addresses?.length
     ? person.addresses
     : person?.addressIds?.length
@@ -116,35 +118,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       photoUrl: p.photoUrl ?? "",
       emails: p.emails || defaultEmails,
       phones: p.phones || defaultPhones,
+      socialMedia: p.socialMedia || defaultSocialMedia,
       addresses: p.addresses || defaultAddresses,
       addressIds: p.addressIds || defaultAddresses.map((a) => a.id),
-      driversLicense: p.driversLicense
-        ? {
-            number: p.driversLicense.number ?? "",
-            issueState:
-              ((p.driversLicense as Record<string, unknown>).issueState as string) ??
-              ((p.driversLicense as Record<string, unknown>).state as string) ??
-              "",
-            issueDate: p.driversLicense.issueDate ?? "",
-            expirationDate: p.driversLicense.expirationDate ?? "",
-          }
-        : {
-            number: "",
-            issueState: "",
-            issueDate: "",
-            expirationDate: "",
-          },
-      pii: p.pii
-        ? {
-            ssn: p.pii.ssn ?? "",
-            biologicalGender: p.pii.biologicalGender ?? undefined,
-            birthDate: p.pii.birthDate ?? "",
-          }
-        : {
-            ssn: "",
-            biologicalGender: undefined,
-            birthDate: "",
-          },
     };
   };
 
@@ -160,19 +136,9 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       photoUrl: "",
       emails: defaultEmails,
       phones: defaultPhones,
+      socialMedia: defaultSocialMedia,
       addresses: defaultAddresses,
       addressIds: defaultAddresses.map((a) => a.id),
-      driversLicense: {
-        number: "",
-        issueState: "",
-        issueDate: "",
-        expirationDate: "",
-      },
-      pii: {
-        ssn: "",
-        biologicalGender: undefined,
-        birthDate: "",
-      },
     },
   });
 
@@ -192,6 +158,15 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   } = useFieldArray({
     control: form.control,
     name: "phones",
+  });
+
+  const {
+    fields: socialMediaFields,
+    append: appendSocialMedia,
+    remove: removeSocialMedia,
+  } = useFieldArray({
+    control: form.control,
+    name: "socialMedia",
   });
 
   const {
@@ -251,15 +226,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   async function onSubmit(values: PersonFormValues) {
     try {
       setIsLoading(true);
-
-      // Clean up empty optional compound objects if not fully filled out
       const submission = { ...values };
-      if (!submission.driversLicense?.number && !submission.driversLicense?.issueState) {
-        delete submission.driversLicense;
-      }
-      if (!submission.pii?.ssn && !submission.pii?.biologicalGender && !submission.pii?.birthDate) {
-        delete submission.pii;
-      }
       // Ensure addressIds syncs with addresses array
       submission.addressIds = submission.addresses?.map((a) => a.id) || [];
 
@@ -305,16 +272,26 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   className="group relative flex h-24 w-24 cursor-pointer items-center justify-center rounded-full border-2 border-muted-foreground/30 border-dashed transition-all duration-300 hover:border-primary/50 hover:bg-accent/40"
                   aria-label="Upload profile photo"
                 >
-                  <Avatar className="h-[88px] w-[88px]">
-                    <AvatarImage
-                      src={form.watch("photoUrl") || undefined}
-                      alt="Profile Preview"
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-primary/5 font-bold text-lg text-primary">
-                      {getInitials(`${form.watch("firstName")} ${form.watch("lastName")}`)}
-                    </AvatarFallback>
-                  </Avatar>
+                  {(() => {
+                    const currentPhotoUrl = form.watch("photoUrl");
+                    const socialMediaList = form.watch("socialMedia") || [];
+                    const activeSocial = socialMediaList.find((sm) => sm.useProfilePhoto);
+                    const previewPhotoUrl = activeSocial
+                      ? getSocialAvatarUrl(activeSocial.type, activeSocial.url) || currentPhotoUrl
+                      : currentPhotoUrl;
+                    return (
+                      <Avatar className="h-[88px] w-[88px]">
+                        <AvatarImage
+                          src={previewPhotoUrl || undefined}
+                          alt="Profile Preview"
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-primary/5 font-bold text-lg text-primary">
+                          {getInitials(`${form.watch("firstName")} ${form.watch("lastName")}`)}
+                        </AvatarFallback>
+                      </Avatar>
+                    );
+                  })()}
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <Camera className="h-5 w-5 text-white" />
@@ -640,130 +617,131 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* Drivers License Section */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="border-b pb-2 font-medium text-sm">Driver&apos;s License</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <FormField
-                  control={form.control}
-                  name="driversLicense.number"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>DL Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="D12345678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.issueState"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Issue State</FormLabel>
-                      <FormControl>
-                        <Input placeholder="CA" maxLength={2} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.issueDate"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Issue Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="driversLicense.expirationDate"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>Expiration Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* PII Section */}
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="border-b pb-2 font-medium text-sm">Personal Identifiable Information (PII)</h3>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="pii.ssn"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SSN</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <SsnInput type={showSSN ? "text" : "password"} placeholder="XXX-XX-XXXX" {...field} />
-                        </FormControl>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-0 right-0 h-full px-3 py-2 text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowSSN(!showSSN)}
-                        >
-                          {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          <span className="sr-only">{showSSN ? "Hide SSN" : "Show SSN"}</span>
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pii.biologicalGender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Biological Gender</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pii.birthDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Birth Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Social Media Section */}
+              <div className="space-y-3 pt-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-base">Social Media Accounts</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendSocialMedia({
+                        id: crypto.randomUUID(),
+                        type: "Facebook",
+                        url: "",
+                        isPrimary: false,
+                        useProfilePhoto: false,
+                      })
+                    }
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Add Social Media
+                  </Button>
+                </div>
+                {socialMediaFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
+                  >
+                    <FormField
+                      control={form.control}
+                      name={`socialMedia.${index}.url`}
+                      render={({ field: inputField }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs">URL</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://..." {...inputField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`socialMedia.${index}.type`}
+                      render={({ field: selectField }) => (
+                        <FormItem className="w-full sm:w-32">
+                          <FormLabel className="text-xs">Type</FormLabel>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Facebook">Facebook</SelectItem>
+                              <SelectItem value="Instagram">Instagram</SelectItem>
+                              <SelectItem value="X">X</SelectItem>
+                              <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                              <SelectItem value="YouTube">YouTube</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`socialMedia.${index}.isPrimary`}
+                      render={({ field: checkField }) => (
+                        <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                          <FormLabel className="mb-2 text-xs">Primary</FormLabel>
+                          <FormControl>
+                            <input
+                              type="radio"
+                              name="primarySocialMedia"
+                              checked={checkField.value}
+                              onChange={() => {
+                                const currentSM = form.getValues("socialMedia") || [];
+                                currentSM.forEach((_, i) => {
+                                  form.setValue(`socialMedia.${i}.isPrimary`, false);
+                                });
+                                form.setValue(`socialMedia.${index}.isPrimary`, true);
+                              }}
+                              className="h-4 w-4"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`socialMedia.${index}.useProfilePhoto`}
+                      render={({ field: checkField }) => (
+                        <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                          <FormLabel className="mb-2 text-xs">Use Photo</FormLabel>
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={checkField.value}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                const currentSM = form.getValues("socialMedia") || [];
+                                currentSM.forEach((_, i) => {
+                                  form.setValue(`socialMedia.${i}.useProfilePhoto`, false);
+                                });
+                                if (checked) {
+                                  form.setValue(`socialMedia.${index}.useProfilePhoto`, true);
+                                }
+                              }}
+                              className="h-4 w-4"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSocialMedia(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { getEntityHistory } from "@/actions/history";
-import { HistoryTable } from "@/components/history/history-table";
+import { HistoryTable } from "@/components/features/history/history-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ChangeHistoryWithEntity } from "@/types/crm";
 

@@ -66,6 +66,8 @@ export function MortgageTab({ client, person }: { client: Client; person: Person
 
       const newMortgage: MortgageInfo = {
         id: crypto.randomUUID(),
+        ownerIds: client.id ? [client.id] : [],
+        ownershipType: "INDIVIDUAL",
         addressId: selectedAddressId,
         purchasePrice: purchasePrice ? parseFloat(purchasePrice) : undefined,
         currentMarketValue: marketValue ? parseFloat(marketValue) : undefined,

@@ -15,8 +15,9 @@ import {
   updateDisabilityInsuranceCompany,
 } from "@/actions/disability-insurance-companies";
 import { getPeople } from "@/actions/people";
-import { PersonAvatar } from "@/components/crm/person-avatar";
-import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { LogoUpload } from "@/components/features/crm/logo-upload";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
+import { PersonSearchSelect } from "@/components/features/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     resolver: zodResolver(DisabilityInsuranceCompanyFormSchema),
     defaultValues: company
       ? {
+          personTitles: company.personTitles || {},
           id: company.id,
           name: company.name,
           websiteUrl: company.websiteUrl,
@@ -57,6 +59,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
           phone: company.phone,
           personIds: company.personIds,
           companyIds: company.companyIds,
+          logoUrl: company.logoUrl || null,
         }
       : {
           name: "",
@@ -64,7 +67,9 @@ export function CompanyForm({ company }: CompanyFormProps) {
           policyNames: ["Short Term Disability", "Long Term Disability"],
           phone: "",
           personIds: [],
+          personTitles: {},
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -118,6 +123,12 @@ export function CompanyForm({ company }: CompanyFormProps) {
       current.filter((id) => id !== personId),
     );
     form.trigger("personIds");
+
+    const currentTitles = form.getValues("personTitles") || {};
+    const newTitles = { ...currentTitles };
+    delete newTitles[personId];
+    form.setValue("personTitles", newTitles);
+    form.trigger("personTitles");
   };
 
   async function onSubmit(values: DisabilityInsuranceCompanyFormValues) {
@@ -174,6 +185,24 @@ export function CompanyForm({ company }: CompanyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={company?.id}
+                      entityType="disability-insurance-companies"
+                      name={form.watch("name") || "Company"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <FormField
                 control={form.control}
@@ -261,6 +290,25 @@ export function CompanyForm({ company }: CompanyFormProps) {
                                   person?.emails?.[0]?.address ||
                                   "No Email"}
                               </p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase shrink-0">
+                                  Title:
+                                </span>
+                                <Input
+                                  size={20}
+                                  placeholder="e.g. Managing Partner"
+                                  value={(form.watch("personTitles") as Record<string, string>)?.[pId] || ""}
+                                  onChange={(e) => {
+                                    const currentTitles = form.getValues("personTitles") || {};
+                                    form.setValue("personTitles", {
+                                      ...currentTitles,
+                                      [pId]: e.target.value,
+                                    });
+                                    form.trigger("personTitles");
+                                  }}
+                                  className="h-7 w-48 text-xs px-2"
+                                />
+                              </div>
                             </div>
                           </div>
 

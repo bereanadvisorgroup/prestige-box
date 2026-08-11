@@ -146,6 +146,8 @@ export async function getAssets(clientId: string) {
             virtualAssets.push({
               id: `company-${company.id}`,
               clientId,
+              ownerIds: [clientId],
+              ownershipType: "INDIVIDUAL",
               name: `${company.name} Ownership (${ownershipPercentage}%)`,
               category: "Business Ownership",
               subType: "Business Ownership",

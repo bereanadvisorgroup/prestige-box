@@ -5,8 +5,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Camera, Check, Plus, Trash2 } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -17,9 +17,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { getSocialAvatarUrl, getUserPhotoUrl } from "@/lib/social";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
+import { SocialMediaAccountSchema, type SocialMediaAccount } from "@/types/crm";
 
 const formSchema = z.object({
   firstName: z.string().min(2, {
@@ -29,7 +31,11 @@ const formSchema = z.object({
     message: "Last name must be at least 2 characters.",
   }),
   role: z.string().min(1, "Please select a role."),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
 });
+
+type FormInput = z.input<typeof formSchema>;
+type FormValues = z.output<typeof formSchema>;
 
 interface EditUserFormProps {
   user: UserProfile;
@@ -45,13 +51,23 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { profile: currentProfile, setProfile } = useAuthStore();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput, any, FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       role: user.role || "client",
+      socialMedia: user.socialMedia || [],
     },
+  });
+
+  const {
+    fields: socialMediaFields,
+    append: appendSocialMedia,
+    remove: removeSocialMedia,
+  } = useFieldArray({
+    control: form.control,
+    name: "socialMedia",
   });
 
   const watchedFirstName = form.watch("firstName");
@@ -95,6 +111,12 @@ export function EditUserForm({ user }: EditUserFormProps) {
         }
       }
 
+      // Reset social media photo flags
+      const currentSM = form.getValues("socialMedia") || [];
+      currentSM.forEach((_, i) => {
+        form.setValue(`socialMedia.${i}.useProfilePhoto`, false);
+      });
+
       setPhotoURL(publicUrl);
       toast.success("Photo uploaded successfully! Save changes to persist.");
     } catch (error) {
@@ -137,6 +159,10 @@ export function EditUserForm({ user }: EditUserFormProps) {
         console.warn("Could not delete custom avatar from storage:", removeErr);
       }
     }
+    const currentSM = form.getValues("socialMedia") || [];
+    currentSM.forEach((_, i) => {
+      form.setValue(`socialMedia.${i}.useProfilePhoto`, false);
+    });
     setPhotoURL("");
     toast.success("Photo removed! Save changes to persist.");
   };
@@ -144,11 +170,21 @@ export function EditUserForm({ user }: EditUserFormProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
+
+      const activeSocial = values.socialMedia.find((sm) => sm.useProfilePhoto);
+      let finalPhotoURL: string | null = photoURL || null;
+
+      if (activeSocial) {
+        const socialAvatar = getSocialAvatarUrl(activeSocial.type, activeSocial.url);
+        if (socialAvatar) finalPhotoURL = socialAvatar;
+      }
+
       const result = await updateUser(user.uid, {
         firstName: values.firstName,
         lastName: values.lastName,
         role: values.role as UserRole,
-        photoURL: photoURL || null,
+        photoURL: finalPhotoURL,
+        socialMedia: values.socialMedia,
       });
 
       if (result.success) {
@@ -158,7 +194,9 @@ export function EditUserForm({ user }: EditUserFormProps) {
             firstName: values.firstName,
             lastName: values.lastName,
             role: values.role as UserRole,
-            photoURL: photoURL || "",
+            photoURL: finalPhotoURL || "",
+            socialMedia: values.socialMedia,
+            googlePhotoURL: user.googlePhotoURL,
           });
         }
         toast.success("User updated successfully");
@@ -175,11 +213,19 @@ export function EditUserForm({ user }: EditUserFormProps) {
     }
   }
 
+  const socialMediaList = form.watch("socialMedia") || [];
+  const activeSocial = (socialMediaList as SocialMediaAccount[]).find((sm) => sm.useProfilePhoto);
+  const previewPhotoUrl = getUserPhotoUrl({
+    ...user,
+    photoURL: photoURL || undefined,
+    socialMedia: socialMediaList as SocialMediaAccount[],
+  });
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         {/* Photo Section */}
-        <div className="flex flex-col items-center gap-6 border-b pb-4 sm:flex-row">
+        <div className="flex flex-col items-center gap-6 border-b pb-6 sm:flex-row">
           <button
             type="button"
             onDragOver={onDragOver}
@@ -195,7 +241,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
           >
             <Avatar className="h-[88px] w-[88px]">
               <AvatarImage
-                src={photoURL || undefined}
+                src={previewPhotoUrl || undefined}
                 alt={`${watchedFirstName} ${watchedLastName}`}
                 className="object-cover"
               />
@@ -223,26 +269,30 @@ export function EditUserForm({ user }: EditUserFormProps) {
             className="hidden"
           />
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <h2 className="font-semibold text-base">Profile Picture</h2>
             <p className="text-muted-foreground text-xs">
-              Click the avatar to upload an image, or drag and drop a file (up to 2MB).
+              Click avatar to upload or select a social media photo below.
             </p>
-            {photoURL && (
-              <Button
-                id="remove-photo-btn"
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleRemovePhoto}
-                className="h-7 w-fit gap-1.5 border-red-200 text-red-600 transition-all duration-300 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40"
-              >
-                <Trash2 className="h-3 w-3" />
-                Remove Photo
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {(photoURL || activeSocial) && (
+                <Button
+                  id="remove-photo-btn"
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemovePhoto}
+                  className="h-7 gap-1.5 border-red-200 text-red-600 text-xs transition-all duration-300 hover:bg-red-50 hover:text-red-600 dark:border-red-950 dark:hover:bg-red-950/40"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  Remove Photo
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* User Info Fields */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -300,6 +350,146 @@ export function EditUserForm({ user }: EditUserFormProps) {
             </FormItem>
           )}
         />
+
+        {/* Social Media Section */}
+        <div className="space-y-4 rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">Social Media Accounts</h3>
+              <p className="text-muted-foreground text-xs">
+                Add social profiles and choose if you want to use their profile picture.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                appendSocialMedia({
+                  id: crypto.randomUUID(),
+                  type: "LinkedIn",
+                  url: "",
+                  isPrimary: socialMediaFields.length === 0,
+                  useProfilePhoto: false,
+                })
+              }
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" /> Add Account
+            </Button>
+          </div>
+
+          {socialMediaFields.length === 0 ? (
+            <p className="py-2 text-center text-muted-foreground text-xs">No social media accounts added yet.</p>
+          ) : (
+            socialMediaFields.map((field, index) => (
+              <div
+                key={field.id}
+                className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
+              >
+                <FormField
+                  control={form.control}
+                  name={`socialMedia.${index}.url`}
+                  render={({ field: inputField }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="text-xs">URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://..." {...inputField} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`socialMedia.${index}.type`}
+                  render={({ field: selectField }) => (
+                    <FormItem className="w-full sm:w-32">
+                      <FormLabel className="text-xs">Type</FormLabel>
+                      <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Facebook">Facebook</SelectItem>
+                          <SelectItem value="Instagram">Instagram</SelectItem>
+                          <SelectItem value="X">X</SelectItem>
+                          <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                          <SelectItem value="YouTube">YouTube</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`socialMedia.${index}.isPrimary`}
+                  render={({ field: checkField }) => (
+                    <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                      <FormLabel className="mb-2 text-xs">Primary</FormLabel>
+                      <FormControl>
+                        <input
+                          type="radio"
+                          name="primarySocialMedia"
+                          checked={checkField.value}
+                          onChange={() => {
+                            const currentSM = form.getValues("socialMedia") || [];
+                            currentSM.forEach((_, i) => {
+                              form.setValue(`socialMedia.${i}.isPrimary`, false);
+                            });
+                            form.setValue(`socialMedia.${index}.isPrimary`, true);
+                          }}
+                          className="h-4 w-4"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`socialMedia.${index}.useProfilePhoto`}
+                  render={({ field: checkField }) => (
+                    <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                      <FormLabel className="mb-2 text-xs">Use Photo</FormLabel>
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={checkField.value}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            const currentSM = form.getValues("socialMedia") || [];
+                            currentSM.forEach((_, i) => {
+                              form.setValue(`socialMedia.${i}.useProfilePhoto`, false);
+                            });
+                            if (checked) {
+                              form.setValue(`socialMedia.${index}.useProfilePhoto`, true);
+                              const avatarUrl = getSocialAvatarUrl(currentSM[index].type, currentSM[index].url);
+                              if (avatarUrl) {
+                                setPhotoURL(avatarUrl);
+                              }
+                            }
+                          }}
+                          className="h-4 w-4"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeSocialMedia(index)}
+                  className="text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
 
         <div className="flex flex-col gap-4 pt-4 md:flex-row">
           <Button type="submit" disabled={isLoading} className="w-full md:w-auto">

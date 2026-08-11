@@ -1,7 +1,7 @@
 import { siGoogle } from "simple-icons";
 
-import { SimpleIcon } from "@/components/simple-icon";
 import { Button } from "@/components/ui/button";
+import { SimpleIcon } from "@/components/ui/simple-icon";
 import { cn } from "@/lib/utils";
 
 export function GoogleButton({ className, ...props }: React.ComponentProps<typeof Button>) {

@@ -14,9 +14,10 @@ import { getAddresses } from "@/actions/addresses";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getPeople } from "@/actions/people";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
-import { PersonAvatar } from "@/components/crm/person-avatar";
-import { PersonSearchSelect } from "@/components/crm/person-search-select";
+import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
+import { LogoUpload } from "@/components/features/crm/logo-upload";
+import { PersonAvatar } from "@/components/features/crm/person-avatar";
+import { PersonSearchSelect } from "@/components/features/crm/person-search-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,21 +57,25 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
       ? {
           id: accountingFirm.id,
           personIds: accountingFirm.personIds,
+          personTitles: accountingFirm.personTitles || {},
           firmName: accountingFirm.firmName,
           firmAddressId: accountingFirm.firmAddressId,
           website: accountingFirm.website,
           phone: accountingFirm.phone,
           clientIds: accountingFirm.clientIds,
           companyIds: accountingFirm.companyIds,
+          logoUrl: accountingFirm.logoUrl || null,
         }
       : {
           personIds: [],
+          personTitles: {},
           firmName: "",
           firmAddressId: "",
           website: "",
           phone: "",
           clientIds: [],
           companyIds: [],
+          logoUrl: null,
         },
   });
 
@@ -91,6 +96,12 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
       current.filter((id) => id !== personId),
     );
     form.trigger("personIds");
+
+    const currentTitles = form.getValues("personTitles") || {};
+    const newTitles = { ...currentTitles };
+    delete newTitles[personId];
+    form.setValue("personTitles", newTitles);
+    form.trigger("personTitles");
   };
 
   useEffect(() => {
@@ -195,6 +206,24 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={accountingFirm?.id}
+                      entityType="accounting-firms"
+                      name={form.watch("firmName") || "Firm"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="firmName"
@@ -309,6 +338,25 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
                                   person?.emails?.[0]?.address ||
                                   "No Email"}
                               </p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase shrink-0">
+                                  Title:
+                                </span>
+                                <Input
+                                  size={20}
+                                  placeholder="e.g. Managing Partner"
+                                  value={(form.watch("personTitles") as Record<string, string>)?.[pId] || ""}
+                                  onChange={(e) => {
+                                    const currentTitles = form.getValues("personTitles") || {};
+                                    form.setValue("personTitles", {
+                                      ...currentTitles,
+                                      [pId]: e.target.value,
+                                    });
+                                    form.trigger("personTitles");
+                                  }}
+                                  className="h-7 w-48 text-xs px-2"
+                                />
+                              </div>
                             </div>
                           </div>
 

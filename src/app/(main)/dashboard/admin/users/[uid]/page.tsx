@@ -2,13 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { format } from "date-fns";
-import { Calendar, Mail, Pencil, Shield, User } from "lucide-react";
+import { Calendar, Globe, Mail, Pencil, Shield, User } from "lucide-react";
 
 import { getUser } from "@/actions/users";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getUserPhotoUrl } from "@/lib/social";
+import type { SocialMediaAccount } from "@/types/crm";
 
 interface UserPageProps {
   params: Promise<{
@@ -26,6 +28,8 @@ export default async function UserPage({ params }: UserPageProps) {
 
   const user = result.user;
   const initials = `${user.firstName[0] || ""}${user.lastName[0] || ""}`.toUpperCase();
+  const photoUrl = getUserPhotoUrl(user);
+  const socialMedia = (user.socialMedia || []) as SocialMediaAccount[];
 
   return (
     <div className="fade-in mx-auto w-full max-w-4xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
@@ -34,7 +38,7 @@ export default async function UserPage({ params }: UserPageProps) {
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
             <AvatarImage
-              src={user.photoURL || undefined}
+              src={photoUrl || undefined}
               alt={`${user.firstName} ${user.lastName}`}
               className="object-cover"
             />
@@ -91,6 +95,36 @@ export default async function UserPage({ params }: UserPageProps) {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Social Media Accounts */}
+          <div className="border-t pt-4">
+            <p className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+              Social Media Accounts
+            </p>
+            {socialMedia.length > 0 ? (
+              <div className="space-y-2">
+                {socialMedia.map((sm) => (
+                  <div key={sm.id} className="flex items-center gap-2 text-sm">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <a
+                      href={sm.url.startsWith("http") ? sm.url : `https://${sm.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {sm.type}
+                    </a>
+                    <Badge variant={sm.isPrimary ? "default" : "outline"} className="px-1.5 py-0 text-[10px]">
+                      {sm.isPrimary ? "Primary" : "Secondary"}
+                      {sm.useProfilePhoto && " (Using Photo)"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">No social media accounts listed.</p>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -25,12 +25,16 @@ export function GeneralTab({
   allCompanies = [],
   allPeople = [],
   allReferralTypes = [],
+  allEvents = [],
+  allAdvisors = [],
 }: {
   client: Client;
   allClients?: any[];
   allCompanies?: any[];
   allPeople?: any[];
   allReferralTypes?: any[];
+  allEvents?: any[];
+  allAdvisors?: any[];
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +49,8 @@ export function GeneralTab({
   const [referredByReferralTypeId, setReferredByReferralTypeId] = useState<string | null>(
     client.referredByReferralTypeId || null,
   );
+  const [referredByEventId, setReferredByEventId] = useState<string | null>(client.referredByEventId || null);
+  const [referredByAdvisorId, setReferredByAdvisorId] = useState<string | null>(client.referredByAdvisorId || null);
 
   const [paymentAccounts, setPaymentAccounts] = useState<PaymentAccount[]>(client.paymentAccounts || []);
   const [paymentAccountInput, setPaymentAccountInput] = useState("");
@@ -58,6 +64,8 @@ export function GeneralTab({
     setReferredByCompanyId(client.referredByCompanyId || null);
     setReferredByPersonId(client.referredByPersonId || null);
     setReferredByReferralTypeId(client.referredByReferralTypeId || null);
+    setReferredByEventId(client.referredByEventId || null);
+    setReferredByAdvisorId(client.referredByAdvisorId || null);
   }, [client]);
 
   const referredClients = allClients.filter((c) => c.referredById === client.id);
@@ -69,8 +77,18 @@ export function GeneralTab({
     if (referredByType === "company") return referredByCompanyId || "";
     if (referredByType === "person") return referredByPersonId || "";
     if (referredByType === "referral_type") return referredByReferralTypeId || "";
+    if (referredByType === "event") return referredByEventId || "";
+    if (referredByType === "advisor") return referredByAdvisorId || "";
     return "";
-  }, [referredByType, referredById, referredByCompanyId, referredByPersonId, referredByReferralTypeId]);
+  }, [
+    referredByType,
+    referredById,
+    referredByCompanyId,
+    referredByPersonId,
+    referredByReferralTypeId,
+    referredByEventId,
+    referredByAdvisorId,
+  ]);
 
   // Compute active referrer name for display in input
   const activeLabel = useMemo(() => {
@@ -91,6 +109,14 @@ export function GeneralTab({
       const match = allReferralTypes.find((rt) => rt.id === referredByReferralTypeId);
       return match ? match.name : "";
     }
+    if (referredByType === "event") {
+      const match = allEvents.find((e) => e.id === referredByEventId);
+      return match ? match.title : "";
+    }
+    if (referredByType === "advisor") {
+      const match = allAdvisors.find((u) => u.uid === referredByAdvisorId);
+      return match ? `${match.firstName || ""} ${match.lastName || ""}`.trim() : "";
+    }
     return "";
   }, [
     referredByType,
@@ -98,10 +124,14 @@ export function GeneralTab({
     referredByCompanyId,
     referredByPersonId,
     referredByReferralTypeId,
+    referredByEventId,
+    referredByAdvisorId,
     allClients,
     allCompanies,
     allPeople,
     allReferralTypes,
+    allEvents,
+    allAdvisors,
   ]);
 
   useEffect(() => {
@@ -135,6 +165,19 @@ export function GeneralTab({
     if (!referrerSearchQuery) return allReferralTypes;
     return allReferralTypes.filter((rt) => rt.name.toLowerCase().includes(referrerSearchQuery.toLowerCase()));
   }, [allReferralTypes, referrerSearchQuery]);
+
+  const eventOptions = useMemo(() => {
+    if (!referrerSearchQuery) return allEvents;
+    return allEvents.filter((e) => e.title.toLowerCase().includes(referrerSearchQuery.toLowerCase()));
+  }, [allEvents, referrerSearchQuery]);
+
+  const advisorOptions = useMemo(() => {
+    if (!referrerSearchQuery) return allAdvisors;
+    return allAdvisors.filter((u) => {
+      const name = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+      return name.includes(referrerSearchQuery.toLowerCase());
+    });
+  }, [allAdvisors, referrerSearchQuery]);
 
   const handleUpdate = async (updates: Partial<Client>) => {
     try {
@@ -185,6 +228,8 @@ export function GeneralTab({
     setReferredByCompanyId(null);
     setReferredByPersonId(null);
     setReferredByReferralTypeId(null);
+    setReferredByEventId(null);
+    setReferredByAdvisorId(null);
 
     if (!newType) {
       handleUpdate({
@@ -193,6 +238,8 @@ export function GeneralTab({
         referredByCompanyId: null,
         referredByPersonId: null,
         referredByReferralTypeId: null,
+        referredByEventId: null,
+        referredByAdvisorId: null,
       });
     }
   };
@@ -206,12 +253,16 @@ export function GeneralTab({
       referredByCompanyId: !isClear && referredByType === "company" ? entityId : null,
       referredByPersonId: !isClear && referredByType === "person" ? entityId : null,
       referredByReferralTypeId: !isClear && referredByType === "referral_type" ? entityId : null,
+      referredByEventId: !isClear && referredByType === "event" ? entityId : null,
+      referredByAdvisorId: !isClear && referredByType === "advisor" ? entityId : null,
     };
 
     setReferredById(payload.referredById);
     setReferredByCompanyId(payload.referredByCompanyId);
     setReferredByPersonId(payload.referredByPersonId);
     setReferredByReferralTypeId(payload.referredByReferralTypeId);
+    setReferredByEventId(payload.referredByEventId);
+    setReferredByAdvisorId(payload.referredByAdvisorId);
 
     if (isClear) {
       setReferredByType(null);
@@ -247,8 +298,10 @@ export function GeneralTab({
                   <SelectItem value="none">
                     <span className="text-muted-foreground italic">None / Clear</span>
                   </SelectItem>
+                  <SelectItem value="advisor">Advisor</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
                   <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="event">Event</SelectItem>
                   <SelectItem value="person">Person</SelectItem>
                   <SelectItem value="referral_type">Referral Type</SelectItem>
                 </SelectContent>
@@ -274,7 +327,7 @@ export function GeneralTab({
                 >
                   <ComboboxInput
                     id="referrer-entity-select"
-                    placeholder={`Search ${referredByType === "referral_type" ? "referral types" : referredByType + "s"}...`}
+                    placeholder={`Search ${referredByType === "referral_type" ? "referral types" : referredByType === "event" ? "events" : referredByType === "advisor" ? "advisors" : referredByType + "s"}...`}
                   />
                   <ComboboxContent className="w-full min-w-[280px]">
                     <ComboboxList>
@@ -315,6 +368,23 @@ export function GeneralTab({
                             {rt.name}
                           </ComboboxItem>
                         ))}
+
+                      {referredByType === "event" &&
+                        eventOptions.map((e) => (
+                          <ComboboxItem key={e.id} value={e.id} label={e.title}>
+                            {e.title}
+                          </ComboboxItem>
+                        ))}
+
+                      {referredByType === "advisor" &&
+                        advisorOptions.map((u) => {
+                          const name = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+                          return (
+                            <ComboboxItem key={u.uid} value={u.uid} label={name}>
+                              {name}
+                            </ComboboxItem>
+                          );
+                        })}
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>

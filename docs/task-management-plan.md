@@ -30,7 +30,7 @@ Additional judgment calls:
 - `category` enum `[Other, Birthday, Wedding Anniversary, Policy Renewal]` — default `Other`
 - `priority` enum `[Low, Medium, High]` — default `Low`
 - `description` text — Tiptap HTML (nullable)
-- `attachments` jsonb — array of `{id, name, url, type, uploadedAt, uploadedBy}`
+- `attachments` jsonb — array of `{id, name, url, type, linkProvider, uploadedAt, uploadedBy}` (supports binary file uploads and Google Drive picker items)
 - `source` enum `[manual, auto]` — default `manual`
 - `sourceType` enum `[birthday, anniversary, renewal]` nullable
 - `sourceRefId` text nullable — anchor id (personId / familyMember id / policyId) for idempotent upsert + recurrence

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -16,6 +16,8 @@ import { useAuthStore } from "@/stores/auth.store";
 export default function MFAEnrollPage() {
   const router = useRouter();
   const { user, profile, isLoading: isAuthLoading } = useAuthStore();
+
+  const enrollmentStartedRef = useRef(false);
 
   const [qrCode, setQrCode] = useState("");
   const [secret, setSecret] = useState("");
@@ -33,6 +35,9 @@ export default function MFAEnrollPage() {
       router.replace("/login");
       return;
     }
+
+    if (enrollmentStartedRef.current) return;
+    enrollmentStartedRef.current = true;
 
     // Call Supabase listFactors first
     supabase.auth.mfa.listFactors().then(async ({ data, error }) => {

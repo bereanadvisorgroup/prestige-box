@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Authentication Debugging", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("should login successfully as Admin", async ({ page }) => {
+  test("should login successfully as Admin", async ({ page, context }) => {
     // Capture console messages
     page.on("console", (msg) => console.log("BROWSER CONSOLE:", msg.type(), msg.text()));
 
@@ -20,7 +20,12 @@ test.describe("Authentication Debugging", () => {
       }
     });
 
+    await context.addCookies([{ name: "is_e2e", value: "true", url: "http://localhost:3000" }]);
     await page.goto("/auth/v1/login");
+    await page.evaluate(() => {
+      document.cookie = "is_e2e=true; path=/";
+      localStorage.setItem("is_e2e", "true");
+    });
 
     await page.locator('input[type="email"]').fill("admin@prestigebox.dev");
     await page.locator('input[type="password"]').fill("password123");

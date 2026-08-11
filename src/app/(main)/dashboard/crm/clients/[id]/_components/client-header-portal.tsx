@@ -16,8 +16,10 @@ export function ClientHeaderPortal({ sectionName, children }: ClientHeaderPortal
   useEffect(() => {
     setMounted(true);
 
-    const nameEl = document.getElementById("client-header-section-name");
-    const sepEl = document.getElementById("client-header-separator");
+    const nameEl =
+      document.getElementById("client-header-section-name") || document.getElementById("company-header-section-name");
+    const sepEl =
+      document.getElementById("client-header-separator") || document.getElementById("company-header-separator");
 
     if (nameEl) {
       nameEl.textContent = sectionName;
@@ -38,7 +40,8 @@ export function ClientHeaderPortal({ sectionName, children }: ClientHeaderPortal
 
   if (!mounted) return null;
 
-  const actionsEl = document.getElementById("client-header-actions");
+  const actionsEl =
+    document.getElementById("client-header-actions") || document.getElementById("company-header-actions");
   if (actionsEl && children) {
     return createPortal(children, actionsEl);
   }

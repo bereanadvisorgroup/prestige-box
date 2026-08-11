@@ -5,14 +5,28 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Briefcase, Building2, Fingerprint, Globe, MapPin, Phone, Plus, Trash2, TrendingUp, Users } from "lucide-react";
+import {
+  Briefcase,
+  Building2,
+  Fingerprint,
+  Globe,
+  MapPin,
+  Phone,
+  Plus,
+  Trash2,
+  TrendingUp,
+  UserCog,
+  Users,
+} from "lucide-react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
 import { createCompany, updateCompany } from "@/actions/companies";
 import { getPeople } from "@/actions/people";
-import { AddressSearchSelect } from "@/components/crm/address-search-select";
+import { getAdvisors } from "@/actions/users";
+import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
+import { LogoUpload } from "@/components/features/crm/logo-upload";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
@@ -41,6 +55,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
+  const [advisors, setAdvisors] = useState<{ uid: string; name: string }[]>([]);
 
   const [personSearchQuery, setPersonSearchQuery] = useState("");
 
@@ -55,6 +70,15 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
           addressId: company.addressId,
           website: company.website,
           phone: company.phone,
+          advisorId: company.advisorId ?? null,
+          logoUrl: company.logoUrl || null,
+          socialMedia: (Array.isArray(company.socialMedia) ? company.socialMedia : []).map((sm: any) => ({
+            id: sm.id || crypto.randomUUID(),
+            type: sm.type || "Facebook",
+            url: sm.url || "",
+            isPrimary: sm.isPrimary || false,
+            useProfilePhoto: sm.useProfilePhoto || false,
+          })),
           owners: initialOwners.map((o) => ({
             personId: o.personId,
             ownershipPercentage: Number(o.ownershipPercentage) || 0,
@@ -79,6 +103,9 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
           addressId: "",
           website: "",
           phone: "",
+          advisorId: null,
+          logoUrl: null,
+          socialMedia: [],
           owners: [],
           situsRecords: [],
           nexusRecords: [],
@@ -113,14 +140,35 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
     name: "owners",
   });
 
+  const {
+    fields: socialMediaFields,
+    append: appendSocialMedia,
+    remove: removeSocialMedia,
+  } = useFieldArray({
+    control: form.control,
+    name: "socialMedia",
+  });
+
   useEffect(() => {
     async function fetchData() {
-      const [peopleResult, addressesResult] = await Promise.all([getPeople(), getAddresses()]);
+      const [peopleResult, addressesResult, advisorsResult] = await Promise.all([
+        getPeople(),
+        getAddresses(),
+        getAdvisors(),
+      ]);
       if (peopleResult.success && peopleResult.people) {
         setAvailablePeople(peopleResult.people);
       }
       if (addressesResult.success && addressesResult.addresses) {
         setAvailableAddresses(addressesResult.addresses);
+      }
+      if (advisorsResult.success && advisorsResult.advisors) {
+        setAdvisors(
+          advisorsResult.advisors.map((a) => ({
+            uid: a.uid,
+            name: `${a.firstName} ${a.lastName}`.trim() || a.uid,
+          })),
+        );
       }
     }
     fetchData();
@@ -178,6 +226,25 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LogoUpload
+                      value={field.value}
+                      onChange={field.onChange}
+                      entityId={company?.id}
+                      entityType="companies"
+                      name={form.watch("name") || "Company"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <FormField
                 control={form.control}
@@ -312,6 +379,168 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="advisorId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="flex items-center gap-2">
+                    <UserCog className="h-4 w-4" />
+                    Assigned Advisor
+                  </FormLabel>
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select advisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unassigned</SelectItem>
+                      {advisors.map((a) => (
+                        <SelectItem key={a.uid} value={a.uid}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>The admin or advisor responsible for this company.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Social Media Section */}
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-base font-semibold">Social Media Accounts</FormLabel>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    appendSocialMedia({
+                      id: crypto.randomUUID(),
+                      type: "Facebook",
+                      url: "",
+                      isPrimary: false,
+                      useProfilePhoto: false,
+                    })
+                  }
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Add Social Media
+                </Button>
+              </div>
+              {socialMediaFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="flex flex-col items-end gap-3 rounded-md border bg-muted/20 p-3 sm:flex-row"
+                >
+                  <FormField
+                    control={form.control}
+                    name={`socialMedia.${index}.url`}
+                    render={({ field: inputField }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel className="text-xs">URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://..." {...inputField} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`socialMedia.${index}.type`}
+                    render={({ field: selectField }) => (
+                      <FormItem className="w-full sm:w-32">
+                        <FormLabel className="text-xs">Type</FormLabel>
+                        <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Facebook">Facebook</SelectItem>
+                            <SelectItem value="Instagram">Instagram</SelectItem>
+                            <SelectItem value="X">X</SelectItem>
+                            <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                            <SelectItem value="YouTube">YouTube</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`socialMedia.${index}.isPrimary`}
+                    render={({ field: checkField }) => (
+                      <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                        <FormLabel className="mb-2 text-xs">Primary</FormLabel>
+                        <FormControl>
+                          <input
+                            type="radio"
+                            name="primarySocialMedia"
+                            checked={checkField.value}
+                            onChange={() => {
+                              const currentSM = form.getValues("socialMedia") || [];
+                              currentSM.forEach((_, i) => {
+                                form.setValue(`socialMedia.${i}.isPrimary`, false);
+                              });
+                              form.setValue(`socialMedia.${index}.isPrimary`, true);
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`socialMedia.${index}.useProfilePhoto`}
+                    render={({ field: checkField }) => (
+                      <FormItem className="flex flex-col items-center justify-end px-2 pb-2">
+                        <FormLabel className="mb-2 text-xs">Use Photo</FormLabel>
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={checkField.value}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              const currentSM = form.getValues("socialMedia") || [];
+                              currentSM.forEach((_, i) => {
+                                form.setValue(`socialMedia.${i}.useProfilePhoto`, false);
+                              });
+                              if (checked) {
+                                form.setValue(`socialMedia.${index}.useProfilePhoto`, true);
+                              }
+                            }}
+                            className="h-4 w-4"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeSocialMedia(index)}
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {socialMediaFields.length === 0 && (
+                <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
+                  No social media accounts added.
+                </p>
+              )}
+            </div>
 
             <div className="space-y-4 border-t pt-4">
               <div className="flex items-center justify-between">

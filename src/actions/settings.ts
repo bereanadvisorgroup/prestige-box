@@ -2,24 +2,39 @@
 
 import { revalidatePath } from "next/cache";
 
-import { supabaseServer } from "@/lib/supabase.server";
+import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
 
 export async function getBusinessContact() {
   try {
     const { data, error } = await supabaseServer
       .from("keyvals")
       .select("id, value")
-      .in("id", ["BUSINESS_EMAIL", "BUSINESS_PHONE"]);
+      .in("id", [
+        "BUSINESS_EMAIL",
+        "BUSINESS_PHONE",
+        "BUSINESS_WEBSITE",
+        "COMPANY_LOGO_URL",
+        "COMPANY_NAME",
+        "PORTAL_SOCIAL_MEDIA",
+      ]);
 
     if (error) throw error;
 
     const emailObj = data?.find((item) => item.id === "BUSINESS_EMAIL");
     const phoneObj = data?.find((item) => item.id === "BUSINESS_PHONE");
+    const websiteObj = data?.find((item) => item.id === "BUSINESS_WEBSITE");
+    const logoUrlObj = data?.find((item) => item.id === "COMPANY_LOGO_URL");
+    const companyNameObj = data?.find((item) => item.id === "COMPANY_NAME");
+    const socialMediaObj = data?.find((item) => item.id === "PORTAL_SOCIAL_MEDIA");
 
     return {
       success: true,
       email: emailObj?.value || "info@prestigeadvisors360.com",
       phone: phoneObj?.value || "941-799-3300",
+      website: websiteObj?.value || "",
+      logoUrl: logoUrlObj?.value || "",
+      companyName: companyNameObj?.value || "Prestige Advisors",
+      socialMediaRaw: socialMediaObj?.value || "[]",
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : JSON.stringify(error) || String(error);
@@ -29,6 +44,10 @@ export async function getBusinessContact() {
       error: errorMsg,
       email: "info@prestigeadvisors360.com",
       phone: "941-799-3300",
+      website: "",
+      logoUrl: "",
+      companyName: "Prestige Advisors",
+      socialMediaRaw: "[]",
     };
   }
 }
@@ -36,11 +55,8 @@ export async function getBusinessContact() {
 export async function updateBusinessContact(email: string, phone: string) {
   try {
     // Security Check: Only authenticated users with admin role can modify settings.
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseServer.auth.getUser();
-    if (authError || !user) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
       throw new Error("Unauthorized: Please sign in.");
     }
 
@@ -73,6 +89,54 @@ export async function updateBusinessContact(email: string, phone: string) {
     return { success: true };
   } catch (error) {
     console.error("Failed to update business contact details:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
+export async function updatePortalSettings(
+  email: string,
+  phone: string,
+  website: string,
+  logoUrl: string,
+  companyName: string,
+  socialMediaRaw: string,
+) {
+  try {
+    // Security Check: Only authenticated users with admin role can modify settings.
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      throw new Error("Unauthorized: Please sign in.");
+    }
+
+    // Check role in public.users
+    const { data: dbUser, error: dbUserError } = await supabaseServer
+      .from("users")
+      .select("role")
+      .eq("uid", user.id)
+      .single();
+
+    if (dbUserError || !dbUser || dbUser.role !== "admin") {
+      throw new Error("Unauthorized: Admin role required.");
+    }
+
+    const updatedAt = new Date().toISOString();
+
+    const { error } = await supabaseServer.from("keyvals").upsert([
+      { id: "BUSINESS_EMAIL", value: email, updatedAt },
+      { id: "BUSINESS_PHONE", value: phone, updatedAt },
+      { id: "BUSINESS_WEBSITE", value: website, updatedAt },
+      { id: "COMPANY_LOGO_URL", value: logoUrl, updatedAt },
+      { id: "COMPANY_NAME", value: companyName, updatedAt },
+      { id: "PORTAL_SOCIAL_MEDIA", value: socialMediaRaw, updatedAt },
+    ]);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/portal-settings");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update portal settings:", error);
     return { success: false, error: (error as Error).message };
   }
 }

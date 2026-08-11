@@ -18,7 +18,7 @@ function sanitizeConnectionString(url: string): string {
   return `${protocol}${username}:${encodedPassword}@${hostDb}${rest}`;
 }
 
-const rawUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || "";
+const rawUrl = process.env.DIRECT_URL || process.env.SUPABASE_DIRECT_URL || "";
 const url = rawUrl ? sanitizeConnectionString(rawUrl) : "";
 
 export default defineConfig({

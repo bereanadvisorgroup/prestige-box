@@ -27,12 +27,14 @@ import { getLawFirms } from "@/actions/law-firms";
 import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { getMoneyManagers } from "@/actions/money-managers";
+import { getNotes } from "@/actions/notes";
 import { getPerson } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getPersonPhotoUrl } from "@/lib/social";
 
 import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
@@ -52,7 +54,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   const person = result.person;
 
-  // Fetch roles/associations
+  // Fetch roles/associations and notes
   const [
     clientsRes,
     lawFirmsRes,
@@ -65,6 +67,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     ltcRes,
     moneyRes,
     recordRes,
+    notesRes,
   ] = await Promise.all([
     getClients(),
     getLawFirms(),
@@ -77,6 +80,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getLongTermCareInsurances(),
     getMoneyManagers(),
     getRecordKeepers(),
+    getNotes({ personId: id }),
   ]);
 
   const associatedClient =
@@ -137,15 +141,17 @@ export default async function PersonPage({ params }: PersonPageProps) {
     associatedMoneyManagers.length > 0 ||
     associatedRecordKeepers.length > 0;
 
+  const notes = notesRes.success && notesRes.notes ? notesRes.notes : [];
+
   return (
     <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            {person.photoUrl && (
+            {getPersonPhotoUrl(person) && (
               <AvatarImage
-                src={person.photoUrl}
+                src={getPersonPhotoUrl(person)!}
                 alt={`${person.firstName} ${person.lastName}`}
                 className="object-cover"
               />
@@ -267,6 +273,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
         associatedLtc={associatedLtc}
         associatedMoneyManagers={associatedMoneyManagers}
         associatedRecordKeepers={associatedRecordKeepers}
+        notes={notes}
       />
     </div>
   );

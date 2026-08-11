@@ -29,6 +29,15 @@ export const PhoneNumberSchema = z.object({
   isPrimary: z.boolean().default(false),
 });
 
+export const SocialMediaTypeSchema = z.enum(["Facebook", "Instagram", "X", "LinkedIn", "YouTube"]);
+export const SocialMediaAccountSchema = z.object({
+  id: z.string(),
+  type: SocialMediaTypeSchema,
+  url: z.string().url("Invalid social media URL (must start with http:// or https://)"),
+  isPrimary: z.boolean().default(false),
+  useProfilePhoto: z.boolean().default(false),
+});
+
 export const DriversLicenseSchema = z.object({
   number: z.string().optional(),
   issueState: z.string().optional(),
@@ -61,29 +70,83 @@ export const PersonSchema = z.object({
   photoUrl: z.string().optional().nullable(),
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
-  driversLicense: DriversLicenseSchema.optional(),
-  pii: PiiSchema.optional(),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
   addresses: z.array(PersonAddressSchema).default([]),
   addressIds: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
-export const HouseholdMemberRole = z.enum(["home_owner", "dependent"]);
+export const HouseholdMemberRole = z.enum([
+  "HEAD",
+  "SPOUSE",
+  "PARTNER",
+  "SON",
+  "DAUGHTER",
+  "GRANDSON",
+  "GRANDDAUGHTER",
+  "GREAT_GRANDSON",
+  "GREAT_GRANDDAUGHTER",
+  "COUSIN",
+  "UNCLE",
+  "AUNT",
+  "NEPHEW",
+  "NIECE",
+  "BROTHER",
+  "SISTER",
+  "FATHER",
+  "MOTHER",
+  "GRANDFATHER",
+  "GRANDMOTHER",
+  "IN_LAW",
+  "OTHER",
+  "DEPENDENT",
+  "TRUSTEE",
+  "MEMBER",
+]);
+export type HouseholdMemberRole = z.infer<typeof HouseholdMemberRole>;
+
+export const HouseholdMemberParentageSchema = z.enum(["BOTH", "HEAD", "SPOUSE"]);
+export type HouseholdMemberParentage = z.infer<typeof HouseholdMemberParentageSchema>;
+
+export const HouseholdMemberRelatedToSchema = z.enum(["HEAD", "SPOUSE"]);
+export type HouseholdMemberRelatedTo = z.infer<typeof HouseholdMemberRelatedToSchema>;
 
 export const HouseholdMemberSchema = z.object({
-  personId: z.string(),
+  id: z.string().optional(),
+  householdId: z.string().optional(),
+  clientId: z.string(),
   role: HouseholdMemberRole,
+  isPrimaryHousehold: z.boolean().default(false),
+  includeInFinancialRollup: z.boolean().default(true),
+  familyRelationship: z.string().optional(),
+  parentage: HouseholdMemberParentageSchema.optional(),
+  relatedTo: HouseholdMemberRelatedToSchema.optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export const HouseholdSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Household name is required"),
   addressId: z.string(),
-  memberIds: z.array(HouseholdMemberSchema).min(1, "At least one member is required"),
+  members: z.array(HouseholdMemberSchema).min(1, "At least one member is required"),
+  headName: z.string().optional(),
+  spouseName: z.string().optional(),
+  headAndSpouse: z.string().optional(),
+  dependentCount: z.number().optional(),
+  totalMembersCount: z.number().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
+
+export const OwnershipTypeSchema = z.enum(["INDIVIDUAL", "JOINT_TENANTS", "TENANTS_IN_COMMON", "TRUST", "CORPORATE"]);
+export type OwnershipType = z.infer<typeof OwnershipTypeSchema>;
+
+export const OwnershipSplitSchema = z.object({
+  clientId: z.string(),
+  percentage: z.number().min(0, "Percentage must be at least 0").max(100, "Percentage cannot exceed 100"),
+});
+export type OwnershipSplit = z.infer<typeof OwnershipSplitSchema>;
 
 export const LifeInsuranceCompanySchema = z.object({
   id: z.string().optional(),
@@ -92,8 +155,10 @@ export const LifeInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -105,8 +170,10 @@ export const DisabilityInsuranceCompanySchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -118,8 +185,10 @@ export const LongTermCareInsuranceSchema = z.object({
   policyNames: z.array(z.string()).default([]),
   phone: z.string().optional().or(z.literal("")),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   companyIds: z.array(z.string()).default([]),
   clientIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -202,15 +271,17 @@ export const NexusSchema = z.object({
 export const CompanySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Company name is required"),
-  dba: z.string().optional(),
+  dba: z.string().optional().nullable(),
   ein: z
     .string()
     .regex(/^\d{2}-\d{7}$/, "EIN must be in XX-XXXXXXX format")
     .optional()
-    .or(z.literal("")),
-  addressId: z.string().optional(),
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
-  phone: z.string().optional(),
+    .or(z.literal(""))
+    .nullable(),
+  addressId: z.string().optional().nullable(),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")).nullable(),
+  phone: z.string().optional().nullable(),
+  advisorId: z.string().optional().nullable(),
   situsRecords: z.array(SitusSchema).default([]),
   nexusRecords: z.array(NexusSchema).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
@@ -250,6 +321,10 @@ export const CompanySchema = z.object({
       }),
     )
     .default([]),
+  logoUrl: z.string().optional().nullable(),
+  socialMedia: z.array(SocialMediaAccountSchema).default([]),
+  documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   estimatedValue: z.number().min(0, "Estimated value must be positive").default(0),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
@@ -273,6 +348,8 @@ export const FamilyMemberSchema = z.object({
   relationship: FamilyRelationType,
   parentId: z.string().optional(),
   marriageDate: z.string().optional(), // YYYY-MM-DD; meaningful on the Spouse entry, drives anniversary tasks
+  gender: BiologicalGenderSchema.optional(),
+  birthDate: z.string().optional(),
 });
 
 export const EmploymentSchema = z.object({
@@ -354,6 +431,7 @@ export const InsurancePolicyFileSchema = z.object({
   id: z.string(),
   name: z.string(),
   url: z.string(),
+  title: z.enum(["Issued Illustration", "Policy Receipts", "Other"]).optional(),
   uploadedAt: z.string().optional(),
 });
 
@@ -369,6 +447,9 @@ export const MoneyManagerAccountSchema = z.object({
   accountNumber: z.string().optional(),
   title: z.string().optional(),
   value: z.number().min(0, "Value must be positive").default(0),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   managementBeginDate: z.string().optional(), // YYYY-MM-DD
   closeDate: z.string().optional(), // YYYY-MM-DD; presence flips status to "Closed"
   custodianId: z.string().optional(), // references custodians
@@ -391,6 +472,9 @@ export const RecordKeeperAccountSchema = z.object({
   accountNumber: z.string().optional(),
   title: z.string().optional(),
   value: z.number().min(0, "Value must be positive").default(0),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   managementBeginDate: z.string().optional(), // YYYY-MM-DD
   closeDate: z.string().optional(), // YYYY-MM-DD; presence flips status to "Closed"
   createdAt: z.string().optional(),
@@ -404,8 +488,16 @@ export const InsurancePolicySchema = z.object({
   companyId: z.string().optional(), // the associated insurance company / vendor (firm)
   policyNumber: z.string().optional(),
   policyName: z.string().optional(),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   issueDate: z.string().optional(), // YYYY-MM-DD
   renewalDate: z.string().optional(), // YYYY-MM-DD
+  anniversaryDate: z.string().optional(), // YYYY-MM-DD
+  premiumFrequency: z.enum(["Monthly", "Quarterly", "Semi-Annual", "Annually"]).optional(),
+  premiumPayment: z.number().default(0),
+  note: z.string().optional(),
+  eliminationPeriod: z.enum(["60 days", "90 days", "120 days", "365 days"]).optional(),
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
@@ -419,6 +511,9 @@ export const LoanSchema = z.object({
   loanType: LoanTypeSelection,
   assetId: z.string().optional().nullable(),
   bankId: z.string().optional().nullable(),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   currentBalance: z.number().default(0),
   monthlyPayment: z.number().optional(),
   startDate: z.string().optional(),
@@ -429,6 +524,9 @@ export const LoanSchema = z.object({
 export const MortgageSchema = z.object({
   id: z.string().optional(),
   addressId: z.string(),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   purchasePrice: z.number().optional(),
   currentMarketValue: z.number().optional(),
   statementPath: z.string().optional(),
@@ -443,6 +541,8 @@ export const ClientSchema = z.object({
   referredByCompanyId: z.string().optional().nullable(),
   referredByPersonId: z.string().optional().nullable(),
   referredByReferralTypeId: z.string().optional().nullable(),
+  referredByEventId: z.string().optional().nullable(),
+  referredByAdvisorId: z.string().optional().nullable(),
   hobbies: z.array(z.string()).default([]),
   favoriteSportsTeams: z.array(z.string()).default([]),
   paymentAccounts: z.array(PaymentAccountSchema).default([]),
@@ -459,6 +559,10 @@ export const ClientSchema = z.object({
   recordKeeperAccounts: z.array(RecordKeeperAccountSchema).default([]),
   liabilities: z.array(LoanSchema).default([]),
   mortgages: z.array(MortgageSchema).default([]),
+  driversLicense: DriversLicenseSchema.optional(),
+  pii: PiiSchema.optional(),
+  documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -475,7 +579,10 @@ export const AssetSubTypeSchema = z.enum([
 
 export const AssetSchema = z.object({
   id: z.string().optional(),
-  clientId: z.string(),
+  clientId: z.string().optional(),
+  ownerIds: z.array(z.string()).min(1, "At least one owner is required").default([]),
+  ownershipType: OwnershipTypeSchema.default("INDIVIDUAL"),
+  ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   name: z.string().min(1, "Asset name/label is required"),
   category: z.string().default("Real Estate and Fixed Physical Assets"),
   subType: AssetSubTypeSchema,
@@ -514,7 +621,7 @@ export const CompanyValuationHistorySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task"]);
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task", "person"]);
 export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
 
 export const ChangeHistorySchema = z.object({
@@ -561,13 +668,19 @@ export const ClientPolicySchema = z.object({
 
 export const LawFirmSchema = z.object({
   id: z.string().optional(),
-  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personIds: z.array(z.string()).default([]),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -575,12 +688,18 @@ export const LawFirmSchema = z.object({
 export const AccountingFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -588,12 +707,18 @@ export const AccountingFirmSchema = z.object({
 export const ActuarialFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -601,12 +726,18 @@ export const ActuarialFirmSchema = z.object({
 export const BankSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Bank name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -614,12 +745,18 @@ export const BankSchema = z.object({
 export const PropertyAndCasualtyFirmSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Firm name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -627,12 +764,18 @@ export const PropertyAndCasualtyFirmSchema = z.object({
 export const MoneyManagerSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Money manager name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -640,12 +783,18 @@ export const MoneyManagerSchema = z.object({
 export const RecordKeeperSchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
   firmName: z.string().min(1, "Record keeper name is required"),
-  firmAddressId: z.string().optional(),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   website: z.string().url("Invalid website URL").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -654,6 +803,7 @@ export const RecordKeeperSchema = z.object({
 
 export type Address = z.infer<typeof AddressSchema>;
 export type PersonAddress = z.infer<typeof PersonAddressSchema>;
+export type SocialMediaAccount = z.infer<typeof SocialMediaAccountSchema>;
 export type Person = z.infer<typeof PersonSchema>;
 export type HouseholdMember = z.infer<typeof HouseholdMemberSchema>;
 export type Household = z.infer<typeof HouseholdSchema>;
@@ -904,3 +1054,90 @@ export const ReferralTypeSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type ReferralType = z.infer<typeof ReferralTypeSchema>;
+
+export const EventSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
+  addressId: z.string().optional().nullable(),
+  startDate: z.string().optional().nullable(),
+  endDate: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Event = z.infer<typeof EventSchema>;
+
+// Opportunities Types & Schemas
+export const OpportunityPipelineStageSchema = z.object({
+  id: z.string().optional(),
+  pipelineId: z.string().optional(),
+  name: z.string().min(1, "Stage name is required"),
+  order: z.number().int().nonnegative(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type OpportunityPipelineStage = z.infer<typeof OpportunityPipelineStageSchema>;
+
+export const OpportunityPipelineSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Pipeline name is required"),
+  isActive: z.boolean().default(true),
+  hasFlatFee: z.boolean().default(false),
+  hasAum: z.boolean().default(false),
+  hasLifeInsurance: z.boolean().default(false),
+  stages: z.array(OpportunityPipelineStageSchema).min(1, "At least one stage is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type OpportunityPipeline = z.infer<typeof OpportunityPipelineSchema>;
+
+export const OpportunitySchema = z.object({
+  id: z.string().optional(),
+  clientId: z.string().nullable().optional(),
+  companyId: z.string().nullable().optional(),
+  amount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  flatFee: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  aumAmount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  aumPercentage: z
+    .string()
+    .regex(/^\d+(\.\d{1,4})?$/, "Must be a valid percentage")
+    .default("0.00"),
+  lifeInsurance: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid currency amount")
+    .default("0.00"),
+  targetCloseDate: z.string().nullable().optional(),
+  pipelineId: z.string().min(1, "Pipeline is required"),
+  stageId: z.string().min(1, "Stage is required"),
+  probabilityWin: z.number().int().min(0).max(100).default(0),
+  notes: z.string().nullable().optional(),
+  resultStatus: z.enum(["TRASH", "WON", "LOST"]).nullable().optional(),
+  resultNotes: z.string().nullable().optional(),
+  closeDate: z.string().nullable().optional(),
+  changeReason: z.string().nullable().optional(),
+  updatedById: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type Opportunity = z.infer<typeof OpportunitySchema>;
+
+export const OpportunityHistorySchema = z.object({
+  id: z.string().optional(),
+  opportunityId: z.string(),
+  type: z.string(),
+  oldValue: z.string().nullable().optional(),
+  newValue: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+  actorId: z.string().nullable().optional(),
+  actorName: z.string(),
+  createdAt: z.string().optional(),
+});
+export type OpportunityHistory = z.infer<typeof OpportunityHistorySchema>;

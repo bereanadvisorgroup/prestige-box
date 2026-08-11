@@ -9,8 +9,8 @@ import { Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteBank } from "@/actions/banks";
-import { DataTable } from "@/components/data-table/data-table";
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { DataTable } from "@/components/features/data-table/data-table";
+import { DataTablePagination } from "@/components/features/data-table/data-table-pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";

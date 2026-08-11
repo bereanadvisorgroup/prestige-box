@@ -1,4 +1,4 @@
-import { LandingHero } from "@/components/external/landing-hero";
+import { LandingHero } from "@/components/features/external/landing-hero";
 
 export default function Home() {
   return <LandingHero />;

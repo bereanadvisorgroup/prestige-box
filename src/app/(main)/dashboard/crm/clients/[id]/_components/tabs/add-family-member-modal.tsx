@@ -88,10 +88,6 @@ export function AddFamilyMemberModal({
         const newPersonData: Partial<Person> = {
           firstName,
           lastName,
-          pii: {
-            biologicalGender: gender ? (gender as "Male" | "Female") : undefined,
-            birthDate: dob || undefined,
-          },
         };
 
         const res = await createPerson(newPersonData);
@@ -114,6 +110,8 @@ export function AddFamilyMemberModal({
         personId: personId,
         relationship: selectedRelationship as FamilyMember["relationship"],
         parentId: isDescendant ? selectedParentId : undefined,
+        gender: mode === "new" ? (gender as "Male" | "Female" | undefined) : undefined,
+        birthDate: mode === "new" ? dob || undefined : undefined,
       };
 
       const updated = [...members, newMember];

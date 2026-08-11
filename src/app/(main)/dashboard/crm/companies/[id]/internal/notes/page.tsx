@@ -1,4 +1,4 @@
-import { NotesView } from "@/components/notes/notes-view";
+import { NotesView } from "@/components/features/notes/notes-view";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -13,6 +13,7 @@ export default async function CompanyNotesPage({ params }: PageProps) {
         title="Notes"
         defaultAssociations={[{ entityType: "company", entityId: id }]}
         lockAssociations
+        useHeaderPortal={true}
       />
     </div>
   );

@@ -38,7 +38,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
         {person && (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <ContactCard person={person} />
-            <PersonalInfoCard person={person} clientId={id} />
+            <PersonalInfoCard client={client} />
           </div>
         )}
         <NetWorthGraph historyData={historyData} />

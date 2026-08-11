@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { createAddress } from "@/actions/addresses";
 import { updateClient } from "@/actions/clients";
-import { AddressAutocomplete } from "@/components/crm/address-autocomplete";
+import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

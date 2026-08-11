@@ -104,6 +104,7 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+// biome-ignore lint/suspicious/noExplicitAny: Recharts dynamic payload typing
 interface ChartTooltipContentProps extends React.ComponentProps<"div"> {
   active?: boolean
   payload?: any[]

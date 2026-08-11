@@ -123,6 +123,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
   }, []);
 
   const selectedCompany = availableCompanies.find((c) => c.id === form.watch("lifeInsuranceCompanyId"));
+  const isLifeInsurance = selectedCompany ? selectedCompany.type === "life" : !!form.watch("lifeInsuranceCompanyId");
   const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
 
   const selectedClientName = selectedClient
@@ -440,7 +441,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
                 name="renewalDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Renewal Date</FormLabel>
+                    <FormLabel>{isLifeInsurance ? "Anniversary Date" : "Renewal Date"}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />

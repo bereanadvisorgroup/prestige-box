@@ -17,6 +17,7 @@ import {
 import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompany } from "@/actions/disability-insurance-companies";
 import { getClientPolicies } from "@/actions/policies";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,11 +59,12 @@ export default async function DisabilityInsuranceCompanyPage({ params }: Disabil
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
-              <Shield className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={company.logoUrl}
+            name={company.name}
+            className="h-20 w-20 rounded-md border-2 border-primary/10"
+            size="lg"
+          />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-sm">
@@ -163,7 +165,10 @@ export default async function DisabilityInsuranceCompanyPage({ params }: Disabil
                               {person.firstName} {person.lastName}
                               <ArrowUpRight className="h-3 w-3 opacity-60" />
                             </Link>
-                            <p className="font-medium text-muted-foreground text-xs">Insurance Professional</p>
+                            <p className="font-medium text-muted-foreground text-xs">
+                              {(company.personTitles as Record<string, string>)?.[person.id as string] ||
+                                "Insurance Professional"}
+                            </p>
                           </div>
                         </div>
 

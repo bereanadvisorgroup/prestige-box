@@ -1,6 +1,7 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import type { SocialMediaAccount } from "@/types/crm";
 
 export type UserRole = "admin" | "advisor" | "client";
 
@@ -12,6 +13,9 @@ export interface UserProfile {
   lastName?: string;
   phone?: string;
   photoURL?: string;
+  socialMedia?: SocialMediaAccount[];
+  googlePhotoURL?: string | null;
+  providers?: string[];
   createdAt?: string;
 }
 

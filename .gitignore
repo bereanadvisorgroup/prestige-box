@@ -6,3 +6,6 @@
 .test-results
 .vercel
 node_modules
+migration
+.env*
+.vercel

@@ -6,6 +6,7 @@ import { ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, R
 import { getAccountingFirm } from "@/actions/accounting-firms";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,11 +46,12 @@ export default async function AccountingFirmDetailsPage({ params }: AccountingFi
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 md:px-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="flex h-full w-full items-center justify-center rounded-md bg-primary/5 text-primary">
-              <ReceiptText className="h-8 w-8 text-primary" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={accountingFirm.logoUrl}
+            name={accountingFirm.firmName}
+            className="h-16 w-16 rounded-md border-2 border-primary/10"
+            size="lg"
+          />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">{accountingFirm.firmName}</h1>
             <p className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
@@ -105,7 +107,10 @@ export default async function AccountingFirmDetailsPage({ params }: AccountingFi
                             {person.firstName} {person.lastName}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
-                          <p className="font-medium text-muted-foreground text-xs">Accounting Professional</p>
+                          <p className="font-medium text-muted-foreground text-xs">
+                            {(accountingFirm.personTitles as Record<string, string>)?.[person.id as string] ||
+                              "Accounting Professional"}
+                          </p>
                         </div>
                       </div>
 
@@ -219,7 +224,7 @@ export default async function AccountingFirmDetailsPage({ params }: AccountingFi
                     return (
                       <Link
                         key={client.id}
-                        href={`/dashboard/crm/clients/${client.id}`}
+                        href={`/dashboard/crm/clients/${client.id}/accounting-firms`}
                         className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                       >
                         <div className="space-y-1">

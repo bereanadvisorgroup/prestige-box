@@ -3,6 +3,7 @@ import {
   Briefcase,
   Building2,
   Clock,
+  DollarSign,
   FileText,
   Home,
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
   Shield,
   StickyNote,
   Users,
+  Workflow,
 } from "lucide-react";
 
 export interface NavSubItem {
@@ -76,6 +78,16 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/crm/tasks",
         icon: ListTodo,
       },
+      {
+        title: "Opportunities",
+        url: "/dashboard/crm/opportunities",
+        icon: DollarSign,
+      },
+      {
+        title: "Workflows",
+        url: "/dashboard/crm/workflows",
+        icon: Workflow,
+      },
     ],
   },
   {
@@ -84,14 +96,14 @@ export const sidebarItems: NavGroup[] = [
     allowedRoles: ["admin", "advisor"],
     items: [
       {
-        title: "Households",
-        url: "/dashboard/crm/households",
-        icon: Home,
-      },
-      {
         title: "Clients",
         url: "/dashboard/crm/clients",
         icon: Briefcase,
+      },
+      {
+        title: "Households",
+        url: "/dashboard/crm/households",
+        icon: Home,
       },
       {
         title: "Companies",

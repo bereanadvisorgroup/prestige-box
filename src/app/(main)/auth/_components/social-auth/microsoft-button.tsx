@@ -1,5 +1,5 @@
-import { SimpleIcon } from "@/components/simple-icon";
 import { Button } from "@/components/ui/button";
+import { SimpleIcon } from "@/components/ui/simple-icon";
 import { cn } from "@/lib/utils";
 
 // Custom Microsoft icon definition matching simple-icons format

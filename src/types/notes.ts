@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // A note can be associated with clients and/or companies, or stand alone.
-export const NoteAssociationEntitySchema = z.enum(["client", "company"]);
+export const NoteAssociationEntitySchema = z.enum(["client", "company", "person"]);
 export type NoteAssociationEntity = z.infer<typeof NoteAssociationEntitySchema>;
 
 export const NoteAssociationSchema = z.object({

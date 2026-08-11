@@ -4,8 +4,8 @@ import { Landmark } from "lucide-react";
 
 import { getBanks, linkClientToBank, unlinkClientFromBank } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
+import { LinkFirmDialog } from "@/components/features/crm/link-firm-dialog";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { PaymentAccountsSection } from "../_components/payment-accounts-section";

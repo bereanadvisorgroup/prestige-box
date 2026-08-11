@@ -4,20 +4,28 @@ import { ExternalLink, Trophy } from "lucide-react";
 
 import { getClient, getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { getEvents } from "@/actions/events";
 import { getNotes } from "@/actions/notes";
 import { getPeople } from "@/actions/people";
 import { getReferralTypes } from "@/actions/referral-types";
 import { getSportsNews } from "@/actions/sports";
 import { getTasks } from "@/actions/tasks";
+import { getTeams } from "@/actions/teams";
+import { getAdvisors } from "@/actions/users";
+import { getWorkflows } from "@/actions/workflows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { AdvisorDropdown } from "../_components/advisor-dropdown";
 import { ClientHeaderPortal } from "../_components/client-header-portal";
+import { DocumentsButton } from "../_components/documents-button";
 import { InterestsCard } from "../_components/interests-card";
+import { NotebookButton } from "../_components/notebook-button";
 import { NotesCard } from "../_components/notes-card";
 import { ReferralTreeCard } from "../_components/referral-tree-card";
 import { ReferredByCard } from "../_components/referred-by-card";
 import { SportsTeamsCard } from "../_components/sports-teams-card";
 import { TasksCard } from "../_components/tasks-card";
+import { WorkflowStepsCard } from "../_components/workflow-steps-card";
 
 interface ClientPageProps {
   params: Promise<{
@@ -39,15 +47,29 @@ export default async function ClientPage({ params }: ClientPageProps) {
   };
 
   // Fetch all required data for the Internal Overview dashboard
-  const [allClientsResult, tasksResult, notesResult, companiesResult, peopleResult, referralTypesResult] =
-    await Promise.all([
-      getClients(),
-      getTasks({ clientId: id }),
-      getNotes({ clientId: id }),
-      getCompanies(),
-      getPeople(),
-      getReferralTypes(),
-    ]);
+  const [
+    allClientsResult,
+    tasksResult,
+    notesResult,
+    companiesResult,
+    peopleResult,
+    referralTypesResult,
+    eventsResult,
+    advisorsResult,
+    workflowsResult,
+    teamsResult,
+  ] = await Promise.all([
+    getClients(),
+    getTasks({ clientId: id }),
+    getNotes({ clientId: id }),
+    getCompanies(),
+    getPeople(),
+    getReferralTypes(),
+    getEvents(),
+    getAdvisors(),
+    getWorkflows("client", id),
+    getTeams(),
+  ]);
 
   const allClients = allClientsResult.success ? allClientsResult.clients || [] : [];
   const tasks = tasksResult.success && tasksResult.tasks ? tasksResult.tasks : [];
@@ -55,9 +77,33 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const allCompanies = companiesResult.success ? companiesResult.companies || [] : [];
   const allPeople = peopleResult.success ? peopleResult.people || [] : [];
   const allReferralTypes = referralTypesResult.success ? referralTypesResult.referralTypes || [] : [];
+  const allEvents = eventsResult.success ? eventsResult.events || [] : [];
+  const allAdvisors = advisorsResult.success ? advisorsResult.advisors || [] : [];
+  const workflows = workflowsResult.success && workflowsResult.workflows ? workflowsResult.workflows : [];
+  const teams = teamsResult.success ? teamsResult.teams || [] : [];
 
   const person = clientResult.person;
   const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
+
+  // Filter and sort outstanding steps
+  const outstandingSteps = workflows.flatMap((w) =>
+    (w.steps || [])
+      .filter((s) => !s.completedAt)
+      .map((s) => ({
+        ...s,
+        workflowName: w.name,
+        workflowId: w.id,
+      })),
+  );
+
+  outstandingSteps.sort((a, b) => {
+    if (a.dueDate && b.dueDate) {
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    }
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 
   // Fetch news for each sports team
   const teamsNews = await Promise.all(
@@ -68,13 +114,20 @@ export default async function ClientPage({ params }: ClientPageProps) {
   );
 
   return (
-    <div className="py-4">
-      <ClientHeaderPortal sectionName="Overview" />
+    <div className="space-y-6 py-4">
+      <ClientHeaderPortal sectionName="Overview">
+        <AdvisorDropdown client={client} advisors={allAdvisors} />
+        <DocumentsButton client={client} />
+        <NotebookButton client={client} />
+      </ClientHeaderPortal>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Six Cards Grid in 3x2 Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:col-span-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:col-span-2">
           <TasksCard clientId={id} initialTasks={tasks} />
           <NotesCard clientId={id} initialNotes={notes} />
+          <div className="md:col-span-2">
+            <WorkflowStepsCard clientId={id} steps={outstandingSteps} teams={teams} />
+          </div>
           <InterestsCard client={client} />
           <SportsTeamsCard client={client} />
           <ReferredByCard
@@ -83,8 +136,10 @@ export default async function ClientPage({ params }: ClientPageProps) {
             allCompanies={allCompanies}
             allPeople={allPeople}
             allReferralTypes={allReferralTypes}
+            allEvents={allEvents}
+            allAdvisors={allAdvisors}
           />
-          <ReferralTreeCard client={client} clientName={clientName} allClients={allClients} />
+          <ReferralTreeCard client={client} clientName={clientName} allClients={allClients} allAdvisors={allAdvisors} />
         </div>
 
         {/* Favorite Teams & News Sidebar */}

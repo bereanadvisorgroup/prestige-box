@@ -2,6 +2,9 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "./schema";
+import dns from "node:dns";
+
+dns.setDefaultResultOrder("ipv4first");
 
 declare global {
   // Use var for global scope declarations in TS
@@ -26,9 +29,9 @@ function sanitizeConnectionString(url: string): string {
   return `${protocol}${username}:${encodedPassword}@${hostDb}${rest}`;
 }
 
-const rawConnectionString = process.env.DATABASE_URL;
+const rawConnectionString = process.env.SUPABASE_DIRECT_URL;
 if (!rawConnectionString) {
-  throw new Error("DATABASE_URL environment variable is missing.");
+  throw new Error("SUPABASE_DIRECT_URL environment variable is missing.");
 }
 
 const connectionString = sanitizeConnectionString(rawConnectionString);

@@ -31,10 +31,10 @@ export async function createUser(data: {
     };
 
     const { error: preDbError } = await supabaseServer.from("users").insert(tempProfile);
-    if (preDbError) throw new Error("Failed to pre-create user profile: " + preDbError.message);
+    if (preDbError) throw new Error(`Failed to pre-create user profile: ${preDbError.message}`);
 
     // 2. Create User in Supabase Auth via Admin API
-    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10) + "A1!";
+    const randomPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
     const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
       email: cleanEmail,
       password: data.password || randomPassword,
@@ -99,8 +99,9 @@ export async function getUsers() {
 
     if (error) throw new Error(error.message);
 
-    // Fetch auth users to map providers
+    // Fetch auth users to map providers and google profile photo
     const providerMap = new Map<string, string[]>();
+    const googlePhotoMap = new Map<string, string>();
     try {
       const {
         data: { users: authUsers },
@@ -115,6 +116,22 @@ export async function getUsers() {
             [authUser.app_metadata?.provider].filter(Boolean) ||
             [];
           providerMap.set(authUser.id, providers);
+
+          const isGoogle = providers.includes("google") || authUser.app_metadata?.provider === "google";
+          let googleAvatar =
+            authUser.user_metadata?.avatar_url ||
+            authUser.user_metadata?.picture ||
+            (authUser.identities || []).find((i) => i.provider === "google")?.identity_data?.avatar_url ||
+            (authUser.identities || []).find((i) => i.provider === "google")?.identity_data?.picture ||
+            null;
+
+          if (!googleAvatar && isGoogle && authUser.email) {
+            googleAvatar = `https://unavatar.io/google/${encodeURIComponent(authUser.email)}`;
+          }
+
+          if (googleAvatar) {
+            googlePhotoMap.set(authUser.id, googleAvatar);
+          }
         }
       }
     } catch (authErr) {
@@ -129,6 +146,8 @@ export async function getUsers() {
       role: dbUser.role || "client",
       createdAt: dbUser.createdAt || new Date().toISOString(),
       photoURL: dbUser.photoURL || "",
+      socialMedia: dbUser.socialMedia || [],
+      googlePhotoURL: googlePhotoMap.get(dbUser.uid) || null,
       providers: providerMap.get(dbUser.uid) || [],
     }));
 
@@ -141,7 +160,13 @@ export async function getUsers() {
 
 export async function updateUser(
   uid: string,
-  data: { firstName: string; lastName: string; role: string; photoURL?: string | null },
+  data: {
+    firstName: string;
+    lastName: string;
+    role: string;
+    photoURL?: string | null;
+    socialMedia?: any[];
+  },
 ) {
   try {
     // Update Document in public.users table
@@ -152,6 +177,7 @@ export async function updateUser(
         lastName: data.lastName,
         role: data.role,
         photoURL: data.photoURL ?? null,
+        socialMedia: data.socialMedia ?? [],
         updatedAt: new Date().toISOString(),
       })
       .eq("uid", uid);
@@ -175,6 +201,8 @@ export async function updateUser(
     }
 
     revalidatePath("/dashboard/admin/users");
+    revalidatePath(`/dashboard/admin/users/${uid}`);
+    revalidatePath(`/dashboard/admin/users/${uid}/edit`);
     return { success: true };
   } catch (error) {
     console.error("Failed to update user:", error);
@@ -205,10 +233,38 @@ export async function deleteUser(uid: string) {
 
 export async function getUser(uid: string) {
   try {
-    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).single();
+    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).maybeSingle();
 
     if (error) throw new Error(error.message);
     if (!dbUser) return { success: false, error: "User not found" };
+
+    let googlePhotoURL: string | null = null;
+    let providers: string[] = [];
+
+    try {
+      const { data: authUser } = await supabaseServer.auth.admin.getUserById(uid);
+      if (authUser?.user) {
+        providers =
+          authUser.user.app_metadata?.providers ||
+          (authUser.user.identities || []).map((i) => i.provider) ||
+          [authUser.user.app_metadata?.provider].filter(Boolean) ||
+          [];
+
+        const isGoogle = providers.includes("google") || authUser.user.app_metadata?.provider === "google";
+        googlePhotoURL =
+          authUser.user.user_metadata?.avatar_url ||
+          authUser.user.user_metadata?.picture ||
+          (authUser.user.identities || []).find((i) => i.provider === "google")?.identity_data?.avatar_url ||
+          (authUser.user.identities || []).find((i) => i.provider === "google")?.identity_data?.picture ||
+          null;
+
+        if (!googlePhotoURL && isGoogle && (dbUser.email || authUser.user.email)) {
+          googlePhotoURL = `https://unavatar.io/google/${encodeURIComponent(dbUser.email || authUser.user.email || "")}`;
+        }
+      }
+    } catch (authErr) {
+      console.warn("[getUser] Could not fetch auth user details:", authErr);
+    }
 
     const user = {
       uid: dbUser.uid,
@@ -218,6 +274,9 @@ export async function getUser(uid: string) {
       role: dbUser.role || "client",
       createdAt: dbUser.createdAt || new Date().toISOString(),
       photoURL: dbUser.photoURL || "",
+      socialMedia: dbUser.socialMedia || [],
+      googlePhotoURL,
+      providers,
     };
 
     return { success: true, user };
@@ -337,5 +396,35 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
   } catch (error) {
     console.error("Failed to send client setup email:", error);
     return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function getAdvisors() {
+  try {
+    const { data: dbUsers, error } = await supabaseServer
+      .from("users")
+      .select("uid, firstName, lastName, role")
+      .in("role", ["admin", "advisor"]);
+
+    if (error) throw new Error(error.message);
+
+    const advisors = (dbUsers || []).map((dbUser) => ({
+      uid: dbUser.uid,
+      firstName: dbUser.firstName || "",
+      lastName: dbUser.lastName || "",
+      role: dbUser.role,
+    }));
+
+    // Sort alphabetically by name
+    advisors.sort((a, b) => {
+      const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
+      const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    return { success: true, advisors };
+  } catch (error) {
+    console.error("Failed to fetch advisors:", error);
+    return { success: false, error: (error as { message: string }).message, advisors: [] };
   }
 }

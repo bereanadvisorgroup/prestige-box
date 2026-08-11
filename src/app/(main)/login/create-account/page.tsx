@@ -79,8 +79,12 @@ function CreateAccountContent() {
       if (loginError) throw loginError;
 
       toast.success("Account created successfully!");
-      // Since they did not select Passkey, redirect to MFA setup
-      router.replace("/auth/mfa-enroll");
+      // Since they did not select Passkey, redirect to MFA setup (or bypass during tests)
+      if (process.env.NEXT_PUBLIC_BYPASS_MFA === "true") {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/auth/mfa-enroll");
+      }
     } catch (error) {
       console.error("Password registration error:", error);
       toast.error((error as Error).message || "Failed to create account.");
@@ -112,8 +116,12 @@ function CreateAccountContent() {
       if (passkeyError) {
         console.warn("Passkey registration failed or cancelled:", passkeyError);
         toast.warning("Passkey setup skipped or cancelled. Setting up Two-Factor Authentication instead.");
-        // If they skip or cancel passkey, force them to setup MFA
-        router.replace("/auth/mfa-enroll");
+        // If they skip or cancel passkey, force them to setup MFA (or bypass during tests)
+        if (process.env.NEXT_PUBLIC_BYPASS_MFA === "true") {
+          router.replace("/dashboard");
+        } else {
+          router.replace("/auth/mfa-enroll");
+        }
         return;
       }
 

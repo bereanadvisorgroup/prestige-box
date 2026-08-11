@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { deleteUser } from "@/actions/users";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -36,22 +35,44 @@ export default function AuthCallbackPage() {
 
       setUser(user);
 
-      const { data: userData, error: fetchError } = await supabase
+      // 1. Primary lookup by uid
+      let { data: userData, error: fetchError } = await supabase
         .from("users")
         .select("*")
         .eq("uid", user.id)
         .maybeSingle();
 
+      // 2. Fallback lookup by email if uid didn't match
+      if (!userData && !fetchError && user.email) {
+        const { data: emailMatchedUser, error: emailError } = await supabase
+          .from("users")
+          .select("*")
+          .ilike("email", user.email)
+          .maybeSingle();
+
+        if (emailMatchedUser) {
+          userData = emailMatchedUser;
+          if (emailMatchedUser.uid !== user.id) {
+            await supabase
+              .from("users")
+              .update({ uid: user.id, updatedAt: new Date().toISOString() })
+              .eq("id", emailMatchedUser.id);
+          }
+        } else if (emailError) {
+          fetchError = emailError;
+        }
+      }
+
       if (!userData) {
         if (fetchError) {
-          // Transient fetch error — don't delete/sign out a potentially valid user.
+          // Transient fetch error — don't delete or bounce to no-account.
           console.error("Profile fetch error on OAuth callback:", fetchError);
           toast.error("Could not load your profile. Please try signing in again.");
           router.replace("/login");
           return;
         }
-        // Confirmed: no whitelisted profile row for this authenticated user.
-        deleteUser(user.id).catch((err) => console.error("Failed to delete unauthorized user:", err));
+        // No whitelisted profile row for this authenticated user.
+        // Sign out safely — NEVER delete user account.
         await supabase.auth.signOut();
         router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
         return;
@@ -74,7 +95,7 @@ export default function AuthCallbackPage() {
       // A registered passkey already satisfies the secure login factor.
       const { data: passkeys, error: passkeyListError } = await supabase.auth.passkey.list();
       const hasPasskey = !passkeyListError && passkeys && passkeys.length > 0;
-      if (hasPasskey) {
+      if (hasPasskey || process.env.NEXT_PUBLIC_BYPASS_MFA === "true") {
         toast.success("Welcome back!");
         router.replace(defaultRoute);
         return;

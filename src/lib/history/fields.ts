@@ -21,6 +21,10 @@ export const COMPANY_PROFILE_FIELDS: FieldConfig[] = [
   { name: "lifeDocuments", label: "Life Documents" },
   { name: "disabilityDocuments", label: "Disability Documents" },
   { name: "ltcDocuments", label: "LTC Documents" },
+  { name: "logoUrl", label: "Logo" },
+  { name: "socialMedia", label: "Social Media Accounts" },
+  { name: "documentUrl", label: "Document URL" },
+  { name: "notebookUrl", label: "Notebook URL" },
 ];
 
 // Client (clients table) fields. Tracked under the "Profile" subtype.
@@ -30,6 +34,8 @@ export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "referredByCompanyId", label: "Referred by Company" },
   { name: "referredByPersonId", label: "Referred by Person" },
   { name: "referredByReferralTypeId", label: "Referred by Referral Type" },
+  { name: "referredByEventId", label: "Referred by Event" },
+  { name: "referredByAdvisorId", label: "Referred by Advisor" },
   { name: "hobbies", label: "Hobbies" },
   { name: "favoriteSportsTeams", label: "Favorite Sports Teams" },
   { name: "paymentAccounts", label: "Payment Accounts" },
@@ -41,6 +47,10 @@ export const CLIENT_PROFILE_FIELDS: FieldConfig[] = [
   { name: "lifeDocuments", label: "Life Documents" },
   { name: "ltcDocuments", label: "LTC Documents" },
   { name: "estateDocuments", label: "Estate Documents" },
+  { name: "documentUrl", label: "Document URL" },
+  { name: "notebookUrl", label: "Notebook URL" },
+  { name: "driversLicense", label: "Driver's License" },
+  { name: "pii", label: "PII" },
 ];
 
 // Person (people table) fields — a client's personal/contact profile.
@@ -53,8 +63,6 @@ export const PERSON_PROFILE_FIELDS: FieldConfig[] = [
   { name: "photoUrl", label: "Photo" },
   { name: "emails", label: "Email Addresses" },
   { name: "phones", label: "Phone Numbers" },
-  { name: "driversLicense", label: "Driver's License" },
-  { name: "pii", label: "PII" },
   { name: "addresses", label: "Addresses" },
 ];
 

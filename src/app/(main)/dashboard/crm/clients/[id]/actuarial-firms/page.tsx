@@ -4,8 +4,8 @@ import { Calculator } from "lucide-react";
 
 import { getActuarialFirms, linkClientToActuarialFirm, unlinkClientFromActuarialFirm } from "@/actions/actuarial-firms";
 import { getClient } from "@/actions/clients";
-import { AssociationCardList } from "@/components/crm/association-card-list";
-import { LinkFirmDialog } from "@/components/crm/link-firm-dialog";
+import { AssociationCardList } from "@/components/features/crm/association-card-list";
+import { LinkFirmDialog } from "@/components/features/crm/link-firm-dialog";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 

@@ -3,8 +3,13 @@ import { expect, test } from "@playwright/test";
 test.describe("Authentication", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    await context.addCookies([{ name: "is_e2e", value: "true", url: "http://localhost:3000" }]);
     await page.goto("/auth/v1/login");
+    await page.evaluate(() => {
+      document.cookie = "is_e2e=true; path=/";
+      localStorage.setItem("is_e2e", "true");
+    });
   });
 
   test("should display login form", async ({ page }) => {

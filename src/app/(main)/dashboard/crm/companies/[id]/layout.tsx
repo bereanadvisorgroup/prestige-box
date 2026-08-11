@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { Building2, Clock, Pencil } from "lucide-react";
 
 import { getCompany } from "@/actions/companies";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Button } from "@/components/ui/button";
+import { getCompanyLogoUrl } from "@/lib/social";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,23 +30,25 @@ export default async function CompanyDetailLayout({ children, params }: LayoutPr
       {/* Header Section */}
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
-            <AvatarFallback className="rounded-md bg-primary/5 text-2xl text-primary">
-              <Building2 className="h-8 w-8" />
-            </AvatarFallback>
-          </Avatar>
+          <FirmLogo
+            logoUrl={getCompanyLogoUrl(company)}
+            name={company.name}
+            className="h-20 w-20 rounded-md border-2 border-primary/10"
+            size="lg"
+            fallbackIcon={<Building2 className="h-8 w-8" />}
+          />
           <div>
-            <h1 className="font-bold text-3xl tracking-tight">{company.name}</h1>
+            <h1 className="font-bold text-3xl tracking-tight flex items-center gap-2">
+              <span>{company.name}</span>
+              <span id="company-header-separator" className="text-muted-foreground/40 font-normal hidden">
+                {" "}
+                :{" "}
+              </span>
+              <span id="company-header-section-name" className="text-muted-foreground/80 font-normal" />
+            </h1>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/crm/companies/${id}/edit`}>
-            <Button>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Company
-            </Button>
-          </Link>
-        </div>
+        <div id="company-header-actions" className="flex gap-2 items-center" />
       </div>
 
       <div className="mt-8 overflow-hidden rounded-xl border bg-background/50 shadow-sm backdrop-blur-sm">
