@@ -193,6 +193,7 @@ export async function getClientAssociationCounts(clientId: string) {
     const [
       lawFirmsRes,
       accountingFirmsRes,
+      insuranceAgenciesRes,
       actuarialFirmsRes,
       banksRes,
       propertyAndCasualtyRes,
@@ -204,6 +205,7 @@ export async function getClientAssociationCounts(clientId: string) {
     ] = await Promise.all([
       supabaseServer.from("law_firms").select("id, clientIds"),
       supabaseServer.from("accounting_firms").select("id, clientIds"),
+      supabaseServer.from("insurance_agencies").select("id, clientIds"),
       supabaseServer.from("actuarial_firms").select("id, clientIds"),
       supabaseServer.from("banks").select("id, clientIds"),
       supabaseServer.from("property_and_casualty_firms").select("id, clientIds"),
@@ -221,6 +223,7 @@ export async function getClientAssociationCounts(clientId: string) {
       success: true,
       counts: {
         accountingFirms: filterByIds(accountingFirmsRes.data || []),
+        insuranceAgencies: filterByIds(insuranceAgenciesRes.data || []),
         actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
         banks: filterByIds(banksRes.data || []),
         lawFirms: filterByIds(lawFirmsRes.data || []),

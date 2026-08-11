@@ -422,6 +422,7 @@ export async function getCompaniesLinkStatus() {
       ownersRes,
       lawFirmsRes,
       accountingFirmsRes,
+      insuranceAgenciesRes,
       actuarialFirmsRes,
       banksRes,
       propertyAndCasualtyRes,
@@ -434,6 +435,7 @@ export async function getCompaniesLinkStatus() {
       supabaseServer.from("company_owners").select("companyId"),
       supabaseServer.from("law_firms").select("companyIds"),
       supabaseServer.from("accounting_firms").select("companyIds"),
+      supabaseServer.from("insurance_agencies").select("companyIds"),
       supabaseServer.from("actuarial_firms").select("companyIds"),
       supabaseServer.from("banks").select("companyIds"),
       supabaseServer.from("property_and_casualty_firms").select("companyIds"),
@@ -467,6 +469,7 @@ export async function getCompaniesLinkStatus() {
 
     addFirmCompanyIds(lawFirmsRes.data);
     addFirmCompanyIds(accountingFirmsRes.data);
+    addFirmCompanyIds(insuranceAgenciesRes.data);
     addFirmCompanyIds(actuarialFirmsRes.data);
     addFirmCompanyIds(banksRes.data);
     addFirmCompanyIds(propertyAndCasualtyRes.data);
@@ -488,6 +491,7 @@ export async function getCompanyAssociationCounts(companyId: string) {
     const [
       lawFirmsRes,
       accountingFirmsRes,
+      insuranceAgenciesRes,
       actuarialFirmsRes,
       banksRes,
       propertyAndCasualtyRes,
@@ -499,6 +503,7 @@ export async function getCompanyAssociationCounts(companyId: string) {
     ] = await Promise.all([
       supabaseServer.from("law_firms").select("id, companyIds"),
       supabaseServer.from("accounting_firms").select("id, companyIds"),
+      supabaseServer.from("insurance_agencies").select("id, companyIds"),
       supabaseServer.from("actuarial_firms").select("id, companyIds"),
       supabaseServer.from("banks").select("id, companyIds"),
       supabaseServer.from("property_and_casualty_firms").select("id, companyIds"),
@@ -516,6 +521,7 @@ export async function getCompanyAssociationCounts(companyId: string) {
       success: true,
       counts: {
         accountingFirms: filterByIds(accountingFirmsRes.data || []),
+        insuranceAgencies: filterByIds(insuranceAgenciesRes.data || []),
         actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
         banks: filterByIds(banksRes.data || []),
         lawFirms: filterByIds(lawFirmsRes.data || []),

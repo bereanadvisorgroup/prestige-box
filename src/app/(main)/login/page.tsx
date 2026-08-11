@@ -253,8 +253,16 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       console.error("Passkey sign in error:", err);
-      const error = err as { message?: string };
-      toast.error(error.message || "Passkey login failed or cancelled.");
+      const error = err as { name?: string; message?: string };
+      if (
+        error.name === "SecurityError" ||
+        error.message?.includes("invalid for this domain") ||
+        error.message?.includes("RP ID")
+      ) {
+        toast.error("Passkey domain mismatch: The Relying Party ID configured in Supabase does not match this domain.");
+      } else {
+        toast.error(error.message || "Passkey login failed or cancelled.");
+      }
     } finally {
       setIsPasskeyLoading(false);
     }

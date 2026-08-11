@@ -25,8 +25,10 @@ import {
   linkClientToPropertyAndCasualtyFirm,
   unlinkClientFromPropertyAndCasualtyFirm,
 } from "@/actions/property-and-casualty";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Dialog,
@@ -82,6 +84,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [addingDocType, setAddingDocType] = useState<string>("");
   const [addingFirmId, setAddingFirmId] = useState<string>("");
+  const [addingIsUnderManagement, setAddingIsUnderManagement] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
@@ -156,6 +159,7 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         type: addingDocType,
         uploadedAt: new Date().toISOString(),
         firmId: addingFirmId || undefined,
+        isUnderManagement: addingIsUnderManagement,
       };
 
       const updatedDocs = [...documents, newDoc];
@@ -363,6 +367,11 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                           <div className="space-y-0.5">
                             <p className="font-medium text-base text-foreground leading-none">{doc.name}</p>
                             <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                              {doc.isUnderManagement && (
+                                <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px] py-0">
+                                  Under Management
+                                </Badge>
+                              )}
                               <span>{doc.type}</span>
                               {doc.uploadedAt && (
                                 <>
@@ -582,6 +591,18 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-semibold file:text-primary file:text-xs file:uppercase file:tracking-wider placeholder:text-muted-foreground hover:file:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
               />
+            </div>
+
+            {/* Under our Management Checkbox */}
+            <div className="flex items-center space-x-2 rounded-md border p-3 bg-background">
+              <Checkbox
+                id="pc-doc-is-under-management"
+                checked={addingIsUnderManagement}
+                onCheckedChange={(checked) => setAddingIsUnderManagement(!!checked)}
+              />
+              <label htmlFor="pc-doc-is-under-management" className="cursor-pointer font-medium text-sm">
+                Under our Management
+              </label>
             </div>
           </div>
 

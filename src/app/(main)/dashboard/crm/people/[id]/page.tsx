@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
@@ -59,6 +60,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     clientsRes,
     lawFirmsRes,
     accountingFirmsRes,
+    insuranceAgenciesRes,
     actuarialFirmsRes,
     banksRes,
     propertyAndCasualtyFirmsRes,
@@ -72,6 +74,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getClients(),
     getLawFirms(),
     getAccountingFirms(),
+    getInsuranceAgencies(),
     getActuarialFirms(),
     getBanks(),
     getPropertyAndCasualtyFirms(),
@@ -91,6 +94,9 @@ export default async function PersonPage({ params }: PersonPageProps) {
   );
   const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
     (a) => !!person.id && a.personIds?.includes(person.id),
+  );
+  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
+    (ia) => !!person.id && ia.personIds?.includes(person.id),
   );
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => !!person.id && act.personIds?.includes(person.id),
@@ -132,6 +138,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     associatedClient ||
     associatedLawFirms.length > 0 ||
     associatedAccountingFirms.length > 0 ||
+    associatedInsuranceAgencies.length > 0 ||
     associatedActuarialFirms.length > 0 ||
     associatedBanks.length > 0 ||
     associatedPropertyAndCasualties.length > 0 ||
@@ -265,6 +272,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
         associatedClient={associatedClient}
         associatedLawFirms={associatedLawFirms}
         associatedAccountingFirms={associatedAccountingFirms}
+        associatedInsuranceAgencies={associatedInsuranceAgencies}
         associatedActuarialFirms={associatedActuarialFirms}
         associatedBanks={associatedBanks}
         associatedPropertyAndCasualties={associatedPropertyAndCasualties}

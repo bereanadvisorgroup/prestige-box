@@ -1,6 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
@@ -19,6 +20,7 @@ export default async function ClientsPage() {
     policiesRes,
     lawFirmsRes,
     accountingFirmsRes,
+    insuranceAgenciesRes,
     actuarialFirmsRes,
     banksRes,
     propertyAndCasualtyFirmsRes,
@@ -29,6 +31,7 @@ export default async function ClientsPage() {
     getClientPolicies(),
     getLawFirms(),
     getAccountingFirms(),
+    getInsuranceAgencies(),
     getActuarialFirms(),
     getBanks(),
     getPropertyAndCasualtyFirms(),
@@ -59,6 +62,8 @@ export default async function ClientsPage() {
   const lawFirms = lawFirmsRes.success && lawFirmsRes.lawFirms ? lawFirmsRes.lawFirms : [];
   const accountingFirms =
     accountingFirmsRes.success && accountingFirmsRes.accountingFirms ? accountingFirmsRes.accountingFirms : [];
+  const insuranceAgencies =
+    insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies ? insuranceAgenciesRes.insuranceAgencies : [];
   const actuarialFirms =
     actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms ? actuarialFirmsRes.actuarialFirms : [];
   const banks = banksRes.success && banksRes.banks ? banksRes.banks : [];
@@ -77,6 +82,7 @@ export default async function ClientsPage() {
       policies.some((p) => p.clientId === client.id) ||
       lawFirms.some((l) => l.clientIds?.includes(client.id!)) ||
       accountingFirms.some((a) => a.clientIds?.includes(client.id!)) ||
+      insuranceAgencies.some((ia) => ia.clientIds?.includes(client.id!)) ||
       actuarialFirms.some((act) => act.clientIds?.includes(client.id!)) ||
       banks.some((b) => b.clientIds?.includes(client.id!)) ||
       propertyAndCasualtyFirms.some((pc) => pc.clientIds?.includes(client.id!)) ||

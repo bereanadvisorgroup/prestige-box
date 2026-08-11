@@ -8,6 +8,17 @@ import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/lib/supabase.client";
@@ -18,6 +29,7 @@ export default function MFAVerifyPage() {
   const { user, profile, isLoading: isAuthLoading } = useAuthStore();
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
@@ -76,6 +88,31 @@ export default function MFAVerifyPage() {
     }
   };
 
+  const handleReset2FA = async () => {
+    try {
+      setIsResetting(true);
+      const res = await fetch("/api/auth/mfa-reset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to reset 2FA process.");
+      }
+
+      toast.success("2FA process reset successfully. Redirecting to setup...");
+      router.replace("/auth/mfa-enroll");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      toast.error(error.message || "Failed to reset 2FA process.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   if (isAuthLoading || isPageLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -101,7 +138,7 @@ export default function MFAVerifyPage() {
             maxLength={6}
             value={code}
             onChange={(val) => setCode(val)}
-            disabled={isVerifying}
+            disabled={isVerifying || isResetting}
             containerClassName="justify-center"
           >
             <InputOTPGroup>
@@ -114,7 +151,11 @@ export default function MFAVerifyPage() {
             </InputOTPGroup>
           </InputOTP>
 
-          <Button type="submit" className="w-full font-semibold" disabled={isVerifying || code.length !== 6}>
+          <Button
+            type="submit"
+            className="w-full font-semibold"
+            disabled={isVerifying || isResetting || code.length !== 6}
+          >
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -125,17 +166,62 @@ export default function MFAVerifyPage() {
             )}
           </Button>
 
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-muted-foreground text-xs hover:text-foreground"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.replace("/login");
-            }}
-          >
-            Back to Sign In
-          </Button>
+          <div className="flex flex-col items-center space-y-2 pt-2 text-center text-xs">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-muted-foreground text-xs underline hover:text-foreground"
+                  disabled={isVerifying || isResetting}
+                >
+                  Lost access to your authenticator? Reset 2FA process
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset Two-Step Verification?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove your current authenticator device setup and redirect you to set up two-factor
+                    authentication again with a new QR code.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isResetting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleReset2FA();
+                    }}
+                    disabled={isResetting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isResetting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Resetting...
+                      </>
+                    ) : (
+                      "Reset 2FA"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-muted-foreground text-xs hover:text-foreground"
+              disabled={isVerifying || isResetting}
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace("/login");
+              }}
+            >
+              Back to Sign In
+            </Button>
+          </div>
         </form>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Building2, Calculator, Landmark, ReceiptText, Scale, Shield } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
@@ -29,8 +30,8 @@ export default async function ProfessionalServicesPage({ params }: Props) {
   const client = clientResult.client;
 
   // Fetch professional services
-  const [lawFirmsRes, accountingFirmsRes, actuarialFirmsRes, banksRes, propertyAndCasualtyFirmsRes] = await Promise.all(
-    [getLawFirms(), getAccountingFirms(), getActuarialFirms(), getBanks(), getPropertyAndCasualtyFirms()],
+  const [lawFirmsRes, accountingFirmsRes, insuranceAgenciesRes, actuarialFirmsRes, banksRes, propertyAndCasualtyFirmsRes] = await Promise.all(
+    [getLawFirms(), getAccountingFirms(), getInsuranceAgencies(), getActuarialFirms(), getBanks(), getPropertyAndCasualtyFirms()],
   );
 
   // Filter professional services by client.id
@@ -39,6 +40,9 @@ export default async function ProfessionalServicesPage({ params }: Props) {
   );
   const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
     (a) => a.clientIds?.includes(client.id || ""),
+  );
+  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
+    (ia) => ia.clientIds?.includes(client.id || ""),
   );
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => act.clientIds?.includes(client.id || ""),
@@ -54,6 +58,7 @@ export default async function ProfessionalServicesPage({ params }: Props) {
   const hasAssociations =
     associatedLawFirms.length > 0 ||
     associatedAccountingFirms.length > 0 ||
+    associatedInsuranceAgencies.length > 0 ||
     associatedActuarialFirms.length > 0 ||
     associatedBanks.length > 0 ||
     associatedPropertyAndCasualties.length > 0;
@@ -91,6 +96,22 @@ export default async function ProfessionalServicesPage({ params }: Props) {
               }))}
               linkPrefix="/dashboard/crm/accounting-firms"
               icon={ReceiptText}
+              noCard={true}
+            />
+          )}
+
+          {associatedInsuranceAgencies.length > 0 && (
+            <AssociationCardList
+              title="Associated Insurance Agencies"
+              description="Insurance agencies this client is associated with"
+              items={associatedInsuranceAgencies.map((f) => ({
+                id: f.id || "",
+                name: f.firmName,
+                website: f.website,
+                phone: f.phone,
+              }))}
+              linkPrefix="/dashboard/crm/insurance-agencies"
+              icon={Shield}
               noCard={true}
             />
           )}

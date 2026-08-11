@@ -16,6 +16,7 @@ import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
           renewalDate: policy.renewalDate,
           paymentSchedule: policy.paymentSchedule,
           paymentAccountId: policy.paymentAccountId,
+          isUnderManagement: policy.isUnderManagement ?? false,
         }
       : {
           clientId: "",
@@ -79,6 +81,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
           renewalDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0],
           paymentSchedule: "monthly",
           paymentAccountId: "",
+          isUnderManagement: false,
         },
   });
 
@@ -413,6 +416,22 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Under our Management */}
+              <FormField
+                control={form.control}
+                name="isUnderManagement"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3.5 shadow-xs self-end h-10 bg-background">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="cursor-pointer font-medium text-sm">Under our Management</FormLabel>
+                    </div>
                   </FormItem>
                 )}
               />

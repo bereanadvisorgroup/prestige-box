@@ -369,6 +369,7 @@ export const DocumentSchema = z.object({
   type: z.string(), // PC / Life / Estate / etc specific types
   uploadedAt: z.string().optional(),
   firmId: z.string().optional(),
+  isUnderManagement: z.boolean().optional(),
 });
 
 // --- Estate Planning documents ---
@@ -501,6 +502,7 @@ export const InsurancePolicySchema = z.object({
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
+  isUnderManagement: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -662,6 +664,7 @@ export const ClientPolicySchema = z.object({
   effectiveDate: z.string(), // ISO date
   renewalDate: z.string(), // ISO date
   paymentSchedule: PaymentSchedule,
+  isUnderManagement: z.boolean().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -686,6 +689,25 @@ export const LawFirmSchema = z.object({
 });
 
 export const AccountingFirmSchema = z.object({
+  id: z.string().optional(),
+  personIds: z.array(z.string()).min(1, "At least one person is required"),
+  personTitles: z.record(z.string(), z.string()).default({}),
+  firmName: z.string().min(1, "Firm name is required"),
+  firmAddressId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
+  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  clientIds: z.array(z.string()).default([]),
+  companyIds: z.array(z.string()).default([]),
+  logoUrl: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export const InsuranceAgencySchema = z.object({
   id: z.string().optional(),
   personIds: z.array(z.string()).min(1, "At least one person is required"),
   personTitles: z.record(z.string(), z.string()).default({}),
@@ -820,6 +842,7 @@ export type Company = z.infer<typeof CompanySchema>;
 export type CompanyValuationHistory = z.infer<typeof CompanyValuationHistorySchema>;
 export type LawFirm = z.infer<typeof LawFirmSchema>;
 export type AccountingFirm = z.infer<typeof AccountingFirmSchema>;
+export type InsuranceAgency = z.infer<typeof InsuranceAgencySchema>;
 export type ActuarialFirm = z.infer<typeof ActuarialFirmSchema>;
 export type Bank = z.infer<typeof BankSchema>;
 export type PropertyAndCasualtyFirm = z.infer<typeof PropertyAndCasualtyFirmSchema>;
@@ -884,6 +907,7 @@ export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt
   );
 export const LawFirmFormSchema = LawFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const AccountingFirmFormSchema = AccountingFirmSchema.omit({ createdAt: true, updatedAt: true });
+export const InsuranceAgencyFormSchema = InsuranceAgencySchema.omit({ createdAt: true, updatedAt: true });
 export const ActuarialFirmFormSchema = ActuarialFirmSchema.omit({ createdAt: true, updatedAt: true });
 export const BankFormSchema = BankSchema.omit({ createdAt: true, updatedAt: true });
 export const PropertyAndCasualtyFirmFormSchema = PropertyAndCasualtyFirmSchema.omit({
@@ -905,6 +929,7 @@ export type ClientFormValues = z.infer<typeof ClientFormSchema>;
 export type CompanyFormValues = z.infer<typeof CompanyFormSchema>;
 export type LawFirmFormValues = z.infer<typeof LawFirmFormSchema>;
 export type AccountingFirmFormValues = z.infer<typeof AccountingFirmFormSchema>;
+export type InsuranceAgencyFormValues = z.infer<typeof InsuranceAgencyFormSchema>;
 export type ActuarialFirmFormValues = z.infer<typeof ActuarialFirmFormSchema>;
 export type BankFormValues = z.infer<typeof BankFormSchema>;
 export type PropertyAndCasualtyFirmFormValues = z.infer<typeof PropertyAndCasualtyFirmFormSchema>;
@@ -923,6 +948,7 @@ export type ClientFormInput = z.input<typeof ClientFormSchema>;
 export type CompanyFormInput = z.input<typeof CompanyFormSchema>;
 export type LawFirmFormInput = z.input<typeof LawFirmFormSchema>;
 export type AccountingFirmFormInput = z.input<typeof AccountingFirmFormSchema>;
+export type InsuranceAgencyFormInput = z.input<typeof InsuranceAgencyFormSchema>;
 export type ActuarialFirmFormInput = z.input<typeof ActuarialFirmFormSchema>;
 export type BankFormInput = z.input<typeof BankFormSchema>;
 export type PropertyAndCasualtyFirmFormInput = z.input<typeof PropertyAndCasualtyFirmFormSchema>;

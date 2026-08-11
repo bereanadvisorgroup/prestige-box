@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddresses } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
@@ -15,6 +16,7 @@ import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type {
   AccountingFirm,
+  InsuranceAgency,
   ActuarialFirm,
   Bank,
   Client,
@@ -35,6 +37,7 @@ export default async function AddressesPage() {
     companiesResult,
     lawFirmsResult,
     accountingFirmsResult,
+    insuranceAgenciesResult,
     actuarialFirmsResult,
     banksResult,
     propertyAndCasualtyFirmsResult,
@@ -46,6 +49,7 @@ export default async function AddressesPage() {
     getCompanies(),
     getLawFirms(),
     getAccountingFirms(),
+    getInsuranceAgencies(),
     getActuarialFirms(),
     getBanks(),
     getPropertyAndCasualtyFirms(),
@@ -82,6 +86,9 @@ export default async function AddressesPage() {
   const accountingFirms = (
     accountingFirmsResult.success && accountingFirmsResult.accountingFirms ? accountingFirmsResult.accountingFirms : []
   ) as AccountingFirm[];
+  const insuranceAgencies = (
+    insuranceAgenciesResult.success && insuranceAgenciesResult.insuranceAgencies ? insuranceAgenciesResult.insuranceAgencies : []
+  ) as InsuranceAgency[];
   const actuarialFirms = (
     actuarialFirmsResult.success && actuarialFirmsResult.actuarialFirms ? actuarialFirmsResult.actuarialFirms : []
   ) as ActuarialFirm[];
@@ -123,6 +130,7 @@ export default async function AddressesPage() {
       companies.some((c) => c.addressId === addr.id) ||
       lawFirms.some((l) => l.firmAddressId === addr.id) ||
       accountingFirms.some((a) => a.firmAddressId === addr.id) ||
+      insuranceAgencies.some((ia) => ia.firmAddressId === addr.id) ||
       actuarialFirms.some((act) => act.firmAddressId === addr.id) ||
       banks.some((b) => b.firmAddressId === addr.id) ||
       propertyAndCasualtyFirms.some((pc) => pc.firmAddressId === addr.id) ||

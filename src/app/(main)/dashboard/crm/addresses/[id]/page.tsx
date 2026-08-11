@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Globe, MapPin, Pencil } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
@@ -43,6 +44,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
     clientsRes,
     lawFirmsRes,
     accountingFirmsRes,
+    insuranceAgenciesRes,
     actuarialFirmsRes,
     banksRes,
     propertyAndCasualtyFirmsRes,
@@ -56,6 +58,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
     getClients(),
     getLawFirms(),
     getAccountingFirms(),
+    getInsuranceAgencies(),
     getActuarialFirms(),
     getBanks(),
     getPropertyAndCasualtyFirms(),
@@ -123,6 +126,10 @@ export default async function AddressPage({ params }: AddressPageProps) {
     (a) => associatedPeopleIds.some((pId) => a.personIds?.includes(pId)),
   );
 
+  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
+    (ia) => associatedPeopleIds.some((pId) => ia.personIds?.includes(pId)),
+  );
+
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => associatedPeopleIds.some((pId) => act.personIds?.includes(pId)),
   );
@@ -188,6 +195,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
         associatedClients={associatedClients}
         associatedLawFirms={associatedLawFirms}
         associatedAccountingFirms={associatedAccountingFirms}
+        associatedInsuranceAgencies={associatedInsuranceAgencies}
         associatedActuarialFirms={associatedActuarialFirms}
         associatedBanks={associatedBanks}
         associatedPropertyAndCasualties={associatedPropertyAndCasualties}

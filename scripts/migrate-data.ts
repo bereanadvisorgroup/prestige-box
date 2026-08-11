@@ -555,7 +555,7 @@ async function runMigration() {
     console.log(`Flushing ${addressesRows.length} addresses...`);
     await flushBatch(addressesRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO addresses ${sql(chunk, "id", "street1", "street2", "city", "state", "zipCode", "country", "createdAt", "updatedAt")}
+        INSERT INTO addresses ${(sql as any)(chunk, "id", "street1", "street2", "city", "state", "zipCode", "country", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -565,7 +565,7 @@ async function runMigration() {
     console.log(`Flushing ${peopleRows.length} people...`);
     await flushBatch(peopleRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO people ${sql(chunk, "id", "prefix", "firstName", "middleName", "lastName", "suffix", "emails", "phones", "socialMedia", "addresses", "addressIds", "createdAt", "updatedAt")}
+        INSERT INTO people ${(sql as any)(chunk, "id", "prefix", "firstName", "middleName", "lastName", "suffix", "emails", "phones", "socialMedia", "addresses", "addressIds", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -575,7 +575,7 @@ async function runMigration() {
     console.log(`Flushing ${clientsRows.length} clients...`);
     await flushBatch(clientsRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO clients ${sql(chunk, "id", "personId", "employments", "driversLicense", "pii", "liabilities", "createdAt", "updatedAt")}
+        INSERT INTO clients ${(sql as any)(chunk, "id", "personId", "employments", "driversLicense", "pii", "liabilities", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -585,7 +585,7 @@ async function runMigration() {
     console.log(`Flushing ${companiesRows.length} companies...`);
     await flushBatch(companiesRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO companies ${sql(chunk, "id", "name", "phone", "website", "addressId", "createdAt", "updatedAt")}
+        INSERT INTO companies ${(sql as any)(chunk, "id", "name", "phone", "website", "addressId", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -595,7 +595,7 @@ async function runMigration() {
     console.log(`Flushing ${householdsRows.length} households...`);
     await flushBatch(householdsRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO households ${sql(chunk, "id", "name", "addressId", "memberIds", "createdAt", "updatedAt")}
+        INSERT INTO households ${(sql as any)(chunk, "id", "name", "addressId", "memberIds", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -605,7 +605,7 @@ async function runMigration() {
     console.log(`Flushing ${companyOwnersRows.length} company owners...`);
     await flushBatch(companyOwnersRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO company_owners ${sql(chunk, "id", "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")}
+        INSERT INTO company_owners ${(sql as any)(chunk, "id", "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -616,7 +616,7 @@ async function runMigration() {
     console.log(`Flushing ${allNotesRows.length} notes...`);
     await flushBatch(allNotesRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO notes ${sql(chunk, "id", "parentId", "rootId", "depth", "title", "body", "authorId", "createdAt", "updatedAt")}
+        INSERT INTO notes ${(sql as any)(chunk, "id", "parentId", "rootId", "depth", "title", "body", "authorId", "createdAt", "updatedAt")}
       `;
     });
   }
@@ -627,7 +627,7 @@ async function runMigration() {
     console.log(`Flushing ${allNoteAssocRows.length} note associations...`);
     await flushBatch(allNoteAssocRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO note_associations ${sql(chunk, "id", "noteId", "entityType", "entityId", "createdAt")}
+        INSERT INTO note_associations ${(sql as any)(chunk, "id", "noteId", "entityType", "entityId", "createdAt")}
       `;
     });
   }

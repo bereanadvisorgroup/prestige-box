@@ -31,6 +31,7 @@ export async function getRelationshipGraphData() {
       { data: longTermCare },
       { data: lawFirms },
       { data: accountingFirms },
+      { data: insuranceAgencies },
       { data: actuarialFirms },
       { data: banks },
       { data: propertyAndCasualty },
@@ -51,6 +52,7 @@ export async function getRelationshipGraphData() {
       supabaseServer.from("long_term_care_insurance").select("id, name, personIds"),
       supabaseServer.from("law_firms").select("id, firmName, firmAddressId, personIds, clientIds"),
       supabaseServer.from("accounting_firms").select("id, firmName, firmAddressId, personIds, clientIds"),
+      supabaseServer.from("insurance_agencies").select("id, firmName, firmAddressId, personIds, clientIds"),
       supabaseServer.from("actuarial_firms").select("id, firmName, firmAddressId, personIds, clientIds"),
       supabaseServer.from("banks").select("id, firmName, firmAddressId, personIds, clientIds"),
       supabaseServer.from("property_and_casualty_firms").select("id, firmName, firmAddressId, personIds, clientIds"),
@@ -258,6 +260,12 @@ export async function getRelationshipGraphData() {
       "Professional Service",
       "Accounting Firm",
       "/dashboard/crm/accounting-firms",
+    );
+    addFirmNodesAndLinks(
+      insuranceAgencies || [],
+      "Professional Service",
+      "Insurance Agency",
+      "/dashboard/crm/insurance-agencies",
     );
     addFirmNodesAndLinks(
       actuarialFirms || [],

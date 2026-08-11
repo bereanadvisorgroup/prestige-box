@@ -5,16 +5,17 @@ import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
-import { Plus, Search, X } from "lucide-react";
+import { Filter, Plus, Search, X } from "lucide-react";
 
 import { DataTable } from "@/components/features/data-table/data-table";
 import { DataTablePagination } from "@/components/features/data-table/data-table-pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
 import type { ClientPolicy } from "@/types/crm";
 
-import { columns } from "./columns";
+import { columns, type EnrichedPolicy } from "./columns";
 import { DeletePolicyAlert } from "./delete-policy-alert";
 
 interface PoliciesTableProps {
@@ -24,6 +25,16 @@ interface PoliciesTableProps {
 export function PoliciesTable({ data }: PoliciesTableProps) {
   const [deletePolicy, setDeletePolicy] = useState<ClientPolicy | null>(null);
   const [searchValue, setSearchValue] = useState("");
+  const [selectedCarrier, setSelectedCarrier] = useState("all");
+  const [policyDetailsSearch, setPolicyDetailsSearch] = useState("");
+  const [selectedManagementStatus, setSelectedManagementStatus] = useState("all");
+
+  const carriers = useMemo(() => {
+    const list = data
+      .map((p) => (p as EnrichedPolicy).carrierName)
+      .filter((name): name is string => Boolean(name) && name !== "Unknown Carrier");
+    return Array.from(new Set(list)).sort();
+  }, [data]);
 
   const tableColumns = useMemo(() => columns(setDeletePolicy), []);
 
@@ -38,6 +49,24 @@ export function PoliciesTable({ data }: PoliciesTableProps) {
     setSearchValue(value);
     table.getColumn("clientName")?.setFilterValue(value);
   };
+
+  const handleCarrierChange = (value: string) => {
+    setSelectedCarrier(value);
+    table.getColumn("carrierName")?.setFilterValue(value === "all" ? undefined : value);
+  };
+
+  const handlePolicyDetailsChange = (value: string) => {
+    setPolicyDetailsSearch(value);
+    table.getColumn("policyName")?.setFilterValue(value || undefined);
+  };
+
+  const handleManagementStatusChange = (value: string) => {
+    setSelectedManagementStatus(value);
+    table.getColumn("isUnderManagement")?.setFilterValue(value === "all" ? undefined : value);
+  };
+
+  const hasActiveFilters =
+    selectedCarrier !== "all" || policyDetailsSearch !== "" || selectedManagementStatus !== "all";
 
   return (
     <div className="space-y-6">
@@ -72,6 +101,80 @@ export function PoliciesTable({ data }: PoliciesTableProps) {
             Add Policy
           </Link>
         </Button>
+      </div>
+
+      {/* Filter Controls Bar */}
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/20 p-3">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <Filter className="h-3.5 w-3.5" />
+          <span>Filters:</span>
+        </div>
+
+        {/* Carrier Filter */}
+        <div className="w-full sm:w-48">
+          <Select value={selectedCarrier} onValueChange={handleCarrierChange}>
+            <SelectTrigger className="h-9 text-xs bg-background">
+              <SelectValue placeholder="Carrier: All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Carriers</SelectItem>
+              {carriers.map((carrier) => (
+                <SelectItem key={carrier} value={carrier}>
+                  {carrier}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Policy Details Filter */}
+        <div className="relative w-full sm:w-56">
+          <Input
+            placeholder="Filter by policy name or #..."
+            value={policyDetailsSearch}
+            onChange={(e) => handlePolicyDetailsChange(e.target.value)}
+            className="h-9 pr-8 text-xs bg-background"
+          />
+          {policyDetailsSearch && (
+            <button
+              type="button"
+              onClick={() => handlePolicyDetailsChange("")}
+              className="absolute top-2.5 right-2.5 flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Under our Management Filter */}
+        <div className="w-full sm:w-48">
+          <Select value={selectedManagementStatus} onValueChange={handleManagementStatusChange}>
+            <SelectTrigger className="h-9 text-xs bg-background">
+              <SelectValue placeholder="Management: All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Management</SelectItem>
+              <SelectItem value="yes">Under Management</SelectItem>
+              <SelectItem value="no">Unmanaged</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Reset Filters Button */}
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              handleCarrierChange("all");
+              handlePolicyDetailsChange("");
+              handleManagementStatusChange("all");
+            }}
+            className="h-9 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Reset Filters
+          </Button>
+        )}
       </div>
 
       <div className="rounded-md border bg-card">

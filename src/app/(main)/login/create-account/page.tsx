@@ -115,7 +115,12 @@ function CreateAccountContent() {
       const { error: passkeyError } = await supabase.auth.registerPasskey();
       if (passkeyError) {
         console.warn("Passkey registration failed or cancelled:", passkeyError);
-        toast.warning("Passkey setup skipped or cancelled. Setting up Two-Factor Authentication instead.");
+        const errorMsg = passkeyError.message || "";
+        if (errorMsg.includes("invalid for this domain") || errorMsg.includes("RP ID")) {
+          toast.error("Passkey domain mismatch: Relying Party ID configured in Supabase does not match this domain.");
+        } else {
+          toast.warning("Passkey setup skipped or cancelled. Setting up Two-Factor Authentication instead.");
+        }
         // If they skip or cancel passkey, force them to setup MFA (or bypass during tests)
         if (process.env.NEXT_PUBLIC_BYPASS_MFA === "true") {
           router.replace("/dashboard");

@@ -47,8 +47,16 @@ export default function SettingsPage() {
       toast.success("Passkey registered successfully!");
     } catch (err: unknown) {
       console.error("Passkey registration failed:", err);
-      const error = err as { message?: string };
-      toast.error(error.message || "Passkey registration failed or cancelled.");
+      const error = err as { name?: string; message?: string };
+      if (
+        error.name === "SecurityError" ||
+        error.message?.includes("invalid for this domain") ||
+        error.message?.includes("RP ID")
+      ) {
+        toast.error("Passkey domain mismatch: Relying Party ID configured in Supabase does not match this domain.");
+      } else {
+        toast.error(error.message || "Passkey registration failed or cancelled.");
+      }
     } finally {
       setIsPasskeyRegistering(false);
     }

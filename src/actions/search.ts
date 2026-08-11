@@ -61,6 +61,13 @@ export async function globalSearch(
       .ilike("firmName", ilikeQuery)
       .limit(10);
 
+    // 6b. Search Insurance Agencies
+    const insuranceAgenciesPromise = supabaseServer
+      .from("insurance_agencies")
+      .select("id, firmName")
+      .ilike("firmName", ilikeQuery)
+      .limit(10);
+
     // 7. Search Actuarial Firms
     const actuarialFirmsPromise = supabaseServer
       .from("actuarial_firms")
@@ -135,6 +142,7 @@ export async function globalSearch(
       companiesRes,
       policiesRes,
       accountingRes,
+      insuranceAgenciesRes,
       actuarialRes,
       banksRes,
       lawRes,
@@ -152,6 +160,7 @@ export async function globalSearch(
       companiesPromise,
       policiesPromise,
       accountingFirmsPromise,
+      insuranceAgenciesPromise,
       actuarialFirmsPromise,
       banksPromise,
       lawFirmsPromise,
@@ -266,6 +275,19 @@ export async function globalSearch(
           subtitle: "Accounting Firm",
           url: `/dashboard/crm/accounting-firms/${f.id}`,
           type: "Accounting Firms",
+        });
+      }
+    }
+
+    // Process Insurance Agencies
+    if (insuranceAgenciesRes.data) {
+      for (const f of insuranceAgenciesRes.data) {
+        results.push({
+          id: f.id,
+          title: f.firmName,
+          subtitle: "Insurance Agency",
+          url: `/dashboard/crm/insurance-agencies/${f.id}`,
+          type: "Insurance Agencies",
         });
       }
     }

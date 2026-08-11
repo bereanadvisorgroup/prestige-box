@@ -741,6 +741,7 @@ async function main() {
         effectiveDate: effectiveDate,
         renewalDate: renewalDate,
         paymentSchedule: faker.helpers.arrayElement(["Monthly", "Quarterly", "Semi-Annually", "Annually"]),
+        isUnderManagement: faker.datatype.boolean(),
       });
     }
     await db.insert(clientPolicies).values(clientPolicyData);

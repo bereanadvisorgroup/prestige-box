@@ -27,6 +27,7 @@ import { updateClient } from "@/actions/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Dialog,
@@ -125,6 +126,7 @@ interface FormState {
   beneficiaries: BeneficiaryRow[];
   contingentBeneficiaries: BeneficiaryRow[];
   files: FormFile[];
+  isUnderManagement: boolean;
 }
 
 const emptyForm: FormState = {
@@ -141,6 +143,7 @@ const emptyForm: FormState = {
   beneficiaries: [],
   contingentBeneficiaries: [],
   files: [],
+  isUnderManagement: false,
 };
 
 const rowsFromBeneficiaries = (list: InsuranceBeneficiary[]): BeneficiaryRow[] =>
@@ -160,6 +163,7 @@ const formFromPolicy = (p: InsurancePolicy): FormState => ({
   beneficiaries: rowsFromBeneficiaries(p.beneficiaries),
   contingentBeneficiaries: rowsFromBeneficiaries(p.contingentBeneficiaries),
   files: [],
+  isUnderManagement: p.isUnderManagement ?? false,
 });
 
 /** Convert form rows into stored beneficiaries, dropping unselected rows. Returns null if any row's percent is invalid. */
@@ -499,6 +503,7 @@ export function InsurancePolicyManager({
       eliminationPeriod: form.eliminationPeriod || undefined,
       beneficiaries,
       contingentBeneficiaries,
+      isUnderManagement: form.isUnderManagement,
     };
   };
 
@@ -637,6 +642,11 @@ export function InsurancePolicyManager({
             {policy.policyName || policy.policyNumber || "Untitled Policy"}
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
+            {policy.isUnderManagement && (
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px] py-0">
+                Under Management
+              </Badge>
+            )}
             {policy.policyNumber && <span>Policy #: {policy.policyNumber}</span>}
             {policy.issueDate && <span>Issued: {policy.issueDate}</span>}
             {(policy.anniversaryDate || policy.renewalDate) && (
@@ -1045,6 +1055,17 @@ export function InsurancePolicyManager({
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-md border p-3 bg-background">
+              <Checkbox
+                id="policy-is-under-management"
+                checked={form.isUnderManagement}
+                onCheckedChange={(checked) => setForm({ ...form, isUnderManagement: !!checked })}
+              />
+              <Label htmlFor="policy-is-under-management" className="cursor-pointer font-medium text-sm">
+                Under our Management
+              </Label>
             </div>
 
             {(policyField === "disabilityPolicies" || policyField === "ltcPolicies") && (

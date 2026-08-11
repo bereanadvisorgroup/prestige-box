@@ -47,6 +47,10 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
   {
     accessorKey: "carrierName",
     header: "Carrier",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      return row.getValue(columnId) === filterValue;
+    },
     cell: ({ row }: { row: Row<EnrichedPolicy> }) => (
       <div className="flex items-center gap-2">
         <Shield className="h-3 w-3 text-primary" />
@@ -57,6 +61,13 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
   {
     accessorKey: "policyName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Policy Details" />,
+    filterFn: (row, _columnId, filterValue) => {
+      if (!filterValue) return true;
+      const search = (filterValue as string).toLowerCase();
+      const name = (row.original.policyName || "").toLowerCase();
+      const num = (row.original.policyNumber || "").toLowerCase();
+      return name.includes(search) || num.includes(search);
+    },
     cell: ({ row }: { row: Row<ClientPolicy> }) => (
       <div className="flex flex-col">
         <Link href={`/dashboard/crm/policies/${row.original.id}`} className="hover:underline">
@@ -65,6 +76,29 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
         <span className="font-mono text-[10px] text-muted-foreground">{row.original.policyNumber}</span>
       </div>
     ),
+  },
+  {
+    accessorKey: "isUnderManagement",
+    header: "Under Management",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue === "all") return true;
+      const val = row.getValue(columnId);
+      if (filterValue === "yes") return val === true;
+      if (filterValue === "no") return val === false;
+      return true;
+    },
+    cell: ({ row }: { row: Row<EnrichedPolicy> }) => {
+      const isManaged = row.original.isUnderManagement;
+      return isManaged ? (
+        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px]">
+          Managed
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="text-muted-foreground text-[10px]">
+          Unmanaged
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "premiumAmount",

@@ -74,6 +74,7 @@ export const CLIENT_POLICY_FIELDS: FieldConfig[] = [
   { name: "effectiveDate", label: "Effective Date" },
   { name: "renewalDate", label: "Renewal Date" },
   { name: "paymentSchedule", label: "Payment Schedule" },
+  { name: "isUnderManagement", label: "Under our Management" },
 ];
 
 /**
@@ -86,6 +87,7 @@ export const SERVICE_SUBTYPE: Record<string, string> = {
   long_term_care_insurance: "Long Term Care",
   law_firms: "Law Firm",
   accounting_firms: "Accounting Firm",
+  insurance_agencies: "Insurance Agency",
   actuarial_firms: "Actuarial Firm",
   banks: "Bank",
   property_and_casualty_firms: "Property & Casualty",

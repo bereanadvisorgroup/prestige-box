@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPhoneNumber } from "@/lib/utils";
 import type {
   AccountingFirm,
+  InsuranceAgency,
   ActuarialFirm,
   Address,
   Bank,
@@ -63,6 +64,7 @@ interface AddressProfileTabsProps {
   associatedClients: { personName: string; client: Client }[];
   associatedLawFirms: LawFirm[];
   associatedAccountingFirms: AccountingFirm[];
+  associatedInsuranceAgencies: InsuranceAgency[];
   associatedActuarialFirms: ActuarialFirm[];
   associatedBanks: Bank[];
   associatedPropertyAndCasualties: PropertyAndCasualtyFirm[];
@@ -144,6 +146,7 @@ export function AddressProfileTabs({
   associatedClients,
   associatedLawFirms,
   associatedAccountingFirms,
+  associatedInsuranceAgencies,
   associatedActuarialFirms,
   associatedBanks,
   associatedPropertyAndCasualties,
@@ -186,6 +189,14 @@ export function AddressProfileTabs({
                 className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 Accounting Firms
+              </TabsTrigger>
+            )}
+            {associatedInsuranceAgencies.length > 0 && (
+              <TabsTrigger
+                value="insurance-agency"
+                className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                Insurance Agencies
               </TabsTrigger>
             )}
             {associatedActuarialFirms.length > 0 && (
@@ -535,6 +546,24 @@ export function AddressProfileTabs({
                 }))}
                 linkPrefix="/dashboard/crm/accounting-firms"
                 icon={ReceiptText}
+              />
+            </TabsContent>
+          )}
+
+          {/* Insurance Agency Tab */}
+          {associatedInsuranceAgencies.length > 0 && (
+            <TabsContent value="insurance-agency" className="m-0 border-0 outline-none">
+              <AssociationCardList
+                title="Associated Insurance Agencies"
+                description="Insurance agencies associated with people at this address"
+                items={associatedInsuranceAgencies.map((f) => ({
+                  id: f.id!,
+                  name: f.firmName,
+                  website: f.website,
+                  phone: f.phone,
+                }))}
+                linkPrefix="/dashboard/crm/insurance-agencies"
+                icon={Shield}
               />
             </TabsContent>
           )}

@@ -129,38 +129,6 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 4,
-    label: "Professional Services",
-    allowedRoles: ["admin", "advisor"],
-    items: [
-      {
-        title: "Accounting Firms",
-        url: "/dashboard/crm/accounting-firms",
-        icon: ReceiptText,
-      },
-      {
-        title: "Actuarial Firms",
-        url: "/dashboard/crm/actuarial-firms",
-        icon: ReceiptText,
-      },
-      {
-        title: "Banks",
-        url: "/dashboard/crm/banks",
-        icon: Building2,
-      },
-      {
-        title: "Law Firms",
-        url: "/dashboard/crm/law-firms",
-        icon: Building2,
-      },
-      {
-        title: "Property And Casualty",
-        url: "/dashboard/crm/property-and-casualty",
-        icon: Shield,
-      },
-    ],
-  },
-  {
-    id: 5,
     label: "Vendors",
     allowedRoles: ["admin"],
     items: [
@@ -188,6 +156,43 @@ export const sidebarItems: NavGroup[] = [
         title: "Record Keepers",
         url: "/dashboard/admin/record-keepers",
         icon: Shield,
+      },
+      {
+        title: "Property And Casualty",
+        url: "/dashboard/crm/property-and-casualty",
+        icon: Shield,
+      },
+    ],
+  },
+  {
+    id: 5,
+    label: "Professional Services",
+    allowedRoles: ["admin", "advisor"],
+    items: [
+      {
+        title: "Accounting Firms",
+        url: "/dashboard/crm/accounting-firms",
+        icon: ReceiptText,
+      },
+      {
+        title: "Insurance Agencies",
+        url: "/dashboard/crm/insurance-agencies",
+        icon: Shield,
+      },
+      {
+        title: "Actuarial Firms",
+        url: "/dashboard/crm/actuarial-firms",
+        icon: ReceiptText,
+      },
+      {
+        title: "Banks",
+        url: "/dashboard/crm/banks",
+        icon: Building2,
+      },
+      {
+        title: "Law Firms",
+        url: "/dashboard/crm/law-firms",
+        icon: Building2,
       },
     ],
   },

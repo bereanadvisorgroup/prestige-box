@@ -1,6 +1,7 @@
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
@@ -17,6 +18,7 @@ import { getRecordKeepers } from "@/actions/record-keepers";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type {
   AccountingFirm,
+  InsuranceAgency,
   ActuarialFirm,
   Bank,
   Client,
@@ -41,6 +43,7 @@ export default async function PeoplePage() {
     clientsRes,
     lawFirmsRes,
     accountingFirmsRes,
+    insuranceAgenciesRes,
     actuarialFirmsRes,
     banksRes,
     propertyAndCasualtyFirmsRes,
@@ -56,6 +59,7 @@ export default async function PeoplePage() {
     getClients(),
     getLawFirms(),
     getAccountingFirms(),
+    getInsuranceAgencies(),
     getActuarialFirms(),
     getBanks(),
     getPropertyAndCasualtyFirms(),
@@ -94,6 +98,9 @@ export default async function PeoplePage() {
   const accountingFirms = (
     accountingFirmsRes.success && accountingFirmsRes.accountingFirms ? accountingFirmsRes.accountingFirms : []
   ) as AccountingFirm[];
+  const insuranceAgencies = (
+    insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies ? insuranceAgenciesRes.insuranceAgencies : []
+  ) as InsuranceAgency[];
   const actuarialFirms = (
     actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms ? actuarialFirmsRes.actuarialFirms : []
   ) as ActuarialFirm[];
@@ -128,6 +135,7 @@ export default async function PeoplePage() {
       clients.some((c) => c.personId === person.id) ||
       lawFirms.some((l) => !!person.id && l.personIds?.includes(person.id)) ||
       accountingFirms.some((a) => !!person.id && a.personIds?.includes(person.id)) ||
+      insuranceAgencies.some((ia) => !!person.id && ia.personIds?.includes(person.id)) ||
       actuarialFirms.some((act) => !!person.id && act.personIds?.includes(person.id)) ||
       banks.some((b) => !!person.id && b.personIds?.includes(person.id)) ||
       propertyAndCasualtyFirms.some((pc) => !!person.id && pc.personIds?.includes(person.id)) ||
@@ -195,6 +203,17 @@ export default async function PeoplePage() {
           type: "Accounting Firm",
           name: firm.firmName,
           href: `/dashboard/crm/accounting-firms/${firm.id}`,
+        });
+      }
+    }
+
+    // Insurance Agencies
+    for (const firm of insuranceAgencies) {
+      if (person.id && firm.personIds?.includes(person.id)) {
+        relations.push({
+          type: "Insurance Agency",
+          name: firm.firmName,
+          href: `/dashboard/crm/insurance-agencies/${firm.id}`,
         });
       }
     }

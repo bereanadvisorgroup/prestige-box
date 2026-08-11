@@ -194,6 +194,7 @@ export const clientPolicies = pgTable("client_policies", {
   effectiveDate: timestamp("effectiveDate", { withTimezone: true }).notNull(),
   renewalDate: timestamp("renewalDate", { withTimezone: true }).notNull(),
   paymentSchedule: text("paymentSchedule").notNull(),
+  isUnderManagement: boolean("isUnderManagement").default(false).notNull(),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -216,6 +217,22 @@ export const lawFirms = pgTable("law_firms", {
 
 // 10. Accounting Firms Table
 export const accountingFirms = pgTable("accounting_firms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
+  personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),
+  firmName: text("firmName").notNull(),
+  firmAddressId: uuid("firmAddressId"),
+  website: text("website"),
+  phone: text("phone"),
+  clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
+  companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
+  logoUrl: text("logoUrl"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 10b. Insurance Agencies Table
+export const insuranceAgencies = pgTable("insurance_agencies", {
   id: uuid("id").primaryKey().defaultRandom(),
   personIds: uuid("personIds").array().notNull().default(sql`'{}'::uuid[]`),
   personTitles: jsonb("personTitles").default(sql`'{}'::jsonb`).notNull(),

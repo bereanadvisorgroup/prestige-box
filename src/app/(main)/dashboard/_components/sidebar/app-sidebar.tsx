@@ -122,42 +122,6 @@ const getHouseholdSidebarItems = (householdId: string, counts: Record<string, nu
   },
   {
     id: 33,
-    label: "Professional Services",
-    items: [
-      {
-        title: "Accounting Firms",
-        url: `/dashboard/crm/households/${householdId}/accounting-firms`,
-        icon: ReceiptText,
-        badge: counts.accountingFirms || 0,
-      },
-      {
-        title: "Actuarial Firms",
-        url: `/dashboard/crm/households/${householdId}/actuarial-firms`,
-        icon: Calculator,
-        badge: counts.actuarialFirms || 0,
-      },
-      {
-        title: "Banks",
-        url: `/dashboard/crm/households/${householdId}/banks`,
-        icon: Landmark,
-        badge: counts.banks || 0,
-      },
-      {
-        title: "Law Firms",
-        url: `/dashboard/crm/households/${householdId}/law-firms`,
-        icon: Scale,
-        badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/households/${householdId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
-      },
-    ],
-  },
-  {
-    id: 34,
     label: "Vendors",
     items: [
       {
@@ -189,6 +153,48 @@ const getHouseholdSidebarItems = (householdId: string, counts: Record<string, nu
         url: `/dashboard/crm/households/${householdId}/record-keepers`,
         icon: Database,
         badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+  {
+    id: 34,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/households/${householdId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Insurance Agencies",
+        url: `/dashboard/crm/households/${householdId}/insurance-agencies`,
+        icon: Shield,
+        badge: counts.insuranceAgencies || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/households/${householdId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/households/${householdId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/households/${householdId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/households/${householdId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
@@ -296,42 +302,6 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
   },
   {
     id: 13,
-    label: "Professional Services",
-    items: [
-      {
-        title: "Accounting Firms",
-        url: `/dashboard/crm/clients/${clientId}/accounting-firms`,
-        icon: ReceiptText,
-        badge: counts.accountingFirms || 0,
-      },
-      {
-        title: "Actuarial Firms",
-        url: `/dashboard/crm/clients/${clientId}/actuarial-firms`,
-        icon: Calculator,
-        badge: counts.actuarialFirms || 0,
-      },
-      {
-        title: "Banks",
-        url: `/dashboard/crm/clients/${clientId}/banks`,
-        icon: Landmark,
-        badge: counts.banks || 0,
-      },
-      {
-        title: "Law Firms",
-        url: `/dashboard/crm/clients/${clientId}/law-firms`,
-        icon: Scale,
-        badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/clients/${clientId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
-      },
-    ],
-  },
-  {
-    id: 14,
     label: "Vendors",
     items: [
       {
@@ -363,6 +333,48 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         url: `/dashboard/crm/clients/${clientId}/record-keepers`,
         icon: Database,
         badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+  {
+    id: 14,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/clients/${clientId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Insurance Agencies",
+        url: `/dashboard/crm/clients/${clientId}/insurance-agencies`,
+        icon: Shield,
+        badge: counts.insuranceAgencies || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/clients/${clientId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/clients/${clientId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/clients/${clientId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/clients/${clientId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
@@ -433,42 +445,6 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
   },
   {
     id: 23,
-    label: "Professional Services",
-    items: [
-      {
-        title: "Accounting Firms",
-        url: `/dashboard/crm/companies/${companyId}/accounting-firms`,
-        icon: ReceiptText,
-        badge: counts.accountingFirms || 0,
-      },
-      {
-        title: "Actuarial Firms",
-        url: `/dashboard/crm/companies/${companyId}/actuarial-firms`,
-        icon: Calculator,
-        badge: counts.actuarialFirms || 0,
-      },
-      {
-        title: "Banks",
-        url: `/dashboard/crm/companies/${companyId}/banks`,
-        icon: Landmark,
-        badge: counts.banks || 0,
-      },
-      {
-        title: "Law Firms",
-        url: `/dashboard/crm/companies/${companyId}/law-firms`,
-        icon: Scale,
-        badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/companies/${companyId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
-      },
-    ],
-  },
-  {
-    id: 24,
     label: "Vendors",
     items: [
       {
@@ -500,6 +476,48 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         url: `/dashboard/crm/companies/${companyId}/record-keepers`,
         icon: Database,
         badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+  {
+    id: 24,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/companies/${companyId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Insurance Agencies",
+        url: `/dashboard/crm/companies/${companyId}/insurance-agencies`,
+        icon: Shield,
+        badge: counts.insuranceAgencies || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/companies/${companyId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/companies/${companyId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/companies/${companyId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/companies/${companyId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
