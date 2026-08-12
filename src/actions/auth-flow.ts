@@ -1,9 +1,9 @@
 "use server";
 
-import { supabaseServer } from "@/lib/supabase.server";
+import { supabaseAdmin } from "@/lib/supabase.server";
 
 async function getAuthUserByEmail(email: string) {
-  const { data, error } = await supabaseServer.auth.admin.listUsers({
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({
     perPage: 1000,
   });
   if (error) throw error;
@@ -16,7 +16,7 @@ export async function checkUserStatus(email: string) {
     const cleanEmail = email.trim().toLowerCase();
 
     // 1. Check if email exists in public.users
-    const { data: dbUser, error: dbError } = await supabaseServer
+    const { data: dbUser, error: dbError } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", cleanEmail)
@@ -48,7 +48,7 @@ export async function registerUserWithPassword(data: { email: string; password: 
     const cleanEmail = data.email.trim().toLowerCase();
 
     // 1. Verify whitelisting
-    const { data: dbUser, error: dbError } = await supabaseServer
+    const { data: dbUser, error: dbError } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", cleanEmail)
@@ -66,7 +66,7 @@ export async function registerUserWithPassword(data: { email: string; password: 
     }
 
     // 3. Create the user in auth.users
-    const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
+    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: cleanEmail,
       password: data.password,
       email_confirm: true,
@@ -98,7 +98,7 @@ export async function registerUserWithPasskeyInit(data: { email: string }) {
     const cleanEmail = data.email.trim().toLowerCase();
 
     // 1. Verify whitelisting
-    const { data: dbUser, error: dbError } = await supabaseServer
+    const { data: dbUser, error: dbError } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", cleanEmail)
@@ -117,7 +117,7 @@ export async function registerUserWithPasskeyInit(data: { email: string }) {
 
     // 3. Create auth user with temporary random password
     const tempPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
-    const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
+    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: cleanEmail,
       password: tempPassword,
       email_confirm: true,

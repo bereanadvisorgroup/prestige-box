@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Resend } from "resend";
 
-import { supabaseServer } from "@/lib/supabase.server";
+import { supabaseAdmin } from "@/lib/supabase.server";
 
 export async function createUser(data: {
   email: string;
@@ -30,12 +30,12 @@ export async function createUser(data: {
       updatedAt: new Date().toISOString(),
     };
 
-    const { error: preDbError } = await supabaseServer.from("users").insert(tempProfile);
+    const { error: preDbError } = await supabaseAdmin.from("users").insert(tempProfile);
     if (preDbError) throw new Error(`Failed to pre-create user profile: ${preDbError.message}`);
 
     // 2. Create User in Supabase Auth via Admin API
     const randomPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
-    const { data: authRecord, error: authError } = await supabaseServer.auth.admin.createUser({
+    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: cleanEmail,
       password: data.password || randomPassword,
       email_confirm: true,
@@ -51,12 +51,12 @@ export async function createUser(data: {
 
     if (authError) {
       // Clean up the temp profile if auth creation fails
-      await supabaseServer.from("users").delete().eq("email", cleanEmail);
+      await supabaseAdmin.from("users").delete().eq("email", cleanEmail);
       throw new Error(authError.message);
     }
 
     if (!authRecord.user) {
-      await supabaseServer.from("users").delete().eq("email", cleanEmail);
+      await supabaseAdmin.from("users").delete().eq("email", cleanEmail);
       throw new Error("Failed to create user auth record.");
     }
 
@@ -92,7 +92,7 @@ export async function createUser(data: {
 export async function getUsers() {
   try {
     // Fetch all user profiles from public.users table
-    const { data: dbUsers, error } = await supabaseServer
+    const { data: dbUsers, error } = await supabaseAdmin
       .from("users")
       .select("*")
       .order("createdAt", { ascending: false });
@@ -106,7 +106,7 @@ export async function getUsers() {
       const {
         data: { users: authUsers },
         error: authError,
-      } = await supabaseServer.auth.admin.listUsers({ perPage: 1000 });
+      } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
       if (authError) throw authError;
       if (authUsers) {
         for (const authUser of authUsers) {
@@ -170,7 +170,7 @@ export async function updateUser(
 ) {
   try {
     // Update Document in public.users table
-    const { error: dbError } = await supabaseServer
+    const { error: dbError } = await supabaseAdmin
       .from("users")
       .update({
         firstName: data.firstName,
@@ -185,7 +185,7 @@ export async function updateUser(
     if (dbError) throw new Error(dbError.message);
 
     // Update user metadata in Supabase Auth
-    const { error: authError } = await supabaseServer.auth.admin.updateUserById(uid, {
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(uid, {
       user_metadata: {
         firstName: data.firstName,
         lastName: data.lastName,
@@ -213,11 +213,11 @@ export async function updateUser(
 export async function deleteUser(uid: string) {
   try {
     // 1. Delete from Supabase Auth
-    const { error: authError } = await supabaseServer.auth.admin.deleteUser(uid);
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(uid);
     if (authError) throw new Error(authError.message);
 
     // 2. Delete Profile Document in public.users table
-    const { error: dbError } = await supabaseServer.from("users").delete().eq("uid", uid);
+    const { error: dbError } = await supabaseAdmin.from("users").delete().eq("uid", uid);
 
     if (dbError) {
       console.error("[deleteUser] Warning: Database profile delete failed:", dbError.message);
@@ -233,7 +233,7 @@ export async function deleteUser(uid: string) {
 
 export async function getUser(uid: string) {
   try {
-    const { data: dbUser, error } = await supabaseServer.from("users").select("*").eq("uid", uid).maybeSingle();
+    const { data: dbUser, error } = await supabaseAdmin.from("users").select("*").eq("uid", uid).maybeSingle();
 
     if (error) throw new Error(error.message);
     if (!dbUser) return { success: false, error: "User not found" };
@@ -242,7 +242,7 @@ export async function getUser(uid: string) {
     let providers: string[] = [];
 
     try {
-      const { data: authUser } = await supabaseServer.auth.admin.getUserById(uid);
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(uid);
       if (authUser?.user) {
         providers =
           authUser.user.app_metadata?.providers ||
@@ -331,7 +331,7 @@ export async function generateUserRecoveryLink(email: string, origin: string) {
       ? `${origin}/auth/v1/reset-password?x-vercel-protection-bypass=${bypassSecret}`
       : `${origin}/auth/v1/reset-password`;
 
-    const { data, error } = await supabaseServer.auth.admin.generateLink({
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: email,
       options: {
@@ -357,7 +357,7 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
       ? `${origin}/auth/v1/client-setup?x-vercel-protection-bypass=${bypassSecret}`
       : `${origin}/auth/v1/client-setup`;
 
-    const { data, error } = await supabaseServer.auth.admin.generateLink({
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: email,
       options: {
@@ -401,7 +401,7 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
 
 export async function getAdvisors() {
   try {
-    const { data: dbUsers, error } = await supabaseServer
+    const { data: dbUsers, error } = await supabaseAdmin
       .from("users")
       .select("uid, firstName, lastName, role")
       .in("role", ["admin", "advisor"]);
