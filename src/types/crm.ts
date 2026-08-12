@@ -370,6 +370,8 @@ export const DocumentSchema = z.object({
   uploadedAt: z.string().optional(),
   firmId: z.string().optional(),
   isUnderManagement: z.boolean().optional(),
+  managingAgencyId: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 // --- Estate Planning documents ---
@@ -454,6 +456,7 @@ export const MoneyManagerAccountSchema = z.object({
   managementBeginDate: z.string().optional(), // YYYY-MM-DD
   closeDate: z.string().optional(), // YYYY-MM-DD; presence flips status to "Closed"
   custodianId: z.string().optional(), // references custodians
+  notes: z.string().optional(),
   beneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   createdAt: z.string().optional(),
@@ -478,6 +481,7 @@ export const RecordKeeperAccountSchema = z.object({
   ownershipSplits: z.array(OwnershipSplitSchema).optional(),
   managementBeginDate: z.string().optional(), // YYYY-MM-DD
   closeDate: z.string().optional(), // YYYY-MM-DD; presence flips status to "Closed"
+  notes: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -503,6 +507,7 @@ export const InsurancePolicySchema = z.object({
   contingentBeneficiaries: z.array(InsuranceBeneficiarySchema).default([]),
   files: z.array(InsurancePolicyFileSchema).default([]),
   isUnderManagement: z.boolean().optional(),
+  managingAgencyId: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -665,6 +670,7 @@ export const ClientPolicySchema = z.object({
   renewalDate: z.string(), // ISO date
   paymentSchedule: PaymentSchedule,
   isUnderManagement: z.boolean().optional(),
+  managingAgencyId: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -798,6 +804,7 @@ export const MoneyManagerSchema = z.object({
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
   logoUrl: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -817,6 +824,7 @@ export const RecordKeeperSchema = z.object({
   clientIds: z.array(z.string()).default([]),
   companyIds: z.array(z.string()).default([]),
   logoUrl: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

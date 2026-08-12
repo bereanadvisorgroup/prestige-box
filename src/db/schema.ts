@@ -195,6 +195,7 @@ export const clientPolicies = pgTable("client_policies", {
   renewalDate: timestamp("renewalDate", { withTimezone: true }).notNull(),
   paymentSchedule: text("paymentSchedule").notNull(),
   isUnderManagement: boolean("isUnderManagement").default(false).notNull(),
+  managingAgencyId: uuid("managingAgencyId"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -307,6 +308,7 @@ export const moneyManagers = pgTable("money_managers", {
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   logoUrl: text("logoUrl"),
+  notes: text("notes"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -323,6 +325,7 @@ export const recordKeepers = pgTable("record_keepers", {
   clientIds: uuid("clientIds").array().default(sql`'{}'::uuid[]`),
   companyIds: uuid("companyIds").array().default(sql`'{}'::uuid[]`),
   logoUrl: text("logoUrl"),
+  notes: text("notes"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

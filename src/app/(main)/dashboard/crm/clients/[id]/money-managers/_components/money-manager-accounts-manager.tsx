@@ -39,6 +39,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Client, InsuranceBeneficiary, InsuranceBeneficiaryRef, MoneyManagerAccount } from "@/types/crm";
 
@@ -95,6 +96,7 @@ interface FormState {
   managementBeginDate: string;
   closeDate: string;
   custodianId: string;
+  notes: string;
   beneficiaries: BeneficiaryRow[];
   contingentBeneficiaries: BeneficiaryRow[];
 }
@@ -108,6 +110,7 @@ const emptyForm: FormState = {
   managementBeginDate: "",
   closeDate: "",
   custodianId: "",
+  notes: "",
   beneficiaries: [],
   contingentBeneficiaries: [],
 };
@@ -124,6 +127,7 @@ const formFromAccount = (a: MoneyManagerAccount): FormState => ({
   managementBeginDate: a.managementBeginDate || "",
   closeDate: a.closeDate || "",
   custodianId: a.custodianId || "",
+  notes: a.notes || "",
   beneficiaries: rowsFromBeneficiaries(a.beneficiaries),
   contingentBeneficiaries: rowsFromBeneficiaries(a.contingentBeneficiaries),
 });
@@ -431,6 +435,7 @@ export function MoneyManagerAccountsManager({
       managementBeginDate: form.managementBeginDate || undefined,
       closeDate: form.closeDate || undefined,
       custodianId: form.custodianId || undefined,
+      notes: form.notes.trim() || undefined,
       beneficiaries,
       contingentBeneficiaries,
     };
@@ -528,6 +533,11 @@ export function MoneyManagerAccountsManager({
               {account.managementBeginDate && <span>Managed since: {formatDate(account.managementBeginDate)}</span>}
               {account.closeDate && <span>Closed: {formatDate(account.closeDate)}</span>}
             </div>
+            {account.notes && (
+              <p className="mt-1 text-muted-foreground text-xs whitespace-pre-wrap">
+                <span className="font-medium text-foreground">Notes:</span> {account.notes}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="font-bold text-base text-foreground tabular-nums">
@@ -797,6 +807,17 @@ export function MoneyManagerAccountsManager({
                 />
                 <p className="text-muted-foreground text-xs">Leave empty to keep the account Open.</p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mm-notes">Notes</Label>
+              <Textarea
+                id="mm-notes"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Enter any notes about this account..."
+                rows={3}
+              />
             </div>
 
             <BeneficiaryRows

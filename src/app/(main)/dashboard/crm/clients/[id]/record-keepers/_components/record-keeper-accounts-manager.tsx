@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Client, RecordKeeperAccount } from "@/types/crm";
 
@@ -57,6 +58,7 @@ interface FormState {
   value: string;
   managementBeginDate: string;
   closeDate: string;
+  notes: string;
 }
 
 const emptyForm: FormState = {
@@ -67,6 +69,7 @@ const emptyForm: FormState = {
   value: "",
   managementBeginDate: "",
   closeDate: "",
+  notes: "",
 };
 
 const formFromAccount = (a: RecordKeeperAccount): FormState => ({
@@ -77,6 +80,7 @@ const formFromAccount = (a: RecordKeeperAccount): FormState => ({
   value: a.value != null ? String(a.value) : "",
   managementBeginDate: a.managementBeginDate || "",
   closeDate: a.closeDate || "",
+  notes: a.notes || "",
 });
 
 const formatDate = (value?: string) => {
@@ -182,6 +186,7 @@ export function RecordKeeperAccountsManager({
       value,
       managementBeginDate: form.managementBeginDate || undefined,
       closeDate: form.closeDate || undefined,
+      notes: form.notes.trim() || undefined,
     };
   };
 
@@ -275,6 +280,11 @@ export function RecordKeeperAccountsManager({
               {account.managementBeginDate && <span>Managed since: {formatDate(account.managementBeginDate)}</span>}
               {account.closeDate && <span>Closed: {formatDate(account.closeDate)}</span>}
             </div>
+            {account.notes && (
+              <p className="mt-1 text-muted-foreground text-xs whitespace-pre-wrap">
+                <span className="font-medium text-foreground">Notes:</span> {account.notes}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="font-bold text-base text-foreground tabular-nums">
@@ -512,6 +522,17 @@ export function RecordKeeperAccountsManager({
                 />
                 <p className="text-muted-foreground text-xs">Leave empty to keep the account Open.</p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rk-notes">Notes</Label>
+              <Textarea
+                id="rk-notes"
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Enter any notes about this account..."
+                rows={3}
+              />
             </div>
           </div>
 

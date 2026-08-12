@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowLeft, ArrowUpRight, Briefcase, Building2, Edit, Globe, Mail, MapPin, Phone, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Briefcase,
+  Building2,
+  Edit,
+  FileText,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  Users,
+} from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
@@ -211,6 +223,19 @@ export default async function RecordKeeperDetailsPage({ params, searchParams }: 
                     <a href={`tel:${recordKeeper.phone}`} className="text-primary text-sm hover:underline">
                       {formatPhoneNumber(recordKeeper.phone)}
                     </a>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {recordKeeper.notes && (
+              <>
+                <Separator />
+                <div className="flex items-start gap-3 pt-2">
+                  <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-sm leading-none">Notes</p>
+                    <p className="text-muted-foreground text-sm whitespace-pre-wrap">{recordKeeper.notes}</p>
                   </div>
                 </div>
               </>

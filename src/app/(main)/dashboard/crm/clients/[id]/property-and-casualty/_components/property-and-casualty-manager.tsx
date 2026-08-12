@@ -41,9 +41,10 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase.client";
 import { cn, formatPhoneNumber } from "@/lib/utils";
-import type { Client, ClientDocument } from "@/types/crm";
+import type { Client, ClientDocument, InsuranceAgency } from "@/types/crm";
 
 import { ClientHeaderPortal } from "../../_components/client-header-portal";
 
@@ -58,6 +59,7 @@ interface PropertyAndCasualtyFirm {
 interface PropertyAndCasualtyManagerProps {
   client: Client;
   allFirms: PropertyAndCasualtyFirm[];
+  insuranceAgencies?: InsuranceAgency[];
 }
 
 const DOCUMENT_TYPES = [
@@ -73,7 +75,11 @@ const DOCUMENT_TYPES = [
   "Other",
 ];
 
-export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasualtyManagerProps) {
+export function PropertyAndCasualtyManager({
+  client,
+  allFirms,
+  insuranceAgencies = [],
+}: PropertyAndCasualtyManagerProps) {
   const router = useRouter();
   const [_isPending, startTransition] = useTransition();
 
@@ -85,6 +91,8 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
   const [addingDocType, setAddingDocType] = useState<string>("");
   const [addingFirmId, setAddingFirmId] = useState<string>("");
   const [addingIsUnderManagement, setAddingIsUnderManagement] = useState<boolean>(false);
+  const [addingManagingAgencyId, setAddingManagingAgencyId] = useState<string>("");
+  const [addingNotes, setAddingNotes] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [comboboxOpen, setComboboxOpen] = useState(false);
@@ -160,6 +168,8 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
         uploadedAt: new Date().toISOString(),
         firmId: addingFirmId || undefined,
         isUnderManagement: addingIsUnderManagement,
+        managingAgencyId: addingIsUnderManagement ? undefined : addingManagingAgencyId || undefined,
+        notes: addingNotes.trim() || undefined,
       };
 
       const updatedDocs = [...documents, newDoc];
@@ -185,6 +195,9 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
       setFile(null);
       setAddingDocType("");
       setAddingFirmId("");
+      setAddingManagingAgencyId("");
+      setAddingIsUnderManagement(false);
+      setAddingNotes("");
       setIsUploadOpen(false);
 
       startTransition(() => {
@@ -367,11 +380,20 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                           <div className="space-y-0.5">
                             <p className="font-medium text-base text-foreground leading-none">{doc.name}</p>
                             <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                              {doc.isUnderManagement && (
+                              {doc.isUnderManagement ? (
                                 <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px] py-0">
                                   Under Management
                                 </Badge>
-                              )}
+                              ) : doc.managingAgencyId ? (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-blue-50 text-blue-800 border-blue-200 text-[10px] py-0"
+                                >
+                                  Agency:{" "}
+                                  {insuranceAgencies?.find((a) => a.id === doc.managingAgencyId)?.firmName ||
+                                    "External Agency"}
+                                </Badge>
+                              ) : null}
                               <span>{doc.type}</span>
                               {doc.uploadedAt && (
                                 <>
@@ -380,6 +402,11 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                                 </>
                               )}
                             </div>
+                            {doc.notes && (
+                              <p className="mt-1 text-muted-foreground text-xs whitespace-pre-wrap">
+                                <span className="font-medium text-foreground">Notes:</span> {doc.notes}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -434,6 +461,20 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                       <div className="space-y-0.5">
                         <p className="font-medium text-base text-foreground leading-none">{doc.name}</p>
                         <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                          {doc.isUnderManagement ? (
+                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px] py-0">
+                              Under Management
+                            </Badge>
+                          ) : doc.managingAgencyId ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-50 text-blue-800 border-blue-200 text-[10px] py-0"
+                            >
+                              Agency:{" "}
+                              {insuranceAgencies?.find((a) => a.id === doc.managingAgencyId)?.firmName ||
+                                "External Agency"}
+                            </Badge>
+                          ) : null}
                           <span>{doc.type}</span>
                           {doc.uploadedAt && (
                             <>
@@ -442,6 +483,11 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
                             </>
                           )}
                         </div>
+                        {doc.notes && (
+                          <p className="mt-1 text-muted-foreground text-xs whitespace-pre-wrap">
+                            <span className="font-medium text-foreground">Notes:</span> {doc.notes}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -598,11 +644,56 @@ export function PropertyAndCasualtyManager({ client, allFirms }: PropertyAndCasu
               <Checkbox
                 id="pc-doc-is-under-management"
                 checked={addingIsUnderManagement}
-                onCheckedChange={(checked) => setAddingIsUnderManagement(!!checked)}
+                onCheckedChange={(checked) => {
+                  setAddingIsUnderManagement(!!checked);
+                  if (checked) setAddingManagingAgencyId("");
+                }}
               />
               <label htmlFor="pc-doc-is-under-management" className="cursor-pointer font-medium text-sm">
                 Under our Management
               </label>
+            </div>
+
+            {!addingIsUnderManagement && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="pc-managing-agency"
+                  className="font-semibold text-foreground text-xs uppercase tracking-wider"
+                >
+                  Managing Insurance Agency
+                </label>
+                <Select value={addingManagingAgencyId} onValueChange={setAddingManagingAgencyId}>
+                  <SelectTrigger id="pc-managing-agency">
+                    <SelectValue placeholder="Select Insurance Agency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {insuranceAgencies && insuranceAgencies.length > 0 ? (
+                      insuranceAgencies.map((agency) => (
+                        <SelectItem key={agency.id} value={agency.id || ""}>
+                          {agency.firmName}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="_none" disabled>
+                        No Insurance Agencies found
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label htmlFor="upload-notes" className="font-semibold text-foreground text-xs uppercase tracking-wider">
+                Notes
+              </label>
+              <Textarea
+                id="upload-notes"
+                value={addingNotes}
+                onChange={(e) => setAddingNotes(e.target.value)}
+                placeholder="Add notes about this document..."
+                rows={3}
+              />
             </div>
           </div>
 

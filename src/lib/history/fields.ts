@@ -75,6 +75,7 @@ export const CLIENT_POLICY_FIELDS: FieldConfig[] = [
   { name: "renewalDate", label: "Renewal Date" },
   { name: "paymentSchedule", label: "Payment Schedule" },
   { name: "isUnderManagement", label: "Under our Management" },
+  { name: "managingAgencyId", label: "Managing Insurance Agency" },
 ];
 
 /**

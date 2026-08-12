@@ -2,12 +2,12 @@ import { notFound } from "next/navigation";
 
 import { Shield } from "lucide-react";
 
+import { getCompany } from "@/actions/companies";
 import {
   getInsuranceAgencies,
   linkCompanyToInsuranceAgency,
   unlinkCompanyFromInsuranceAgency,
 } from "@/actions/insurance-agencies";
-import { getCompany } from "@/actions/companies";
 import { AssociationCardList } from "@/components/features/crm/association-card-list";
 import { LinkFirmDialog } from "@/components/features/crm/link-firm-dialog";
 

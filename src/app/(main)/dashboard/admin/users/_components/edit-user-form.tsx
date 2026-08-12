@@ -21,7 +21,7 @@ import { getSocialAvatarUrl, getUserPhotoUrl } from "@/lib/social";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
-import { SocialMediaAccountSchema, type SocialMediaAccount } from "@/types/crm";
+import { type SocialMediaAccount, SocialMediaAccountSchema } from "@/types/crm";
 
 const formSchema = z.object({
   firstName: z.string().min(2, {

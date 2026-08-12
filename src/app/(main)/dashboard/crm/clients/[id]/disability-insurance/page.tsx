@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getClient } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getPeople } from "@/actions/people";
 
 import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
@@ -14,11 +15,12 @@ interface Props {
 
 export default async function DisabilityInsurancePage({ params }: Props) {
   const { id } = await params;
-  const [clientResult, companiesRes, peopleResult, allCompaniesResult] = await Promise.all([
+  const [clientResult, companiesRes, peopleResult, allCompaniesResult, agenciesRes] = await Promise.all([
     getClient(id),
     getDisabilityInsuranceCompanies(),
     getPeople(),
     getCompanies(),
+    getInsuranceAgencies(),
   ]);
 
   if (!clientResult.success || !clientResult.client) {
@@ -27,6 +29,7 @@ export default async function DisabilityInsurancePage({ params }: Props) {
 
   const client = clientResult.client;
   const allCompanies = (companiesRes.success && companiesRes.companies) || [];
+  const insuranceAgencies = (agenciesRes.success && agenciesRes.insuranceAgencies) || [];
 
   const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
@@ -40,7 +43,12 @@ export default async function DisabilityInsurancePage({ params }: Props) {
 
   return (
     <div className="py-4">
-      <DisabilityInsuranceManager client={client} allCompanies={allCompanies} parties={parties} />
+      <DisabilityInsuranceManager
+        client={client}
+        allCompanies={allCompanies}
+        parties={parties}
+        insuranceAgencies={insuranceAgencies}
+      />
     </div>
   );
 }

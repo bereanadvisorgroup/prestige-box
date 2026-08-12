@@ -45,7 +45,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase.client";
 import { cn, formatCurrency, formatPhoneNumber } from "@/lib/utils";
-import type { Client, InsuranceBeneficiary, InsuranceBeneficiaryRef, InsurancePolicy } from "@/types/crm";
+import type {
+  Client,
+  InsuranceAgency,
+  InsuranceBeneficiary,
+  InsuranceBeneficiaryRef,
+  InsurancePolicy,
+} from "@/types/crm";
 
 import { ClientHeaderPortal } from "./client-header-portal";
 
@@ -87,6 +93,7 @@ interface InsurancePolicyManagerProps {
   sectionName: string;
   /** Admin route base for the company detail/create links. */
   adminBasePath: string;
+  insuranceAgencies?: InsuranceAgency[];
   linkCompany: (companyId: string, clientId: string) => Promise<ActionResult>;
   unlinkCompany: (companyId: string, clientId: string) => Promise<ActionResult>;
 }
@@ -127,6 +134,7 @@ interface FormState {
   contingentBeneficiaries: BeneficiaryRow[];
   files: FormFile[];
   isUnderManagement: boolean;
+  managingAgencyId: string;
 }
 
 const emptyForm: FormState = {
@@ -144,6 +152,7 @@ const emptyForm: FormState = {
   contingentBeneficiaries: [],
   files: [],
   isUnderManagement: false,
+  managingAgencyId: "",
 };
 
 const rowsFromBeneficiaries = (list: InsuranceBeneficiary[]): BeneficiaryRow[] =>
@@ -164,6 +173,7 @@ const formFromPolicy = (p: InsurancePolicy): FormState => ({
   contingentBeneficiaries: rowsFromBeneficiaries(p.contingentBeneficiaries),
   files: [],
   isUnderManagement: p.isUnderManagement ?? false,
+  managingAgencyId: p.managingAgencyId || "",
 });
 
 /** Convert form rows into stored beneficiaries, dropping unselected rows. Returns null if any row's percent is invalid. */
@@ -332,6 +342,7 @@ export function InsurancePolicyManager({
   policyField,
   sectionName,
   adminBasePath,
+  insuranceAgencies = [],
   linkCompany,
   unlinkCompany,
 }: InsurancePolicyManagerProps) {
@@ -504,6 +515,7 @@ export function InsurancePolicyManager({
       beneficiaries,
       contingentBeneficiaries,
       isUnderManagement: form.isUnderManagement,
+      managingAgencyId: form.isUnderManagement ? undefined : form.managingAgencyId || undefined,
     };
   };
 
@@ -642,11 +654,15 @@ export function InsurancePolicyManager({
             {policy.policyName || policy.policyNumber || "Untitled Policy"}
           </p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-muted-foreground text-xs">
-            {policy.isUnderManagement && (
+            {policy.isUnderManagement ? (
               <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px] py-0">
                 Under Management
               </Badge>
-            )}
+            ) : policy.managingAgencyId ? (
+              <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-[10px] py-0">
+                Agency: {insuranceAgencies.find((a) => a.id === policy.managingAgencyId)?.firmName || "External Agency"}
+              </Badge>
+            ) : null}
             {policy.policyNumber && <span>Policy #: {policy.policyNumber}</span>}
             {policy.issueDate && <span>Issued: {policy.issueDate}</span>}
             {(policy.anniversaryDate || policy.renewalDate) && (
@@ -1061,12 +1077,45 @@ export function InsurancePolicyManager({
               <Checkbox
                 id="policy-is-under-management"
                 checked={form.isUnderManagement}
-                onCheckedChange={(checked) => setForm({ ...form, isUnderManagement: !!checked })}
+                onCheckedChange={(checked) =>
+                  setForm({
+                    ...form,
+                    isUnderManagement: !!checked,
+                    managingAgencyId: checked ? "" : form.managingAgencyId,
+                  })
+                }
               />
               <Label htmlFor="policy-is-under-management" className="cursor-pointer font-medium text-sm">
                 Under our Management
               </Label>
             </div>
+
+            {!form.isUnderManagement && (
+              <div className="space-y-2">
+                <Label htmlFor="policy-managing-agency">Managing Insurance Agency</Label>
+                <Select
+                  value={form.managingAgencyId}
+                  onValueChange={(val) => setForm({ ...form, managingAgencyId: val })}
+                >
+                  <SelectTrigger id="policy-managing-agency">
+                    <SelectValue placeholder="Select Insurance Agency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {insuranceAgencies && insuranceAgencies.length > 0 ? (
+                      insuranceAgencies.map((agency) => (
+                        <SelectItem key={agency.id} value={agency.id || ""}>
+                          {agency.firmName}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="_none" disabled>
+                        No Insurance Agencies found
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {(policyField === "disabilityPolicies" || policyField === "ltcPolicies") && (
               <div className="space-y-2">

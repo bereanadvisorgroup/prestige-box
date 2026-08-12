@@ -36,12 +36,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPhoneNumber } from "@/lib/utils";
 import type {
   AccountingFirm,
-  InsuranceAgency,
   ActuarialFirm,
   Address,
   Bank,
   Client,
   DisabilityInsuranceCompany,
+  InsuranceAgency,
   LawFirm,
   LifeInsuranceCompany,
   LongTermCareInsurance,

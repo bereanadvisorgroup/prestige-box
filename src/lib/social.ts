@@ -1,5 +1,5 @@
-import type { Company, Person } from "@/types/crm";
 import type { UserProfile } from "@/stores/auth.store";
+import type { Company, Person } from "@/types/crm";
 
 /**
  * Extracts the username/handle from a social media URL and returns the unavatar.io profile photo URL.

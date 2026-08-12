@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase.client";
 import type { Client, ClientDocument } from "@/types/crm";
 
@@ -48,6 +49,7 @@ export function DocumentsTab({
   const [isUploading, setIsUploading] = useState(false);
   const [addingDocType, setAddingDocType] = useState<string>("");
   const [addingFirmId, setAddingFirmId] = useState<string>("");
+  const [addingNotes, setAddingNotes] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -98,6 +100,7 @@ export function DocumentsTab({
         type: addingDocType,
         uploadedAt: new Date().toISOString(),
         firmId: firms ? addingFirmId : undefined,
+        notes: addingNotes.trim() || undefined,
       };
 
       const updated = [...documents, newDoc];
@@ -108,6 +111,7 @@ export function DocumentsTab({
         setFile(null);
         setAddingDocType("");
         setAddingFirmId("");
+        setAddingNotes("");
         // Reset file input
         const fileInput = document.getElementById(`file-upload-${category}`) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
@@ -194,6 +198,19 @@ export function DocumentsTab({
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </div>
+          <div className="w-full space-y-2 sm:w-1/3">
+            <label htmlFor={`doc-notes-${category}`} className="font-medium text-sm">
+              Notes
+            </label>
+            <Textarea
+              id={`doc-notes-${category}`}
+              value={addingNotes}
+              onChange={(e) => setAddingNotes(e.target.value)}
+              placeholder="Notes (optional)..."
+              className="min-h-10 text-sm"
+              rows={1}
+            />
+          </div>
           <Button
             onClick={handleUpload}
             disabled={isUploading || !file || !addingDocType}
@@ -264,6 +281,18 @@ export function DocumentsTab({
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
               </div>
+              <div className="space-y-2">
+                <label htmlFor={`dialog-doc-notes-${category}`} className="font-medium text-sm">
+                  Notes
+                </label>
+                <Textarea
+                  id={`dialog-doc-notes-${category}`}
+                  value={addingNotes}
+                  onChange={(e) => setAddingNotes(e.target.value)}
+                  placeholder="Notes (optional)..."
+                  rows={2}
+                />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -313,6 +342,11 @@ export function DocumentsTab({
                       </>
                     )}
                   </div>
+                  {doc.notes && (
+                    <p className="mt-1 text-muted-foreground text-xs whitespace-pre-wrap">
+                      <span className="font-medium text-foreground">Notes:</span> {doc.notes}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">

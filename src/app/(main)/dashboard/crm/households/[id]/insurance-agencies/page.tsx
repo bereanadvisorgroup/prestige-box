@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 
 import { Shield } from "lucide-react";
 
-import { getInsuranceAgencies, unlinkClientFromInsuranceAgency } from "@/actions/insurance-agencies";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
+import { getInsuranceAgencies, unlinkClientFromInsuranceAgency } from "@/actions/insurance-agencies";
 import { AssociationCardList } from "@/components/features/crm/association-card-list";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
@@ -24,7 +24,9 @@ export default async function HouseholdInsuranceAgenciesPage({ params }: Props) 
   const insuranceAgenciesRes = await getInsuranceAgencies();
   const allFirms = (insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || [];
 
-  const associatedInsuranceAgencies = allFirms.filter((a) => a.clientIds?.some((cId: string) => clientIds.includes(cId)));
+  const associatedInsuranceAgencies = allFirms.filter((a) =>
+    a.clientIds?.some((cId: string) => clientIds.includes(cId)),
+  );
 
   return (
     <div className="py-4">

@@ -18,12 +18,12 @@ import {
 } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
@@ -95,9 +95,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
   const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
     (a) => !!person.id && a.personIds?.includes(person.id),
   );
-  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
-    (ia) => !!person.id && ia.personIds?.includes(person.id),
-  );
+  const associatedInsuranceAgencies = (
+    (insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) ||
+    []
+  ).filter((ia) => !!person.id && ia.personIds?.includes(person.id));
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => !!person.id && act.personIds?.includes(person.id),
   );

@@ -25,6 +25,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   type Address,
   type Client,
@@ -65,6 +66,7 @@ export function RecordKeeperForm({ recordKeeper }: RecordKeeperFormProps) {
           clientIds: recordKeeper.clientIds,
           companyIds: recordKeeper.companyIds,
           logoUrl: recordKeeper.logoUrl || null,
+          notes: recordKeeper.notes || null,
         }
       : {
           personIds: [],
@@ -76,6 +78,7 @@ export function RecordKeeperForm({ recordKeeper }: RecordKeeperFormProps) {
           clientIds: [],
           companyIds: [],
           logoUrl: null,
+          notes: null,
         },
   });
 
@@ -295,6 +298,24 @@ export function RecordKeeperForm({ recordKeeper }: RecordKeeperFormProps) {
                     }}
                   />
                   <FormDescription>Select from shared addresses.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add notes about this record keeper..."
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

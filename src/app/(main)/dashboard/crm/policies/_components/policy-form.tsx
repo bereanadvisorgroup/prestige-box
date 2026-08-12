@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { getClients } from "@/actions/clients";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { createClientPolicy, updateClientPolicy } from "@/actions/policies";
@@ -28,6 +29,7 @@ import {
   ClientPolicyFormSchema,
   type ClientPolicyFormValues,
   type DisabilityInsuranceCompany,
+  type InsuranceAgency,
   type LifeInsuranceCompany,
   type LongTermCareInsurance,
   type PaymentAccount,
@@ -47,6 +49,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
   const [isLoading, setIsLoading] = useState(false);
   const [availableClients, setAvailableClients] = useState<(Client & { person: Person | null })[]>([]);
   const [availableCompanies, setAvailableCompanies] = useState<MergedCompany[]>([]);
+  const [availableAgencies, setAvailableAgencies] = useState<InsuranceAgency[]>([]);
 
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [carrierSearchQuery, setCarrierSearchQuery] = useState("");
@@ -68,6 +71,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
           paymentSchedule: policy.paymentSchedule,
           paymentAccountId: policy.paymentAccountId,
           isUnderManagement: policy.isUnderManagement ?? false,
+          managingAgencyId: policy.managingAgencyId || null,
         }
       : {
           clientId: "",
@@ -82,20 +86,26 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
           paymentSchedule: "monthly",
           paymentAccountId: "",
           isUnderManagement: false,
+          managingAgencyId: null,
         },
   });
 
   useEffect(() => {
     async function fetchData() {
-      const [clientResult, lifeResult, disabilityResult, longTermCareResult] = await Promise.all([
+      const [clientResult, lifeResult, disabilityResult, longTermCareResult, agenciesResult] = await Promise.all([
         getClients(),
         getLifeInsuranceCompanies(),
         getDisabilityInsuranceCompanies(),
         getLongTermCareInsurances(),
+        getInsuranceAgencies(),
       ]);
 
       if (clientResult.success && clientResult.clients) {
         setAvailableClients(clientResult.clients);
+      }
+
+      if (agenciesResult.success && agenciesResult.insuranceAgencies) {
+        setAvailableAgencies(agenciesResult.insuranceAgencies);
       }
 
       const companiesList: MergedCompany[] = [];
@@ -179,6 +189,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
         lifeInsuranceCompanyId: isDisability || isLongTermCare ? null : values.lifeInsuranceCompanyId,
         disabilityInsuranceCompanyId: isDisability ? values.lifeInsuranceCompanyId : null,
         longTermCareInsuranceId: isLongTermCare ? values.lifeInsuranceCompanyId : null,
+        managingAgencyId: values.isUnderManagement ? null : values.managingAgencyId || null,
       };
 
       const result = isEditing
@@ -427,7 +438,15 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3.5 shadow-xs self-end h-10 bg-background">
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (checked) {
+                            form.setValue("managingAgencyId", null);
+                          }
+                        }}
+                      />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="cursor-pointer font-medium text-sm">Under our Management</FormLabel>
@@ -435,6 +454,40 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
                   </FormItem>
                 )}
               />
+
+              {/* Managing Insurance Agency */}
+              {!form.watch("isUnderManagement") && (
+                <FormField
+                  control={form.control}
+                  name="managingAgencyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Managing Insurance Agency</FormLabel>
+                      <Select value={field.value || ""} onValueChange={(val) => field.onChange(val || null)}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Insurance Agency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableAgencies && availableAgencies.length > 0 ? (
+                            availableAgencies.map((agency) => (
+                              <SelectItem key={agency.id} value={agency.id || ""}>
+                                {agency.firmName}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="_none" disabled>
+                              No Insurance Agencies found
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">

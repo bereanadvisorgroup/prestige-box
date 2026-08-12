@@ -1,11 +1,11 @@
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getClientPolicies } from "@/actions/policies";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
@@ -63,7 +63,9 @@ export default async function ClientsPage() {
   const accountingFirms =
     accountingFirmsRes.success && accountingFirmsRes.accountingFirms ? accountingFirmsRes.accountingFirms : [];
   const insuranceAgencies =
-    insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies ? insuranceAgenciesRes.insuranceAgencies : [];
+    insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies
+      ? insuranceAgenciesRes.insuranceAgencies
+      : [];
   const actuarialFirms =
     actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms ? actuarialFirmsRes.actuarialFirms : [];
   const banks = banksRes.success && banksRes.banks ? banksRes.banks : [];

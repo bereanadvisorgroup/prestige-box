@@ -3,25 +3,25 @@ export const dynamic = "force-dynamic";
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddresses } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getHouseholds } from "@/actions/households";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getPeople } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type {
   AccountingFirm,
-  InsuranceAgency,
   ActuarialFirm,
   Bank,
   Client,
   Company,
   Household,
+  InsuranceAgency,
   LawFirm,
   Person,
   PropertyAndCasualtyFirm,
@@ -87,7 +87,9 @@ export default async function AddressesPage() {
     accountingFirmsResult.success && accountingFirmsResult.accountingFirms ? accountingFirmsResult.accountingFirms : []
   ) as AccountingFirm[];
   const insuranceAgencies = (
-    insuranceAgenciesResult.success && insuranceAgenciesResult.insuranceAgencies ? insuranceAgenciesResult.insuranceAgencies : []
+    insuranceAgenciesResult.success && insuranceAgenciesResult.insuranceAgencies
+      ? insuranceAgenciesResult.insuranceAgencies
+      : []
   ) as InsuranceAgency[];
   const actuarialFirms = (
     actuarialFirmsResult.success && actuarialFirmsResult.actuarialFirms ? actuarialFirmsResult.actuarialFirms : []

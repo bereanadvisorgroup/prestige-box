@@ -66,7 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: profileData.photoURL || googlePhotoURL || "",
             socialMedia: profileData.socialMedia || [],
             googlePhotoURL,
-            providers: user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
+            providers:
+              user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
             createdAt: profileData.createdAt,
           });
         } else if (!error) {
@@ -116,7 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               photoURL: profileData.photoURL || googlePhotoURL || "",
               socialMedia: profileData.socialMedia || [],
               googlePhotoURL,
-              providers: user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
+              providers:
+                user.app_metadata?.providers || (user.app_metadata?.provider ? [user.app_metadata.provider] : []),
               createdAt: profileData.createdAt,
             });
           } else if (!error) {

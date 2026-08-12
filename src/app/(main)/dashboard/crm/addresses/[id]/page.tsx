@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { Globe, MapPin, Pencil } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getAddress } from "@/actions/addresses";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
@@ -126,9 +126,10 @@ export default async function AddressPage({ params }: AddressPageProps) {
     (a) => associatedPeopleIds.some((pId) => a.personIds?.includes(pId)),
   );
 
-  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
-    (ia) => associatedPeopleIds.some((pId) => ia.personIds?.includes(pId)),
-  );
+  const associatedInsuranceAgencies = (
+    (insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) ||
+    []
+  ).filter((ia) => associatedPeopleIds.some((pId) => ia.personIds?.includes(pId)));
 
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => associatedPeopleIds.some((pId) => act.personIds?.includes(pId)),

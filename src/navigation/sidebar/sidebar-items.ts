@@ -148,6 +148,11 @@ export const sidebarItems: NavGroup[] = [
         icon: Shield,
       },
       {
+        title: "Property And Casualty",
+        url: "/dashboard/crm/property-and-casualty",
+        icon: Shield,
+      },
+      {
         title: "Money Managers",
         url: "/dashboard/admin/money-managers",
         icon: Shield,
@@ -155,11 +160,6 @@ export const sidebarItems: NavGroup[] = [
       {
         title: "Record Keepers",
         url: "/dashboard/admin/record-keepers",
-        icon: Shield,
-      },
-      {
-        title: "Property And Casualty",
-        url: "/dashboard/crm/property-and-casualty",
         icon: Shield,
       },
     ],

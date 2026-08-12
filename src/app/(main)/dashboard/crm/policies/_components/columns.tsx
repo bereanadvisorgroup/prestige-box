@@ -16,6 +16,7 @@ export type EnrichedPolicy = ClientPolicy & {
   clientName?: string;
   clientPhotoUrl?: string | null;
   carrierName?: string;
+  managingAgencyName?: string | null;
 };
 
 export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<EnrichedPolicy>[] => [
@@ -28,39 +29,33 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
       const firstName = parts[0] || "";
       const lastName = parts.slice(1).join(" ") || "";
       return (
-        <div className="flex items-center gap-2">
-          <PersonAvatar photoUrl={row.original.clientPhotoUrl} firstName={firstName} lastName={lastName} size="sm" />
-          <div className="flex flex-col">
-            <Link
-              href={`/dashboard/crm/policies/${row.original.id}`}
-              className="flex items-center gap-1 font-semibold text-primary hover:underline"
-            >
-              <span>{row.original.clientName}</span>
-              <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
-            </Link>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">Policy Client</span>
-          </div>
+        <div className="flex items-center gap-3">
+          <PersonAvatar firstName={firstName} lastName={lastName} photoUrl={row.original.clientPhotoUrl} size="sm" />
+          <Link
+            href={`/dashboard/crm/clients/${row.original.clientId}`}
+            className="flex items-center gap-1 font-medium text-foreground hover:text-primary hover:underline"
+          >
+            {row.original.clientName || "Unknown Client"}
+            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+          </Link>
         </div>
       );
     },
   },
   {
     accessorKey: "carrierName",
-    header: "Carrier",
-    filterFn: (row, columnId, filterValue) => {
-      if (!filterValue || filterValue === "all") return true;
-      return row.getValue(columnId) === filterValue;
-    },
+    filterFn: "includesString",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Carrier" />,
     cell: ({ row }: { row: Row<EnrichedPolicy> }) => (
       <div className="flex items-center gap-2">
-        <Shield className="h-3 w-3 text-primary" />
-        <span className="font-medium text-sm">{row.original.carrierName}</span>
+        <Shield className="h-4 w-4 text-primary" />
+        <span className="font-medium">{row.original.carrierName || "Unknown Carrier"}</span>
       </div>
     ),
   },
   {
     accessorKey: "policyName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Policy Details" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Policy Name / #" />,
     filterFn: (row, _columnId, filterValue) => {
       if (!filterValue) return true;
       const search = (filterValue as string).toLowerCase();
@@ -68,10 +63,14 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
       const num = (row.original.policyNumber || "").toLowerCase();
       return name.includes(search) || num.includes(search);
     },
-    cell: ({ row }: { row: Row<ClientPolicy> }) => (
+    cell: ({ row }: { row: Row<EnrichedPolicy> }) => (
       <div className="flex flex-col">
-        <Link href={`/dashboard/crm/policies/${row.original.id}`} className="hover:underline">
-          <span className="font-bold text-foreground text-sm">{row.original.policyName}</span>
+        <Link
+          href={`/dashboard/crm/policies/${row.original.id}/edit`}
+          className="flex items-center gap-1 font-medium text-foreground hover:text-primary hover:underline"
+        >
+          {row.original.policyName}
+          <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
         </Link>
         <span className="font-mono text-[10px] text-muted-foreground">{row.original.policyNumber}</span>
       </div>
@@ -89,9 +88,14 @@ export const columns = (onDelete: (policy: ClientPolicy) => void): ColumnDef<Enr
     },
     cell: ({ row }: { row: Row<EnrichedPolicy> }) => {
       const isManaged = row.original.isUnderManagement;
+      const agencyName = row.original.managingAgencyName;
       return isManaged ? (
         <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 text-[10px]">
           Managed
+        </Badge>
+      ) : agencyName ? (
+        <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-[10px]">
+          {agencyName}
         </Badge>
       ) : (
         <Badge variant="outline" className="text-muted-foreground text-[10px]">

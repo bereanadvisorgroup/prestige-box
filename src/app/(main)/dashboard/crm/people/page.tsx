@@ -1,13 +1,13 @@
 import { AlertCircle } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
 import { getHouseholds } from "@/actions/households";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getLifeInsuranceCompanies } from "@/actions/life-insurance-companies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
@@ -18,13 +18,13 @@ import { getRecordKeepers } from "@/actions/record-keepers";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type {
   AccountingFirm,
-  InsuranceAgency,
   ActuarialFirm,
   Bank,
   Client,
   Company,
   DisabilityInsuranceCompany,
   Household,
+  InsuranceAgency,
   LawFirm,
   LifeInsuranceCompany,
   LongTermCareInsurance,

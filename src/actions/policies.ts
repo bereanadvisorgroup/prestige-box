@@ -40,31 +40,45 @@ export async function getClientPolicies() {
     const longTermCareInsuranceIds = Array.from(
       new Set(policies.map((p) => p.longTermCareInsuranceId).filter(Boolean)),
     );
+    const managingAgencyIds = Array.from(new Set(policies.map((p) => p.managingAgencyId).filter(Boolean)));
 
-    const [clientsResult, companiesResult, disabilityCompaniesResult, longTermCareResult] = await Promise.all([
-      clientIds.length > 0
-        ? supabaseServer.from("clients").select("id, personId").in("id", clientIds)
-        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
-      companyIds.length > 0
-        ? supabaseServer.from("life_insurance_companies").select("id, name").in("id", companyIds)
-        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
-      disabilityCompanyIds.length > 0
-        ? supabaseServer.from("disability_insurance_companies").select("id, name").in("id", disabilityCompanyIds)
-        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
-      longTermCareInsuranceIds.length > 0
-        ? supabaseServer.from("long_term_care_insurance").select("id, name").in("id", longTermCareInsuranceIds)
-        : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
-    ]);
+    const [clientsResult, companiesResult, disabilityCompaniesResult, longTermCareResult, agenciesResult] =
+      await Promise.all([
+        clientIds.length > 0
+          ? supabaseServer.from("clients").select("id, personId").in("id", clientIds)
+          : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+        companyIds.length > 0
+          ? supabaseServer.from("life_insurance_companies").select("id, name").in("id", companyIds)
+          : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+        disabilityCompanyIds.length > 0
+          ? supabaseServer.from("disability_insurance_companies").select("id, name").in("id", disabilityCompanyIds)
+          : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+        longTermCareInsuranceIds.length > 0
+          ? supabaseServer.from("long_term_care_insurance").select("id, name").in("id", longTermCareInsuranceIds)
+          : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+        managingAgencyIds.length > 0
+          ? supabaseServer.from("insurance_agencies").select("id, firmName").in("id", managingAgencyIds)
+          : Promise.resolve({ data: [] as never[], error: null as PostgrestError | null }),
+      ]);
 
     if (clientsResult.error) throw new Error(clientsResult.error.message);
     if (companiesResult.error) throw new Error(companiesResult.error.message);
     if (disabilityCompaniesResult.error) throw new Error(disabilityCompaniesResult.error.message);
     if (longTermCareResult.error) throw new Error(longTermCareResult.error.message);
+    if (agenciesResult.error) throw new Error(agenciesResult.error.message);
 
     const clients = clientsResult.data || [];
     const companies = companiesResult.data || [];
     const disabilityCompanies = disabilityCompaniesResult.data || [];
     const longTermCareInsurances = longTermCareResult.data || [];
+    const agencies = agenciesResult.data || [];
+    const agenciesMap = agencies.reduce(
+      (acc, a) => {
+        acc[a.id] = a.firmName;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
     const companiesMap = [...companies, ...disabilityCompanies, ...longTermCareInsurances].reduce(
       (acc, c) => {
         acc[c.id] = c.name;
@@ -109,6 +123,7 @@ export async function getClientPolicies() {
         companiesMap[
           policy.lifeInsuranceCompanyId || policy.disabilityInsuranceCompanyId || policy.longTermCareInsuranceId || ""
         ] || "Unknown Carrier",
+      managingAgencyName: policy.managingAgencyId ? agenciesMap[policy.managingAgencyId] || null : null,
     }));
 
     return { success: true, policies: enrichedPolicies };

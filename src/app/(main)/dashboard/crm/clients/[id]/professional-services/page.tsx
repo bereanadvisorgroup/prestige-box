@@ -3,10 +3,10 @@ import { notFound } from "next/navigation";
 import { Building2, Calculator, Landmark, ReceiptText, Scale, Shield } from "lucide-react";
 
 import { getAccountingFirms } from "@/actions/accounting-firms";
-import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getActuarialFirms } from "@/actions/actuarial-firms";
 import { getBanks } from "@/actions/banks";
 import { getClient } from "@/actions/clients";
+import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { AssociationCardList } from "@/components/features/crm/association-card-list";
@@ -30,9 +30,21 @@ export default async function ProfessionalServicesPage({ params }: Props) {
   const client = clientResult.client;
 
   // Fetch professional services
-  const [lawFirmsRes, accountingFirmsRes, insuranceAgenciesRes, actuarialFirmsRes, banksRes, propertyAndCasualtyFirmsRes] = await Promise.all(
-    [getLawFirms(), getAccountingFirms(), getInsuranceAgencies(), getActuarialFirms(), getBanks(), getPropertyAndCasualtyFirms()],
-  );
+  const [
+    lawFirmsRes,
+    accountingFirmsRes,
+    insuranceAgenciesRes,
+    actuarialFirmsRes,
+    banksRes,
+    propertyAndCasualtyFirmsRes,
+  ] = await Promise.all([
+    getLawFirms(),
+    getAccountingFirms(),
+    getInsuranceAgencies(),
+    getActuarialFirms(),
+    getBanks(),
+    getPropertyAndCasualtyFirms(),
+  ]);
 
   // Filter professional services by client.id
   const associatedLawFirms = ((lawFirmsRes.success && lawFirmsRes.lawFirms) || []).filter((l) =>
@@ -41,9 +53,10 @@ export default async function ProfessionalServicesPage({ params }: Props) {
   const associatedAccountingFirms = ((accountingFirmsRes.success && accountingFirmsRes.accountingFirms) || []).filter(
     (a) => a.clientIds?.includes(client.id || ""),
   );
-  const associatedInsuranceAgencies = ((insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) || []).filter(
-    (ia) => ia.clientIds?.includes(client.id || ""),
-  );
+  const associatedInsuranceAgencies = (
+    (insuranceAgenciesRes.success && insuranceAgenciesRes.insuranceAgencies) ||
+    []
+  ).filter((ia) => ia.clientIds?.includes(client.id || ""));
   const associatedActuarialFirms = ((actuarialFirmsRes.success && actuarialFirmsRes.actuarialFirms) || []).filter(
     (act) => act.clientIds?.includes(client.id || ""),
   );

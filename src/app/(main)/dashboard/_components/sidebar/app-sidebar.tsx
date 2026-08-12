@@ -143,6 +143,12 @@ const getHouseholdSidebarItems = (householdId: string, counts: Record<string, nu
         badge: counts.longTermCare || 0,
       },
       {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/households/${householdId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+      {
         title: "Money Managers",
         url: `/dashboard/crm/households/${householdId}/money-managers`,
         icon: TrendingUp,
@@ -189,12 +195,6 @@ const getHouseholdSidebarItems = (householdId: string, counts: Record<string, nu
         url: `/dashboard/crm/households/${householdId}/law-firms`,
         icon: Scale,
         badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/households/${householdId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
@@ -323,6 +323,12 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         badge: counts.longTermCare || 0,
       },
       {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/clients/${clientId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+      {
         title: "Money Managers",
         url: `/dashboard/crm/clients/${clientId}/money-managers`,
         icon: TrendingUp,
@@ -369,12 +375,6 @@ const getClientSidebarItems = (clientId: string, counts: Record<string, number>)
         url: `/dashboard/crm/clients/${clientId}/law-firms`,
         icon: Scale,
         badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/clients/${clientId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
@@ -466,6 +466,12 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         badge: counts.longTermCare || 0,
       },
       {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/companies/${companyId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+      {
         title: "Money Managers",
         url: `/dashboard/crm/companies/${companyId}/money-managers`,
         icon: TrendingUp,
@@ -512,12 +518,6 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
         url: `/dashboard/crm/companies/${companyId}/law-firms`,
         icon: Scale,
         badge: counts.lawFirms || 0,
-      },
-      {
-        title: "Property And Casualty",
-        url: `/dashboard/crm/companies/${companyId}/property-and-casualty`,
-        icon: Shield,
-        badge: counts.propertyAndCasualty || 0,
       },
     ],
   },
