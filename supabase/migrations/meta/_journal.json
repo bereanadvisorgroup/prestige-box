@@ -15,6 +15,34 @@
       "when": 1785500000001,
       "tag": "0001_add_social_media_to_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785500000002,
+      "tag": "0002_add_insurance_agencies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785500000003,
+      "tag": "0003_add_is_under_management_to_client_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785500000004,
+      "tag": "0004_add_notes_to_money_managers_and_record_keepers",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785500000005,
+      "tag": "0008_add_managing_agency_id_to_client_policies",
+      "breakpoints": true
     }
   ]
 }
