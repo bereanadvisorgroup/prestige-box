@@ -10,11 +10,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { GoogleAuthProvider, OAuthProvider, signInWithPopup } from "firebase/auth";
+
 import { checkUserStatus } from "@/actions/auth-flow";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase.client";
+import { auth } from "@/lib/firebase.client";
 import { useAuthStore } from "@/stores/auth.store";
 
 const GoogleIcon = () => (
@@ -271,20 +273,21 @@ export default function LoginPage() {
   const handleOAuthSignIn = async (provider: "google" | "azure") => {
     try {
       setIsOAuthLoading(provider);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          // Azure/Microsoft does not return the user's email unless it is explicitly
-          // requested. Without it, Supabase cannot match the sign-in to the whitelisted
-          // public.users row and the login silently bounces back to /login.
-          scopes: provider === "azure" ? "openid profile email" : undefined,
-          queryParams: provider === "google" ? { prompt: "select_account" } : undefined,
-        },
-      });
-      if (error) throw error;
+      let authProvider;
+      if (provider === "google") {
+        authProvider = new GoogleAuthProvider();
+        authProvider.setCustomParameters({ prompt: "select_account" });
+      } else {
+        authProvider = new OAuthProvider("microsoft.com");
+        authProvider.addScope("openid");
+        authProvider.addScope("profile");
+        authProvider.addScope("email");
+      }
+      await signInWithPopup(auth, authProvider);
+      router.push("/dashboard/default");
     } catch (err: unknown) {
       toast.error((err as Error).message || `Could not authenticate with ${provider}.`);
+    } finally {
       setIsOAuthLoading(null);
     }
   };

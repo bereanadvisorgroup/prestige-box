@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { Factor } from "@supabase/supabase-js";
 import { CheckCircle2, Fingerprint, KeyRound, Loader2, Shield, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,6 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/lib/supabase.client";
 import { useAuthStore } from "@/stores/auth.store";
+
+type Factor = {
+  id: string;
+  factor_type: string;
+  friendly_name?: string;
+  status: string;
+};
 
 export default function SettingsPage() {
   const { user, isLoading: isAuthLoading } = useAuthStore();
@@ -48,15 +54,7 @@ export default function SettingsPage() {
     } catch (err: unknown) {
       console.error("Passkey registration failed:", err);
       const error = err as { name?: string; message?: string };
-      if (
-        error.name === "SecurityError" ||
-        error.message?.includes("invalid for this domain") ||
-        error.message?.includes("RP ID")
-      ) {
-        toast.error("Passkey domain mismatch: Relying Party ID configured in Supabase does not match this domain.");
-      } else {
-        toast.error(error.message || "Passkey registration failed or cancelled.");
-      }
+      toast.error(error.message || "Passkey registration failed or cancelled.");
     } finally {
       setIsPasskeyRegistering(false);
     }

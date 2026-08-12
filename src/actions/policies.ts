@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { PostgrestError } from "@supabase/supabase-js";
+type PostgrestError = { message: string };
 
 import { CLIENT_POLICY_FIELDS } from "@/lib/history/fields";
 import { recordEvent, recordFieldDiffs } from "@/lib/history/record";

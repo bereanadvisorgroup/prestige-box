@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, signInWithPopup, signOut as firebaseSignOut, type User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useLogger } from "next-axiom";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -15,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase.client";
+import { auth, db } from "@/lib/firebase.client";
 import { type UserProfile, type UserRole, useAuthStore } from "@/stores/auth.store";
 
 import { GoogleButton } from "./social-auth/google-button";
@@ -44,50 +46,48 @@ export function LoginForm() {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const handleAuthUser = async (user: import("@supabase/supabase-js").User) => {
+  const handleAuthUser = async (user: FirebaseUser) => {
     setUser(user);
 
-    // Fetch User Profile & Role from Supabase
-    const { data: userData, error: fetchError } = await supabase.from("users").select("*").eq("uid", user.id).single();
+    // Fetch User Profile & Role from Firestore users collection
+    const userDocRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userDocRef);
+    const userData = userSnap.data();
 
     let profile: UserProfile;
 
-    if (userData && !fetchError) {
+    if (userData) {
       profile = {
-        uid: user.id,
+        uid: user.uid,
         email: user.email ?? null,
-        role: userData.role as UserRole,
+        role: (userData.role as UserRole) || "client",
         firstName: userData.firstName,
         lastName: userData.lastName,
         phone: userData.phone || "",
-        photoURL: userData.photoURL || user.user_metadata?.avatar_url || "",
+        photoURL: userData.photoURL || user.photoURL || "",
       };
       setProfile(profile);
-      log.info("User logged in", { userId: user.id, email: user.email, role: profile.role });
+      log.info("User logged in", { userId: user.uid, email: user.email, role: profile.role });
       toast.success("Login successful!");
       const defaultRoute =
         profile.role === "admin" || profile.role === "advisor" ? "/dashboard/crm" : "/dashboard/default";
       router.push(defaultRoute);
     } else {
-      // User is not in public.users - deny access
-      await supabase.auth.signOut();
+      // User is not in users collection - deny access
+      await firebaseSignOut(auth);
       setUser(null);
       setProfile(null);
-      log.warn("Unauthorized login attempt", { userId: user.id, email: user.email });
+      log.warn("Unauthorized login attempt", { userId: user.uid, email: user.email });
       toast.error("Access Denied. Your account has not been created by an administrator.");
-      router.push("/auth/v1/login");
+      router.push("/login/no-account");
     }
   };
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       setLoading(true);
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      if (error) throw error;
-      await handleAuthUser(authData.user);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      await handleAuthUser(userCredential.user);
     } catch (error) {
       console.error("Login Error:", error);
       log.error("Login failed", { error: (error as Error).message });
@@ -100,13 +100,9 @@ export function LoginForm() {
   const onGoogleLogin = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard/default`,
-        },
-      });
-      if (error) throw error;
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleAuthUser(userCredential.user);
     } catch (error) {
       console.error("Google Login Error:", error);
       toast.error((error as { message: string }).message || "Could not authenticate with Google.");
@@ -118,14 +114,9 @@ export function LoginForm() {
   const onMicrosoftLogin = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "azure",
-        options: {
-          scopes: "email",
-          redirectTo: `${window.location.origin}/dashboard/default`,
-        },
-      });
-      if (error) throw error;
+      const provider = new OAuthProvider("microsoft.com");
+      const userCredential = await signInWithPopup(auth, provider);
+      await handleAuthUser(userCredential.user);
     } catch (error) {
       console.error("Microsoft Login Error:", error);
       toast.error((error as { message: string }).message || "Could not authenticate with Microsoft.");

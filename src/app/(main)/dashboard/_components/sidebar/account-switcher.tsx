@@ -36,7 +36,7 @@ export function AccountSwitcher() {
 
   if (!profile) return null;
 
-  const photoURL = user?.user_metadata?.avatar_url || profile.photoURL;
+  const photoURL = user?.photoURL || profile.photoURL;
 
   return (
     <DropdownMenu>

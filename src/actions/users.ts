@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Resend } from "resend";
 
-import { supabaseAdmin } from "@/lib/supabase.server";
+import { adminAuth, adminDb } from "@/lib/firebase.server";
 
 export async function createUser(data: {
   email: string;
@@ -17,11 +17,17 @@ export async function createUser(data: {
   try {
     const cleanEmail = data.email.trim().toLowerCase();
 
-    // 1. Pre-insert the profile in public.users with a temporary random UUID
-    // This allows the handle_new_user BEFORE INSERT trigger to pass when the auth account is created.
-    const tempUid = crypto.randomUUID();
-    const tempProfile = {
-      uid: tempUid,
+    // 1. Create User in Firebase Auth via Admin SDK
+    const randomPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
+    const userRecord = await adminAuth.createUser({
+      email: cleanEmail,
+      password: data.password || randomPassword,
+      displayName: `${data.firstName} ${data.lastName}`.trim(),
+    });
+
+    const userProfile = {
+      uid: userRecord.uid,
+      id: userRecord.uid,
       email: cleanEmail,
       firstName: data.firstName,
       lastName: data.lastName,
@@ -30,51 +36,15 @@ export async function createUser(data: {
       updatedAt: new Date().toISOString(),
     };
 
-    const { error: preDbError } = await supabaseAdmin.from("users").insert(tempProfile);
-    if (preDbError) throw new Error(`Failed to pre-create user profile: ${preDbError.message}`);
-
-    // 2. Create User in Supabase Auth via Admin API
-    const randomPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
-    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: cleanEmail,
-      password: data.password || randomPassword,
-      email_confirm: true,
-      user_metadata: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-      },
-      app_metadata: {
-        role: data.role,
-      },
-    });
-
-    if (authError) {
-      // Clean up the temp profile if auth creation fails
-      await supabaseAdmin.from("users").delete().eq("email", cleanEmail);
-      throw new Error(authError.message);
-    }
-
-    if (!authRecord.user) {
-      await supabaseAdmin.from("users").delete().eq("email", cleanEmail);
-      throw new Error("Failed to create user auth record.");
-    }
-
-    const userProfile = {
-      uid: authRecord.user.id,
-      email: cleanEmail,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      createdAt: tempProfile.createdAt,
-    };
+    // 2. Insert Profile Document in Firestore users collection
+    await adminDb.collection("users").doc(userRecord.uid).set(userProfile);
 
     // 3. Send initial password reset email or client setup email
     try {
       if (data.role === "client") {
-        await sendClientSetupEmail(authRecord.user.id, cleanEmail, data.origin);
+        await sendClientSetupEmail(userRecord.uid, cleanEmail, data.origin);
       } else {
-        await resetUserPassword(authRecord.user.id, cleanEmail, data.origin);
+        await resetUserPassword(userRecord.uid, cleanEmail, data.origin);
       }
     } catch (emailErr) {
       console.error("[createUser] Warning: Failed to send initial welcome email:", emailErr);
@@ -91,47 +61,23 @@ export async function createUser(data: {
 
 export async function getUsers() {
   try {
-    // Fetch all user profiles from public.users table
-    const { data: dbUsers, error } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .order("createdAt", { ascending: false });
+    const snapshot = await adminDb.collection("users").orderBy("createdAt", "desc").get();
+    const dbUsers = snapshot.docs.map((doc) => doc.data());
 
-    if (error) throw new Error(error.message);
-
-    // Fetch auth users to map providers and google profile photo
     const providerMap = new Map<string, string[]>();
     const googlePhotoMap = new Map<string, string>();
     try {
-      const {
-        data: { users: authUsers },
-        error: authError,
-      } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-      if (authError) throw authError;
-      if (authUsers) {
-        for (const authUser of authUsers) {
-          const providers =
-            authUser.app_metadata?.providers ||
-            (authUser.identities || []).map((i) => i.provider) ||
-            [authUser.app_metadata?.provider].filter(Boolean) ||
-            [];
-          providerMap.set(authUser.id, providers);
+      const listUsersResult = await adminAuth.listUsers(1000);
+      for (const authUser of listUsersResult.users) {
+        const providers = authUser.providerData.map((p) => p.providerId);
+        providerMap.set(authUser.uid, providers);
 
-          const isGoogle = providers.includes("google") || authUser.app_metadata?.provider === "google";
-          let googleAvatar =
-            authUser.user_metadata?.avatar_url ||
-            authUser.user_metadata?.picture ||
-            (authUser.identities || []).find((i) => i.provider === "google")?.identity_data?.avatar_url ||
-            (authUser.identities || []).find((i) => i.provider === "google")?.identity_data?.picture ||
-            null;
-
-          if (!googleAvatar && isGoogle && authUser.email) {
-            googleAvatar = `https://unavatar.io/google/${encodeURIComponent(authUser.email)}`;
-          }
-
-          if (googleAvatar) {
-            googlePhotoMap.set(authUser.id, googleAvatar);
-          }
+        let googleAvatar = authUser.photoURL || null;
+        if (!googleAvatar && providers.includes("google.com") && authUser.email) {
+          googleAvatar = `https://unavatar.io/google/${encodeURIComponent(authUser.email)}`;
+        }
+        if (googleAvatar) {
+          googlePhotoMap.set(authUser.uid, googleAvatar);
         }
       }
     } catch (authErr) {
@@ -139,7 +85,7 @@ export async function getUsers() {
     }
 
     const users = (dbUsers || []).map((dbUser) => ({
-      uid: dbUser.uid,
+      uid: dbUser.uid || dbUser.id,
       email: dbUser.email || "",
       firstName: dbUser.firstName || "",
       lastName: dbUser.lastName || "",
@@ -147,8 +93,8 @@ export async function getUsers() {
       createdAt: dbUser.createdAt || new Date().toISOString(),
       photoURL: dbUser.photoURL || "",
       socialMedia: dbUser.socialMedia || [],
-      googlePhotoURL: googlePhotoMap.get(dbUser.uid) || null,
-      providers: providerMap.get(dbUser.uid) || [],
+      googlePhotoURL: googlePhotoMap.get(dbUser.uid || dbUser.id) || null,
+      providers: providerMap.get(dbUser.uid || dbUser.id) || [],
     }));
 
     return { success: true, users };
@@ -169,9 +115,9 @@ export async function updateUser(
   },
 ) {
   try {
-    // Update Document in public.users table
-    const { error: dbError } = await supabaseAdmin
-      .from("users")
+    await adminDb
+      .collection("users")
+      .doc(uid)
       .update({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -179,25 +125,14 @@ export async function updateUser(
         photoURL: data.photoURL ?? null,
         socialMedia: data.socialMedia ?? [],
         updatedAt: new Date().toISOString(),
-      })
-      .eq("uid", uid);
+      });
 
-    if (dbError) throw new Error(dbError.message);
-
-    // Update user metadata in Supabase Auth
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(uid, {
-      user_metadata: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-      },
-      app_metadata: {
-        role: data.role,
-      },
-    });
-
-    if (authError) {
-      console.error("[updateUser] Warning: Auth metadata update failed:", authError.message);
+    try {
+      await adminAuth.updateUser(uid, {
+        displayName: `${data.firstName} ${data.lastName}`.trim(),
+      });
+    } catch (authError: any) {
+      console.error("[updateUser] Warning: Auth update failed:", authError.message);
     }
 
     revalidatePath("/dashboard/admin/users");
@@ -212,16 +147,13 @@ export async function updateUser(
 
 export async function deleteUser(uid: string) {
   try {
-    // 1. Delete from Supabase Auth
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(uid);
-    if (authError) throw new Error(authError.message);
-
-    // 2. Delete Profile Document in public.users table
-    const { error: dbError } = await supabaseAdmin.from("users").delete().eq("uid", uid);
-
-    if (dbError) {
-      console.error("[deleteUser] Warning: Database profile delete failed:", dbError.message);
+    try {
+      await adminAuth.deleteUser(uid);
+    } catch (authError: any) {
+      console.error("[deleteUser] Warning: Auth delete failed:", authError.message);
     }
+
+    await adminDb.collection("users").doc(uid).delete();
 
     revalidatePath("/dashboard/admin/users");
     return { success: true };
@@ -233,41 +165,27 @@ export async function deleteUser(uid: string) {
 
 export async function getUser(uid: string) {
   try {
-    const { data: dbUser, error } = await supabaseAdmin.from("users").select("*").eq("uid", uid).maybeSingle();
+    const docSnap = await adminDb.collection("users").doc(uid).get();
 
-    if (error) throw new Error(error.message);
-    if (!dbUser) return { success: false, error: "User not found" };
+    if (!docSnap.exists) return { success: false, error: "User not found" };
+    const dbUser = docSnap.data()!;
 
     let googlePhotoURL: string | null = null;
     let providers: string[] = [];
 
     try {
-      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(uid);
-      if (authUser?.user) {
-        providers =
-          authUser.user.app_metadata?.providers ||
-          (authUser.user.identities || []).map((i) => i.provider) ||
-          [authUser.user.app_metadata?.provider].filter(Boolean) ||
-          [];
-
-        const isGoogle = providers.includes("google") || authUser.user.app_metadata?.provider === "google";
-        googlePhotoURL =
-          authUser.user.user_metadata?.avatar_url ||
-          authUser.user.user_metadata?.picture ||
-          (authUser.user.identities || []).find((i) => i.provider === "google")?.identity_data?.avatar_url ||
-          (authUser.user.identities || []).find((i) => i.provider === "google")?.identity_data?.picture ||
-          null;
-
-        if (!googlePhotoURL && isGoogle && (dbUser.email || authUser.user.email)) {
-          googlePhotoURL = `https://unavatar.io/google/${encodeURIComponent(dbUser.email || authUser.user.email || "")}`;
-        }
+      const authUser = await adminAuth.getUser(uid);
+      providers = authUser.providerData.map((p) => p.providerId);
+      googlePhotoURL = authUser.photoURL || null;
+      if (!googlePhotoURL && providers.includes("google.com") && (dbUser.email || authUser.email)) {
+        googlePhotoURL = `https://unavatar.io/google/${encodeURIComponent(dbUser.email || authUser.email || "")}`;
       }
     } catch (authErr) {
       console.warn("[getUser] Could not fetch auth user details:", authErr);
     }
 
     const user = {
-      uid: dbUser.uid,
+      uid: dbUser.uid || uid,
       email: dbUser.email || "",
       firstName: dbUser.firstName || "",
       lastName: dbUser.lastName || "",
@@ -326,23 +244,10 @@ export async function resetUserPassword(_uid: string, email: string, origin: str
 
 export async function generateUserRecoveryLink(email: string, origin: string) {
   try {
-    const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    const redirectTo = bypassSecret
-      ? `${origin}/auth/v1/reset-password?x-vercel-protection-bypass=${bypassSecret}`
-      : `${origin}/auth/v1/reset-password`;
-
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: email,
-      options: {
-        redirectTo,
-      },
+    const link = await adminAuth.generatePasswordResetLink(email, {
+      url: `${origin}/auth/v1/reset-password`,
     });
-    if (error) throw error;
-    if (!data.properties?.action_link) {
-      throw new Error("No recovery link generated by Supabase.");
-    }
-    return { success: true, link: data.properties.action_link };
+    return { success: true, link };
   } catch (error) {
     console.error("Failed to generate recovery link:", error);
     return { success: false, error: (error as { message: string }).message };
@@ -352,23 +257,9 @@ export async function generateUserRecoveryLink(email: string, origin: string) {
 export async function sendClientSetupEmail(_uid: string, email: string, origin: string) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    const redirectTo = bypassSecret
-      ? `${origin}/auth/v1/client-setup?x-vercel-protection-bypass=${bypassSecret}`
-      : `${origin}/auth/v1/client-setup`;
-
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: email,
-      options: {
-        redirectTo,
-      },
+    const link = await adminAuth.generatePasswordResetLink(email, {
+      url: `${origin}/auth/v1/client-setup`,
     });
-
-    if (error) throw error;
-    if (!data.properties?.action_link) {
-      throw new Error("No setup link generated by Supabase.");
-    }
 
     const { error: resendError } = await resend.emails.send({
       from: "Prestige Advisors <noreply@contact.bereanadvisorgroup.com>",
@@ -380,12 +271,12 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
           <p>Hello,</p>
           <p>A client portal account has been created for you. Click the button below to set up your account and choose how you want to log in:</p>
           <div style="margin: 30px 0;">
-            <a href="${data.properties.action_link}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Set Up Account</a>
+            <a href="${link}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Set Up Account</a>
           </div>
           <p style="color: #666; font-size: 14px;">If you didn't expect this invitation, you can safely ignore this email.</p>
           <br />
           <p style="color: #666; font-size: 14px;">Or, copy and paste this link into your browser:</p>
-          <p style="color: #666; font-size: 14px; word-break: break-all;">${data.properties.action_link}</p>
+          <p style="color: #666; font-size: 14px; word-break: break-all;">${link}</p>
         </div>
       `,
     });
@@ -401,21 +292,18 @@ export async function sendClientSetupEmail(_uid: string, email: string, origin: 
 
 export async function getAdvisors() {
   try {
-    const { data: dbUsers, error } = await supabaseAdmin
-      .from("users")
-      .select("uid, firstName, lastName, role")
-      .in("role", ["admin", "advisor"]);
+    const snapshot = await adminDb.collection("users").where("role", "in", ["admin", "advisor"]).get();
 
-    if (error) throw new Error(error.message);
+    const advisors = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        uid: data.uid || doc.id,
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        role: data.role,
+      };
+    });
 
-    const advisors = (dbUsers || []).map((dbUser) => ({
-      uid: dbUser.uid,
-      firstName: dbUser.firstName || "",
-      lastName: dbUser.lastName || "",
-      role: dbUser.role,
-    }));
-
-    // Sort alphabetically by name
     advisors.sort((a, b) => {
       const nameA = `${a.firstName} ${a.lastName}`.trim().toLowerCase();
       const nameB = `${b.firstName} ${b.lastName}`.trim().toLowerCase();

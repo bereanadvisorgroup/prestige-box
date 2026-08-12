@@ -1,6 +1,6 @@
 "use server";
 
-import type { PostgrestError } from "@supabase/supabase-js";
+type PostgrestError = { message: string };
 
 import { supabaseServer } from "@/lib/supabase.server";
 import type { PaymentSchedule } from "@/types/crm";

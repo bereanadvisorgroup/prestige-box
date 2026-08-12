@@ -2,12 +2,13 @@
 
 import { useRef, useState } from "react";
 
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { FirmLogo } from "@/components/features/crm/firm-logo";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase.client";
+import { storage } from "@/lib/firebase.client";
 
 interface LogoUploadProps {
   value?: string | null;
@@ -38,26 +39,11 @@ export function LogoUpload({ value, onChange, entityId, entityType, name }: Logo
 
       const fileExt = file.name.split(".").pop();
       const folderId = entityId || crypto.randomUUID();
-      const filePath = `${entityType}/${folderId}/${Date.now()}-logo.${fileExt}`;
+      const filePath = `avatars/${entityType}/${folderId}/${Date.now()}-logo.${fileExt}`;
+      const storageRef = ref(storage, filePath);
 
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
-      const publicUrl = urlData.publicUrl;
-
-      // Clean up old logo if it was in avatars bucket for this entity
-      if (value?.includes("/avatars/") && value.includes(`${entityType}/`)) {
-        try {
-          const oldPath = value.split("/public/avatars/")[1];
-          if (oldPath) {
-            await supabase.storage.from("avatars").remove([oldPath]);
-          }
-        } catch (removeErr) {
-          console.warn("Could not clean up old logo file:", removeErr);
-        }
-      }
+      await uploadBytes(storageRef, file);
+      const publicUrl = await getDownloadURL(storageRef);
 
       onChange(publicUrl);
       toast.success("Logo uploaded successfully!");
@@ -70,12 +56,10 @@ export function LogoUpload({ value, onChange, entityId, entityType, name }: Logo
   };
 
   const handleRemoveLogo = async () => {
-    if (value?.includes("/avatars/") && value.includes(`${entityType}/`)) {
+    if (value && value.includes("firebasestorage")) {
       try {
-        const oldPath = value.split("/public/avatars/")[1];
-        if (oldPath) {
-          await supabase.storage.from("avatars").remove([oldPath]);
-        }
+        const fileRef = ref(storage, value);
+        await deleteObject(fileRef);
       } catch (removeErr) {
         console.warn("Could not delete logo from storage:", removeErr);
       }

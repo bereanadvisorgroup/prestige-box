@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { CLIENT_PROFILE_FIELDS } from "@/lib/history/fields";
 import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
-import { supabaseServer } from "@/lib/supabase.server";
-import { type Client, ClientSchema } from "@/types/crm";
+import { FirebaseService } from "@/services/firebase.service";
+import { type Client, ClientSchema, type Person } from "@/types/crm";
 
 import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
 
@@ -13,20 +13,16 @@ const TABLE = "clients";
 
 export async function getClients() {
   try {
-    const { data: clients, error: clientsError } = await supabaseServer.from(TABLE).select("*");
+    const res = await FirebaseService.getRecords<Client>(TABLE);
+    if (!res.success || !res.data) return { success: true, clients: [] };
+    const clients = res.data;
 
-    if (clientsError) throw new Error((clientsError as { message: string }).message);
-    if (!clients || clients.length === 0) return { success: true, clients: [] };
-
-    // Fetch person details for each client
-    const personIds = Array.from(new Set(clients.map((c) => c.personId)));
+    const personIds = Array.from(new Set(clients.map((c) => c.personId).filter(Boolean)));
     if (personIds.length === 0) return { success: true, clients: [] };
 
-    const { data: people, error: peopleError } = await supabaseServer.from("people").select("*").in("id", personIds);
-
-    if (peopleError) throw new Error((peopleError as { message: string }).message);
-
-    const peopleMap = (people || []).reduce(
+    const peopleRes = await FirebaseService.getRecords<Person>("people");
+    const people = peopleRes.data || [];
+    const peopleMap = people.reduce(
       (acc, person) => {
         acc[person.id] = person;
         return acc;
@@ -54,23 +50,17 @@ export async function getClients() {
 
 export async function getClient(id: string) {
   try {
-    const { data: client, error: clientError } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+    const clientRes = await FirebaseService.getRecordById<Client>(TABLE, id);
+    if (!clientRes.success || !clientRes.data) return { success: false, error: "Client not found" };
+    const client = clientRes.data;
 
-    if (clientError) throw new Error((clientError as { message: string }).message);
-    if (!client) return { success: false, error: "Client not found" };
-
-    // Fetch person details
-    const { data: person, error: personError } = await supabaseServer
-      .from("people")
-      .select("*")
-      .eq("id", client.personId)
-      .single();
-
-    if (personError && personError.code !== "PGRST116") {
-      throw new Error((personError as { message: string }).message);
+    let person = null;
+    if (client.personId) {
+      const personRes = await FirebaseService.getRecordById("people", client.personId);
+      if (personRes.success) person = personRes.data;
     }
 
-    return { success: true, client: client as Client, person: person || null };
+    return { success: true, client, person };
   } catch (error) {
     console.error(`[getClient] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -79,15 +69,8 @@ export async function getClient(id: string) {
 
 export async function createClient(data: Partial<Client>) {
   try {
-    // Check if client for this person already exists
-    const { data: existing, error: checkError } = await supabaseServer
-      .from(TABLE)
-      .select("id")
-      .eq("personId", data.personId)
-      .limit(1);
-
-    if (checkError) throw new Error((checkError as { message: string }).message);
-    if (existing && existing.length > 0) {
+    const existing = await FirebaseService.getRecords<Client>(TABLE, "personId", data.personId);
+    if (existing.success && existing.data && existing.data.length > 0) {
       throw new Error("A client record already exists for this person");
     }
 
@@ -96,25 +79,25 @@ export async function createClient(data: Partial<Client>) {
       createdAt: new Date().toISOString(),
     });
 
-    const { data: inserted, error: insertError } = await supabaseServer.from(TABLE).insert(validated).select().single();
+    const inserted = await FirebaseService.insertRecord<Client>(TABLE, validated as Record<string, unknown>);
+    if (!inserted.success || !inserted.data) throw new Error(inserted.error || "Failed to create client");
 
-    if (insertError) throw new Error((insertError as { message: string }).message);
+    const clientId = inserted.data.id;
 
     await recordEvent({
       entityType: "client",
-      entityId: inserted.id,
+      entityId: clientId,
       subType: "Profile",
       action: "created",
       summary: "Client created",
     });
 
-    // Seed auto-generated tasks now that this person is a client.
-    await syncBirthdayForPerson(inserted.personId);
-    await syncAnniversaryForClient(inserted.id);
+    if (data.personId) await syncBirthdayForPerson(data.personId);
+    await syncAnniversaryForClient(clientId);
 
     revalidatePath("/dashboard/crm/clients");
 
-    return { success: true, id: inserted.id };
+    return { success: true, id: clientId };
   } catch (error) {
     console.error(`[createClient] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -123,17 +106,16 @@ export async function createClient(data: Partial<Client>) {
 
 export async function updateClient(id: string, data: Partial<Client>) {
   try {
-    // Fetch the current record so we can diff changed fields into history.
-    const { data: current } = await supabaseServer.from(TABLE).select("*").eq("id", id).single();
+    const currentRes = await FirebaseService.getRecordById<Client>(TABLE, id);
+    const current = currentRes.data;
 
     const updateData = {
       ...data,
       updatedAt: new Date().toISOString(),
     };
 
-    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
-
-    if (error) throw new Error((error as { message: string }).message);
+    const res = await FirebaseService.updateRecord(TABLE, id, updateData);
+    if (!res.success) throw new Error(res.error || "Failed to update client");
 
     await recordFieldDiffs({
       entityType: "client",
@@ -144,7 +126,6 @@ export async function updateClient(id: string, data: Partial<Client>) {
       fields: CLIENT_PROFILE_FIELDS,
     });
 
-    // Re-sync auto tasks: advisor reassignment, marriageDate edits, etc.
     if (current?.personId) await syncBirthdayForPerson(current.personId);
     await syncAnniversaryForClient(id);
 
@@ -160,14 +141,12 @@ export async function updateClient(id: string, data: Partial<Client>) {
 
 export async function deleteClient(id: string) {
   try {
-    // Capture personId before deletion so we can clean up the birthday auto task.
-    const { data: existing } = await supabaseServer.from(TABLE).select("personId").eq("id", id).single();
+    const existingRes = await FirebaseService.getRecordById<Client>(TABLE, id);
+    const existing = existingRes.data;
 
-    const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
+    const res = await FirebaseService.deleteRecord(TABLE, id);
+    if (!res.success) throw new Error(res.error || "Failed to delete client");
 
-    if (error) throw new Error((error as { message: string }).message);
-
-    // Remove auto tasks anchored to this client.
     if (existing?.personId) await removeAutoTask("birthday", existing.personId);
     await removeAutoTask("anniversary", id);
 
@@ -190,31 +169,23 @@ export async function deleteClient(id: string) {
 
 export async function getClientAssociationCounts(clientId: string) {
   try {
-    const [
-      lawFirmsRes,
-      accountingFirmsRes,
-      insuranceAgenciesRes,
-      actuarialFirmsRes,
-      banksRes,
-      propertyAndCasualtyRes,
-      moneyManagersRes,
-      recordKeepersRes,
-      lifeRes,
-      disabilityRes,
-      ltcRes,
-    ] = await Promise.all([
-      supabaseServer.from("law_firms").select("id, clientIds"),
-      supabaseServer.from("accounting_firms").select("id, clientIds"),
-      supabaseServer.from("insurance_agencies").select("id, clientIds"),
-      supabaseServer.from("actuarial_firms").select("id, clientIds"),
-      supabaseServer.from("banks").select("id, clientIds"),
-      supabaseServer.from("property_and_casualty_firms").select("id, clientIds"),
-      supabaseServer.from("money_managers").select("id, clientIds"),
-      supabaseServer.from("record_keepers").select("id, clientIds"),
-      supabaseServer.from("life_insurance_companies").select("id, clientIds"),
-      supabaseServer.from("disability_insurance_companies").select("id, clientIds"),
-      supabaseServer.from("long_term_care_insurance").select("id, clientIds"),
-    ]);
+    const collections = [
+      "law_firms",
+      "accounting_firms",
+      "insurance_agencies",
+      "actuarial_firms",
+      "banks",
+      "property_and_casualty_firms",
+      "money_managers",
+      "record_keepers",
+      "life_insurance_companies",
+      "disability_insurance_companies",
+      "long_term_care_insurance",
+    ];
+
+    const results = await Promise.all(
+      collections.map((col) => FirebaseService.getRecords<{ clientIds?: string[] }>(col)),
+    );
 
     const filterByIds = (list: { clientIds?: string[] | null }[]) =>
       list.filter((item) => item.clientIds?.includes(clientId)).length;
@@ -222,17 +193,17 @@ export async function getClientAssociationCounts(clientId: string) {
     return {
       success: true,
       counts: {
-        accountingFirms: filterByIds(accountingFirmsRes.data || []),
-        insuranceAgencies: filterByIds(insuranceAgenciesRes.data || []),
-        actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
-        banks: filterByIds(banksRes.data || []),
-        lawFirms: filterByIds(lawFirmsRes.data || []),
-        propertyAndCasualty: filterByIds(propertyAndCasualtyRes.data || []),
-        moneyManagers: filterByIds(moneyManagersRes.data || []),
-        recordKeepers: filterByIds(recordKeepersRes.data || []),
-        lifeInsurance: filterByIds(lifeRes.data || []),
-        disabilityInsurance: filterByIds(disabilityRes.data || []),
-        longTermCare: filterByIds(ltcRes.data || []),
+        lawFirms: filterByIds(results[0].data || []),
+        accountingFirms: filterByIds(results[1].data || []),
+        insuranceAgencies: filterByIds(results[2].data || []),
+        actuarialFirms: filterByIds(results[3].data || []),
+        banks: filterByIds(results[4].data || []),
+        propertyAndCasualty: filterByIds(results[5].data || []),
+        moneyManagers: filterByIds(results[6].data || []),
+        recordKeepers: filterByIds(results[7].data || []),
+        lifeInsurance: filterByIds(results[8].data || []),
+        disabilityInsurance: filterByIds(results[9].data || []),
+        longTermCare: filterByIds(results[10].data || []),
       },
     };
   } catch (error) {

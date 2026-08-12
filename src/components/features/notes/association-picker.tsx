@@ -37,8 +37,10 @@ export function AssociationPicker({ value, onChange }: AssociationPickerProps) {
       const opts: Option[] = [];
       if (clientsRes.success) {
         for (const c of clientsRes.clients || []) {
-          const name = `${c.person?.firstName ?? ""} ${c.person?.lastName ?? ""}`.trim() || "Unnamed client";
-          opts.push({ entityType: "client", entityId: c.id, name });
+          if (c.id) {
+            const name = `${c.person?.firstName ?? ""} ${c.person?.lastName ?? ""}`.trim() || "Unnamed client";
+            opts.push({ entityType: "client", entityId: c.id, name });
+          }
         }
       }
       if (companiesRes.success) {

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Trash2, UploadCloud } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -103,7 +103,7 @@ export function ProfileForm() {
       }
 
       const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/${Date.now()}-avatar.${fileExt}`;
+      const filePath = `${user.uid}/${Date.now()}-avatar.${fileExt}`;
 
       // 2. Upload to storage
       const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, { upsert: true });
@@ -115,7 +115,7 @@ export function ProfileForm() {
       const publicUrl = urlData.publicUrl;
 
       // 4. Remove old custom photo if it was in the avatars storage
-      if (photoURL?.includes("/avatars/") && photoURL.includes(user.id)) {
+      if (photoURL?.includes("/avatars/") && photoURL.includes(user.uid)) {
         try {
           const oldPath = photoURL.split("/public/avatars/")[1];
           if (oldPath) {
@@ -162,7 +162,7 @@ export function ProfileForm() {
   const handleRemovePhoto = async () => {
     if (!user) return;
     // If it's a custom uploaded photo, remove it from storage immediately to keep bucket clean
-    if (photoURL?.includes("/avatars/") && photoURL.includes(user.id)) {
+    if (photoURL?.includes("/avatars/") && photoURL.includes(user.uid)) {
       try {
         const oldPath = photoURL.split("/public/avatars/")[1];
         if (oldPath) {
@@ -190,21 +190,11 @@ export function ProfileForm() {
           photoURL: photoURL || null,
           updatedAt: new Date().toISOString(),
         })
-        .eq("uid", user.id);
+        .eq("uid", user.uid);
 
       if (dbError) throw dbError;
 
-      // 2. Update user metadata in Supabase Auth
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          firstName: values.firstName,
-          lastName: values.lastName,
-        },
-      });
-
-      if (authError) throw authError;
-
-      // 3. Update client-side global store
+      // 2. Update client-side global store
       setProfile({
         ...profile,
         firstName: values.firstName,

@@ -79,16 +79,16 @@ export default async function ClientsPage() {
     advisors.map((a) => [a.uid, `${a.firstName} ${a.lastName}`.trim() || a.uid] as const),
   );
 
-  const clients = rawClients.map((client) => {
+  const clients = rawClients.map((client: any) => {
     const isLinked =
-      policies.some((p) => p.clientId === client.id) ||
-      lawFirms.some((l) => l.clientIds?.includes(client.id!)) ||
-      accountingFirms.some((a) => a.clientIds?.includes(client.id!)) ||
-      insuranceAgencies.some((ia) => ia.clientIds?.includes(client.id!)) ||
-      actuarialFirms.some((act) => act.clientIds?.includes(client.id!)) ||
-      banks.some((b) => b.clientIds?.includes(client.id!)) ||
-      propertyAndCasualtyFirms.some((pc) => pc.clientIds?.includes(client.id!)) ||
-      companies.some((comp) => (comp as { clientIds?: string[] }).clientIds?.includes(client.id!));
+      policies.some((p: any) => p.clientId === client.id) ||
+      lawFirms.some((l: any) => l.clientIds?.includes(client.id!)) ||
+      accountingFirms.some((a: any) => a.clientIds?.includes(client.id!)) ||
+      insuranceAgencies.some((ia: any) => ia.clientIds?.includes(client.id!)) ||
+      actuarialFirms.some((act: any) => act.clientIds?.includes(client.id!)) ||
+      banks.some((b: any) => b.clientIds?.includes(client.id!)) ||
+      propertyAndCasualtyFirms.some((pc: any) => pc.clientIds?.includes(client.id!)) ||
+      companies.some((comp: any) => comp.clientIds?.includes(client.id!));
 
     return {
       ...client,

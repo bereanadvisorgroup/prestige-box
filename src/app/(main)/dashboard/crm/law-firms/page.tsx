@@ -27,7 +27,7 @@ export default async function LawFirmsPage() {
   }
 
   const rawLawFirms = result.lawFirms || [];
-  const lawFirms = rawLawFirms.map((lawFirm) => ({
+  const lawFirms = rawLawFirms.map((lawFirm: any) => ({
     ...lawFirm,
     isLinked: lawFirm.clientIds && lawFirm.clientIds.length > 0,
   }));

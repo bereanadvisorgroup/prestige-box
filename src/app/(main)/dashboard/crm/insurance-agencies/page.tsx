@@ -29,7 +29,7 @@ export default async function InsuranceAgenciesPage() {
   }
 
   const rawInsuranceAgencies = result.insuranceAgencies || [];
-  const insuranceAgencies = rawInsuranceAgencies.map((agency) => ({
+  const insuranceAgencies = rawInsuranceAgencies.map((agency: any) => ({
     ...agency,
     isLinked: agency.clientIds && agency.clientIds.length > 0,
   }));

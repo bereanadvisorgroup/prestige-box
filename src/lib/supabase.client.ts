@@ -1,107 +1,113 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
-let client: SupabaseClient | null = null;
+import { auth, db } from "@/lib/firebase.client";
 
-function getClient() {
-  if (client) return client;
+class ClientFirestoreQueryBuilder {
+  private colName: string;
+  private filters: Array<{ field: string; op: any; val: any }> = [];
+  private limitNum?: number;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      "Missing Supabase client environment variables. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are configured.",
-    );
+  constructor(colName: string) {
+    this.colName = colName;
   }
 
-  client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      storage: {
-        getItem: (key) => {
-          // localStorage holds the full session and is the source of truth for the
-          // client. The cookie (read below) is only a trimmed copy for the server
-          // proxy (src/proxy.ts), so prefer localStorage to avoid handing the client a partial session.
-          if (typeof window !== "undefined") {
-            const stored = localStorage.getItem(key);
-            if (stored) return stored;
+  select(_fields?: string) {
+    return this;
+  }
+
+  eq(field: string, val: any) {
+    this.filters.push({ field, op: "==", val });
+    return this;
+  }
+
+  ilike(field: string, val: any) {
+    this.filters.push({ field, op: "==", val: String(val).replace(/%/g, "").toLowerCase() });
+    return this;
+  }
+
+  limit(n: number) {
+    this.limitNum = n;
+    return this;
+  }
+
+  async maybeSingle() {
+    try {
+      let q = query(collection(db, this.colName));
+      for (const f of this.filters) {
+        q = query(q, where(f.field, f.op, f.val));
+      }
+      if (this.limitNum) {
+        q = query(q, limit(this.limitNum));
+      }
+      const snap = await getDocs(q);
+      if (snap.empty) return { data: null, error: null };
+      const d = snap.docs[0];
+      return { data: { id: d.id, ...d.data() }, error: null };
+    } catch (err: any) {
+      return { data: null, error: { message: err?.message || String(err) } };
+    }
+  }
+
+  async single() {
+    return this.maybeSingle();
+  }
+
+  async update(payload: any) {
+    const colName = this.colName;
+    const filters = this.filters;
+    return {
+      eq: async (field: string, val: any) => {
+        try {
+          let q = query(collection(db, colName));
+          for (const f of filters) {
+            q = query(q, where(f.field, f.op, f.val));
           }
-          if (typeof document !== "undefined") {
-            const cookie = document.cookie.split("; ").find((row) => row.startsWith(`${key}=`));
-            if (cookie) {
-              try {
-                return decodeURIComponent(cookie.split("=")[1]);
-              } catch (e) {
-                console.error("Error decoding auth cookie:", e);
-              }
-            }
+          q = query(q, where(field, "==", val));
+          const snap = await getDocs(q);
+          for (const d of snap.docs) {
+            await updateDoc(doc(db, colName, d.id), payload);
           }
-          return null;
-        },
-        setItem: (key, value) => {
-          if (typeof window !== "undefined") {
-            localStorage.setItem(key, value);
-          }
-          if (typeof document !== "undefined") {
-            // The full Supabase session can exceed the browser's ~4KB single-cookie
-            // limit — Azure/Microsoft sign-ins add large provider tokens and a heavy
-            // user object, so the browser silently drops the oversized cookie and the
-            // server proxy (src/proxy.ts) sees no session, bouncing the user to /login.
-            // The proxy only needs the access_token JWT (for exp/aal), so write a
-            // trimmed copy to the cookie and keep the full session in localStorage.
-            let cookieValue = value;
-            try {
-              const parsed = JSON.parse(value);
-              if (parsed && typeof parsed === "object" && parsed.access_token) {
-                const { provider_token, provider_refresh_token, user, ...rest } = parsed;
-                cookieValue = JSON.stringify(rest);
-              }
-            } catch {
-              // Non-session values (e.g. the PKCE code verifier) are small; store as-is.
-            }
-            // biome-ignore lint/suspicious/noDocumentCookie: Shared with server via cookies
-            document.cookie = `${key}=${encodeURIComponent(cookieValue)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax; Secure`;
-          }
-        },
-        removeItem: (key) => {
-          if (typeof document !== "undefined") {
-            // biome-ignore lint/suspicious/noDocumentCookie: Clear cookie on sign out
-            document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-          }
-          if (typeof window !== "undefined") {
-            localStorage.removeItem(key);
-          }
-        },
+          return { data: null, error: null };
+        } catch (err: any) {
+          return { data: null, error: { message: err?.message || String(err) } };
+        }
       },
-      experimental: {
-        passkey: true,
-      },
-    },
-  });
-  return client;
+    };
+  }
 }
 
-export const supabase = new Proxy({} as unknown as SupabaseClient, {
-  get(_target, prop, receiver) {
-    const activeClient = getClient();
-    const value = Reflect.get(activeClient, prop, receiver);
-    if (typeof value === "function") {
-      return value.bind(activeClient);
-    }
-    return value;
+export const supabase: any = {
+  from: (table: string) => new ClientFirestoreQueryBuilder(table),
+  auth: {
+    getSession: async () => ({ data: { session: auth.currentUser ? { user: auth.currentUser } : null } }),
+    onAuthStateChange: (cb: any) => {
+      const unsub = auth.onAuthStateChanged((user) => {
+        cb(user ? "SIGNED_IN" : "SIGNED_OUT", user ? { user } : null);
+      });
+      return { data: { subscription: { unsubscribe: unsub } } };
+    },
+    signOut: async () => {
+      await auth.signOut();
+      return { error: null };
+    },
+    mfa: {
+      getAuthenticatorAssuranceLevel: async () => ({
+        data: { currentLevel: "aal1", nextLevel: "aal1" },
+        error: null,
+      }),
+    },
+    passkey: {
+      list: async () => ({ data: [], error: null }),
+    },
   },
-  set(_target, prop, value, receiver) {
-    const activeClient = getClient();
-    return Reflect.set(activeClient, prop, value, receiver);
-  },
-  ownKeys(_target) {
-    const activeClient = getClient();
-    return Reflect.ownKeys(activeClient);
-  },
-  getOwnPropertyDescriptor(_target, prop) {
-    const activeClient = getClient();
-    return Reflect.getOwnPropertyDescriptor(activeClient, prop);
-  },
-});
+};

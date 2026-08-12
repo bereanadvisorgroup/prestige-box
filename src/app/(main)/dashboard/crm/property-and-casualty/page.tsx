@@ -27,7 +27,7 @@ export default async function PropertyAndCasualtyPage() {
   }
 
   const rawFirms = result.propertyAndCasualtyFirms || [];
-  const firms = rawFirms.map((firm) => ({
+  const firms = rawFirms.map((firm: any) => ({
     ...firm,
     isLinked: firm.clientIds && firm.clientIds.length > 0,
   }));

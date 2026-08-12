@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { GoogleAuthProvider, OAuthProvider, signInWithPopup } from "firebase/auth";
+
 import { registerUserWithPasskeyInit, registerUserWithPassword } from "@/actions/auth-flow";
 import { PasswordRequirements } from "@/app/(main)/auth/_components/password-requirements";
 import { GoogleButton } from "@/app/(main)/auth/_components/social-auth/google-button";
@@ -18,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase.client";
+import { auth } from "@/lib/firebase.client";
 
 const passwordValidation = z
   .string()
@@ -142,16 +144,22 @@ function CreateAccountContent() {
   const handleOAuthRegister = async (provider: "google" | "azure") => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/dashboard/default`,
-        },
-      });
-      if (error) throw error;
+      let authProvider;
+      if (provider === "google") {
+        authProvider = new GoogleAuthProvider();
+        authProvider.setCustomParameters({ prompt: "select_account" });
+      } else {
+        authProvider = new OAuthProvider("microsoft.com");
+        authProvider.addScope("openid");
+        authProvider.addScope("profile");
+        authProvider.addScope("email");
+      }
+      await signInWithPopup(auth, authProvider);
+      router.replace("/dashboard/default");
     } catch (error) {
       console.error("Social signup error:", error);
       toast.error((error as Error).message || `Failed to sign up with ${provider}`);
+    } finally {
       setIsLoading(false);
     }
   };

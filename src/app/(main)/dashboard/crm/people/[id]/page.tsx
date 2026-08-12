@@ -108,22 +108,22 @@ export default async function PersonPage({ params }: PersonPageProps) {
   const associatedPropertyAndCasualties = (
     (propertyAndCasualtyFirmsRes.success && propertyAndCasualtyFirmsRes.propertyAndCasualtyFirms) ||
     []
-  ).filter((pc) => !!person.id && pc.personIds?.includes(person.id));
+  ).filter((pc: any) => !!person.id && pc.personIds?.includes(person.id));
 
   const associatedLife = ((lifeRes.success && lifeRes.companies) || []).filter(
-    (c) => !!person.id && c.personIds?.includes(person.id),
+    (c: any) => !!person.id && c.personIds?.includes(person.id),
   );
   const associatedDisability = ((disabilityRes.success && disabilityRes.companies) || []).filter(
-    (c) => !!person.id && c.personIds?.includes(person.id),
+    (c: any) => !!person.id && c.personIds?.includes(person.id),
   );
   const associatedLtc = ((ltcRes.success && ltcRes.companies) || []).filter(
-    (c) => !!person.id && c.personIds?.includes(person.id),
+    (c: any) => !!person.id && c.personIds?.includes(person.id),
   );
   const associatedMoneyManagers = ((moneyRes.success && moneyRes.moneyManagers) || []).filter(
-    (c) => !!person.id && c.personIds?.includes(person.id),
+    (c: any) => !!person.id && c.personIds?.includes(person.id),
   );
   const associatedRecordKeepers = ((recordRes.success && recordRes.recordKeepers) || []).filter(
-    (c) => !!person.id && c.personIds?.includes(person.id),
+    (c: any) => !!person.id && c.personIds?.includes(person.id),
   );
 
   // Fetch addresses

@@ -1,34 +1,32 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase.server";
+import { adminAuth, adminDb } from "@/lib/firebase.server";
 
 async function getAuthUserByEmail(email: string) {
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-    perPage: 1000,
-  });
-  if (error) throw error;
-  const user = data?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-  return user || null;
+  try {
+    const userRecord = await adminAuth.getUserByEmail(email);
+    return userRecord || null;
+  } catch (error: unknown) {
+    const err = error as { code?: string };
+    if (err.code === "auth/user-not-found") {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function checkUserStatus(email: string) {
   try {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Check if email exists in public.users
-    const { data: dbUser, error: dbError } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("email", cleanEmail)
-      .maybeSingle();
+    // 1. Check if email exists in users collection in Firestore
+    const snapshot = await adminDb.collection("users").where("email", "==", cleanEmail).limit(1).get();
 
-    if (dbError) throw dbError;
-
-    if (!dbUser) {
+    if (snapshot.empty) {
       return { success: true, status: "no_account" as const };
     }
 
-    // 2. Check if user exists in auth.users
+    // 2. Check if user exists in Firebase Auth
     const authUser = await getAuthUserByEmail(cleanEmail);
     const hasAuth = !!authUser;
 
@@ -47,17 +45,15 @@ export async function registerUserWithPassword(data: { email: string; password: 
   try {
     const cleanEmail = data.email.trim().toLowerCase();
 
-    // 1. Verify whitelisting
-    const { data: dbUser, error: dbError } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("email", cleanEmail)
-      .maybeSingle();
+    // 1. Verify whitelisting in Firestore
+    const snapshot = await adminDb.collection("users").where("email", "==", cleanEmail).limit(1).get();
 
-    if (dbError) throw dbError;
-    if (!dbUser) {
+    if (snapshot.empty) {
       return { success: false, error: "You do not have an account, please contact our office for assistance." };
     }
+
+    const dbUserDoc = snapshot.docs[0];
+    const dbUser = dbUserDoc.data();
 
     // 2. Verify no existing auth record
     const authUser = await getAuthUserByEmail(cleanEmail);
@@ -65,26 +61,18 @@ export async function registerUserWithPassword(data: { email: string; password: 
       return { success: false, error: "An account already exists for this email address. Please sign in." };
     }
 
-    // 3. Create the user in auth.users
-    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // 3. Create the user in Firebase Auth
+    const userRecord = await adminAuth.createUser({
       email: cleanEmail,
       password: data.password,
-      email_confirm: true,
-      user_metadata: {
-        firstName: dbUser.firstName,
-        lastName: dbUser.lastName,
-        role: dbUser.role,
-      },
-      app_metadata: {
-        role: dbUser.role,
-      },
+      displayName: `${dbUser.firstName || ""} ${dbUser.lastName || ""}`.trim(),
     });
 
-    if (authError) throw authError;
-    if (!authRecord?.user) throw new Error("Failed to create auth record.");
-
-    // Note: The `AFTER INSERT` trigger `tr_sync_user_profile_uid` will automatically
-    // update the `uid` column in public.users to match `authRecord.user.id`.
+    // Update uid in users collection document
+    await dbUserDoc.ref.update({
+      uid: userRecord.uid,
+      updatedAt: new Date().toISOString(),
+    });
 
     return { success: true };
   } catch (error) {
@@ -98,16 +86,14 @@ export async function registerUserWithPasskeyInit(data: { email: string }) {
     const cleanEmail = data.email.trim().toLowerCase();
 
     // 1. Verify whitelisting
-    const { data: dbUser, error: dbError } = await supabaseAdmin
-      .from("users")
-      .select("*")
-      .eq("email", cleanEmail)
-      .maybeSingle();
+    const snapshot = await adminDb.collection("users").where("email", "==", cleanEmail).limit(1).get();
 
-    if (dbError) throw dbError;
-    if (!dbUser) {
+    if (snapshot.empty) {
       return { success: false, error: "You do not have an account, please contact our office for assistance." };
     }
+
+    const dbUserDoc = snapshot.docs[0];
+    const dbUser = dbUserDoc.data();
 
     // 2. Verify no existing auth record
     const authUser = await getAuthUserByEmail(cleanEmail);
@@ -117,22 +103,16 @@ export async function registerUserWithPasskeyInit(data: { email: string }) {
 
     // 3. Create auth user with temporary random password
     const tempPassword = `${Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10)}A1!`;
-    const { data: authRecord, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const userRecord = await adminAuth.createUser({
       email: cleanEmail,
       password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        firstName: dbUser.firstName,
-        lastName: dbUser.lastName,
-        role: dbUser.role,
-      },
-      app_metadata: {
-        role: dbUser.role,
-      },
+      displayName: `${dbUser.firstName || ""} ${dbUser.lastName || ""}`.trim(),
     });
 
-    if (authError) throw authError;
-    if (!authRecord?.user) throw new Error("Failed to create auth record.");
+    await dbUserDoc.ref.update({
+      uid: userRecord.uid,
+      updatedAt: new Date().toISOString(),
+    });
 
     return { success: true, tempPassword };
   } catch (error) {
