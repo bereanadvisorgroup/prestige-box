@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { sanitizeNoteHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { MAX_NOTE_DEPTH, type NoteNode } from "@/types/notes";
@@ -171,8 +172,8 @@ export function NoteItem({ node, onChanged }: NoteItemProps) {
               {node.depth === 0 && node.title && <h2 className="font-semibold text-lg">{node.title}</h2>}
               <div
                 className="prose prose-sm dark:prose-invert max-w-none [&_.mention]:font-medium [&_.mention]:text-primary [&_a]:text-primary [&_a]:underline"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: body is sanitized server-side in getNoteThread (DOMPurify)
-                dangerouslySetInnerHTML={{ __html: node.body }}
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: body is sanitized with DOMPurify
+                dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(node.body) }}
               />
             </>
           )}

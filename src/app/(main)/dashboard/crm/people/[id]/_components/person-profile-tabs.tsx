@@ -296,8 +296,8 @@ export function PersonProfileTabs({
                       </p>
                       {person.emails && person.emails.length > 0 ? (
                         <div className="space-y-2">
-                          {person.emails.map((email) => (
-                            <div key={email.id} className="flex items-center gap-2 text-sm">
+                          {person.emails.map((email, idx) => (
+                            <div key={email.id || email.address || idx} className="flex items-center gap-2 text-sm">
                               <User className="h-4 w-4 text-muted-foreground" />
                               <span className="font-semibold">{email.address}</span>
                               <Badge
@@ -320,8 +320,8 @@ export function PersonProfileTabs({
                       </p>
                       {person.phones && person.phones.length > 0 ? (
                         <div className="space-y-2">
-                          {person.phones.map((phone) => (
-                            <div key={phone.id} className="flex items-center gap-2 text-sm">
+                          {person.phones.map((phone, idx) => (
+                            <div key={phone.id || phone.number || idx} className="flex items-center gap-2 text-sm">
                               <Phone className="h-4 w-4 text-muted-foreground" />
                               <span className="font-semibold">{formatPhoneNumber(phone.number)}</span>
                               <Badge
@@ -344,11 +344,11 @@ export function PersonProfileTabs({
                       </p>
                       {person.socialMedia && person.socialMedia.length > 0 ? (
                         <div className="space-y-2">
-                          {person.socialMedia.map((sm) => {
+                          {person.socialMedia.map((sm, idx) => {
                             const Icon = Globe;
 
                             return (
-                              <div key={sm.id} className="flex items-center gap-2 text-sm">
+                              <div key={sm.id || sm.url || idx} className="flex items-center gap-2 text-sm">
                                 <Icon className="h-4 w-4 text-muted-foreground" />
                                 <a
                                   href={sm.url.startsWith("http") ? sm.url : `https://${sm.url}`}
@@ -386,11 +386,11 @@ export function PersonProfileTabs({
                   <CardContent className="pt-6">
                     {addresses.length > 0 ? (
                       <div className="space-y-4">
-                        {addresses.map((address) => {
+                        {addresses.map((address, idx) => {
                           const personAddrInfo = person.addresses?.find((a) => a.id === address.id);
                           return (
                             <div
-                              key={address.id}
+                              key={address.id || idx}
                               className="group flex items-start justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/5"
                             >
                               <div className="space-y-1">
@@ -485,7 +485,7 @@ export function PersonProfileTabs({
                     </div>
                   )}
 
-                  {associatedClient.employments && associatedClient.employments.length > 0 && (
+                  {Array.isArray(associatedClient.employments) && associatedClient.employments.length > 0 && (
                     <div className="border-t pt-4">
                       <h4 className="mb-3 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                         <Briefcase className="h-4 w-4 text-primary" /> Employment History
@@ -506,10 +506,10 @@ export function PersonProfileTabs({
                     </div>
                   )}
 
-                  {((associatedClient.mortgages && associatedClient.mortgages.length > 0) ||
-                    (associatedClient.liabilities && associatedClient.liabilities.length > 0)) && (
+                  {((Array.isArray(associatedClient.mortgages) && associatedClient.mortgages.length > 0) ||
+                    (Array.isArray(associatedClient.liabilities) && associatedClient.liabilities.length > 0)) && (
                     <div className="grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
-                      {associatedClient.mortgages && associatedClient.mortgages.length > 0 && (
+                      {Array.isArray(associatedClient.mortgages) && associatedClient.mortgages.length > 0 && (
                         <div>
                           <h4 className="mb-3 flex items-center gap-1.5 font-semibold text-muted-foreground text-sm">
                             <Home className="h-4 w-4 text-primary" /> Mortgages

@@ -7,6 +7,7 @@ import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Client, ClientSchema } from "@/types/crm";
 
+import { normalizeClient, normalizePerson } from "@/lib/crm-normalize";
 import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "clients";
@@ -18,24 +19,20 @@ export async function getClients() {
     if (clientsError) throw new Error((clientsError as { message: string }).message);
     if (!clients || clients.length === 0) return { success: true, clients: [] };
 
-    // Fetch person details for each client
-    const personIds = Array.from(new Set(clients.map((c) => c.personId)));
-    if (personIds.length === 0) return { success: true, clients: [] };
-
-    const { data: people, error: peopleError } = await supabaseServer.from("people").select("*").in("id", personIds);
+    const { data: people, error: peopleError } = await supabaseServer.from("people").select("*");
 
     if (peopleError) throw new Error((peopleError as { message: string }).message);
 
     const peopleMap = (people || []).reduce(
       (acc, person) => {
-        acc[person.id] = person;
+        acc[person.id] = normalizePerson(person);
         return acc;
       },
       {} as Record<string, (typeof people)[number]>,
     );
 
     const clientWithPeople = clients.map((client) => ({
-      ...client,
+      ...normalizeClient(client),
       person: peopleMap[client.personId] || null,
     }));
 
@@ -70,7 +67,7 @@ export async function getClient(id: string) {
       throw new Error((personError as { message: string }).message);
     }
 
-    return { success: true, client: client as Client, person: person || null };
+    return { success: true, client: normalizeClient(client) as Client, person: person ? normalizePerson(person) : null };
   } catch (error) {
     console.error(`[getClient] Error:`, error);
     return { success: false, error: (error as { message: string }).message };

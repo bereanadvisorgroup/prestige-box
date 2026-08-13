@@ -3,9 +3,26 @@
 import { revalidatePath } from "next/cache";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { fetchInChunks } from "@/lib/fetch-chunks";
 import { type Household, type HouseholdMember, HouseholdSchema, type Person } from "@/types/crm";
 
 const TABLE = "households";
+
+function parseHouseholdMembers(h: any): HouseholdMember[] {
+  if (!h) return [];
+  const raw = h.members ?? h.memberIds;
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 export async function getHouseholds() {
   try {
@@ -16,7 +33,7 @@ export async function getHouseholds() {
     // Collect all member client/person IDs to resolve names
     const allMemberIds: string[] = [];
     for (const h of households || []) {
-      const memberList = (h.members || h.memberIds || []) as HouseholdMember[];
+      const memberList = parseHouseholdMembers(h);
       for (const m of memberList) {
         const id = m.clientId || (m as unknown as { personId?: string }).personId;
         if (id) allMemberIds.push(id);
@@ -27,12 +44,14 @@ export async function getHouseholds() {
     const personNameMap: Record<string, string> = {};
 
     if (uniqueIds.length > 0) {
-      const { data: clientsData } = await supabaseServer.from("clients").select("id, personId").in("id", uniqueIds);
+      const clientsData = await fetchInChunks(uniqueIds, (chunk) =>
+        supabaseServer.from("clients").select("id, personId").in("id", chunk).then((res) => res.data || []),
+      );
 
       const clientToPersonMap: Record<string, string> = {};
       const personIdsToFetch = new Set<string>();
 
-      for (const c of clientsData || []) {
+      for (const c of clientsData) {
         clientToPersonMap[c.id] = c.personId;
         personIdsToFetch.add(c.personId);
       }
@@ -43,12 +62,11 @@ export async function getHouseholds() {
         }
       }
 
-      const { data: peopleData } = await supabaseServer
-        .from("people")
-        .select("id, firstName, lastName")
-        .in("id", Array.from(personIdsToFetch));
+      const peopleData = await fetchInChunks(Array.from(personIdsToFetch), (chunk) =>
+        supabaseServer.from("people").select("id, firstName, lastName").in("id", chunk).then((res) => res.data || []),
+      );
 
-      for (const p of peopleData || []) {
+      for (const p of peopleData) {
         personNameMap[p.id] = `${p.firstName} ${p.lastName}`;
       }
 
@@ -60,7 +78,7 @@ export async function getHouseholds() {
     }
 
     const enrichedHouseholds = (households || []).map((h) => {
-      const memberList = (h.members || h.memberIds || []) as HouseholdMember[];
+      const memberList = parseHouseholdMembers(h);
       const head = memberList.find((m) => m.role === "HEAD" || (m.role as string) === "home_owner");
       const spouse = memberList.find((m) => m.role === "SPOUSE" || (m.role as string) === "PARTNER");
       const dependents = memberList.filter((m) => m.role === "DEPENDENT" || (m.role as string) === "dependent");
@@ -131,7 +149,7 @@ export async function getHousehold(id: string) {
       relatedTo?: "HEAD" | "SPOUSE";
       tags?: string[];
     }[] = [];
-    const memberList = household.members || household.memberIds || [];
+    const memberList = parseHouseholdMembers(household);
     if (memberList.length > 0) {
       const clientIds = memberList.map((m: { clientId?: string; personId?: string }) => m.clientId || m.personId);
       const { data: clientsData } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);

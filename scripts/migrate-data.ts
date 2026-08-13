@@ -70,6 +70,67 @@ function parseHouseholdName(name: string): { lastName: string; firstNames: strin
   return { lastName, firstNames };
 }
 
+// Helper to parse contact tags from comma-separated string or string array
+function getContactTags(c: any): string[] {
+  if (!c || !c.tags) return [];
+  if (Array.isArray(c.tags)) {
+    return c.tags.map((t: any) => String(t).trim()).filter(Boolean);
+  }
+  if (typeof c.tags === "string") {
+    return c.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+// Helper to check if contact has a specific tag (case-insensitive)
+function hasTag(c: any, targetTag: string): boolean {
+  const tags = getContactTags(c);
+  const targetLower = targetTag.trim().toLowerCase();
+  return tags.some((t) => t.toLowerCase() === targetLower);
+}
+
+// Helper to export an array of contact objects to RFC 4180 compliant CSV
+function exportContactsToCsv(contacts: any[], outputPath: string) {
+  const dir = path.dirname(outputPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  if (contacts.length === 0) {
+    fs.writeFileSync(outputPath, "", "utf8");
+    return;
+  }
+
+  const keySet = new Set<string>();
+  for (const c of contacts) {
+    for (const key of Object.keys(c)) {
+      keySet.add(key);
+    }
+  }
+  const headers = Array.from(keySet);
+
+  const escapeCsv = (val: any): string => {
+    if (val === null || val === undefined) return '""';
+    let str: string;
+    if (typeof val === "object") {
+      str = JSON.stringify(val);
+    } else {
+      str = String(val);
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  const lines: string[] = [];
+  lines.push(headers.map(escapeCsv).join(","));
+
+  for (const c of contacts) {
+    const row = headers.map((h) => escapeCsv(c[h]));
+    lines.push(row.join(","));
+  }
+
+  fs.writeFileSync(outputPath, lines.join("\n"), "utf8");
+}
+
 // Generic helper to flush array of rows in batches
 async function flushBatch<T>(
   batch: T[],
@@ -84,8 +145,26 @@ async function flushBatch<T>(
 
 async function runMigration() {
   const startTime = Date.now();
-  const rawArg = process.argv[2] || "scripts/20260801_ClientList.json";
-  const jsonPathArg = rawArg.replace(/^['"]|['"]$/g, "");
+
+  let jsonPathArg = process.argv[2] ? process.argv[2].replace(/^['"]|['"]$/g, "") : "";
+
+  if (!jsonPathArg) {
+    const candidatePaths = [
+      "migrate/20260801_ClientList.json",
+      "migration/20260801_ClientList.json",
+      "scripts/20260801_ClientList.json",
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(path.resolve(process.cwd(), p))) {
+        jsonPathArg = p;
+        break;
+      }
+    }
+    if (!jsonPathArg) {
+      jsonPathArg = "migrate/20260801_ClientList.json";
+    }
+  }
+
   const jsonPath = path.resolve(process.cwd(), jsonPathArg);
 
   if (!fs.existsSync(jsonPath)) {
@@ -114,6 +193,80 @@ async function runMigration() {
 
   console.log(`JSON parsed successfully: ${contacts.length} contacts, ${notes.length} notes, ${comments.length} comments.`);
 
+  // Result trackers
+  const contactResultsMap = new Map<number, {
+    originalId: number;
+    name: string;
+    type: string;
+    tags: string[];
+    status: "successful" | "ignored";
+    reason: string;
+    newId: string | null;
+    personId?: string | null;
+    entityType: string | null;
+  }>();
+
+  const fdcMailingContacts: any[] = [];
+  const adcpaContacts: any[] = [];
+  const contactsToImport: any[] = [];
+
+  for (const c of contacts) {
+    const tags = getContactTags(c);
+    const hasFdc = hasTag(c, "FDC Mailing List");
+    const hasAdcpa = hasTag(c, "ADCPA");
+    const contactName = (c.name || `${c.first_name || ""} ${c.last_name || ""}`).trim() || "Unknown";
+
+    if (hasFdc) {
+      fdcMailingContacts.push(c);
+    }
+    if (hasAdcpa) {
+      adcpaContacts.push(c);
+    }
+
+    if (hasFdc || hasAdcpa) {
+      const reasons: string[] = [];
+      if (hasFdc) reasons.push("Has tag 'FDC Mailing List'");
+      if (hasAdcpa) reasons.push("Has tag 'ADCPA'");
+
+      contactResultsMap.set(c.id, {
+        originalId: c.id,
+        name: contactName,
+        type: c.type || "Unknown",
+        tags,
+        status: "ignored",
+        reason: `Ignored: ${reasons.join(", ")}`,
+        newId: null,
+        personId: null,
+        entityType: null,
+      });
+    } else {
+      contactsToImport.push(c);
+      contactResultsMap.set(c.id, {
+        originalId: c.id,
+        name: contactName,
+        type: c.type || "Unknown",
+        tags,
+        status: "successful",
+        reason: "Imported into database",
+        newId: null,
+        personId: null,
+        entityType: null,
+      });
+    }
+  }
+
+  console.log(`\nTag filtering complete: ${contactsToImport.length} contacts to import, ${fdcMailingContacts.length} FDC Mailing List contacts, ${adcpaContacts.length} ADCPA contacts.`);
+
+  // Export CSV files to /migration/ directory
+  const fdcCsvPath = path.resolve(process.cwd(), "migration/FDC_MailingList.csv");
+  const adcpaCsvPath = path.resolve(process.cwd(), "migration/ADCPA.csv");
+
+  exportContactsToCsv(fdcMailingContacts, fdcCsvPath);
+  console.log(`Exported ${fdcMailingContacts.length} contacts to ${fdcCsvPath}`);
+
+  exportContactsToCsv(adcpaContacts, adcpaCsvPath);
+  console.log(`Exported ${adcpaContacts.length} contacts to ${adcpaCsvPath}`);
+
   // In-memory maps (Legacy ID -> New UUID)
   const personIdMap = new Map<number, string>();
   const clientIdMap = new Map<number, string>();
@@ -122,11 +275,11 @@ async function runMigration() {
 
   const allPeople: Array<{ legacyId: number; personId: string; clientId: string; firstName: string; lastName: string }> = [];
 
-  const personContacts = contacts.filter((c: any) => c.type === "Person");
-  const companyContacts = contacts.filter((c: any) => c.type === "Organization");
-  const householdContacts = contacts.filter((c: any) => c.type === "Household");
+  const personContacts = contactsToImport.filter((c: any) => c.type === "Person");
+  const companyContacts = contactsToImport.filter((c: any) => c.type === "Organization");
+  const householdContacts = contactsToImport.filter((c: any) => c.type === "Household");
 
-  console.log(`\nFound ${personContacts.length} Person contacts, ${companyContacts.length} Organization contacts, ${householdContacts.length} Household contacts.`);
+  console.log(`\nFound ${personContacts.length} Person contacts, ${companyContacts.length} Organization contacts, ${householdContacts.length} Household contacts to import.`);
 
   // Prepare batch buffers
   const addressesRows: any[] = [];
@@ -151,6 +304,13 @@ async function runMigration() {
 
     personIdMap.set(c.id, personUuid);
     clientIdMap.set(c.id, clientUuid);
+
+    const contactResult = contactResultsMap.get(c.id);
+    if (contactResult) {
+      contactResult.newId = clientUuid;
+      contactResult.personId = personUuid;
+      contactResult.entityType = "client";
+    }
 
     const firstName = (c.first_name || "").trim() || (c.name || "").trim() || "Unknown";
     const lastName = (c.last_name || "").trim() || "Unknown";
@@ -306,6 +466,12 @@ async function runMigration() {
     const companyUuid = crypto.randomUUID();
     companyIdMap.set(c.id, companyUuid);
 
+    const contactResult = contactResultsMap.get(c.id);
+    if (contactResult) {
+      contactResult.newId = companyUuid;
+      contactResult.entityType = "company";
+    }
+
     let addressId: string | null = null;
     if (Array.isArray(c.addresses) && c.addresses.length > 0) {
       const addr = c.addresses[0];
@@ -348,6 +514,12 @@ async function runMigration() {
   for (const c of householdContacts) {
     const householdUuid = crypto.randomUUID();
     householdIdMap.set(c.id, householdUuid);
+
+    const contactResult = contactResultsMap.get(c.id);
+    if (contactResult) {
+      contactResult.newId = householdUuid;
+      contactResult.entityType = "household";
+    }
 
     let addressId: string | null = null;
     if (Array.isArray(c.addresses) && c.addresses.length > 0) {
@@ -447,24 +619,54 @@ async function runMigration() {
   // --- STEP 5: Prepare Notes & Comments Batches ---
   console.log("\n--- STEP 5: Preparing Notes & Comments ---");
 
-  for (const n of notes) {
-    let targetEntityType: "client" | "company" | null = null;
-    let targetEntityId: string | null = null;
+  const noteResults: Array<{
+    originalId: number;
+    title: string;
+    contentSnippet: string;
+    createdAt: string;
+    associatedContactId: number | null;
+    associatedEntityId: string | null;
+    entityType: string | null;
+    status: "successful" | "ignored";
+    reason: string;
+  }> = [];
 
-    if (Array.isArray(n.related_resources)) {
-      for (const res of n.related_resources) {
-        if (res.id) {
-          if (clientIdMap.has(res.id)) {
-            targetEntityType = "client";
-            targetEntityId = clientIdMap.get(res.id)!;
-            break;
-          } else if (companyIdMap.has(res.id)) {
-            targetEntityType = "company";
-            targetEntityId = companyIdMap.get(res.id)!;
-            break;
-          }
+  for (const n of notes) {
+    const noteContent = n.content || "";
+    const shortenedTitle = getShortenedTitle(noteContent);
+    const createdAtStr = n.created_at || new Date().toISOString();
+    const contentSnippet = noteContent.substring(0, 150);
+
+    let targetContactId: number | null = null;
+    let targetEntityType: "client" | "company" | "household" | null = null;
+    let targetEntityId: string | null = null;
+    let skipReason = "";
+
+    const firstResource = Array.isArray(n.related_resources) && n.related_resources.length > 0
+      ? n.related_resources[0]
+      : null;
+
+    if (firstResource && firstResource.id != null) {
+      targetContactId = Number(firstResource.id);
+      if (clientIdMap.has(targetContactId)) {
+        targetEntityType = "client";
+        targetEntityId = clientIdMap.get(targetContactId)!;
+      } else if (companyIdMap.has(targetContactId)) {
+        targetEntityType = "company";
+        targetEntityId = companyIdMap.get(targetContactId)!;
+      } else if (householdIdMap.has(targetContactId)) {
+        targetEntityType = "household";
+        targetEntityId = householdIdMap.get(targetContactId)!;
+      } else {
+        const contactResult = contactResultsMap.get(targetContactId);
+        if (contactResult && contactResult.status === "ignored") {
+          skipReason = `Associated contact ${targetContactId} was ignored (${contactResult.reason})`;
+        } else {
+          skipReason = `Associated contact ID ${targetContactId} not found in imported contacts`;
         }
       }
+    } else {
+      skipReason = "No valid related_resource ID found in first item of related_resources";
     }
 
     if (targetEntityType && targetEntityId) {
@@ -476,8 +678,8 @@ async function runMigration() {
         parentId: null,
         rootId: noteUuid,
         depth: 0,
-        title: getShortenedTitle(n.content),
-        body: n.content || "",
+        title: shortenedTitle,
+        body: noteContent,
         authorId: null,
         createdAt: n.created_at ? new Date(n.created_at) : new Date(),
         updatedAt: n.updated_at ? new Date(n.updated_at) : new Date(),
@@ -490,12 +692,36 @@ async function runMigration() {
         entityId: targetEntityId,
         createdAt: new Date(),
       });
+
+      noteResults.push({
+        originalId: n.id,
+        title: shortenedTitle,
+        contentSnippet,
+        createdAt: createdAtStr,
+        associatedContactId: targetContactId,
+        associatedEntityId: targetEntityId,
+        entityType: targetEntityType,
+        status: "successful",
+        reason: `Matched to imported ${targetEntityType} (contact ID ${targetContactId})`,
+      });
     } else {
       skippedItems.push({
         type: "note",
         legacyId: n.id,
-        contentSnippet: (n.content || "").substring(0, 100),
-        reason: "No associated entity found in people/companies",
+        contentSnippet: contentSnippet.substring(0, 100),
+        reason: skipReason,
+      });
+
+      noteResults.push({
+        originalId: n.id,
+        title: shortenedTitle,
+        contentSnippet,
+        createdAt: createdAtStr,
+        associatedContactId: targetContactId,
+        associatedEntityId: null,
+        entityType: null,
+        status: "ignored",
+        reason: skipReason,
       });
     }
   }
@@ -640,40 +866,54 @@ async function runMigration() {
   const results = {
     timestamp: new Date().toISOString(),
     durationSeconds: Number(durationSeconds),
-    counts: {
-      people: peopleRows.length,
-      clients: clientsRows.length,
-      companies: companiesRows.length,
-      households: householdsRows.length,
-      addresses: addressesRows.length,
-      tagNotes: tagNotesRows.length,
-      totalNotes: allNotesRows.length,
-      noteAssociations: allNoteAssocRows.length,
-      companyOwners: companyOwnersRows.length,
+    summary: {
+      totalContacts: contacts.length,
+      importedContacts: contactsToImport.length,
+      ignoredContacts: fdcMailingContacts.length + adcpaContacts.length,
+      fdcMailingContacts: fdcMailingContacts.length,
+      adcpaContacts: adcpaContacts.length,
+      peopleInserted: peopleRows.length,
+      clientsInserted: clientsRows.length,
+      companiesInserted: companiesRows.length,
+      householdsInserted: householdsRows.length,
+      addressesInserted: addressesRows.length,
+      totalNotes: notes.length,
+      importedNotes: notesRows.length,
+      skippedNotes: noteResults.filter((nr) => nr.status === "ignored").length,
+      tagNotesInserted: tagNotesRows.length,
+      totalNotesInsertedInDb: allNotesRows.length,
+      noteAssociationsInserted: allNoteAssocRows.length,
+      companyOwnersInserted: companyOwnersRows.length,
     },
-    skippedCounts: {
-      totalSkipped: skippedItems.length,
-      skippedNotes: skippedItems.filter((i) => i.type === "note").length,
-      skippedComments: skippedItems.filter((i) => i.type === "comment").length,
-    },
+    contacts: Array.from(contactResultsMap.values()),
+    notes: noteResults,
     skippedItems,
   };
 
-  const resultsPath = path.resolve(process.cwd(), "scripts/migration_results.json");
+  const migrationDir = path.resolve(process.cwd(), "migration");
+  if (!fs.existsSync(migrationDir)) {
+    fs.mkdirSync(migrationDir, { recursive: true });
+  }
+
+  const resultsPath = path.resolve(migrationDir, "results.json");
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2), "utf8");
 
   console.log(`\n================ MIGRATION SUCCESSFUL ===============`);
   console.log(`Duration: ${durationSeconds} seconds`);
+  console.log(`Total Contacts: ${contacts.length} (${contactsToImport.length} imported, ${fdcMailingContacts.length + adcpaContacts.length} ignored)`);
+  console.log(`  - FDC Mailing ListCSV: ${fdcCsvPath} (${fdcMailingContacts.length} contacts)`);
+  console.log(`  - ADCPA CSV: ${adcpaCsvPath} (${adcpaContacts.length} contacts)`);
   console.log(`People inserted: ${peopleRows.length}`);
   console.log(`Clients inserted: ${clientsRows.length}`);
   console.log(`Companies inserted: ${companiesRows.length}`);
   console.log(`Households inserted: ${householdsRows.length}`);
   console.log(`Addresses inserted: ${addressesRows.length}`);
-  console.log(`Notes inserted: ${allNotesRows.length} (including ${tagNotesRows.length} tag notes)`);
+  console.log(`Notes inserted: ${allNotesRows.length} (${notesRows.length} imported notes, ${tagNotesRows.length} tag notes)`);
+  console.log(`Notes skipped: ${noteResults.filter((nr) => nr.status === "ignored").length}`);
   console.log(`Note Associations inserted: ${allNoteAssocRows.length}`);
   console.log(`Company Owners inserted: ${companyOwnersRows.length}`);
-  console.log(`Skipped Notes/Comments: ${skippedItems.length}`);
-  console.log(`Results saved to: ${resultsPath}`);
+  console.log(`Skipped Items (Notes/Comments): ${skippedItems.length}`);
+  console.log(`Detailed Results saved to: ${resultsPath}`);
 
   await sql.end();
 }

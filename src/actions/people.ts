@@ -7,6 +7,7 @@ import { recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
+import { normalizePerson } from "@/lib/crm-normalize";
 import { syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "people";
@@ -17,7 +18,9 @@ export async function getPeople() {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    return { success: true, people: people as Person[] };
+    const formattedPeople = (people || []).map(normalizePerson);
+
+    return { success: true, people: formattedPeople as Person[] };
   } catch (error) {
     console.error(`[getPeople] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -31,7 +34,7 @@ export async function getPerson(id: string) {
     if (error) throw new Error((error as { message: string }).message);
     if (!person) return { success: false, error: "Person not found" };
 
-    return { success: true, person: person as Person };
+    return { success: true, person: normalizePerson(person) as Person };
   } catch (error) {
     console.error(`[getPerson] Error:`, error);
     return { success: false, error: (error as { message: string }).message };

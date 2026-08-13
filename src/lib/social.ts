@@ -84,6 +84,20 @@ export function getSocialAvatarUrl(type: string, url: string): string | null {
   }
 }
 
+function ensureArray<T = any>(val: any): T[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 /**
  * Resolves a Person's profile photo URL. If a social media account has "useProfilePhoto" enabled,
  * it attempts to parse the URL and return the unavatar.io URL. Otherwise, it returns the custom uploaded photoUrl.
@@ -91,8 +105,9 @@ export function getSocialAvatarUrl(type: string, url: string): string | null {
 export function getPersonPhotoUrl(person?: Person | null): string | null {
   if (!person) return null;
 
-  if (person.socialMedia && person.socialMedia.length > 0) {
-    const useSocialPhoto = person.socialMedia.find((sm) => sm.useProfilePhoto);
+  const socialMedia = ensureArray<{ useProfilePhoto?: boolean; type: string; url: string }>(person.socialMedia);
+  if (socialMedia.length > 0) {
+    const useSocialPhoto = socialMedia.find((sm) => sm.useProfilePhoto);
     if (useSocialPhoto) {
       const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
       if (socialAvatar) return socialAvatar;
@@ -109,8 +124,9 @@ export function getPersonPhotoUrl(person?: Person | null): string | null {
 export function getCompanyLogoUrl(company?: Company | null): string | null {
   if (!company) return null;
 
-  if (company.socialMedia && company.socialMedia.length > 0) {
-    const useSocialPhoto = company.socialMedia.find((sm) => sm.useProfilePhoto);
+  const socialMedia = ensureArray<{ useProfilePhoto?: boolean; type: string; url: string }>(company.socialMedia);
+  if (socialMedia.length > 0) {
+    const useSocialPhoto = socialMedia.find((sm) => sm.useProfilePhoto);
     if (useSocialPhoto) {
       const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
       if (socialAvatar) return socialAvatar;
@@ -123,9 +139,9 @@ export function getCompanyLogoUrl(company?: Company | null): string | null {
 export function getUserPhotoUrl(user?: UserProfile | null): string | null {
   if (!user) return null;
 
-  // 1. Social media link with photo checked
-  if (user.socialMedia && user.socialMedia.length > 0) {
-    const useSocialPhoto = user.socialMedia.find((sm) => sm.useProfilePhoto);
+  const socialMedia = ensureArray<{ useProfilePhoto?: boolean; type: string; url: string }>(user.socialMedia);
+  if (socialMedia.length > 0) {
+    const useSocialPhoto = socialMedia.find((sm) => sm.useProfilePhoto);
     if (useSocialPhoto) {
       const socialAvatar = getSocialAvatarUrl(useSocialPhoto.type, useSocialPhoto.url);
       if (socialAvatar) return socialAvatar;
