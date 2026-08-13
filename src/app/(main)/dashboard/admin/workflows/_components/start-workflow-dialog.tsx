@@ -47,7 +47,7 @@ export function StartWorkflowDialog({ isOpen, onClose, templateId, templateName 
         if (clientsResult.success) {
           setClients(
             (clientsResult.clients || []).map((c) => ({
-              id: c.id,
+              id: c.id ?? "",
               name: `${c.person?.firstName || ""} ${c.person?.lastName || ""}`.trim() || "Unnamed Client",
               type: "client" as const,
             })),

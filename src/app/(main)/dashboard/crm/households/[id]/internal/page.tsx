@@ -126,7 +126,7 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
           <InterestsCard
             client={{
               ...primaryClient,
-              favoriteInterests: Array.from(new Set(activeClientObjs.flatMap((c) => c.favoriteInterests || []))),
+              hobbies: Array.from(new Set(activeClientObjs.flatMap((c) => c.hobbies || []))),
             }}
           />
           <SportsTeamsCard

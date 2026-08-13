@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { supabaseServer } from "@/lib/supabase.server";
 import { fetchInChunks } from "@/lib/fetch-chunks";
+import { supabaseServer } from "@/lib/supabase.server";
 import { type Household, type HouseholdMember, HouseholdSchema, type Person } from "@/types/crm";
 
 const TABLE = "households";
@@ -44,16 +44,19 @@ export async function getHouseholds() {
     const personNameMap: Record<string, string> = {};
 
     if (uniqueIds.length > 0) {
-      const clientsData = await fetchInChunks(uniqueIds, (chunk) =>
-        supabaseServer.from("clients").select("id, personId").in("id", chunk).then((res) => res.data || []),
-      );
+      const clientsData = await fetchInChunks(uniqueIds, async (chunk) => {
+        const { data } = await supabaseServer.from("clients").select("id, personId").in("id", chunk);
+        return (data || []) as { id: string; personId: string }[];
+      });
 
       const clientToPersonMap: Record<string, string> = {};
       const personIdsToFetch = new Set<string>();
 
       for (const c of clientsData) {
-        clientToPersonMap[c.id] = c.personId;
-        personIdsToFetch.add(c.personId);
+        if (c.id && c.personId) {
+          clientToPersonMap[c.id] = c.personId;
+          personIdsToFetch.add(c.personId);
+        }
       }
 
       for (const id of uniqueIds) {
@@ -62,12 +65,15 @@ export async function getHouseholds() {
         }
       }
 
-      const peopleData = await fetchInChunks(Array.from(personIdsToFetch), (chunk) =>
-        supabaseServer.from("people").select("id, firstName, lastName").in("id", chunk).then((res) => res.data || []),
-      );
+      const peopleData = await fetchInChunks(Array.from(personIdsToFetch), async (chunk) => {
+        const { data } = await supabaseServer.from("people").select("id, firstName, lastName").in("id", chunk);
+        return (data || []) as { id: string; firstName: string | null; lastName: string | null }[];
+      });
 
       for (const p of peopleData) {
-        personNameMap[p.id] = `${p.firstName} ${p.lastName}`;
+        if (p.id) {
+          personNameMap[p.id] = `${p.firstName || ""} ${p.lastName || ""}`.trim();
+        }
       }
 
       for (const [cId, pId] of Object.entries(clientToPersonMap)) {
