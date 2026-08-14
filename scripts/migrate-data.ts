@@ -256,6 +256,52 @@ function getCanonicalFirstName(rawFirstName: string): {
   };
 }
 
+// Helper to normalize an address object and generate a canonical deduplication key
+function normalizeAddress(addr: any): {
+  key: string;
+  street1: string;
+  street2: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+} | null {
+  if (!addr) return null;
+  const street1 = (addr.street_line_1 || addr.street1 || "").trim();
+  const street2 = (addr.street_line_2 || addr.street2 || "").trim() || null;
+  const city = (addr.city || "").trim();
+  const state = (addr.state || "").trim().toUpperCase();
+  const rawZip = (addr.zip_code || addr.zipCode || "").trim();
+  const zipCode = rawZip.split("-")[0].trim();
+  const country = (addr.country || "").trim() || "USA";
+
+  if (!street1 && !city && !state && !zipCode) return null;
+
+  const key = `${street1.toLowerCase()}|${(street2 || "").toLowerCase()}|${city.toLowerCase()}|${state}|${zipCode}`;
+  return {
+    key,
+    street1: street1 || "N/A",
+    street2,
+    city: city || "N/A",
+    state: state || "N/A",
+    zipCode: zipCode || "N/A",
+    country,
+  };
+}
+
+// Helper to normalize person suffix (Jr, Sr, II, III, IV, etc.)
+function normalizeSuffix(suffix: string | null | undefined): string {
+  if (!suffix) return "";
+  let clean = suffix.trim().replace(/[.,;]+$/, "").trim().toUpperCase();
+  if (clean === "JUNIOR") clean = "JR";
+  if (clean === "SENIOR") clean = "SR";
+  if (clean === "2ND") clean = "II";
+  if (clean === "3RD") clean = "III";
+  if (clean === "4TH") clean = "IV";
+  if (clean === "5TH") clean = "V";
+  return clean;
+}
+
 // Helper to export an array of contact objects to RFC 4180 compliant CSV
 function exportContactsToCsv(contacts: any[], outputPath: string) {
   const dir = path.dirname(outputPath);
@@ -345,7 +391,7 @@ async function runMigration() {
   // 1. Pre-Migration Table Reset
   console.log("\n--- STEP 1: Truncating existing tables ---");
   await sql`
-    TRUNCATE TABLE note_associations, notes, company_owners, households, companies, clients, people, addresses CASCADE;
+    TRUNCATE TABLE note_associations, notes, company_employees, company_owners, households, companies, clients, people, addresses CASCADE;
   `;
   console.log("Existing tables successfully truncated.");
 
@@ -373,6 +419,12 @@ async function runMigration() {
     householdId: string | null;
     personId?: string | null;
     entityType: string | null;
+    notesNotImported: {
+      id?: number;
+      title: string;
+      contentSnippet: string;
+      reason: string;
+    }[];
   }>();
 
   const fdcMailingContacts: any[] = [];
@@ -409,6 +461,7 @@ async function runMigration() {
         householdId: null,
         personId: null,
         entityType: null,
+        notesNotImported: [],
       });
     } else {
       contactsToImport.push(c);
@@ -424,6 +477,7 @@ async function runMigration() {
         householdId: null,
         personId: null,
         entityType: null,
+        notesNotImported: [],
       });
     }
   }
@@ -463,10 +517,78 @@ async function runMigration() {
   const tagNotesRows: any[] = [];
   const tagAssocRows: any[] = [];
   const companyOwnersRows: any[] = [];
+  const companyEmployeesRows: any[] = [];
   const notesRows: any[] = [];
   const noteAssocRows: any[] = [];
 
   const skippedItems: Array<{ type: string; legacyId: number; contentSnippet: string; reason: string }> = [];
+
+  // Global address deduplication registry
+  const globalAddressMap = new Map<
+    string,
+    {
+      id: string;
+      street1: string;
+      street2: string | null;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+      entityCount: number;
+    }
+  >();
+
+  let totalAddressOccurrences = 0;
+
+  function getOrCreateAddress(addrInput: any): {
+    id: string;
+    street1: string;
+    street2: string | null;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    isNew: boolean;
+  } | null {
+    const norm = normalizeAddress(addrInput);
+    if (!norm) return null;
+
+    totalAddressOccurrences++;
+
+    if (globalAddressMap.has(norm.key)) {
+      const existing = globalAddressMap.get(norm.key)!;
+      existing.entityCount++;
+      return { ...existing, isNew: false };
+    }
+
+    const addrUuid = crypto.randomUUID();
+    const entry = {
+      id: addrUuid,
+      street1: norm.street1,
+      street2: norm.street2,
+      city: norm.city,
+      state: norm.state,
+      zipCode: norm.zipCode,
+      country: norm.country,
+      entityCount: 1,
+    };
+
+    globalAddressMap.set(norm.key, entry);
+
+    addressesRows.push({
+      id: addrUuid,
+      street1: norm.street1,
+      street2: norm.street2,
+      city: norm.city,
+      state: norm.state,
+      zipCode: norm.zipCode,
+      country: norm.country,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return { ...entry, isNew: true };
+  }
 
   // --- STEP 3: Deduplicate Person Contacts & Normalize Nicknames ---
   console.log("\n--- STEP 3: Deduplicating Person Contacts & Normalizing Names ---");
@@ -483,8 +605,10 @@ async function runMigration() {
   for (const c of personContacts) {
     const rawFirstName = (c.first_name || "").trim() || (c.name || "").trim() || "Unknown";
     const lastName = (c.last_name || "").trim() || "Unknown";
+    const rawSuffix = (c.suffix || "").trim();
+    const normalizedSuffix = normalizeSuffix(rawSuffix);
     const { canonical, wasConverted, original } = getCanonicalFirstName(rawFirstName);
-    const key = `${canonical.toLowerCase()}|${lastName.toLowerCase()}`;
+    const key = `${canonical.toLowerCase()}|${lastName.toLowerCase()}|${normalizedSuffix.toLowerCase()}`;
 
     if (!personGroups.has(key)) {
       personGroups.set(key, []);
@@ -495,6 +619,7 @@ async function runMigration() {
       _wasConverted: wasConverted,
       _originalFirstName: original,
       _lastName: lastName,
+      _normalizedSuffix: normalizedSuffix,
     });
   }
 
@@ -539,6 +664,8 @@ async function runMigration() {
 
     const firstName = primaryContact._canonicalFirstName;
     const lastName = primaryContact._lastName;
+    const suffix = primaryContact.suffix ? primaryContact.suffix.trim() : null;
+    const fullName = [firstName, lastName, suffix].filter(Boolean).join(" ");
 
     allPeople.push({
       legacyId: primaryContact.id,
@@ -549,10 +676,11 @@ async function runMigration() {
     });
 
     if (primaryContact._wasConverted) {
+      const origFullName = [primaryContact._originalFirstName, lastName, suffix].filter(Boolean).join(" ");
       nicknameConversions.push({
         legacyId: primaryContact.id,
-        originalName: `${primaryContact._originalFirstName} ${lastName}`,
-        canonicalName: `${firstName} ${lastName}`,
+        originalName: origFullName,
+        canonicalName: fullName,
         mergedIntoLegacyId: null,
         reason: `Standardized nickname '${primaryContact._originalFirstName}' to given name '${firstName}'`,
       });
@@ -564,7 +692,7 @@ async function runMigration() {
       primaryResult.clientId = clientUuid;
       primaryResult.personId = personUuid;
       primaryResult.entityType = "client";
-      primaryResult.name = `${firstName} ${lastName}`;
+      primaryResult.name = fullName;
       if (secondaryContacts.length > 0) {
         primaryResult.reason = `Imported into database (merged ${secondaryContacts.length} duplicate record(s): IDs ${secondaryContacts.map((s) => s.id).join(", ")})`;
       }
@@ -573,64 +701,47 @@ async function runMigration() {
     // Process each secondary/duplicate contact
     for (const sec of secondaryContacts) {
       const secResult = contactResultsMap.get(sec.id);
+      const secSuffix = sec.suffix ? sec.suffix.trim() : null;
+      const secOrigFullName = [sec._originalFirstName, sec._lastName, secSuffix].filter(Boolean).join(" ");
+
       if (secResult) {
         secResult.status = "deduplicated" as any;
         secResult.clientId = clientUuid;
         secResult.personId = personUuid;
         secResult.entityType = "client";
-        secResult.reason = `Merged into primary contact ${firstName} ${lastName} (ID: ${primaryContact.id}) due to duplicate / nickname match`;
+        secResult.reason = `Merged into primary contact ${fullName} (ID: ${primaryContact.id}) due to duplicate / nickname match`;
       }
 
       nicknameConversions.push({
         legacyId: sec.id,
-        originalName: `${sec._originalFirstName} ${sec._lastName}`,
-        canonicalName: `${firstName} ${lastName}`,
+        originalName: secOrigFullName,
+        canonicalName: fullName,
         mergedIntoLegacyId: primaryContact.id,
-        reason: `Merged duplicate record '${sec._originalFirstName} ${sec._lastName}' (ID: ${sec.id}) into '${firstName} ${lastName}' (ID: ${primaryContact.id})`,
+        reason: `Merged duplicate record '${secOrigFullName}' (ID: ${sec.id}) into '${fullName}' (ID: ${primaryContact.id})`,
       });
     }
 
     // Merge unique addresses across all records in the group
     const addressIds: string[] = [];
     const peopleAddressesFormatted: any[] = [];
-    const seenAddresses = new Set<string>();
+    const seenAddressIdsForPerson = new Set<string>();
 
     for (const member of groupMembers) {
       if (Array.isArray(member.addresses)) {
         for (const addr of member.addresses) {
-          const street1 = (addr.street_line_1 || "").trim() || "N/A";
-          const street2 = (addr.street_line_2 || "").trim() || null;
-          const city = (addr.city || "").trim() || "N/A";
-          const state = (addr.state || "").trim() || "N/A";
-          const zipCode = (addr.zip_code || "").trim() || "N/A";
-          const country = (addr.country || "").trim() || "USA";
+          const resolved = getOrCreateAddress(addr);
+          if (!resolved || seenAddressIdsForPerson.has(resolved.id)) continue;
 
-          const addrKey = `${street1.toLowerCase()}|${(street2 || "").toLowerCase()}|${city.toLowerCase()}|${state.toLowerCase()}|${zipCode.toLowerCase()}`;
-          if (seenAddresses.has(addrKey)) continue;
-          seenAddresses.add(addrKey);
-
-          const addrUuid = crypto.randomUUID();
-          addressesRows.push({
-            id: addrUuid,
-            street1,
-            street2,
-            city,
-            state,
-            zipCode,
-            country,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
-
-          addressIds.push(addrUuid);
+          seenAddressIdsForPerson.add(resolved.id);
+          addressIds.push(resolved.id);
           peopleAddressesFormatted.push({
-            id: addrUuid,
-            street1,
-            street2,
-            city,
-            state,
-            zipCode,
-            country,
+            id: resolved.id,
+            street1: resolved.street1,
+            street2: resolved.street2,
+            city: resolved.city,
+            state: resolved.state,
+            zipCode: resolved.zipCode,
+            country: resolved.country,
             kind: addr.kind || "Main",
           });
         }
@@ -754,36 +865,22 @@ async function runMigration() {
       updatedAt: primaryContact.updated_at ? new Date(primaryContact.updated_at) : new Date(),
     });
 
-    // Merge tags from all group members
+    // Merge tags from all group members and record as notes not imported
     const groupTags = new Set<string>();
     for (const member of groupMembers) {
       const tags = getContactTags(member);
       for (const t of tags) groupTags.add(t);
     }
 
-    for (const tag of groupTags) {
-      const noteUuid = crypto.randomUUID();
-      const assocUuid = crypto.randomUUID();
-
-      tagNotesRows.push({
-        id: noteUuid,
-        parentId: null,
-        rootId: noteUuid,
-        depth: 0,
-        title: `Contact Tag: ${tag}`,
-        body: `Imported Tag: ${tag}`,
-        authorId: null,
-        createdAt: primaryContact.created_at ? new Date(primaryContact.created_at) : new Date(),
-        updatedAt: new Date(),
-      });
-
-      tagAssocRows.push({
-        id: assocUuid,
-        noteId: noteUuid,
-        entityType: "client",
-        entityId: clientUuid,
-        createdAt: new Date(),
-      });
+    if (primaryResult && groupTags.size > 0) {
+      primaryResult.notesNotImported = primaryResult.notesNotImported || [];
+      for (const tag of groupTags) {
+        primaryResult.notesNotImported.push({
+          title: `Contact Tag: ${tag}`,
+          contentSnippet: `Tag: ${tag}`,
+          reason: "Contact Tag not imported as a note",
+        });
+      }
     }
   }
 
@@ -804,27 +901,10 @@ async function runMigration() {
 
     let addressId: string | null = null;
     if (Array.isArray(c.addresses) && c.addresses.length > 0) {
-      const addr = c.addresses[0];
-      const addrUuid = crypto.randomUUID();
-      const street1 = (addr.street_line_1 || "").trim() || "N/A";
-      const street2 = (addr.street_line_2 || "").trim() || null;
-      const city = (addr.city || "").trim() || "N/A";
-      const state = (addr.state || "").trim() || "N/A";
-      const zipCode = (addr.zip_code || "").trim() || "N/A";
-      const country = (addr.country || "").trim() || "USA";
-
-      addressesRows.push({
-        id: addrUuid,
-        street1,
-        street2,
-        city,
-        state,
-        zipCode,
-        country,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      addressId = addrUuid;
+      const resolved = getOrCreateAddress(c.addresses[0]);
+      if (resolved) {
+        addressId = resolved.id;
+      }
     }
 
     const phone = c.phones && c.phones[0] ? c.phones[0].value : null;
@@ -853,27 +933,10 @@ async function runMigration() {
 
     let addressId: string | null = null;
     if (Array.isArray(c.addresses) && c.addresses.length > 0) {
-      const addr = c.addresses[0];
-      const addrUuid = crypto.randomUUID();
-      const street1 = (addr.street_line_1 || "").trim() || "N/A";
-      const street2 = (addr.street_line_2 || "").trim() || null;
-      const city = (addr.city || "").trim() || "N/A";
-      const state = (addr.state || "").trim() || "N/A";
-      const zipCode = (addr.zip_code || "").trim() || "N/A";
-      const country = (addr.country || "").trim() || "USA";
-
-      addressesRows.push({
-        id: addrUuid,
-        street1,
-        street2,
-        city,
-        state,
-        zipCode,
-        country,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      addressId = addrUuid;
+      const resolved = getOrCreateAddress(c.addresses[0]);
+      if (resolved) {
+        addressId = resolved.id;
+      }
     }
 
     const { lastName: hLastName, firstNames: hFirstNames } = parseHouseholdName(c.name || "");
@@ -914,36 +977,75 @@ async function runMigration() {
     });
   }
 
-  // Company Owner links
+  // Company Employee links (with deduplication per company)
+  const companyEmployeeMap = new Map<
+    string,
+    {
+      companyId: string;
+      personId: string;
+      jobTitle: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }
+  >();
+
+  // 1. Link from person's organization_id
   for (const c of personContacts) {
-    if (c.organization_id && companyIdMap.has(c.organization_id)) {
-      companyOwnersRows.push({
-        id: crypto.randomUUID(),
-        companyId: companyIdMap.get(c.organization_id)!,
-        personId: personIdMap.get(c.id)!,
-        ownershipPercentage: 0.0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    if (c.organization_id && companyIdMap.has(c.organization_id) && personIdMap.has(c.id)) {
+      const companyId = companyIdMap.get(c.organization_id)!;
+      const personId = personIdMap.get(c.id)!;
+      const pairKey = `${companyId}|${personId}`;
+      const jobTitle = (c.job_title || c.occupation || "").trim() || null;
+
+      if (!companyEmployeeMap.has(pairKey)) {
+        companyEmployeeMap.set(pairKey, {
+          companyId,
+          personId,
+          jobTitle,
+          createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+          updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+        });
+      } else if (jobTitle && !companyEmployeeMap.get(pairKey)!.jobTitle) {
+        companyEmployeeMap.get(pairKey)!.jobTitle = jobTitle;
+      }
     }
   }
 
+  // 2. Link from company's contact_related_contacts
   for (const c of companyContacts) {
-    const companyUuid = companyIdMap.get(c.id)!;
-    if (Array.isArray(c.contact_related_contacts)) {
+    if (Array.isArray(c.contact_related_contacts) && companyIdMap.has(c.id)) {
+      const companyId = companyIdMap.get(c.id)!;
       for (const rel of c.contact_related_contacts) {
         if (rel.related_contact_id && personIdMap.has(rel.related_contact_id)) {
-          companyOwnersRows.push({
-            id: crypto.randomUUID(),
-            companyId: companyUuid,
-            personId: personIdMap.get(rel.related_contact_id)!,
-            ownershipPercentage: 0.0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
+          const personId = personIdMap.get(rel.related_contact_id)!;
+          const pairKey = `${companyId}|${personId}`;
+          const relTitle = rel.relationship && rel.relationship.trim() ? rel.relationship.trim() : null;
+
+          if (!companyEmployeeMap.has(pairKey)) {
+            companyEmployeeMap.set(pairKey, {
+              companyId,
+              personId,
+              jobTitle: relTitle,
+              createdAt: c.created_at ? new Date(c.created_at) : new Date(),
+              updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+            });
+          } else if (relTitle && !companyEmployeeMap.get(pairKey)!.jobTitle) {
+            companyEmployeeMap.get(pairKey)!.jobTitle = relTitle;
+          }
         }
       }
     }
+  }
+
+  for (const emp of companyEmployeeMap.values()) {
+    companyEmployeesRows.push({
+      id: crypto.randomUUID(),
+      companyId: emp.companyId,
+      personId: emp.personId,
+      jobTitle: emp.jobTitle,
+      createdAt: emp.createdAt,
+      updatedAt: emp.updatedAt,
+    });
   }
 
   // --- STEP 5: Prepare Notes & Comments Batches ---
@@ -963,6 +1065,7 @@ async function runMigration() {
 
   for (const n of notes) {
     const noteContent = n.content || "";
+    const rawTitle = n.title || "";
     const shortenedTitle = getShortenedTitle(noteContent);
     const createdAtStr = n.created_at || new Date().toISOString();
     const contentSnippet = noteContent.substring(0, 150);
@@ -997,6 +1100,46 @@ async function runMigration() {
       }
     } else {
       skipReason = "No valid related_resource ID found in first item of related_resources";
+    }
+
+    // Check if the note begins with "Contact Tag"
+    const isContactTagNote =
+      noteContent.trim().toLowerCase().startsWith("contact tag") ||
+      rawTitle.trim().toLowerCase().startsWith("contact tag") ||
+      shortenedTitle.toLowerCase().startsWith("contact tag");
+
+    if (isContactTagNote) {
+      const tagSkipReason = "Note begins with 'Contact Tag' (not imported as a note)";
+      skippedItems.push({
+        type: "note",
+        legacyId: n.id,
+        contentSnippet: contentSnippet.substring(0, 100),
+        reason: tagSkipReason,
+      });
+
+      noteResults.push({
+        originalId: n.id,
+        title: shortenedTitle,
+        contentSnippet,
+        createdAt: createdAtStr,
+        associatedContactId: targetContactId,
+        associatedEntityId: targetEntityId,
+        entityType: targetEntityType,
+        status: "ignored",
+        reason: tagSkipReason,
+      });
+
+      if (targetContactId && contactResultsMap.has(targetContactId)) {
+        const targetResult = contactResultsMap.get(targetContactId)!;
+        targetResult.notesNotImported = targetResult.notesNotImported || [];
+        targetResult.notesNotImported.push({
+          id: n.id,
+          title: shortenedTitle,
+          contentSnippet: contentSnippet.substring(0, 100),
+          reason: tagSkipReason,
+        });
+      }
+      continue;
     }
 
     if (targetEntityType && targetEntityId) {
@@ -1156,21 +1299,20 @@ async function runMigration() {
     });
   }
 
-  // 6. Company Owners
-  if (companyOwnersRows.length > 0) {
-    console.log(`Flushing ${companyOwnersRows.length} company owners...`);
-    await flushBatch(companyOwnersRows, 500, async (chunk) => {
+  // 6. Company Employees
+  if (companyEmployeesRows.length > 0) {
+    console.log(`Flushing ${companyEmployeesRows.length} company employees...`);
+    await flushBatch(companyEmployeesRows, 500, async (chunk) => {
       await sql`
-        INSERT INTO company_owners ${(sql as any)(chunk, "id", "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")}
+        INSERT INTO company_employees ${(sql as any)(chunk, "id", "companyId", "personId", "jobTitle", "createdAt", "updatedAt")}
       `;
     });
   }
 
-  // 7. Notes (Tag notes + Imported notes)
-  const allNotesRows = [...tagNotesRows, ...notesRows];
-  if (allNotesRows.length > 0) {
-    console.log(`Flushing ${allNotesRows.length} notes...`);
-    await flushBatch(allNotesRows, 500, async (chunk) => {
+  // 7. Notes
+  if (notesRows.length > 0) {
+    console.log(`Flushing ${notesRows.length} notes...`);
+    await flushBatch(notesRows, 500, async (chunk) => {
       await sql`
         INSERT INTO notes ${(sql as any)(chunk, "id", "parentId", "rootId", "depth", "title", "body", "authorId", "createdAt", "updatedAt")}
       `;
@@ -1178,10 +1320,9 @@ async function runMigration() {
   }
 
   // 8. Note Associations
-  const allNoteAssocRows = [...tagAssocRows, ...noteAssocRows];
-  if (allNoteAssocRows.length > 0) {
-    console.log(`Flushing ${allNoteAssocRows.length} note associations...`);
-    await flushBatch(allNoteAssocRows, 500, async (chunk) => {
+  if (noteAssocRows.length > 0) {
+    console.log(`Flushing ${noteAssocRows.length} note associations...`);
+    await flushBatch(noteAssocRows, 500, async (chunk) => {
       await sql`
         INSERT INTO note_associations ${(sql as any)(chunk, "id", "noteId", "entityType", "entityId", "createdAt")}
       `;
@@ -1192,6 +1333,8 @@ async function runMigration() {
   console.log("\n--- STEP 7: Writing Migration Summary JSON ---");
 
   const durationSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+  const duplicateAddressesMerged = totalAddressOccurrences - addressesRows.length;
+  const multiEntityAddressesCount = Array.from(globalAddressMap.values()).filter((a) => a.entityCount > 1).length;
 
   const results = {
     timestamp: new Date().toISOString(),
@@ -1207,17 +1350,31 @@ async function runMigration() {
       duplicatePeopleMerged: duplicatesMerged,
       nicknameConversionsCount: nicknameConversions.length,
       companiesInserted: companiesRows.length,
+      companyEmployeesInserted: companyEmployeesRows.length,
       householdsInserted: householdsRows.length,
       addressesInserted: addressesRows.length,
+      duplicateAddressesMerged,
       totalNotes: notes.length,
       importedNotes: notesRows.length,
       skippedNotes: noteResults.filter((nr) => nr.status === "ignored").length,
-      tagNotesInserted: tagNotesRows.length,
-      totalNotesInsertedInDb: allNotesRows.length,
-      noteAssociationsInserted: allNoteAssocRows.length,
-      companyOwnersInserted: companyOwnersRows.length,
+      totalNotesInsertedInDb: notesRows.length,
+      noteAssociationsInserted: noteAssocRows.length,
     },
     deduplication: {
+      peopleDeduplication: {
+        totalDuplicatesDetected,
+        uniquePeopleCreated: peopleRows.length,
+        duplicatesMerged,
+        nicknameConversionsCount: nicknameConversions.length,
+        nicknameConversions,
+      },
+      addressDeduplication: {
+        totalAddressOccurrences,
+        uniqueAddressesCreated: addressesRows.length,
+        duplicateAddressesMerged,
+        multiEntityAddressesCount,
+      },
+      // Top-level aliases for backwards compatibility
       totalDuplicatesDetected,
       uniquePeopleCreated: peopleRows.length,
       duplicatesMerged,
@@ -1242,16 +1399,16 @@ async function runMigration() {
   console.log(`Total Contacts: ${contacts.length} (${contactsToImport.length} imported, ${fdcMailingContacts.length + adcpaContacts.length} ignored)`);
   console.log(`  - FDC Mailing List CSV: ${fdcCsvPath} (${fdcMailingContacts.length} contacts)`);
   console.log(`  - ADCPA CSV: ${adcpaCsvPath} (${adcpaContacts.length} contacts)`);
-  console.log(`Deduplication: ${duplicatesMerged} duplicate records merged, ${nicknameConversions.length} nickname transitions/merges recorded`);
+  console.log(`Person Deduplication: ${duplicatesMerged} duplicate records merged, ${nicknameConversions.length} nickname transitions/merges recorded`);
+  console.log(`Address Deduplication: ${duplicateAddressesMerged} duplicate address occurrences merged across ${multiEntityAddressesCount} shared locations (${addressesRows.length} unique addresses created)`);
   console.log(`People inserted: ${peopleRows.length}`);
   console.log(`Clients inserted: ${clientsRows.length}`);
   console.log(`Companies inserted: ${companiesRows.length}`);
+  console.log(`Company Employees inserted: ${companyEmployeesRows.length}`);
   console.log(`Households inserted: ${householdsRows.length}`);
   console.log(`Addresses inserted: ${addressesRows.length}`);
-  console.log(`Notes inserted: ${allNotesRows.length} (${notesRows.length} imported notes, ${tagNotesRows.length} tag notes)`);
-  console.log(`Notes skipped: ${noteResults.filter((nr) => nr.status === "ignored").length}`);
-  console.log(`Note Associations inserted: ${allNoteAssocRows.length}`);
-  console.log(`Company Owners inserted: ${companyOwnersRows.length}`);
+  console.log(`Notes inserted: ${notesRows.length} (${noteResults.filter((nr) => nr.status === "ignored").length} notes skipped/not imported)`);
+  console.log(`Note Associations inserted: ${noteAssocRows.length}`);
   console.log(`Skipped Items (Notes/Comments): ${skippedItems.length}`);
   console.log(`Detailed Results saved to: ${resultsPath}`);
 

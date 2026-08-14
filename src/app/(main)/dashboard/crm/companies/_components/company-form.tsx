@@ -48,9 +48,10 @@ import {
 interface CompanyFormProps {
   company?: Company;
   initialOwners?: any[];
+  initialEmployees?: any[];
 }
 
-export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
+export function CompanyForm({ company, initialOwners = [], initialEmployees = [] }: CompanyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
@@ -58,6 +59,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
   const [advisors, setAdvisors] = useState<{ uid: string; name: string }[]>([]);
 
   const [personSearchQuery, setPersonSearchQuery] = useState("");
+  const [employeeSearchQuery, setEmployeeSearchQuery] = useState("");
 
   const form = useForm<CompanyFormInput, any, CompanyFormValues>({
     resolver: zodResolver(CompanyFormSchema),
@@ -83,6 +85,10 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
             personId: o.personId,
             ownershipPercentage: Number(o.ownershipPercentage) || 0,
           })),
+          employees: initialEmployees.map((e) => ({
+            personId: e.personId,
+            jobTitle: e.jobTitle || "",
+          })),
           situsRecords: (Array.isArray(company.situsRecords) ? company.situsRecords : []).map((s: any) => ({
             id: s.id,
             jurisdiction: s.jurisdiction || s.state || "DE",
@@ -107,6 +113,7 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
           logoUrl: null,
           socialMedia: [],
           owners: [],
+          employees: [],
           situsRecords: [],
           nexusRecords: [],
           estimatedValue: 0,
@@ -138,6 +145,15 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
   } = useFieldArray({
     control: form.control,
     name: "owners",
+  });
+
+  const {
+    fields: employeeFields,
+    append: appendEmployee,
+    remove: removeEmployee,
+  } = useFieldArray({
+    control: form.control,
+    name: "employees",
   });
 
   const {
@@ -192,6 +208,22 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
       return name.toLowerCase().includes(personSearchQuery.toLowerCase());
     });
   }, [availablePeople, personSearchQuery, watchedPersonIds]);
+
+  const watchedEmployees =
+    useWatch({
+      control: form.control,
+      name: "employees",
+    }) || [];
+  const watchedEmployeePersonIds = watchedEmployees.map((e) => e.personId);
+
+  const filteredPeopleForEmployees = useMemo(() => {
+    const base = availablePeople.filter((p) => !watchedEmployeePersonIds.includes(p.id!));
+    if (!employeeSearchQuery) return base;
+    return base.filter((p) => {
+      const name = `${p.firstName || ""} ${p.lastName || ""}`;
+      return name.toLowerCase().includes(employeeSearchQuery.toLowerCase());
+    });
+  }, [availablePeople, employeeSearchQuery, watchedEmployeePersonIds]);
 
   async function onSubmit(values: CompanyFormValues) {
     try {
@@ -845,6 +877,105 @@ export function CompanyForm({ company, initialOwners = [] }: CompanyFormProps) {
                 {ownerFields.length === 0 && (
                   <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
                     No owners added.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Company Employees Section */}
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-medium text-sm">
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  Company Employees
+                </h3>
+              </div>
+
+              <div className="space-y-2">
+                <Combobox
+                  onValueChange={(val) => {
+                    if (typeof val === "string") {
+                      appendEmployee({ personId: val, jobTitle: "" });
+                      setEmployeeSearchQuery("");
+                    }
+                  }}
+                  inputValue={employeeSearchQuery}
+                  onInputValueChange={setEmployeeSearchQuery}
+                >
+                  <ComboboxInput placeholder="Search to add employee..." />
+                  <ComboboxContent>
+                    <ComboboxList>
+                      {filteredPeopleForEmployees.map((person) => (
+                        <ComboboxItem
+                          key={person.id}
+                          value={person.id!}
+                          label={`${person.firstName} ${person.lastName}`}
+                        >
+                          {person.firstName} {person.lastName}
+                        </ComboboxItem>
+                      ))}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+                {(form.formState.errors.employees?.message || form.formState.errors.employees?.root?.message) && (
+                  <p className="mt-1 font-semibold text-destructive text-xs">
+                    {
+                      (form.formState.errors.employees.message ||
+                        form.formState.errors.employees.root?.message) as string
+                    }
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {employeeFields.map((field, index) => {
+                  const person = availablePeople.find((p) => p.id === field.personId);
+                  const name = person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
+                  return (
+                    <div
+                      key={field.id}
+                      className="relative grid grid-cols-[2fr_1fr_auto] items-end gap-4 rounded-md border bg-muted/10 p-4"
+                    >
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-medium text-muted-foreground text-xs">Employee Name</span>
+                        <div className="flex h-10 items-center rounded-md border bg-background px-3 py-2 text-sm">
+                          {name}
+                        </div>
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name={`employees.${index}.jobTitle`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Job Title / Role</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g. Software Engineer"
+                                {...formField}
+                                value={formField.value || ""}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="mb-0.5 self-end text-muted-foreground hover:text-destructive"
+                        onClick={() => removeEmployee(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+                {employeeFields.length === 0 && (
+                  <p className="flex h-10 items-center justify-center rounded-md border border-dashed text-muted-foreground text-xs italic">
+                    No employees added.
                   </p>
                 )}
               </div>

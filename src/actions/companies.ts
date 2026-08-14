@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { COMPANY_PROFILE_FIELDS } from "@/lib/history/fields";
 import { resolvePersonNames } from "@/lib/history/person-names";
 import { formatValue, getCurrentActor, recordEvent, recordFieldDiffs } from "@/lib/history/record";
-import { fetchAllRows } from "@/lib/fetch-chunks";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Company, CompanyFormSchema, type CompanyValuationHistory } from "@/types/crm";
 
@@ -14,10 +14,7 @@ const TABLE = "companies";
 export async function getCompanies() {
   try {
     const companies = await fetchAllRows((from, to) =>
-      supabaseServer
-        .from(TABLE)
-        .select("*, owners:company_owners(id, personId)")
-        .range(from, to),
+      supabaseServer.from(TABLE).select("*, owners:company_owners(id, personId)").range(from, to),
     );
 
     return { success: true, companies: (companies ?? []) as Company[] };
@@ -67,6 +64,50 @@ export async function getCompanyOwners(companyId: string) {
   }
 }
 
+export async function getCompanyEmployees(companyId: string) {
+  try {
+    const { data: employees, error } = await supabaseServer
+      .from("company_employees")
+      .select(`
+        id,
+        companyId,
+        personId,
+        jobTitle,
+        createdAt,
+        updatedAt,
+        person:people (
+          id,
+          firstName,
+          lastName,
+          photoUrl,
+          email,
+          phone
+        )
+      `)
+      .eq("companyId", companyId);
+
+    if (error) throw new Error(error.message);
+
+    // Fetch all clients to check if employees are clients
+    const { data: clients, error: clientsError } = await supabaseServer.from("clients").select("id, personId");
+
+    if (clientsError) throw new Error(clientsError.message);
+
+    const clientPersonMap = new Map((clients || []).map((c) => [c.personId, c.id]));
+
+    const employeesWithClientTag = (employees || []).map((emp: any) => ({
+      ...emp,
+      isClient: clientPersonMap.has(emp.personId),
+      clientId: clientPersonMap.get(emp.personId) || null,
+    }));
+
+    return { success: true, employees: employeesWithClientTag };
+  } catch (error) {
+    console.error("[getCompanyEmployees] Error:", error);
+    return { success: false, error: (error as Error).message };
+  }
+}
+
 export async function getCompaniesByClient(clientId: string) {
   try {
     // Get the client's personId
@@ -112,11 +153,12 @@ export async function getCompany(id: string) {
     if (error) throw new Error((error as { message: string }).message);
     if (!company) return { success: false, error: "Company not found" };
 
-    // Fetch owners
-    const ownersResult = await getCompanyOwners(id);
+    // Fetch owners and employees
+    const [ownersResult, employeesResult] = await Promise.all([getCompanyOwners(id), getCompanyEmployees(id)]);
     const owners = ownersResult.success ? ownersResult.owners || [] : [];
+    const employees = employeesResult.success ? employeesResult.employees || [] : [];
 
-    return { success: true, company: { ...company, owners } as any };
+    return { success: true, company: { ...company, owners, employees } as any };
   } catch (error) {
     console.error(`[getCompany] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
@@ -129,7 +171,7 @@ export async function createCompany(data: any) {
       ...data,
     });
 
-    const { owners, ...companyData } = validated;
+    const { owners, employees, ...companyData } = validated;
 
     const insertData = {
       ...companyData,
@@ -164,6 +206,20 @@ export async function createCompany(data: any) {
       if (ownersError) throw new Error(ownersError.message);
     }
 
+    // Insert employees if provided
+    if (employees && employees.length > 0) {
+      const employeesToInsert = employees.map((emp) => ({
+        companyId: inserted.id,
+        personId: emp.personId,
+        jobTitle: emp.jobTitle || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const { error: empError } = await supabaseServer.from("company_employees").insert(employeesToInsert);
+      if (empError) throw new Error(empError.message);
+    }
+
     // Insert initial snapshot into company_valuation_history
     const initialSnapshot = {
       companyId: inserted.id,
@@ -188,10 +244,10 @@ export async function createCompany(data: any) {
 
     revalidatePath("/dashboard/crm/companies");
 
-    // Revalidate paths for owners who are clients
-    if (owners && owners.length > 0) {
-      const personIds = owners.map((o) => o.personId);
-      const { data: clients } = await supabaseServer.from("clients").select("id").in("personId", personIds);
+    // Revalidate paths for owners & employees who are clients
+    const relatedPersonIds = [...(owners || []).map((o) => o.personId), ...(employees || []).map((e) => e.personId)];
+    if (relatedPersonIds.length > 0) {
+      const { data: clients } = await supabaseServer.from("clients").select("id").in("personId", relatedPersonIds);
 
       if (clients && clients.length > 0) {
         clients.forEach((c) => {
@@ -226,7 +282,7 @@ export async function updateCompany(id: string, data: any) {
       id,
     });
 
-    const { owners, ...companyData } = validated;
+    const { owners, employees, ...companyData } = validated;
 
     const updateData = {
       ...companyData,
@@ -366,6 +422,83 @@ export async function updateCompany(id: string, data: any) {
       }
     }
 
+    // Update employees if provided
+    if (employees !== undefined) {
+      const { data: oldEmployees } = await supabaseServer
+        .from("company_employees")
+        .select("personId")
+        .eq("companyId", id);
+
+      const { error: deleteEmpError } = await supabaseServer.from("company_employees").delete().eq("companyId", id);
+      if (deleteEmpError) throw new Error(deleteEmpError.message);
+
+      if (employees.length > 0) {
+        const empToInsert = employees.map((emp) => ({
+          companyId: id,
+          personId: emp.personId,
+          jobTitle: emp.jobTitle || null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }));
+
+        const { error: insertEmpError } = await supabaseServer.from("company_employees").insert(empToInsert);
+        if (insertEmpError) throw new Error(insertEmpError.message);
+      }
+
+      // Record employee additions/removals in change history
+      const oldEmpIds = new Set((oldEmployees || []).map((e) => e.personId));
+      const newEmpIds = new Set(employees.map((e) => e.personId));
+      const empNames = await resolvePersonNames([...oldEmpIds, ...newEmpIds]);
+      for (const emp of employees) {
+        if (!oldEmpIds.has(emp.personId)) {
+          await recordEvent(
+            {
+              entityType: "company",
+              entityId: id,
+              subType: "Employee",
+              action: "added",
+              fieldName: "employee",
+              fieldLabel: "Employee",
+              newValue: empNames.get(emp.personId) ?? emp.personId,
+              summary: "Employee added",
+            },
+            actor,
+          );
+        }
+      }
+      for (const old of oldEmployees || []) {
+        if (!newEmpIds.has(old.personId)) {
+          await recordEvent(
+            {
+              entityType: "company",
+              entityId: id,
+              subType: "Employee",
+              action: "removed",
+              fieldName: "employee",
+              fieldLabel: "Employee",
+              oldValue: empNames.get(old.personId) ?? old.personId,
+              summary: "Employee removed",
+            },
+            actor,
+          );
+        }
+      }
+
+      const allEmpPersonIds = Array.from(
+        new Set([...(oldEmployees || []).map((e) => e.personId), ...employees.map((e) => e.personId)]),
+      );
+
+      if (allEmpPersonIds.length > 0) {
+        const { data: clients } = await supabaseServer.from("clients").select("id").in("personId", allEmpPersonIds);
+
+        if (clients && clients.length > 0) {
+          clients.forEach((c) => {
+            revalidatePath(`/dashboard/crm/clients/${c.id}`);
+          });
+        }
+      }
+    }
+
     revalidatePath("/dashboard/crm/companies");
     revalidatePath(`/dashboard/crm/companies/${id}`);
 
@@ -378,8 +511,11 @@ export async function updateCompany(id: string, data: any) {
 
 export async function deleteCompany(id: string) {
   try {
-    // Fetch owners before deleting to revalidate paths
-    const { data: owners } = await supabaseServer.from("company_owners").select("personId").eq("companyId", id);
+    // Fetch owners and employees before deleting to revalidate paths
+    const [{ data: owners }, { data: employees }] = await Promise.all([
+      supabaseServer.from("company_owners").select("personId").eq("companyId", id),
+      supabaseServer.from("company_employees").select("personId").eq("companyId", id),
+    ]);
 
     // Capture the company name before deletion for the history summary.
     const { data: doomed } = await supabaseServer.from(TABLE).select("name").eq("id", id).single();
@@ -398,9 +534,9 @@ export async function deleteCompany(id: string) {
 
     revalidatePath("/dashboard/crm/companies");
 
-    if (owners && owners.length > 0) {
-      const personIds = owners.map((o) => o.personId);
-      const { data: clients } = await supabaseServer.from("clients").select("id").in("personId", personIds);
+    const relatedPersonIds = [...(owners || []).map((o) => o.personId), ...(employees || []).map((e) => e.personId)];
+    if (relatedPersonIds.length > 0) {
+      const { data: clients } = await supabaseServer.from("clients").select("id").in("personId", relatedPersonIds);
 
       if (clients && clients.length > 0) {
         clients.forEach((c) => {
@@ -422,6 +558,7 @@ export async function getCompaniesLinkStatus() {
   try {
     const [
       ownersRes,
+      employeesRes,
       lawFirmsRes,
       accountingFirmsRes,
       insuranceAgenciesRes,
@@ -435,6 +572,7 @@ export async function getCompaniesLinkStatus() {
       ltcRes,
     ] = await Promise.all([
       supabaseServer.from("company_owners").select("companyId"),
+      supabaseServer.from("company_employees").select("companyId"),
       supabaseServer.from("law_firms").select("companyIds"),
       supabaseServer.from("accounting_firms").select("companyIds"),
       supabaseServer.from("insurance_agencies").select("companyIds"),
@@ -454,6 +592,13 @@ export async function getCompaniesLinkStatus() {
     if (ownersRes.data) {
       for (const o of ownersRes.data) {
         linkedCompanyIds.add(o.companyId);
+      }
+    }
+
+    // Add employees
+    if (employeesRes.data) {
+      for (const e of employeesRes.data) {
+        linkedCompanyIds.add(e.companyId);
       }
     }
 

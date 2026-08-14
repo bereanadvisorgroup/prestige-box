@@ -180,6 +180,20 @@ export const companyOwners = pgTable("company_owners", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 7c. Company Employees Table
+export const companyEmployees = pgTable("company_employees", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyId: uuid("companyId")
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+  personId: uuid("personId")
+    .notNull()
+    .references(() => people.id, { onDelete: "cascade" }),
+  jobTitle: text("jobTitle"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
 // 8. Client Policies Table
 export const clientPolicies = pgTable("client_policies", {
   id: uuid("id").primaryKey().defaultRandom(),

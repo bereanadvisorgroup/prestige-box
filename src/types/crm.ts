@@ -341,6 +341,17 @@ export const CompanyOwnerSchema = z.object({
 
 export type CompanyOwner = z.infer<typeof CompanyOwnerSchema>;
 
+export const CompanyEmployeeSchema = z.object({
+  id: z.string().optional(),
+  companyId: z.string(),
+  personId: z.string(),
+  jobTitle: z.string().optional().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type CompanyEmployee = z.infer<typeof CompanyEmployeeSchema>;
+
 export const FamilyRelationType = z.enum(["Spouse", "Child", "Grandchild", "Great Grandchild"]);
 export const FamilyMemberSchema = z.object({
   id: z.string().optional(),
@@ -899,6 +910,14 @@ export const CompanyFormSchema = CompanySchema.omit({ createdAt: true, updatedAt
             .number()
             .min(0, "Ownership must be at least 0%")
             .max(100, "Ownership cannot exceed 100%"),
+        }),
+      )
+      .default([]),
+    employees: z
+      .array(
+        z.object({
+          personId: z.string().min(1, "Person is required"),
+          jobTitle: z.string().optional().nullable(),
         }),
       )
       .default([]),

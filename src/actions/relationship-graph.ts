@@ -25,6 +25,7 @@ export async function getRelationshipGraphData() {
       { data: clients },
       { data: companies },
       { data: companyOwners },
+      { data: companyEmployees },
       { data: clientPolicies },
       { data: lifeInsurance },
       { data: disabilityInsurance },
@@ -44,6 +45,7 @@ export async function getRelationshipGraphData() {
       supabaseServer.from("clients").select("id, personId"),
       supabaseServer.from("companies").select("id, name, dba, addressId"),
       supabaseServer.from("company_owners").select("companyId, personId, ownershipPercentage"),
+      supabaseServer.from("company_employees").select("companyId, personId, jobTitle"),
       supabaseServer
         .from("client_policies")
         .select("id, clientId, lifeInsuranceCompanyId, disabilityInsuranceCompanyId, longTermCareInsuranceId"),
@@ -147,6 +149,16 @@ export async function getRelationshipGraphData() {
       }
     }
 
+    // Map company employees
+    const employeesMap = new Map<string, { personId: string; jobTitle?: string | null }[]>();
+    if (companyEmployees) {
+      for (const e of companyEmployees) {
+        const arr = employeesMap.get(e.companyId) || [];
+        arr.push({ personId: e.personId, jobTitle: e.jobTitle });
+        employeesMap.set(e.companyId, arr);
+      }
+    }
+
     // Companies
     (companies || []).forEach((c) => {
       nodes.push({
@@ -166,6 +178,16 @@ export async function getRelationshipGraphData() {
             source: owner.personId,
             target: c.id,
             label: `Owns ${owner.ownershipPercentage.toFixed(2)}%`,
+          });
+        }
+      });
+      const employees = employeesMap.get(c.id) || [];
+      employees.forEach((emp) => {
+        if (peopleMap.has(emp.personId)) {
+          links.push({
+            source: emp.personId,
+            target: c.id,
+            label: emp.jobTitle ? `Employed as ${emp.jobTitle}` : "Employed At",
           });
         }
       });

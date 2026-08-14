@@ -9,8 +9,8 @@ import { getInitials } from "@/lib/utils";
 
 interface PersonAvatarProps {
   photoUrl?: string | null;
-  firstName?: string;
-  lastName?: string;
+  firstName?: string | null;
+  lastName?: string | null;
   className?: string;
   size?: "default" | "sm" | "lg";
   fallbackIcon?: React.ReactNode;
@@ -24,7 +24,7 @@ export function PersonAvatar({
   size = "sm",
   fallbackIcon,
 }: PersonAvatarProps) {
-  const name = `${firstName} ${lastName}`.trim();
+  const name = `${firstName || ""} ${lastName || ""}`.trim();
   const initials = getInitials(name);
 
   return (
