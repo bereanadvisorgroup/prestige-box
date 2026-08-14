@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { COMPANY_PROFILE_FIELDS } from "@/lib/history/fields";
 import { resolvePersonNames } from "@/lib/history/person-names";
 import { formatValue, getCurrentActor, recordEvent, recordFieldDiffs } from "@/lib/history/record";
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Company, CompanyFormSchema, type CompanyValuationHistory } from "@/types/crm";
 
@@ -12,11 +13,12 @@ const TABLE = "companies";
 
 export async function getCompanies() {
   try {
-    const { data: companies, error } = await supabaseServer
-      .from(TABLE)
-      .select("*, owners:company_owners(id, personId)");
-
-    if (error) throw new Error((error as { message: string }).message);
+    const companies = await fetchAllRows((from, to) =>
+      supabaseServer
+        .from(TABLE)
+        .select("*, owners:company_owners(id, personId)")
+        .range(from, to),
+    );
 
     return { success: true, companies: (companies ?? []) as Company[] };
   } catch (error) {

@@ -2,32 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
+import { supabaseServer, verifyAdmin } from "@/lib/supabase.server";
 import { type OpportunityPipeline, OpportunityPipelineSchema } from "@/types/crm";
 
 const PIPELINES_TABLE = "opportunity_pipelines";
 const STAGES_TABLE = "opportunity_pipeline_stages";
-
-/**
- * Verify that the current user is authenticated and is an admin.
- */
-async function verifyAdmin() {
-  const user = await getAuthenticatedUser();
-
-  if (!user) {
-    throw new Error("Unauthorized: Please sign in.");
-  }
-
-  const { data: dbUser, error: dbUserError } = await supabaseServer
-    .from("users")
-    .select("role")
-    .eq("uid", user.id)
-    .single();
-
-  if (dbUserError || !dbUser || dbUser.role !== "admin") {
-    throw new Error("Unauthorized: Admin role required.");
-  }
-}
 
 /**
  * Fetch all opportunity pipelines with their stages.

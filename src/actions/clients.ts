@@ -7,6 +7,7 @@ import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Client, ClientSchema } from "@/types/crm";
 
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { normalizeClient, normalizePerson } from "@/lib/crm-normalize";
 import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
 
@@ -14,14 +15,15 @@ const TABLE = "clients";
 
 export async function getClients() {
   try {
-    const { data: clients, error: clientsError } = await supabaseServer.from(TABLE).select("*");
+    const clients = await fetchAllRows((from, to) =>
+      supabaseServer.from(TABLE).select("*").range(from, to),
+    );
 
-    if (clientsError) throw new Error((clientsError as { message: string }).message);
     if (!clients || clients.length === 0) return { success: true, clients: [] };
 
-    const { data: people, error: peopleError } = await supabaseServer.from("people").select("*");
-
-    if (peopleError) throw new Error((peopleError as { message: string }).message);
+    const people = await fetchAllRows((from, to) =>
+      supabaseServer.from("people").select("*").range(from, to),
+    );
 
     const peopleMap = (people || []).reduce(
       (acc, person) => {

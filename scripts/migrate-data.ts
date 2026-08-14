@@ -89,6 +89,173 @@ function hasTag(c: any, targetTag: string): boolean {
   return tags.some((t) => t.toLowerCase() === targetLower);
 }
 
+// Dictionary mapping common nicknames to formal given names
+const NICKNAME_MAP: Record<string, string> = {
+  al: "Albert",
+  alec: "Alexander",
+  alex: "Alexander",
+  andy: "Andrew",
+  art: "Arthur",
+  arty: "Arthur",
+  barry: "Bartholomew",
+  becky: "Rebecca",
+  ben: "Benjamin",
+  benny: "Benjamin",
+  bernie: "Bernard",
+  beth: "Elizabeth",
+  betsy: "Elizabeth",
+  betty: "Elizabeth",
+  bill: "William",
+  billy: "William",
+  bob: "Robert",
+  bobby: "Robert",
+  brad: "Bradley",
+  cathy: "Catherine",
+  charles: "Charles",
+  charlie: "Charles",
+  chas: "Charles",
+  chris: "Christopher",
+  chuck: "Charles",
+  cliff: "Clifford",
+  curt: "Curtis",
+  dan: "Daniel",
+  danny: "Daniel",
+  dave: "David",
+  davey: "David",
+  deb: "Deborah",
+  debbie: "Deborah",
+  dex: "Dexter",
+  dick: "Richard",
+  don: "Donald",
+  donnie: "Donald",
+  doug: "Douglas",
+  drew: "Andrew",
+  ed: "Edward",
+  eddie: "Edward",
+  eli: "Elijah",
+  frank: "Francis",
+  frankie: "Francis",
+  fred: "Frederick",
+  freddy: "Frederick",
+  gabe: "Gabriel",
+  gene: "Eugene",
+  geoff: "Geoffrey",
+  glen: "Glenn",
+  greg: "Gregory",
+  hank: "Henry",
+  harry: "Harold",
+  howie: "Howard",
+  irv: "Irving",
+  jack: "John",
+  jake: "Jacob",
+  james: "James",
+  jeff: "Jeffrey",
+  jen: "Jennifer",
+  jenny: "Jennifer",
+  jerry: "Gerald",
+  jim: "James",
+  jimmy: "James",
+  joe: "Joseph",
+  joey: "Joseph",
+  john: "John",
+  johnny: "John",
+  jon: "John",
+  josh: "Joshua",
+  kate: "Katherine",
+  kathy: "Katherine",
+  katie: "Katherine",
+  ken: "Kenneth",
+  kenny: "Kenneth",
+  larry: "Lawrence",
+  lenny: "Leonard",
+  leo: "Leonard",
+  liam: "William",
+  lisa: "Elizabeth",
+  liz: "Elizabeth",
+  lizzie: "Elizabeth",
+  maggie: "Margaret",
+  marty: "Martin",
+  matt: "Matthew",
+  meg: "Margaret",
+  mickey: "Michael",
+  mike: "Michael",
+  mitch: "Mitchell",
+  nate: "Nathaniel",
+  nathan: "Nathaniel",
+  nick: "Nicholas",
+  pat: "Patrick",
+  patty: "Patricia",
+  peggy: "Margaret",
+  pete: "Peter",
+  phil: "Philip",
+  ray: "Raymond",
+  rich: "Richard",
+  richie: "Richard",
+  rick: "Richard",
+  ricky: "Richard",
+  rob: "Robert",
+  robbie: "Robert",
+  rod: "Rodney",
+  ron: "Ronald",
+  ronnie: "Ronald",
+  russ: "Russell",
+  sam: "Samuel",
+  sammy: "Samuel",
+  sid: "Sidney",
+  stan: "Stanley",
+  steve: "Stephen",
+  steven: "Stephen",
+  stu: "Stewart",
+  sue: "Susan",
+  susie: "Susan",
+  ted: "Theodore",
+  teddy: "Theodore",
+  terry: "Terrence",
+  theo: "Theodore",
+  tim: "Timothy",
+  timmy: "Timothy",
+  tom: "Thomas",
+  tommy: "Thomas",
+  tony: "Anthony",
+  tricia: "Patricia",
+  vicky: "Victoria",
+  vince: "Vincent",
+  vinny: "Vincent",
+  wally: "Walter",
+  walt: "Walter",
+  will: "William",
+  willy: "William",
+  zach: "Zachary",
+  zack: "Zachary",
+};
+
+// Helper to get formal/canonical given name
+function getCanonicalFirstName(rawFirstName: string): {
+  canonical: string;
+  wasConverted: boolean;
+  original: string;
+} {
+  const original = (rawFirstName || "").trim();
+  if (!original) {
+    return { canonical: "Unknown", wasConverted: false, original: "" };
+  }
+  const lower = original.toLowerCase();
+  if (NICKNAME_MAP[lower]) {
+    const canonical = NICKNAME_MAP[lower];
+    return {
+      canonical,
+      wasConverted: canonical.toLowerCase() !== lower,
+      original,
+    };
+  }
+  const titleCased = original.charAt(0).toUpperCase() + original.slice(1);
+  return {
+    canonical: titleCased,
+    wasConverted: false,
+    original,
+  };
+}
+
 // Helper to export an array of contact objects to RFC 4180 compliant CSV
 function exportContactsToCsv(contacts: any[], outputPath: string) {
   const dir = path.dirname(outputPath);
@@ -201,7 +368,9 @@ async function runMigration() {
     tags: string[];
     status: "successful" | "ignored";
     reason: string;
-    newId: string | null;
+    clientId: string | null;
+    companyId: string | null;
+    householdId: string | null;
     personId?: string | null;
     entityType: string | null;
   }>();
@@ -235,7 +404,9 @@ async function runMigration() {
         tags,
         status: "ignored",
         reason: `Ignored: ${reasons.join(", ")}`,
-        newId: null,
+        clientId: null,
+        companyId: null,
+        householdId: null,
         personId: null,
         entityType: null,
       });
@@ -248,7 +419,9 @@ async function runMigration() {
         tags,
         status: "successful",
         reason: "Imported into database",
-        newId: null,
+        clientId: null,
+        companyId: null,
+        householdId: null,
         personId: null,
         entityType: null,
       });
@@ -295,129 +468,280 @@ async function runMigration() {
 
   const skippedItems: Array<{ type: string; legacyId: number; contentSnippet: string; reason: string }> = [];
 
-  // --- STEP 3: Build Person & Address Row Batches ---
-  console.log("\n--- STEP 3: Preparing Person Contacts & Addresses ---");
+  // --- STEP 3: Deduplicate Person Contacts & Normalize Nicknames ---
+  console.log("\n--- STEP 3: Deduplicating Person Contacts & Normalizing Names ---");
+
+  const personGroups = new Map<string, any[]>();
+  const nicknameConversions: Array<{
+    legacyId: number;
+    originalName: string;
+    canonicalName: string;
+    mergedIntoLegacyId: number | null;
+    reason: string;
+  }> = [];
 
   for (const c of personContacts) {
+    const rawFirstName = (c.first_name || "").trim() || (c.name || "").trim() || "Unknown";
+    const lastName = (c.last_name || "").trim() || "Unknown";
+    const { canonical, wasConverted, original } = getCanonicalFirstName(rawFirstName);
+    const key = `${canonical.toLowerCase()}|${lastName.toLowerCase()}`;
+
+    if (!personGroups.has(key)) {
+      personGroups.set(key, []);
+    }
+    personGroups.get(key)!.push({
+      ...c,
+      _canonicalFirstName: canonical,
+      _wasConverted: wasConverted,
+      _originalFirstName: original,
+      _lastName: lastName,
+    });
+  }
+
+  let totalDuplicatesDetected = 0;
+  let duplicatesMerged = 0;
+
+  for (const [groupKey, groupMembers] of personGroups.entries()) {
+    // Sort to determine primary record
+    groupMembers.sort((a, b) => {
+      // 1. Prefer record whose original first name is already formal/canonical
+      const aIsFormal = a._originalFirstName.toLowerCase() === a._canonicalFirstName.toLowerCase() ? 1 : 0;
+      const bIsFormal = b._originalFirstName.toLowerCase() === b._canonicalFirstName.toLowerCase() ? 1 : 0;
+      if (aIsFormal !== bIsFormal) return bIsFormal - aIsFormal;
+
+      // 2. Prefer record with more contact information
+      const aScore = (a.emails?.length || 0) + (a.phones?.length || 0) + (a.addresses?.length || 0);
+      const bScore = (b.emails?.length || 0) + (b.phones?.length || 0) + (b.addresses?.length || 0);
+      if (aScore !== bScore) return bScore - aScore;
+
+      // 3. Prefer earlier creation date
+      const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return aDate - bDate;
+    });
+
+    const primaryContact = groupMembers[0];
+    const secondaryContacts = groupMembers.slice(1);
+
+    if (secondaryContacts.length > 0) {
+      totalDuplicatesDetected += groupMembers.length;
+      duplicatesMerged += secondaryContacts.length;
+    }
+
     const personUuid = crypto.randomUUID();
     const clientUuid = crypto.randomUUID();
 
-    personIdMap.set(c.id, personUuid);
-    clientIdMap.set(c.id, clientUuid);
-
-    const contactResult = contactResultsMap.get(c.id);
-    if (contactResult) {
-      contactResult.newId = clientUuid;
-      contactResult.personId = personUuid;
-      contactResult.entityType = "client";
+    // Map ALL legacy IDs in this group to the same UUIDs (so notes and households link correctly)
+    for (const member of groupMembers) {
+      personIdMap.set(member.id, personUuid);
+      clientIdMap.set(member.id, clientUuid);
     }
 
-    const firstName = (c.first_name || "").trim() || (c.name || "").trim() || "Unknown";
-    const lastName = (c.last_name || "").trim() || "Unknown";
+    const firstName = primaryContact._canonicalFirstName;
+    const lastName = primaryContact._lastName;
 
     allPeople.push({
-      legacyId: c.id,
+      legacyId: primaryContact.id,
       personId: personUuid,
       clientId: clientUuid,
       firstName,
       lastName,
     });
 
-    const addressIds: string[] = [];
-    const peopleAddressesFormatted: any[] = [];
+    if (primaryContact._wasConverted) {
+      nicknameConversions.push({
+        legacyId: primaryContact.id,
+        originalName: `${primaryContact._originalFirstName} ${lastName}`,
+        canonicalName: `${firstName} ${lastName}`,
+        mergedIntoLegacyId: null,
+        reason: `Standardized nickname '${primaryContact._originalFirstName}' to given name '${firstName}'`,
+      });
+    }
 
-    if (Array.isArray(c.addresses)) {
-      for (const addr of c.addresses) {
-        const addrUuid = crypto.randomUUID();
-        const street1 = (addr.street_line_1 || "").trim() || "N/A";
-        const street2 = (addr.street_line_2 || "").trim() || null;
-        const city = (addr.city || "").trim() || "N/A";
-        const state = (addr.state || "").trim() || "N/A";
-        const zipCode = (addr.zip_code || "").trim() || "N/A";
-        const country = (addr.country || "").trim() || "USA";
-
-        addressesRows.push({
-          id: addrUuid,
-          street1,
-          street2,
-          city,
-          state,
-          zipCode,
-          country,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        addressIds.push(addrUuid);
-        peopleAddressesFormatted.push({
-          id: addrUuid,
-          street1,
-          street2,
-          city,
-          state,
-          zipCode,
-          country,
-          kind: addr.kind || "Main",
-        });
+    // Update primary contact result tracking
+    const primaryResult = contactResultsMap.get(primaryContact.id);
+    if (primaryResult) {
+      primaryResult.clientId = clientUuid;
+      primaryResult.personId = personUuid;
+      primaryResult.entityType = "client";
+      primaryResult.name = `${firstName} ${lastName}`;
+      if (secondaryContacts.length > 0) {
+        primaryResult.reason = `Imported into database (merged ${secondaryContacts.length} duplicate record(s): IDs ${secondaryContacts.map((s) => s.id).join(", ")})`;
       }
     }
 
-    const socialMedia: any[] = [];
-    if (c.twitter_name) socialMedia.push({ platform: "Twitter", handle: c.twitter_name });
-    if (c.linkedin_url) socialMedia.push({ platform: "LinkedIn", url: c.linkedin_url });
+    // Process each secondary/duplicate contact
+    for (const sec of secondaryContacts) {
+      const secResult = contactResultsMap.get(sec.id);
+      if (secResult) {
+        secResult.status = "deduplicated" as any;
+        secResult.clientId = clientUuid;
+        secResult.personId = personUuid;
+        secResult.entityType = "client";
+        secResult.reason = `Merged into primary contact ${firstName} ${lastName} (ID: ${primaryContact.id}) due to duplicate / nickname match`;
+      }
 
+      nicknameConversions.push({
+        legacyId: sec.id,
+        originalName: `${sec._originalFirstName} ${sec._lastName}`,
+        canonicalName: `${firstName} ${lastName}`,
+        mergedIntoLegacyId: primaryContact.id,
+        reason: `Merged duplicate record '${sec._originalFirstName} ${sec._lastName}' (ID: ${sec.id}) into '${firstName} ${lastName}' (ID: ${primaryContact.id})`,
+      });
+    }
+
+    // Merge unique addresses across all records in the group
+    const addressIds: string[] = [];
+    const peopleAddressesFormatted: any[] = [];
+    const seenAddresses = new Set<string>();
+
+    for (const member of groupMembers) {
+      if (Array.isArray(member.addresses)) {
+        for (const addr of member.addresses) {
+          const street1 = (addr.street_line_1 || "").trim() || "N/A";
+          const street2 = (addr.street_line_2 || "").trim() || null;
+          const city = (addr.city || "").trim() || "N/A";
+          const state = (addr.state || "").trim() || "N/A";
+          const zipCode = (addr.zip_code || "").trim() || "N/A";
+          const country = (addr.country || "").trim() || "USA";
+
+          const addrKey = `${street1.toLowerCase()}|${(street2 || "").toLowerCase()}|${city.toLowerCase()}|${state.toLowerCase()}|${zipCode.toLowerCase()}`;
+          if (seenAddresses.has(addrKey)) continue;
+          seenAddresses.add(addrKey);
+
+          const addrUuid = crypto.randomUUID();
+          addressesRows.push({
+            id: addrUuid,
+            street1,
+            street2,
+            city,
+            state,
+            zipCode,
+            country,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+
+          addressIds.push(addrUuid);
+          peopleAddressesFormatted.push({
+            id: addrUuid,
+            street1,
+            street2,
+            city,
+            state,
+            zipCode,
+            country,
+            kind: addr.kind || "Main",
+          });
+        }
+      }
+    }
+
+    // Merge unique emails across all records in the group
+    const mergedEmails: any[] = [];
+    const seenEmails = new Set<string>();
+    for (const member of groupMembers) {
+      if (Array.isArray(member.emails)) {
+        for (const em of member.emails) {
+          const val = (em.value || "").trim().toLowerCase();
+          if (val && !seenEmails.has(val)) {
+            seenEmails.add(val);
+            mergedEmails.push({
+              address: em.value,
+              type: em.kind || "Work",
+              isPrimary: mergedEmails.length === 0,
+            });
+          }
+        }
+      }
+    }
+
+    // Merge unique phones across all records in the group
+    const mergedPhones: any[] = [];
+    const seenPhones = new Set<string>();
+    for (const member of groupMembers) {
+      if (Array.isArray(member.phones)) {
+        for (const ph of member.phones) {
+          const digits = (ph.value || "").replace(/\D/g, "");
+          const key = digits || ph.value;
+          if (key && !seenPhones.has(key)) {
+            seenPhones.add(key);
+            mergedPhones.push({
+              number: ph.value,
+              type: ph.kind || "Mobile",
+              isPrimary: mergedPhones.length === 0,
+            });
+          }
+        }
+      }
+    }
+
+    // Merge social media
+    const socialMedia: any[] = [];
+    const twitterHandle = groupMembers.find((m) => m.twitter_name)?.twitter_name;
+    const linkedinUrl = groupMembers.find((m) => m.linkedin_url)?.linkedin_url;
+    if (twitterHandle) socialMedia.push({ platform: "Twitter", handle: twitterHandle });
+    if (linkedinUrl) socialMedia.push({ platform: "LinkedIn", url: linkedinUrl });
+
+    // Build people row
     peopleRows.push({
       id: personUuid,
-      prefix: c.prefix || null,
+      prefix: primaryContact.prefix || null,
       firstName,
-      middleName: c.middle_name || null,
+      middleName: primaryContact.middle_name || null,
       lastName,
-      suffix: c.suffix || null,
-      emails: JSON.stringify(c.emails || []),
-      phones: JSON.stringify(c.phones || []),
+      suffix: primaryContact.suffix || null,
+      emails: JSON.stringify(mergedEmails),
+      phones: JSON.stringify(mergedPhones),
       socialMedia: JSON.stringify(socialMedia),
       addresses: JSON.stringify(peopleAddressesFormatted),
       addressIds,
-      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+      createdAt: primaryContact.created_at ? new Date(primaryContact.created_at) : new Date(),
+      updatedAt: primaryContact.updated_at ? new Date(primaryContact.updated_at) : new Date(),
     });
 
-    const employments = c.job_title || c.occupation
-      ? [{ title: c.job_title || c.occupation, startDate: c.occupation_start_date || null }]
+    const jobTitle = groupMembers.find((m) => m.job_title || m.occupation)?.job_title || groupMembers.find((m) => m.occupation)?.occupation || null;
+    const orgName = groupMembers.find((m) => m.organization_name)?.organization_name || "";
+    const startDate = groupMembers.find((m) => m.occupation_start_date)?.occupation_start_date || null;
+
+    const employments = jobTitle || orgName
+      ? [{ title: jobTitle || "Professional", employerName: orgName, startDate }]
       : [];
 
     const driversLicense = {
-      number: c.drivers_license_number || null,
-      state: c.drivers_license_state || null,
-      issuedDate: c.drivers_license_issued_date || null,
-      expiresDate: c.drivers_license_expires_date || null,
+      number: groupMembers.find((m) => m.drivers_license_number)?.drivers_license_number || null,
+      state: groupMembers.find((m) => m.drivers_license_state)?.drivers_license_state || null,
+      issuedDate: groupMembers.find((m) => m.drivers_license_issued_date)?.drivers_license_issued_date || null,
+      expiresDate: groupMembers.find((m) => m.drivers_license_expires_date)?.drivers_license_expires_date || null,
     };
 
     const pii = {
-      ssn: c.ssn || null,
-      birthDate: c.birth_date || null,
-      gender: c.gender || null,
-      maritalStatus: c.marital_status || null,
-      birthPlace: c.birth_place || null,
-      maidenName: c.maiden_name || null,
-      passportNumber: c.passport_number || null,
-      greenCardNumber: c.green_card_number || null,
-      smoker: c.smoker ?? null,
-      height: c.height || null,
-      weight: c.weight || null,
-      medicalConditions: c.medical_conditions || null,
-      personalInterests: c.personal_interests || null,
-      importantInformation: c.important_information || null,
+      ssn: groupMembers.find((m) => m.ssn)?.ssn || null,
+      birthDate: groupMembers.find((m) => m.birth_date)?.birth_date || null,
+      gender: groupMembers.find((m) => m.gender)?.gender || null,
+      maritalStatus: groupMembers.find((m) => m.marital_status)?.marital_status || null,
+      birthPlace: groupMembers.find((m) => m.birth_place)?.birth_place || null,
+      maidenName: groupMembers.find((m) => m.maiden_name)?.maiden_name || null,
+      passportNumber: groupMembers.find((m) => m.passport_number)?.passport_number || null,
+      greenCardNumber: groupMembers.find((m) => m.green_card_number)?.green_card_number || null,
+      smoker: groupMembers.find((m) => m.smoker !== null && m.smoker !== undefined)?.smoker ?? null,
+      height: groupMembers.find((m) => m.height)?.height || null,
+      weight: groupMembers.find((m) => m.weight)?.weight || null,
+      medicalConditions: groupMembers.find((m) => m.medical_conditions)?.medical_conditions || null,
+      personalInterests: groupMembers.find((m) => m.personal_interests)?.personal_interests || null,
+      importantInformation: groupMembers.find((m) => m.important_information)?.important_information || null,
       agreements: {
-        signedFeeAgreementDate: c.signed_fee_agreement_date || null,
-        signedIpsAgreementDate: c.signed_ips_agreement_date || null,
-        signedFpAgreementDate: c.signed_fp_agreement_date || null,
-        lastAdvOfferingDate: c.last_adv_offering_date || null,
-        initialCrsOfferingDate: c.initial_crs_offering_date || null,
-        lastCrsOfferingDate: c.last_crs_offering_date || null,
-        lastPrivacyOfferingDate: c.last_privacy_offering_date || null,
+        signedFeeAgreementDate: groupMembers.find((m) => m.signed_fee_agreement_date)?.signed_fee_agreement_date || null,
+        signedIpsAgreementDate: groupMembers.find((m) => m.signed_ips_agreement_date)?.signed_ips_agreement_date || null,
+        signedFpAgreementDate: groupMembers.find((m) => m.signed_fp_agreement_date)?.signed_fp_agreement_date || null,
+        lastAdvOfferingDate: groupMembers.find((m) => m.last_adv_offering_date)?.last_adv_offering_date || null,
+        initialCrsOfferingDate: groupMembers.find((m) => m.initial_crs_offering_date)?.initial_crs_offering_date || null,
+        lastCrsOfferingDate: groupMembers.find((m) => m.last_crs_offering_date)?.last_crs_offering_date || null,
+        lastPrivacyOfferingDate: groupMembers.find((m) => m.last_privacy_offering_date)?.last_privacy_offering_date || null,
       },
     };
+
+    const mergedLiabilities = groupMembers.filter((m) => m.liabilities).map((m) => m.liabilities);
 
     clientsRows.push({
       id: clientUuid,
@@ -425,39 +749,45 @@ async function runMigration() {
       employments: JSON.stringify(employments),
       driversLicense: JSON.stringify(driversLicense),
       pii: JSON.stringify(pii),
-      liabilities: JSON.stringify(c.liabilities ? [c.liabilities] : []),
-      createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-      updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
+      liabilities: JSON.stringify(mergedLiabilities),
+      createdAt: primaryContact.created_at ? new Date(primaryContact.created_at) : new Date(),
+      updatedAt: primaryContact.updated_at ? new Date(primaryContact.updated_at) : new Date(),
     });
 
-    if (c.tags && typeof c.tags === "string" && c.tags.trim() !== "") {
-      const tagList = c.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
-      for (const tag of tagList) {
-        const noteUuid = crypto.randomUUID();
-        const assocUuid = crypto.randomUUID();
+    // Merge tags from all group members
+    const groupTags = new Set<string>();
+    for (const member of groupMembers) {
+      const tags = getContactTags(member);
+      for (const t of tags) groupTags.add(t);
+    }
 
-        tagNotesRows.push({
-          id: noteUuid,
-          parentId: null,
-          rootId: noteUuid,
-          depth: 0,
-          title: `Contact Tag: ${tag}`,
-          body: `Imported Tag: ${tag}`,
-          authorId: null,
-          createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-          updatedAt: new Date(),
-        });
+    for (const tag of groupTags) {
+      const noteUuid = crypto.randomUUID();
+      const assocUuid = crypto.randomUUID();
 
-        tagAssocRows.push({
-          id: assocUuid,
-          noteId: noteUuid,
-          entityType: "client",
-          entityId: clientUuid,
-          createdAt: new Date(),
-        });
-      }
+      tagNotesRows.push({
+        id: noteUuid,
+        parentId: null,
+        rootId: noteUuid,
+        depth: 0,
+        title: `Contact Tag: ${tag}`,
+        body: `Imported Tag: ${tag}`,
+        authorId: null,
+        createdAt: primaryContact.created_at ? new Date(primaryContact.created_at) : new Date(),
+        updatedAt: new Date(),
+      });
+
+      tagAssocRows.push({
+        id: assocUuid,
+        noteId: noteUuid,
+        entityType: "client",
+        entityId: clientUuid,
+        createdAt: new Date(),
+      });
     }
   }
+
+  console.log(`Deduplication summary: ${personGroups.size} unique people created from ${personContacts.length} source records. (${duplicatesMerged} duplicate records merged).`);
 
   // --- STEP 4: Build Organization & Household Batches ---
   console.log("\n--- STEP 4: Preparing Organizations & Households ---");
@@ -468,7 +798,7 @@ async function runMigration() {
 
     const contactResult = contactResultsMap.get(c.id);
     if (contactResult) {
-      contactResult.newId = companyUuid;
+      contactResult.companyId = companyUuid;
       contactResult.entityType = "company";
     }
 
@@ -517,7 +847,7 @@ async function runMigration() {
 
     const contactResult = contactResultsMap.get(c.id);
     if (contactResult) {
-      contactResult.newId = householdUuid;
+      contactResult.householdId = householdUuid;
       contactResult.entityType = "household";
     }
 
@@ -874,6 +1204,8 @@ async function runMigration() {
       adcpaContacts: adcpaContacts.length,
       peopleInserted: peopleRows.length,
       clientsInserted: clientsRows.length,
+      duplicatePeopleMerged: duplicatesMerged,
+      nicknameConversionsCount: nicknameConversions.length,
       companiesInserted: companiesRows.length,
       householdsInserted: householdsRows.length,
       addressesInserted: addressesRows.length,
@@ -884,6 +1216,13 @@ async function runMigration() {
       totalNotesInsertedInDb: allNotesRows.length,
       noteAssociationsInserted: allNoteAssocRows.length,
       companyOwnersInserted: companyOwnersRows.length,
+    },
+    deduplication: {
+      totalDuplicatesDetected,
+      uniquePeopleCreated: peopleRows.length,
+      duplicatesMerged,
+      nicknameConversionsCount: nicknameConversions.length,
+      nicknameConversions,
     },
     contacts: Array.from(contactResultsMap.values()),
     notes: noteResults,
@@ -901,8 +1240,9 @@ async function runMigration() {
   console.log(`\n================ MIGRATION SUCCESSFUL ===============`);
   console.log(`Duration: ${durationSeconds} seconds`);
   console.log(`Total Contacts: ${contacts.length} (${contactsToImport.length} imported, ${fdcMailingContacts.length + adcpaContacts.length} ignored)`);
-  console.log(`  - FDC Mailing ListCSV: ${fdcCsvPath} (${fdcMailingContacts.length} contacts)`);
+  console.log(`  - FDC Mailing List CSV: ${fdcCsvPath} (${fdcMailingContacts.length} contacts)`);
   console.log(`  - ADCPA CSV: ${adcpaCsvPath} (${adcpaContacts.length} contacts)`);
+  console.log(`Deduplication: ${duplicatesMerged} duplicate records merged, ${nicknameConversions.length} nickname transitions/merges recorded`);
   console.log(`People inserted: ${peopleRows.length}`);
   console.log(`Clients inserted: ${clientsRows.length}`);
   console.log(`Companies inserted: ${companiesRows.length}`);

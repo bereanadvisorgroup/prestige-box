@@ -4,35 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { randomUUID } from "crypto";
 
-import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
+import { supabaseAdmin, supabaseServer, verifyAdmin } from "@/lib/supabase.server";
 import { type WorkflowTemplate, type WorkflowTemplateListItem, WorkflowTemplateSchema } from "@/types/workflows";
 
 const TEMPLATES_TABLE = "workflow_templates";
 const STEPS_TABLE = "workflow_template_steps";
-
-/**
- * Helper to verify that the current user is authenticated and has the admin role.
- * Returns the authenticated user.
- */
-async function verifyAdmin() {
-  const user = await getAuthenticatedUser();
-
-  if (!user) {
-    throw new Error("Unauthorized: Please sign in.");
-  }
-
-  const { data: dbUser, error: dbUserError } = await supabaseServer
-    .from("users")
-    .select("role")
-    .eq("uid", user.id)
-    .single();
-
-  if (dbUserError || !dbUser || dbUser.role !== "admin") {
-    throw new Error("Unauthorized: Admin role required.");
-  }
-
-  return user;
-}
 
 /**
  * Fetch all workflow templates with their step counts, sorted alphabetically.
@@ -161,7 +137,7 @@ export async function createWorkflowTemplate(data: Partial<WorkflowTemplate>) {
 
     const validated = WorkflowTemplateSchema.parse(data);
 
-    const { data: inserted, error } = await supabaseServer
+    const { data: inserted, error } = await supabaseAdmin
       .from(TEMPLATES_TABLE)
       .insert({
         name: validated.name,
@@ -174,7 +150,7 @@ export async function createWorkflowTemplate(data: Partial<WorkflowTemplate>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    const { error: stepsError } = await supabaseServer
+    const { error: stepsError } = await supabaseAdmin
       .from(STEPS_TABLE)
       .insert(validated.steps.map((step, index) => toStepRow(inserted.id, step, index)));
 
@@ -198,7 +174,7 @@ export async function updateWorkflowTemplate(id: string, data: Partial<WorkflowT
 
     const validated = WorkflowTemplateSchema.parse(data);
 
-    const { error } = await supabaseServer
+    const { error } = await supabaseAdmin
       .from(TEMPLATES_TABLE)
       .update({
         name: validated.name,
@@ -211,7 +187,7 @@ export async function updateWorkflowTemplate(id: string, data: Partial<WorkflowT
     if (error) throw new Error((error as { message: string }).message);
 
     // Fetch existing steps for differential updates
-    const { data: existingSteps, error: fetchError } = await supabaseServer
+    const { data: existingSteps, error: fetchError } = await supabaseAdmin
       .from(STEPS_TABLE)
       .select("id")
       .eq("templateId", id);
@@ -232,17 +208,17 @@ export async function updateWorkflowTemplate(id: string, data: Partial<WorkflowT
     const toUpdate = incomingSteps.filter((s) => existingIds.has(s.id));
 
     if (toDeleteIds.length > 0) {
-      const { error: deleteError } = await supabaseServer.from(STEPS_TABLE).delete().in("id", toDeleteIds);
+      const { error: deleteError } = await supabaseAdmin.from(STEPS_TABLE).delete().in("id", toDeleteIds);
       if (deleteError) throw new Error((deleteError as { message: string }).message);
     }
 
     if (toInsert.length > 0) {
-      const { error: insertError } = await supabaseServer.from(STEPS_TABLE).insert(toInsert);
+      const { error: insertError } = await supabaseAdmin.from(STEPS_TABLE).insert(toInsert);
       if (insertError) throw new Error((insertError as { message: string }).message);
     }
 
     for (const step of toUpdate) {
-      const { error: updateError } = await supabaseServer.from(STEPS_TABLE).update(step).eq("id", step.id);
+      const { error: updateError } = await supabaseAdmin.from(STEPS_TABLE).update(step).eq("id", step.id);
       if (updateError) throw new Error((updateError as { message: string }).message);
     }
 
@@ -264,7 +240,7 @@ export async function deleteWorkflowTemplate(id: string) {
   try {
     await verifyAdmin();
 
-    const { error } = await supabaseServer.from(TEMPLATES_TABLE).delete().eq("id", id);
+    const { error } = await supabaseAdmin.from(TEMPLATES_TABLE).delete().eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
 

@@ -56,7 +56,7 @@ export default function AuthCallbackPage() {
             await supabase
               .from("users")
               .update({ uid: user.id, updatedAt: new Date().toISOString() })
-              .eq("id", emailMatchedUser.id);
+              .eq("email", emailMatchedUser.email);
           }
         } else if (emailError) {
           fetchError = emailError;

@@ -121,7 +121,7 @@ export default function LoginPage() {
             await supabase
               .from("users")
               .update({ uid: userId, updatedAt: new Date().toISOString() })
-              .eq("id", emailUser.id);
+              .eq("email", emailUser.email);
           }
         } else if (emailError) {
           fetchError = emailError;

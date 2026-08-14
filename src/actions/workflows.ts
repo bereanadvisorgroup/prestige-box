@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
+import { supabaseServer, verifyStaff } from "@/lib/supabase.server";
 import type {
   WorkflowDueDateBase,
   WorkflowEntityType,
@@ -13,30 +13,6 @@ import type {
 const INSTANCES_TABLE = "workflow_instances";
 const INSTANCE_STEPS_TABLE = "workflow_instance_steps";
 const TEMPLATE_STEPS_TABLE = "workflow_template_steps";
-
-/**
- * Helper to verify the current user is an authenticated admin or advisor.
- * Returns the authenticated user.
- */
-async function verifyStaff() {
-  const user = await getAuthenticatedUser();
-
-  if (!user) {
-    throw new Error("Unauthorized: Please sign in.");
-  }
-
-  const { data: dbUser, error: dbUserError } = await supabaseServer
-    .from("users")
-    .select("role")
-    .eq("uid", user.id)
-    .single();
-
-  if (dbUserError || !dbUser || !["admin", "advisor"].includes(dbUser.role)) {
-    throw new Error("Unauthorized: Admin or Advisor role required.");
-  }
-
-  return user;
-}
 
 function entityWorkflowsPath(entityType: WorkflowEntityType, entityId: string) {
   const segment = entityType === "client" ? "clients" : "companies";

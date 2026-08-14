@@ -170,3 +170,88 @@ export async function getAuthenticatedUser() {
     return null;
   }
 }
+
+/**
+ * Verifies that the current user is authenticated and has one of the allowed roles.
+ * Resolves the role from public.users with automatic email-based fallback and UID synchronization,
+ * or from auth metadata if the database record is missing.
+ */
+export async function verifyUserRole(allowedRoles: string | string[]) {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    throw new Error("Unauthorized: Please sign in.");
+  }
+
+  const roles = (Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]).map((r) => r.toLowerCase().trim());
+
+  // 1. Primary lookup by uid
+  let dbUser: Record<string, unknown> | null = null;
+  const { data: byUid } = await supabaseAdmin.from("users").select("*").eq("uid", user.id).maybeSingle();
+
+  if (byUid) {
+    dbUser = byUid;
+  } else if (user.email) {
+    // 2. Fallback lookup by email if uid was not synced
+    const { data: byEmail } = await supabaseAdmin
+      .from("users")
+      .select("*")
+      .ilike("email", user.email.trim())
+      .maybeSingle();
+
+    if (byEmail) {
+      dbUser = byEmail;
+      // Auto-heal out-of-sync UID so future queries, foreign keys, and RLS succeed
+      if (byEmail.uid !== user.id) {
+        await supabaseAdmin
+          .from("users")
+          .update({ uid: user.id, updatedAt: new Date().toISOString() })
+          .eq("email", byEmail.email);
+      }
+    }
+  }
+
+  // 3. Resolve role from DB record or Auth token metadata
+  const effectiveRole = (dbUser?.role || user.app_metadata?.role || user.user_metadata?.role || "")
+    .toLowerCase()
+    .trim();
+
+  // If user profile is missing in public.users but role is present in metadata, initialize profile
+  if (!dbUser && user.email && effectiveRole) {
+    const newProfile = {
+      uid: user.id,
+      email: user.email.toLowerCase().trim(),
+      firstName: user.user_metadata?.firstName || user.user_metadata?.name?.split(" ")[0] || "",
+      lastName: user.user_metadata?.lastName || user.user_metadata?.name?.split(" ").slice(1).join(" ") || "",
+      role: effectiveRole,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const { data: created } = await supabaseAdmin.from("users").insert(newProfile).select().maybeSingle();
+    if (created) dbUser = created;
+  }
+
+  if (!effectiveRole || !roles.includes(effectiveRole)) {
+    const roleLabel = roles.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(" or ");
+    throw new Error(`Unauthorized: ${roleLabel} role required.`);
+  }
+
+  return { user, profile: dbUser, role: effectiveRole };
+}
+
+/**
+ * Helper to verify that the current user is authenticated and has the admin role.
+ * Returns the authenticated user.
+ */
+export async function verifyAdmin() {
+  const result = await verifyUserRole("admin");
+  return result.user;
+}
+
+/**
+ * Helper to verify that the current user is authenticated and has admin or advisor role.
+ * Returns the authenticated user.
+ */
+export async function verifyStaff() {
+  const result = await verifyUserRole(["admin", "advisor"]);
+  return result.user;
+}

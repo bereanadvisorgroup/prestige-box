@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
+import { supabaseServer, verifyAdmin } from "@/lib/supabase.server";
 
 export async function getBusinessContact() {
   try {
@@ -55,21 +55,7 @@ export async function getBusinessContact() {
 export async function updateBusinessContact(email: string, phone: string) {
   try {
     // Security Check: Only authenticated users with admin role can modify settings.
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      throw new Error("Unauthorized: Please sign in.");
-    }
-
-    // Check role in public.users
-    const { data: dbUser, error: dbUserError } = await supabaseServer
-      .from("users")
-      .select("role")
-      .eq("uid", user.id)
-      .single();
-
-    if (dbUserError || !dbUser || dbUser.role !== "admin") {
-      throw new Error("Unauthorized: Admin role required.");
-    }
+    await verifyAdmin();
 
     // Upsert email
     const { error: emailError } = await supabaseServer
@@ -103,21 +89,7 @@ export async function updatePortalSettings(
 ) {
   try {
     // Security Check: Only authenticated users with admin role can modify settings.
-    const user = await getAuthenticatedUser();
-    if (!user) {
-      throw new Error("Unauthorized: Please sign in.");
-    }
-
-    // Check role in public.users
-    const { data: dbUser, error: dbUserError } = await supabaseServer
-      .from("users")
-      .select("role")
-      .eq("uid", user.id)
-      .single();
-
-    if (dbUserError || !dbUser || dbUser.role !== "admin") {
-      throw new Error("Unauthorized: Admin role required.");
-    }
+    await verifyAdmin();
 
     const updatedAt = new Date().toISOString();
 

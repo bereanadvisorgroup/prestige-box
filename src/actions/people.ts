@@ -7,6 +7,7 @@ import { recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { normalizePerson } from "@/lib/crm-normalize";
 import { syncBirthdayForPerson } from "./task-sync";
 
@@ -14,9 +15,9 @@ const TABLE = "people";
 
 export async function getPeople() {
   try {
-    const { data: people, error } = await supabaseServer.from(TABLE).select("*").order("lastName", { ascending: true });
-
-    if (error) throw new Error((error as { message: string }).message);
+    const people = await fetchAllRows((from, to) =>
+      supabaseServer.from(TABLE).select("*").order("lastName", { ascending: true }).range(from, to),
+    );
 
     const formattedPeople = (people || []).map(normalizePerson);
 

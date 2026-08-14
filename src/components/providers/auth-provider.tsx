@@ -26,7 +26,7 @@ async function fetchUserProfile(userId: string, email?: string | null) {
         await supabase
           .from("users")
           .update({ uid: userId, updatedAt: new Date().toISOString() })
-          .eq("id", emailUser.id);
+          .eq("email", emailUser.email);
       }
       return { profileData: emailUser, error: null };
     }

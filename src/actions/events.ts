@@ -2,31 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getAuthenticatedUser, supabaseServer } from "@/lib/supabase.server";
+import { supabaseServer, verifyAdmin } from "@/lib/supabase.server";
 import { type Event, EventSchema } from "@/types/crm";
 
 const TABLE = "events";
-
-/**
- * Helper to verify that the current user is authenticated and has the admin role.
- */
-async function verifyAdmin() {
-  const user = await getAuthenticatedUser();
-
-  if (!user) {
-    throw new Error("Unauthorized: Please sign in.");
-  }
-
-  const { data: dbUser, error: dbUserError } = await supabaseServer
-    .from("users")
-    .select("role")
-    .eq("uid", user.id)
-    .single();
-
-  if (dbUserError || !dbUser || dbUser.role !== "admin") {
-    throw new Error("Unauthorized: Admin role required.");
-  }
-}
 
 /**
  * Fetch all events sorted by start date.
