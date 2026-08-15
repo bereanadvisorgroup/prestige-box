@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatPersonName } from "@/lib/utils";
 import type { NoteAssociation } from "@/types/notes";
 
 interface Option {
@@ -38,7 +39,7 @@ export function AssociationPicker({ value, onChange }: AssociationPickerProps) {
       if (clientsRes.success) {
         for (const c of clientsRes.clients || []) {
           if (c.id) {
-            const name = `${c.person?.firstName ?? ""} ${c.person?.lastName ?? ""}`.trim() || "Unnamed client";
+            const name = formatPersonName(c.person, "Unnamed client");
             opts.push({ entityType: "client", entityId: c.id, name });
           }
         }
@@ -52,7 +53,7 @@ export function AssociationPicker({ value, onChange }: AssociationPickerProps) {
       }
       if (peopleRes.success) {
         for (const p of peopleRes.people || []) {
-          const name = `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unnamed person";
+          const name = formatPersonName(p, "Unnamed person");
           opts.push({ entityType: "person", entityId: p.id!, name });
         }
       }

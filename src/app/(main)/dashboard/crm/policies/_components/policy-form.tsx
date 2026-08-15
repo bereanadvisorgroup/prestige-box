@@ -22,6 +22,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatPersonName } from "@/lib/utils";
 import {
   type Client,
   type ClientPolicy,
@@ -139,9 +140,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
   const isLifeInsurance = selectedCompany ? selectedCompany.type === "life" : !!form.watch("lifeInsuranceCompanyId");
   const selectedClient = availableClients.find((c) => c.id === form.watch("clientId"));
 
-  const selectedClientName = selectedClient
-    ? `${selectedClient.person?.firstName} ${selectedClient.person?.lastName}`
-    : "";
+  const selectedClientName = selectedClient ? formatPersonName(selectedClient.person) : "";
   const selectedCarrierName = selectedCompany?.name || "";
 
   useEffect(() => {
@@ -158,7 +157,7 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
       return availableClients;
     }
     return availableClients.filter((c) => {
-      const name = `${c.person?.firstName} ${c.person?.lastName}`;
+      const name = formatPersonName(c.person);
       const email = c.person?.emails?.find((e) => e.isPrimary)?.address || c.person?.emails?.[0]?.address || "";
       return (
         name.toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
@@ -246,12 +245,8 @@ export function PolicyForm({ policy }: { policy?: ClientPolicy }) {
                       <ComboboxContent>
                         <ComboboxList>
                           {filteredClients.map((c) => (
-                            <ComboboxItem
-                              key={c.id}
-                              value={c.id!}
-                              label={`${c.person?.firstName} ${c.person?.lastName}`}
-                            >
-                              {c.person?.firstName} {c.person?.lastName} (
+                            <ComboboxItem key={c.id} value={c.id!} label={formatPersonName(c.person)}>
+                              {formatPersonName(c.person)} (
                               {c.person?.emails?.find((e) => e.isPrimary)?.address ||
                                 c.person?.emails?.[0]?.address ||
                                 "No Email"}

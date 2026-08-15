@@ -28,6 +28,7 @@ import { getAdvisors } from "@/actions/users";
 import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
 import { LogoUpload } from "@/components/features/crm/logo-upload";
 import { Button } from "@/components/ui/button";
+import { formatPersonName } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -215,7 +216,7 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
     const base = availablePeople.filter((p) => !allAssignedPersonIds.has(p.id!));
     if (!personSearchQuery) return base;
     return base.filter((p) => {
-      const name = `${p.firstName || ""} ${p.lastName || ""}`;
+      const name = formatPersonName(p, "");
       return name.toLowerCase().includes(personSearchQuery.toLowerCase());
     });
   }, [availablePeople, personSearchQuery, allAssignedPersonIds]);
@@ -224,7 +225,7 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
     const base = availablePeople.filter((p) => !allAssignedPersonIds.has(p.id!));
     if (!employeeSearchQuery) return base;
     return base.filter((p) => {
-      const name = `${p.firstName || ""} ${p.lastName || ""}`;
+      const name = formatPersonName(p, "");
       return name.toLowerCase().includes(employeeSearchQuery.toLowerCase());
     });
   }, [availablePeople, employeeSearchQuery, allAssignedPersonIds]);
@@ -810,12 +811,8 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
                   <ComboboxContent>
                     <ComboboxList>
                       {filteredPeople.map((person) => (
-                        <ComboboxItem
-                          key={person.id}
-                          value={person.id!}
-                          label={`${person.firstName} ${person.lastName}`}
-                        >
-                          {person.firstName} {person.lastName}
+                        <ComboboxItem key={person.id} value={person.id!} label={formatPersonName(person)}>
+                          {formatPersonName(person)}
                         </ComboboxItem>
                       ))}
                     </ComboboxList>
@@ -831,7 +828,7 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
               <div className="space-y-4">
                 {ownerFields.map((field, index) => {
                   const person = availablePeople.find((p) => p.id === field.personId);
-                  const name = person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
+                  const name = person ? formatPersonName(person) : "Unknown Person";
                   return (
                     <div
                       key={field.id}
@@ -910,12 +907,8 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
                   <ComboboxContent>
                     <ComboboxList>
                       {filteredPeopleForEmployees.map((person) => (
-                        <ComboboxItem
-                          key={person.id}
-                          value={person.id!}
-                          label={`${person.firstName} ${person.lastName}`}
-                        >
-                          {person.firstName} {person.lastName}
+                        <ComboboxItem key={person.id} value={person.id!} label={formatPersonName(person)}>
+                          {formatPersonName(person)}
                         </ComboboxItem>
                       ))}
                     </ComboboxList>
@@ -934,7 +927,7 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
               <div className="space-y-4">
                 {employeeFields.map((field, index) => {
                   const person = availablePeople.find((p) => p.id === field.personId);
-                  const name = person ? `${person.firstName} ${person.lastName}` : "Unknown Person";
+                  const name = person ? formatPersonName(person) : "Unknown Person";
                   return (
                     <div
                       key={field.id}

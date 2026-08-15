@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatPersonName } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 interface DeletePersonAlertProps {
@@ -49,11 +50,8 @@ export function DeletePersonAlert({ person, open, onOpenChange }: DeletePersonAl
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete{" "}
-            <strong>
-              {person.firstName} {person.lastName}
-            </strong>{" "}
-            from the CRM records.
+            This action cannot be undone. This will permanently delete <strong>{formatPersonName(person)}</strong> from
+            the CRM records.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

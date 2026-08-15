@@ -374,9 +374,9 @@ async function runMigration() {
 
   if (!jsonPathArg) {
     const candidatePaths = [
-      "migrate/20260801_ClientList.json",
-      "migration/20260801_ClientList.json",
-      "scripts/20260801_ClientList.json",
+      "migrate/20260815_ClientList.json",
+      "migration/20260815_ClientList.json",
+      "scripts/20260815_ClientList.json",
     ];
     for (const p of candidatePaths) {
       if (fs.existsSync(path.resolve(process.cwd(), p))) {

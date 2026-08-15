@@ -3,6 +3,7 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import type { PaymentSchedule } from "@/types/crm";
 
 export interface ScheduledPayment {
@@ -145,9 +146,14 @@ export async function getPaymentsForMonth(month: number, year: number) {
             ? clientPayments.find((a) => a.id === policy.paymentAccountId)?.name || "Unknown Account"
             : "No Account Selected";
 
-          const clientPerson = client?.person as { firstName?: string; lastName?: string; photoUrl?: string } | null;
+          const clientPerson = client?.person as {
+            firstName?: string;
+            lastName?: string;
+            suffix?: string;
+            photoUrl?: string;
+          } | null;
           const clientName = clientPerson
-            ? `${clientPerson.firstName || ""} ${clientPerson.lastName || ""}`.trim()
+            ? formatFullName(clientPerson.firstName, clientPerson.lastName, clientPerson.suffix, "Unknown Client")
             : "Unknown Client";
 
           payments.push({

@@ -10,6 +10,7 @@ import { getPeople } from "@/actions/people";
 import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatPersonName } from "@/lib/utils";
 import type { Client, FamilyMember, Person } from "@/types/crm";
 
 function TreeEdgeHorizontal({ isFirst, isLast, isOnly }: { isFirst: boolean; isLast: boolean; isOnly: boolean }) {
@@ -77,11 +78,8 @@ function NodeCard({
     <div className="relative flex w-[160px] flex-col items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md">
       <PersonAvatar photoUrl={person?.photoUrl} firstName={person?.firstName} lastName={person?.lastName} size="lg" />
       <div className="text-center">
-        <p
-          className="line-clamp-1 font-semibold text-foreground text-sm"
-          title={person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-        >
-          {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
+        <p className="line-clamp-1 font-semibold text-foreground text-sm" title={formatPersonName(person)}>
+          {formatPersonName(person)}
         </p>
         <Badge variant="secondary" className="mt-1 bg-muted/50 font-semibold text-[10px] uppercase tracking-wider">
           {displayLabel}

@@ -33,7 +33,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         type="tel"
         className={className}
         onChange={handleChange}
-        value={value}
+        value={value ?? ""}
         ref={ref}
         {...props}
       />

@@ -13,6 +13,7 @@ import { getCompanies } from "@/actions/companies";
 import { createTask, updateTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
+import { formatPersonName } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -156,7 +157,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
 
       if (clientsRes.success && clientsRes.clients) {
         for (const c of clientsRes.clients) {
-          const label = `${c.person?.firstName ?? ""} ${c.person?.lastName ?? ""}`.trim() || "Unnamed client";
+          const label = formatPersonName(c.person, "Unnamed client");
           opts.push({
             value: `client:${c.id}`,
             label,

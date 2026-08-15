@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SsnInput } from "@/components/ui/ssn-input";
 import { sportsTeams } from "@/data/sports-teams";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import {
   type Client,
   type ClientFormInput,
@@ -286,9 +286,7 @@ export function ClientForm({ client }: ClientFormProps) {
                   size="default"
                 />
                 <div className="grid gap-1">
-                  <p className="font-bold text-base leading-none">
-                    {selectedPerson.firstName} {selectedPerson.lastName}
-                  </p>
+                  <p className="font-bold text-base leading-none">{formatPersonName(selectedPerson)}</p>
                   <div className="mt-1 flex flex-col gap-0.5 text-muted-foreground">
                     <p className="flex items-center gap-2">
                       <span className="font-medium text-foreground/70">Email:</span>{" "}

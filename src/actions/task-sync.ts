@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import type { TaskCategory, TaskSourceType } from "@/types/crm";
 
 /**
@@ -140,7 +141,7 @@ export async function syncBirthdayForPerson(personId: string): Promise<void> {
 
     const { data: person } = await supabaseServer
       .from("people")
-      .select("firstName, lastName")
+      .select("firstName, lastName, suffix")
       .eq("id", personId)
       .maybeSingle();
     const birthDate = (client.pii as { birthDate?: string } | null)?.birthDate;
@@ -184,10 +185,10 @@ export async function syncAnniversaryForClient(clientId: string): Promise<void> 
 
     const { data: person } = await supabaseServer
       .from("people")
-      .select("firstName, lastName")
+      .select("firstName, lastName, suffix")
       .eq("id", client.personId)
       .maybeSingle();
-    const clientName = `${person?.firstName ?? ""} ${person?.lastName ?? ""}`.trim() || "Client";
+    const clientName = formatFullName(person?.firstName, person?.lastName, person?.suffix, "Client");
 
     await upsertAutoTask({
       sourceType: "anniversary",

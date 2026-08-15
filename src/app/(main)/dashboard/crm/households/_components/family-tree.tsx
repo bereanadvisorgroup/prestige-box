@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { calculateHouseholdNetWorth } from "@/lib/financial-rollup";
+import { formatPersonName } from "@/lib/utils";
 import type { Household, Person } from "@/types/crm";
 
 interface FamilyTreeMember {
@@ -209,9 +210,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-xs">
-                          {m.person ? `${m.person.firstName} ${m.person.lastName}` : "Relative"}
-                        </p>
+                        <p className="truncate font-medium text-xs">{formatPersonName(m.person, "Relative")}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant="secondary" className="text-[9px]">
                             {formatRoleName(m.role)}
@@ -248,9 +247,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                       size="default"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-sm">
-                        {headMember.person ? `${headMember.person.firstName} ${headMember.person.lastName}` : "Head"}
-                      </p>
+                      <p className="truncate font-bold text-sm">{formatPersonName(headMember.person, "Head")}</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         <Badge variant="default" className="text-[10px]">
                           Head of Household
@@ -285,11 +282,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                       size="default"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-sm">
-                        {spouseMember.person
-                          ? `${spouseMember.person.firstName} ${spouseMember.person.lastName}`
-                          : "Spouse"}
-                      </p>
+                      <p className="truncate font-bold text-sm">{formatPersonName(spouseMember.person, "Spouse")}</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         <Badge
                           variant="secondary"
@@ -349,9 +342,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             size="sm"
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold text-xs">
-                              {m.person ? `${m.person.firstName} ${m.person.lastName}` : "Child"}
-                            </p>
+                            <p className="truncate font-semibold text-xs">{formatPersonName(m.person, "Child")}</p>
                             <div className="mt-1 flex flex-wrap gap-1">
                               <Badge variant="outline" className="text-[9px]">
                                 {formatRoleName(m.role)}
@@ -396,9 +387,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             size="sm"
                           />
                           <div>
-                            <p className="font-medium text-xs">
-                              {m.person ? `${m.person.firstName} ${m.person.lastName}` : "Grandchild"}
-                            </p>
+                            <p className="font-medium text-xs">{formatPersonName(m.person, "Grandchild")}</p>
                             <div className="mt-0.5 flex gap-1">
                               <Badge variant="outline" className="text-[8px]">
                                 {formatRoleName(m.role)}
@@ -436,9 +425,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             size="sm"
                           />
                           <div>
-                            <p className="font-medium text-xs">
-                              {m.person ? `${m.person.firstName} ${m.person.lastName}` : "Great Grandchild"}
-                            </p>
+                            <p className="font-medium text-xs">{formatPersonName(m.person, "Great Grandchild")}</p>
                             <div className="mt-0.5 flex gap-1">
                               <Badge variant="outline" className="text-[8px]">
                                 {formatRoleName(m.role)}
@@ -486,9 +473,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-xs">
-                          {m.person ? `${m.person.firstName} ${m.person.lastName}` : "Relative"}
-                        </p>
+                        <p className="truncate font-medium text-xs">{formatPersonName(m.person, "Relative")}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant="secondary" className="text-[9px]">
                             {formatRoleName(m.role)}
@@ -563,9 +548,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             lastName={person.lastName}
                             size="sm"
                           />
-                          <span>
-                            {person.firstName} {person.lastName}
-                          </span>
+                          <span>{formatPersonName(person)}</span>
                           <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
                         </Link>
                       </div>

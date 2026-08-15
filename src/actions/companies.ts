@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { normalizePerson } from "@/lib/crm-normalize";
 import { fetchAllRows } from "@/lib/fetch-chunks";
 import { COMPANY_PROFILE_FIELDS } from "@/lib/history/fields";
 import { resolvePersonNames } from "@/lib/history/person-names";
@@ -74,6 +75,7 @@ export async function getCompanyOwners(companyId: string) {
           id,
           firstName,
           lastName,
+          suffix,
           photoUrl
         )
       `)
@@ -116,9 +118,10 @@ export async function getCompanyEmployees(companyId: string) {
           id,
           firstName,
           lastName,
+          suffix,
           photoUrl,
-          email,
-          phone
+          emails,
+          phones
         )
       `)
       .eq("companyId", companyId);
@@ -133,11 +136,30 @@ export async function getCompanyEmployees(companyId: string) {
 
     const clientPersonMap = new Map((clients || []).map((c) => [c.personId, c.id]));
 
-    const employeesWithClientTag = (employees || []).map((emp: any) => ({
-      ...emp,
-      isClient: clientPersonMap.has(emp.personId),
-      clientId: clientPersonMap.get(emp.personId) || null,
-    }));
+    const employeesWithClientTag = (employees || []).map((emp) => {
+      const normalizedPerson = emp.person ? normalizePerson(emp.person) : null;
+      const primaryEmail =
+        normalizedPerson?.emails?.find((e: { isPrimary?: boolean; address?: string }) => e.isPrimary)?.address ||
+        normalizedPerson?.emails?.[0]?.address ||
+        null;
+      const primaryPhone =
+        normalizedPerson?.phones?.find((p: { isPrimary?: boolean; number?: string }) => p.isPrimary)?.number ||
+        normalizedPerson?.phones?.[0]?.number ||
+        null;
+
+      return {
+        ...emp,
+        person: normalizedPerson
+          ? {
+              ...normalizedPerson,
+              email: primaryEmail,
+              phone: primaryPhone,
+            }
+          : null,
+        isClient: clientPersonMap.has(emp.personId),
+        clientId: clientPersonMap.get(emp.personId) || null,
+      };
+    });
 
     return { success: true, employees: employeesWithClientTag };
   } catch (error) {

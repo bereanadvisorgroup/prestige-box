@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatPersonName } from "@/lib/utils";
 
 export interface GraphNode {
   id: string;
@@ -39,7 +40,7 @@ export async function getRelationshipGraphData() {
       { data: moneyManagers },
       { data: recordKeepers },
     ] = await Promise.all([
-      supabaseServer.from("people").select("id, firstName, lastName, addressIds"),
+      supabaseServer.from("people").select("id, firstName, lastName, suffix, addressIds"),
       supabaseServer.from("addresses").select("id, street1, city, state"),
       supabaseServer.from("households").select("id, name, addressId, memberIds"),
       supabaseServer.from("clients").select("id, personId"),
@@ -64,10 +65,6 @@ export async function getRelationshipGraphData() {
 
     const nodes: GraphNode[] = [];
     const links: GraphLink[] = [];
-
-    // Helper to format names
-    const formatPersonName = (p: { firstName: string | null; lastName: string | null }) =>
-      `${p.firstName || ""} ${p.lastName || ""}`.trim() || "Unknown Person";
 
     // Build lookup maps for fast access
     const peopleMap = new Map((people || []).map((p) => [p.id, p]));

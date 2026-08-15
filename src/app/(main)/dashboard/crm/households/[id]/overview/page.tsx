@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AnyFinancialItem } from "@/lib/financial-rollup";
 import { calculatePortfolioRollups } from "@/lib/portfolio-rollup";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type { Address } from "@/types/crm";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
@@ -147,9 +147,7 @@ export default async function HouseholdOverviewPage({ params }: HouseholdOvervie
                           />
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm">
-                                {person.firstName} {person.lastName}
-                              </span>
+                              <span className="font-semibold text-sm">{formatPersonName(person)}</span>
                               <Badge
                                 variant={role === "home_owner" ? "default" : "secondary"}
                                 className="py-0 text-[10px] capitalize"

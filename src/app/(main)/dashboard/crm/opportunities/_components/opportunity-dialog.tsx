@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatPersonName } from "@/lib/utils";
 import { OpportunitySchema } from "@/types/crm";
 
 interface OpportunityDialogProps {
@@ -165,9 +166,7 @@ export function OpportunityDialog({
     if (associationType === "client" && watchedClientId) {
       const client = clients.find((c) => c.id === watchedClientId);
       if (client) {
-        const name = client.person
-          ? `${client.person.firstName ?? ""} ${client.person.lastName ?? ""}`.trim()
-          : "Client";
+        const name = formatPersonName(client.person, "Client");
         return {
           name,
           documentUrl: (client.documentUrl as string | null | undefined) ?? null,
@@ -540,7 +539,7 @@ export function OpportunityDialog({
                                 <SelectContent>
                                   {clients.map((c) => (
                                     <SelectItem key={c.id} value={c.id}>
-                                      {c.person ? `${c.person.firstName} ${c.person.lastName}` : "Unnamed Client"}
+                                      {formatPersonName(c.person, "Unnamed Client")}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -1116,7 +1115,7 @@ export function OpportunityDialog({
                               <SelectContent>
                                 {clients.map((c) => (
                                   <SelectItem key={c.id} value={c.id}>
-                                    {c.person ? `${c.person.firstName} ${c.person.lastName}` : "Unnamed Client"}
+                                    {formatPersonName(c.person, "Unnamed Client")}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

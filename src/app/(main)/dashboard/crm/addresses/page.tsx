@@ -14,6 +14,7 @@ import { getLawFirms } from "@/actions/law-firms";
 import { getPeople } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatPersonName } from "@/lib/utils";
 import type {
   AccountingFirm,
   ActuarialFirm,
@@ -109,7 +110,7 @@ export default async function AddressesPage() {
         return [
           {
             id: p.id!,
-            name: `${p.firstName} ${p.lastName}`,
+            name: formatPersonName(p),
             type: addrLink.type,
           },
         ];
@@ -118,7 +119,7 @@ export default async function AddressesPage() {
         return [
           {
             id: p.id!,
-            name: `${p.firstName} ${p.lastName}`,
+            name: formatPersonName(p),
             type: "Home",
           },
         ];

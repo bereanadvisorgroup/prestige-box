@@ -13,6 +13,7 @@ import { getPeople } from "@/actions/people";
 import type { BeneficiaryParty } from "@/app/(main)/dashboard/crm/clients/[id]/_components/insurance-policy-manager";
 import { DisabilityInsuranceManager } from "@/app/(main)/dashboard/crm/clients/[id]/disability-insurance/_components/disability-insurance-manager";
 import { AssociationCardList } from "@/components/features/crm/association-card-list";
+import { formatPersonName } from "@/lib/utils";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 
@@ -42,7 +43,7 @@ export default async function HouseholdDisabilityInsurancePage({ params }: Props
 
   const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
   const companies: BeneficiaryParty[] = (allCompaniesResult.success ? (allCompaniesResult.companies ?? []) : []).map(
@@ -57,7 +58,7 @@ export default async function HouseholdDisabilityInsurancePage({ params }: Props
         activeClients.map((client) => (
           <div key={client.id} className="space-y-2">
             <h3 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
-              Client: {client.person ? `${client.person.firstName} ${client.person.lastName}` : client.id}
+              Client: {formatPersonName(client.person, client.id)}
             </h3>
             <DisabilityInsuranceManager client={client} allCompanies={allInsuranceCompanies} parties={parties} />
           </div>

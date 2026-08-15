@@ -14,6 +14,7 @@ import { getTeams } from "@/actions/teams";
 import { getAdvisors } from "@/actions/users";
 import { getWorkflows } from "@/actions/workflows";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatPersonName } from "@/lib/utils";
 
 import { AdvisorDropdown } from "../_components/advisor-dropdown";
 import { ClientHeaderPortal } from "../_components/client-header-portal";
@@ -83,7 +84,7 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const teams = teamsResult.success ? teamsResult.teams || [] : [];
 
   const person = clientResult.person;
-  const clientName = person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "Client";
+  const clientName = formatPersonName(person, "Client");
 
   // Filter and sort outstanding steps
   const outstandingSteps = workflows.flatMap((w) =>

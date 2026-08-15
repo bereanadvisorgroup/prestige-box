@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatCurrency, formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type {
   AccountingFirm,
   ActuarialFirm,
@@ -55,6 +55,7 @@ interface AddressProfileTabsProps {
     id: string;
     firstName: string;
     lastName: string;
+    suffix?: string | null;
     photoUrl: string | null | undefined;
     email: string;
     phone: string;
@@ -335,9 +336,7 @@ export function AddressProfileTabs({
                               />
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-sm">
-                                    {person.firstName} {person.lastName}
-                                  </span>
+                                  <span className="font-semibold text-sm">{formatPersonName(person)}</span>
                                   <Badge
                                     variant={person.isPrimary ? "default" : "secondary"}
                                     className="py-0 text-[10px]"

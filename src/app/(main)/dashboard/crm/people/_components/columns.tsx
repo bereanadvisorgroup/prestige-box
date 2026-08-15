@@ -10,7 +10,7 @@ import { DataTableColumnHeader } from "@/components/features/data-table/data-tab
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPersonPhotoUrl } from "@/lib/social";
-import { cn, formatPhoneNumber } from "@/lib/utils";
+import { cn, formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 export type RelationLink = {
@@ -50,7 +50,7 @@ const getRelationBadgeStyle = (type: string) => {
 export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedPerson>[] => [
   {
     id: "name",
-    accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+    accessorFn: (row) => formatPersonName(row),
     filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }: { row: Row<EnrichedPerson> }) => {

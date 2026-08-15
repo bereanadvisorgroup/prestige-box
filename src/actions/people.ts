@@ -6,6 +6,7 @@ import { normalizePerson } from "@/lib/crm-normalize";
 import { fetchAllRows } from "@/lib/fetch-chunks";
 import { PERSON_PROFILE_FIELDS } from "@/lib/history/fields";
 import { recordFieldDiffs } from "@/lib/history/record";
+import { getNicknameVariants } from "@/lib/nicknames";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
@@ -117,5 +118,95 @@ export async function deletePerson(id: string) {
   } catch (error) {
     console.error(`[deletePerson] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export interface DuplicatePersonMatch {
+  id: string;
+  prefix?: string | null;
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+  suffix?: string | null;
+  photoUrl?: string | null;
+  primaryEmail?: string | null;
+  primaryPhone?: string | null;
+  isExactMatch: boolean;
+  matchedName: string;
+  inputName: string;
+}
+
+export interface FindDuplicatePeopleParams {
+  firstName?: string | null;
+  lastName?: string | null;
+  excludePersonId?: string | null;
+}
+
+export async function findDuplicatePeople({ firstName, lastName, excludePersonId }: FindDuplicatePeopleParams) {
+  try {
+    const cleanFirst = (firstName || "").trim();
+    const cleanLast = (lastName || "").trim();
+
+    if (!cleanFirst || !cleanLast || cleanFirst.length < 2 || cleanLast.length < 2) {
+      return { success: true, duplicates: [] as DuplicatePersonMatch[] };
+    }
+
+    const firstVariants = new Set(getNicknameVariants(cleanFirst).map((v) => v.toLowerCase()));
+
+    let query = supabaseServer
+      .from(TABLE)
+      .select("id, prefix, firstName, middleName, lastName, suffix, photoUrl, emails, phones")
+      .ilike("lastName", cleanLast);
+
+    if (excludePersonId) {
+      query = query.neq("id", excludePersonId);
+    }
+
+    const { data: candidates, error } = await query;
+
+    if (error) throw new Error((error as { message: string }).message);
+    if (!candidates || candidates.length === 0) {
+      return { success: true, duplicates: [] as DuplicatePersonMatch[] };
+    }
+
+    const duplicates: DuplicatePersonMatch[] = [];
+
+    for (const raw of candidates) {
+      const person = normalizePerson(raw);
+      const candFirst = (person.firstName || "").trim().toLowerCase();
+      const isExact = candFirst === cleanFirst.toLowerCase();
+      const isNickMatch = firstVariants.has(candFirst);
+
+      if (isExact || isNickMatch) {
+        const emails = person.emails || [];
+        const phones = person.phones || [];
+
+        const primaryEmail = emails.find((e) => e.isPrimary)?.address || emails[0]?.address || null;
+        const primaryPhone = phones.find((p) => p.isPrimary)?.number || phones[0]?.number || null;
+
+        const personId = person.id || (raw as { id: string }).id;
+        if (!personId) continue;
+
+        duplicates.push({
+          id: personId,
+          prefix: person.prefix || null,
+          firstName: person.firstName || "",
+          middleName: person.middleName || null,
+          lastName: person.lastName || "",
+          suffix: person.suffix || null,
+          photoUrl: person.photoUrl || null,
+          primaryEmail,
+          primaryPhone,
+          isExactMatch: isExact,
+          matchedName: person.firstName || "",
+          inputName: cleanFirst,
+        });
+      }
+    }
+
+    return { success: true, duplicates };
+  } catch (error) {
+    console.error(`[findDuplicatePeople] Error:`, error);
+    return { success: false, duplicates: [] as DuplicatePersonMatch[], error: (error as { message: string }).message };
   }
 }

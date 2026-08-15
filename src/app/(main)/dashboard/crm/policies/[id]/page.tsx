@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabaseServer } from "@/lib/supabase.server";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type { PaymentSchedule } from "@/types/crm";
 
 // Helper function to calculate payment schedule dates and amounts
@@ -179,9 +179,7 @@ export default async function PolicyLandingPage({ params }: { params: Promise<{ 
                         lastName={personData.lastName}
                         size="sm"
                       />
-                      <p className="font-medium text-foreground">
-                        {personData.firstName} {personData.lastName}
-                      </p>
+                      <p className="font-medium text-foreground">{formatPersonName(personData)}</p>
                     </div>
                   </div>
                   <div>

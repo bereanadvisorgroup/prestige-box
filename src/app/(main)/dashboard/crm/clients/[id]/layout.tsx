@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getClient } from "@/actions/clients";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatPersonName } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 interface LayoutProps {
@@ -20,6 +21,7 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
   }
 
   const person = clientResult.person as Person | null;
+  const clientName = formatPersonName(person, "Client Profile");
   const initials = `${person?.firstName?.[0] || ""}${person?.lastName?.[0] || ""}`.toUpperCase();
 
   return (
@@ -28,18 +30,12 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
       <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 border-2 border-primary/10">
-            {person?.photoUrl && (
-              <AvatarImage
-                src={person.photoUrl}
-                alt={`${person.firstName} ${person.lastName}`}
-                className="object-cover"
-              />
-            )}
+            {person?.photoUrl && <AvatarImage src={person.photoUrl} alt={clientName} className="object-cover" />}
             <AvatarFallback className="bg-primary/5 text-2xl text-primary">{initials || "CL"}</AvatarFallback>
           </Avatar>
           <div>
             <h1 className="font-bold text-3xl tracking-tight flex items-center gap-2">
-              <span>{person ? `${person.firstName} ${person.lastName}` : "Client Profile"}</span>
+              <span>{clientName}</span>
               <span id="client-header-separator" className="text-muted-foreground/40 font-normal hidden">
                 {" "}
                 :{" "}

@@ -19,6 +19,7 @@ import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { formatPersonName } from "@/lib/utils";
 
 import { AddressProfileTabs } from "./_components/address-profile-tabs";
 
@@ -80,6 +81,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
           id: p.id!,
           firstName: p.firstName,
           lastName: p.lastName,
+          suffix: p.suffix,
           photoUrl: p.photoUrl,
           email: p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "N/A",
           phone: p.phones?.find((ph) => ph.isPrimary)?.number || p.phones?.[0]?.number || "N/A",
@@ -94,6 +96,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
           id: p.id!,
           firstName: p.firstName,
           lastName: p.lastName,
+          suffix: p.suffix,
           photoUrl: p.photoUrl,
           email: p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "N/A",
           phone: p.phones?.find((ph) => ph.isPrimary)?.number || p.phones?.[0]?.number || "N/A",
@@ -113,7 +116,7 @@ export default async function AddressPage({ params }: AddressPageProps) {
     .map((c) => {
       const person = associatedPeople.find((ap) => ap.id === c.personId);
       return {
-        personName: person ? `${person.firstName} ${person.lastName}` : "Unknown",
+        personName: formatPersonName(person, "Unknown"),
         client: c,
       };
     });

@@ -7,6 +7,7 @@ import { fetchAllRows } from "@/lib/fetch-chunks";
 import { CLIENT_PROFILE_FIELDS } from "@/lib/history/fields";
 import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatPersonName } from "@/lib/utils";
 import { type Client, ClientSchema } from "@/types/crm";
 
 import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
@@ -35,8 +36,8 @@ export async function getClients() {
     }));
 
     clientWithPeople.sort((a, b) => {
-      const nameA = `${a.person?.firstName || ""} ${a.person?.lastName || ""}`.trim().toLowerCase();
-      const nameB = `${b.person?.firstName || ""} ${b.person?.lastName || ""}`.trim().toLowerCase();
+      const nameA = formatPersonName(a.person, "").toLowerCase();
+      const nameB = formatPersonName(b.person, "").toLowerCase();
       return nameA.localeCompare(nameB);
     });
 

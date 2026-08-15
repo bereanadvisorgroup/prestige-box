@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type { Address, Person } from "@/types/crm";
 
 interface LawFirmDetailsPageProps {
@@ -104,7 +104,7 @@ export default async function LawFirmDetailsPage({ params }: LawFirmDetailsPageP
                             href={`/dashboard/crm/people/${person.id}`}
                             className="flex items-center gap-0.5 font-semibold text-primary text-sm hover:underline"
                           >
-                            {person.firstName} {person.lastName}
+                            {formatPersonName(person)}
                             <ArrowUpRight className="h-3 w-3 opacity-60" />
                           </Link>
                           <p className="font-medium text-muted-foreground text-xs">
@@ -207,9 +207,7 @@ export default async function LawFirmDetailsPage({ params }: LawFirmDetailsPageP
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {associatedClients.map((client) => {
                     const clientPerson = client.person as Person | null;
-                    const clientName = clientPerson
-                      ? `${clientPerson.firstName} ${clientPerson.lastName}`
-                      : "Unknown Client";
+                    const clientName = formatPersonName(clientPerson, "Unknown Client");
                     const clientEmail =
                       clientPerson?.emails?.find((e) => e.isPrimary)?.address ||
                       clientPerson?.emails?.[0]?.address ||

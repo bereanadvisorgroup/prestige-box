@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { getCurrentActor, recordEvent } from "@/lib/history/record";
 import { sanitizeNoteHtml } from "@/lib/sanitize";
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import {
   MAX_NOTE_DEPTH,
   type NoteAssociationRef,
@@ -68,9 +69,9 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
     const { data: clients } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);
     const clientPersonIds = Array.from(new Set((clients || []).map((c) => c.personId)));
     const { data: people } = clientPersonIds.length
-      ? await supabaseServer.from("people").select("id, firstName, lastName").in("id", clientPersonIds)
+      ? await supabaseServer.from("people").select("id, firstName, lastName, suffix").in("id", clientPersonIds)
       : { data: [] };
-    const peopleMap = new Map((people || []).map((p) => [p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim()]));
+    const peopleMap = new Map((people || []).map((p) => [p.id, formatFullName(p.firstName, p.lastName, p.suffix)]));
     for (const c of clients || []) {
       names.set(`client:${c.id}`, peopleMap.get(c.personId) || "Unknown client");
     }
@@ -82,9 +83,12 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
   }
 
   if (personIds.length > 0) {
-    const { data: people } = await supabaseServer.from("people").select("id, firstName, lastName").in("id", personIds);
+    const { data: people } = await supabaseServer
+      .from("people")
+      .select("id, firstName, lastName, suffix")
+      .in("id", personIds);
     for (const p of people || []) {
-      names.set(`person:${p.id}`, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Unknown person");
+      names.set(`person:${p.id}`, formatFullName(p.firstName, p.lastName, p.suffix) || "Unknown person");
     }
   }
 

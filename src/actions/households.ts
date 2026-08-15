@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { fetchInChunks } from "@/lib/fetch-chunks";
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import { type Household, type HouseholdMember, HouseholdSchema, type Person } from "@/types/crm";
 
 const TABLE = "households";
@@ -66,13 +67,18 @@ export async function getHouseholds() {
       }
 
       const peopleData = await fetchInChunks(Array.from(personIdsToFetch), async (chunk) => {
-        const { data } = await supabaseServer.from("people").select("id, firstName, lastName").in("id", chunk);
-        return (data || []) as { id: string; firstName: string | null; lastName: string | null }[];
+        const { data } = await supabaseServer.from("people").select("id, firstName, lastName, suffix").in("id", chunk);
+        return (data || []) as {
+          id: string;
+          firstName: string | null;
+          lastName: string | null;
+          suffix: string | null;
+        }[];
       });
 
       for (const p of peopleData) {
         if (p.id) {
-          personNameMap[p.id] = `${p.firstName || ""} ${p.lastName || ""}`.trim();
+          personNameMap[p.id] = formatFullName(p.firstName, p.lastName, p.suffix);
         }
       }
 

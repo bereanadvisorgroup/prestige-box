@@ -5,7 +5,7 @@ import { ArrowUpRight, Users } from "lucide-react";
 import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatPersonName } from "@/lib/utils";
 
 export interface CompanyOwnerDisplayItem {
   id?: string;
@@ -18,6 +18,7 @@ export interface CompanyOwnerDisplayItem {
     id?: string;
     firstName?: string | null;
     lastName?: string | null;
+    suffix?: string | null;
     photoUrl?: string | null;
   } | null;
 }
@@ -54,9 +55,7 @@ export function CompanyOwnersCard({ owners = [], estimatedValue = 0 }: CompanyOw
               <tbody className="divide-y">
                 {owners.map((owner) => {
                   const person = owner.person;
-                  const name = person
-                    ? `${person.firstName || ""} ${person.lastName || ""}`.trim() || "Unknown Person"
-                    : "Unknown Person";
+                  const name = formatPersonName(person);
                   const linkHref =
                     owner.isClient && owner.clientId
                       ? `/dashboard/crm/clients/${owner.clientId}`

@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, formatPersonName } from "@/lib/utils";
 
 import { OpportunityDialog } from "./opportunity-dialog";
 import { PipelineSummarySection } from "./pipeline-summary-section";
@@ -47,9 +47,7 @@ function OpportunityCard({
   const isCompany = !!opportunity.companyId;
   const name = isCompany
     ? opportunity.company?.name || "Unnamed Company"
-    : opportunity.client?.person
-      ? `${opportunity.client.person.firstName} ${opportunity.client.person.lastName}`
-      : "Unnamed Client";
+    : formatPersonName(opportunity.client?.person, "Unnamed Client");
 
   const closeDate = opportunity.targetCloseDate ? format(new Date(opportunity.targetCloseDate), "MMM d, yyyy") : null;
 
@@ -106,9 +104,7 @@ function OpportunityCard({
           )}
 
           {opportunity.companyId && opportunity.client?.person && (
-            <p className="text-xs text-muted-foreground">
-              Re: {opportunity.client.person.firstName} {opportunity.client.person.lastName}
-            </p>
+            <p className="text-xs text-muted-foreground">Re: {formatPersonName(opportunity.client.person)}</p>
           )}
         </div>
         <Badge
@@ -421,11 +417,7 @@ export function KanbanBoard({
     if (!pendingOppId) return "";
     const opp = opportunities.find((o) => o.id === pendingOppId);
     if (!opp) return "";
-    return opp.company
-      ? opp.company.name
-      : opp.client?.person
-        ? `${opp.client.person.firstName} ${opp.client.person.lastName}`
-        : "Opportunity";
+    return opp.company ? opp.company.name : formatPersonName(opp.client?.person, "Opportunity");
   }, [pendingOppId, opportunities]);
 
   if (pipelines.length === 0) {

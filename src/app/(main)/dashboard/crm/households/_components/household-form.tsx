@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { formatPersonName } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -321,7 +322,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                                 />
                                 <div className="min-w-0">
                                   <p className="truncate font-semibold text-sm">
-                                    {person ? `${person.firstName} ${person.lastName}` : "Selected Person"}
+                                    {formatPersonName(person, "Selected Person")}
                                   </p>
                                   <p className="truncate text-muted-foreground text-xs">
                                     {person?.emails?.find((e) => e.isPrimary)?.address ||
@@ -436,7 +437,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                                 />
                                 <div className="min-w-0">
                                   <p className="truncate font-semibold text-sm">
-                                    {person ? `${person.firstName} ${person.lastName}` : "Selected Person"}
+                                    {formatPersonName(person, "Selected Person")}
                                   </p>
                                   <p className="truncate text-muted-foreground text-xs">
                                     {person?.emails?.find((e) => e.isPrimary)?.address ||
@@ -582,9 +583,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                             size="default"
                           />
                           <div>
-                            <p className="font-semibold text-sm">
-                              {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-                            </p>
+                            <p className="font-semibold text-sm">{formatPersonName(person, "Unknown Person")}</p>
                             <p className="text-muted-foreground text-xs">
                               {person?.emails?.find((e) => e.isPrimary)?.address ||
                                 person?.emails?.[0]?.address ||

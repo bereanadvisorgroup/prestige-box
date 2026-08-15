@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatPersonName } from "@/lib/utils";
 import type { Client, FamilyMember, Person } from "@/types/crm";
 
 interface AddFamilyMemberModalProps {
@@ -49,6 +50,7 @@ export function AddFamilyMemberModal({
   // New Person State
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [suffix, setSuffix] = useState("");
   const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
 
@@ -88,6 +90,7 @@ export function AddFamilyMemberModal({
         const newPersonData: Partial<Person> = {
           firstName,
           lastName,
+          suffix: suffix || undefined,
         };
 
         const res = await createPerson(newPersonData);
@@ -165,7 +168,7 @@ export function AddFamilyMemberModal({
                   <SelectContent className="max-h-[200px]">
                     {people.map((p) => (
                       <SelectItem key={p.id} value={p.id!}>
-                        {p.firstName} {p.lastName}
+                        {formatPersonName(p)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -173,7 +176,7 @@ export function AddFamilyMemberModal({
               </div>
             </TabsContent>
             <TabsContent value="new" className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">First Name</label>
                   <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
@@ -181,6 +184,10 @@ export function AddFamilyMemberModal({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Last Name</label>
                   <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Suffix (Optional)</label>
+                  <Input value={suffix} onChange={(e) => setSuffix(e.target.value)} placeholder="Jr." />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -236,7 +243,7 @@ export function AddFamilyMemberModal({
                   <SelectContent>
                     {parentOptions.map((opt) => (
                       <SelectItem key={opt.id} value={opt.id!}>
-                        {opt.person ? `${opt.person.firstName} ${opt.person.lastName}` : "Unknown"} ({opt.relationship})
+                        {formatPersonName(opt.person, "Unknown")} ({opt.relationship})
                       </SelectItem>
                     ))}
                     {parentOptions.length === 0 && (

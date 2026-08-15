@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createPerson } from "@/actions/people";
+import { PersonDuplicateChecker } from "@/components/features/crm/person-duplicate-checker";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -32,6 +33,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
       firstName: "",
       middleName: "",
       lastName: "",
+      suffix: "",
       phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
       emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
       addressIds: [],
@@ -45,6 +47,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
         firstName: "",
         middleName: "",
         lastName: "",
+        suffix: "",
         phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
         emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
         addressIds: [],
@@ -98,7 +101,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" {...field} />
+                      <Input placeholder="John" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -111,7 +114,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" {...field} />
+                      <Input placeholder="Doe" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -119,19 +122,36 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="middleName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Middle Name (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Quincy" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="middleName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Middle Name (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Quincy" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="suffix"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Suffix (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Jr., III" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <PersonDuplicateChecker firstName={form.watch("firstName")} lastName={form.watch("lastName")} />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
@@ -146,6 +166,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                           type="email"
                           placeholder="john.doe@example.com"
                           {...field}
+                          value={field.value ?? ""}
                           className={fieldState.isDirty && !fieldState.invalid && field.value ? "pr-10" : ""}
                         />
                         {fieldState.isDirty && !fieldState.invalid && field.value && (
@@ -164,7 +185,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                   <FormItem>
                     <FormLabel>Mobile Phone</FormLabel>
                     <FormControl>
-                      <PhoneInput placeholder="555-123-4567" {...field} />
+                      <PhoneInput placeholder="555-123-4567" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

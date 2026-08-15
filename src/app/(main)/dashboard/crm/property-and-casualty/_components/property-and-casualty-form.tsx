@@ -25,6 +25,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { formatPersonName } from "@/lib/utils";
 import {
   type Address,
   type Client,
@@ -135,7 +136,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
     const base = availableClients.filter((client) => !watchedClientIds.includes(client.id!));
     if (!clientSearchQuery) return base;
     return base.filter((c) => {
-      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
+      const name = formatPersonName(c.person);
       return name.toLowerCase().includes(clientSearchQuery.toLowerCase());
     });
   }, [availableClients, clientSearchQuery, watchedClientIds]);
@@ -331,9 +332,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                               size="sm"
                             />
                             <div>
-                              <p className="font-medium text-sm">
-                                {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-                              </p>
+                              <p className="font-medium text-sm">{formatPersonName(person, "Unknown Person")}</p>
                               <p className="text-muted-foreground text-xs">
                                 {person?.emails?.find((e) => e.isPrimary)?.address ||
                                   person?.emails?.[0]?.address ||
@@ -422,15 +421,11 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                   <ComboboxContent>
                     <ComboboxList>
                       {filteredClients.map((client) => {
-                        const person = (client as { person?: { firstName: string; lastName: string } }).person;
+                        const person = client.person;
                         if (!person) return null;
                         return (
-                          <ComboboxItem
-                            key={client.id}
-                            value={client.id!}
-                            label={`${person.firstName} ${person.lastName}`}
-                          >
-                            {person.firstName} {person.lastName}
+                          <ComboboxItem key={client.id} value={client.id!} label={formatPersonName(person)}>
+                            {formatPersonName(person)}
                           </ComboboxItem>
                         );
                       })}
@@ -445,14 +440,14 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
+                  const person = client?.person;
                   return (
                     <Badge
                       key={clientId}
                       variant="secondary"
                       className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
                     >
-                      {person ? `${person.firstName} ${person.lastName}` : "Unknown Client"}
+                      {formatPersonName(person, "Unknown Client")}
                       <button
                         type="button"
                         onClick={() => handleToggleClient(clientId)}

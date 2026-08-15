@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPersonPhotoUrl } from "@/lib/social";
+import { formatPersonName } from "@/lib/utils";
 
 import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
@@ -158,11 +159,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20 rounded-md border-2 border-primary/10">
             {getPersonPhotoUrl(person) && (
-              <AvatarImage
-                src={getPersonPhotoUrl(person)!}
-                alt={`${person.firstName} ${person.lastName}`}
-                className="object-cover"
-              />
+              <AvatarImage src={getPersonPhotoUrl(person)!} alt={formatPersonName(person)} className="object-cover" />
             )}
             <AvatarFallback className="rounded-md bg-primary/5 font-bold text-2xl text-primary">
               {initials || <User className="h-8 w-8" />}

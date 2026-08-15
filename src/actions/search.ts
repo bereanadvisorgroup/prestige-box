@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 
 export interface SearchResult {
   id: string;
@@ -24,8 +25,8 @@ export async function globalSearch(
     // 1. Search People
     const peoplePromise = supabaseServer
       .from("people")
-      .select("id, firstName, lastName")
-      .or(`firstName.ilike.${ilikeQuery},lastName.ilike.${ilikeQuery}`)
+      .select("id, firstName, lastName, suffix")
+      .or(`firstName.ilike.${ilikeQuery},lastName.ilike.${ilikeQuery},suffix.ilike.${ilikeQuery}`)
       .limit(10);
 
     // 2. Search Addresses
@@ -180,7 +181,7 @@ export async function globalSearch(
       for (const p of peopleRes.data) {
         results.push({
           id: p.id,
-          title: `${p.firstName} ${p.lastName}`,
+          title: formatFullName(p.firstName, p.lastName, p.suffix),
           subtitle: "Person",
           url: `/dashboard/crm/people/${p.id}`,
           type: "People",
@@ -230,7 +231,7 @@ export async function globalSearch(
           if (person) {
             results.push({
               id: c.id,
-              title: `${person.firstName} ${person.lastName}`,
+              title: formatFullName(person.firstName, person.lastName, person.suffix),
               subtitle: "Client",
               url: `/dashboard/crm/clients/${c.id}`,
               type: "Clients",

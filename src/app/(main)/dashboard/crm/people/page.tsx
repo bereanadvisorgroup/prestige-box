@@ -16,6 +16,7 @@ import { getPeople } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { formatPersonName } from "@/lib/utils";
 import type {
   AccountingFirm,
   ActuarialFirm,
@@ -155,7 +156,7 @@ export default async function PeoplePage() {
     if (clientRecord) {
       relations.push({
         type: "Client",
-        name: `${person.firstName} ${person.lastName}`,
+        name: formatPersonName(person),
         href: `/dashboard/crm/clients/${clientRecord.id}`,
       });
     }
@@ -164,7 +165,7 @@ export default async function PeoplePage() {
     for (const c of clients) {
       const familyMember = c.familyMembers?.find((m) => m.personId === person.id);
       if (familyMember) {
-        const clientName = c.person ? `${c.person.firstName} ${c.person.lastName}` : "Client";
+        const clientName = c.person ? formatPersonName(c.person, "Client") : "Client";
         relations.push({
           type: `Family: ${familyMember.relationship}`,
           name: clientName,

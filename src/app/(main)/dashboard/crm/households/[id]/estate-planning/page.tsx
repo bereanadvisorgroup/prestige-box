@@ -12,6 +12,7 @@ import {
   type EstateParty,
 } from "@/app/(main)/dashboard/crm/clients/[id]/_components/tabs/estate-documents-tab";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPersonName } from "@/lib/utils";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 
@@ -46,7 +47,7 @@ export default async function HouseholdEstatePlanningPage({ params }: HouseholdE
 
   const people: EstateParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
 
@@ -65,7 +66,7 @@ export default async function HouseholdEstatePlanningPage({ params }: HouseholdE
         activeClients.map((client) => (
           <div key={client.id} className="space-y-2">
             <h3 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
-              Client: {client.person ? `${client.person.firstName} ${client.person.lastName}` : client.id}
+              Client: {formatPersonName(client.person, client.id)}
             </h3>
             <EstateDocumentsTab
               client={client}

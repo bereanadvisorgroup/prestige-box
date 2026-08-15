@@ -1,3 +1,4 @@
+import { formatPersonName } from "@/lib/utils";
 import type { Client, Household, Person } from "@/types/crm";
 
 import type { AnyFinancialItem } from "./financial-rollup";
@@ -170,7 +171,7 @@ export function calculatePortfolioRollups(
   // Helper to build member name
   const getMemberName = (m?: typeof headMember) => {
     if (!m?.person) return "Client";
-    return `${m.person.firstName} ${m.person.lastName}`.trim();
+    return formatPersonName(m.person, "Client");
   };
 
   // Collect all items across all active clients

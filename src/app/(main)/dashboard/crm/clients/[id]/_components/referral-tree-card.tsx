@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatPersonName } from "@/lib/utils";
 import type { Client } from "@/types/crm";
 
 interface ReferralTreeNode {
@@ -105,7 +106,7 @@ export function ReferralTreeCard({ client, clientName, allClients = [], allAdvis
   function getDescendants(clientId: string): ReferralTreeNode[] {
     const children = allClients.filter((c) => c.referredById === clientId);
     return children.map((child) => {
-      const name = `${child.person?.firstName || ""} ${child.person?.lastName || ""}`.trim();
+      const name = formatPersonName(child.person);
       return {
         id: child.id,
         name,
@@ -131,9 +132,7 @@ export function ReferralTreeCard({ client, clientName, allClients = [], allAdvis
     let lastNode = currentClientNode;
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const ancestor = ancestors[i];
-      const name = ancestor.isAdvisor
-        ? ancestor.name
-        : `${ancestor.person?.firstName || ""} ${ancestor.person?.lastName || ""}`.trim();
+      const name = ancestor.isAdvisor ? ancestor.name : formatPersonName(ancestor.person);
       const ancestorNode: ReferralTreeNode = {
         id: ancestor.id,
         name,

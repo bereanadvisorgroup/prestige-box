@@ -7,6 +7,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { CLIENT_POLICY_FIELDS } from "@/lib/history/fields";
 import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import { type ClientPolicy, ClientPolicySchema } from "@/types/crm";
 
 import { removeAutoTask, syncRenewalForPolicy } from "./task-sync";
@@ -92,13 +93,13 @@ export async function getClientPolicies() {
     if (personIds.length > 0) {
       const { data: people, error: peopleError } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName, photoUrl")
+        .select("id, firstName, lastName, suffix, photoUrl")
         .in("id", personIds);
       if (peopleError) throw new Error((peopleError as { message: string }).message);
       peopleMap = (people || []).reduce(
         (acc, p) => {
           acc[p.id] = {
-            name: `${p.firstName} ${p.lastName}`,
+            name: formatFullName(p.firstName, p.lastName, p.suffix),
             photoUrl: p.photoUrl || null,
           };
           return acc;

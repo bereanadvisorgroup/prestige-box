@@ -10,7 +10,7 @@ import { ArrowUpRight, Briefcase, Calendar, CheckCircle2 } from "lucide-react";
 import { getAssignedActiveOpportunitiesForUser } from "@/actions/opportunities";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatPersonName } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Opportunity } from "@/types/crm";
 
@@ -22,6 +22,7 @@ export interface AssignedOpportunity extends Opportunity {
       id: string;
       firstName: string;
       lastName: string;
+      suffix?: string | null;
       photoUrl?: string | null;
     } | null;
   } | null;
@@ -96,9 +97,7 @@ export function AssignedOpportunitiesCard() {
         ) : (
           <ul className="space-y-3">
             {opportunities.map((opp) => {
-              const name = opp.client?.person
-                ? `${opp.client.person.firstName} ${opp.client.person.lastName}`
-                : "Unnamed Client";
+              const name = formatPersonName(opp.client?.person, "Unnamed Client");
 
               const formattedAmount = new Intl.NumberFormat("en-US", {
                 style: "currency",

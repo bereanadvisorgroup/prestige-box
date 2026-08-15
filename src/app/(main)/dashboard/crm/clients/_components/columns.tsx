@@ -9,7 +9,7 @@ import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 import type { Client, Person } from "@/types/crm";
 
 export type EnrichedClient = Client & {
@@ -21,7 +21,7 @@ export type EnrichedClient = Client & {
 export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedClient>[] => [
   {
     id: "personName",
-    accessorFn: (row) => (row.person ? `${row.person.firstName} ${row.person.lastName}` : ""),
+    accessorFn: (row) => formatPersonName(row.person, ""),
     filterFn: "includesString",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Client Name" />,
     cell: ({ row }: { row: Row<EnrichedClient> }) => {
@@ -34,9 +34,7 @@ export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedC
             href={`/dashboard/crm/clients/${row.original.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"
           >
-            <span>
-              {person.firstName} {person.lastName}
-            </span>
+            <span>{formatPersonName(person)}</span>
             <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
           </Link>
         </div>

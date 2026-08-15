@@ -5,6 +5,7 @@ import { getCompanies } from "@/actions/companies";
 import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getLongTermCareInsurances } from "@/actions/long-term-care-insurance";
 import { getPeople } from "@/actions/people";
+import { formatPersonName } from "@/lib/utils";
 
 import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
 import { LongTermCareManager } from "./_components/long-term-care-manager";
@@ -33,7 +34,7 @@ export default async function LongTermCarePage({ params }: Props) {
 
   const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
   const companies: BeneficiaryParty[] = (allCompaniesResult.success ? (allCompaniesResult.companies ?? []) : []).map(

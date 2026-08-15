@@ -4,6 +4,7 @@ import { getClient } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getLawFirms } from "@/actions/law-firms";
 import { getPeople } from "@/actions/people";
+import { formatPersonName } from "@/lib/utils";
 
 import { EstateDocumentsTab, type EstateParty } from "../_components/tabs/estate-documents-tab";
 
@@ -33,7 +34,7 @@ export default async function EstatePlanningPage({ params }: Props) {
 
   const people: EstateParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
 

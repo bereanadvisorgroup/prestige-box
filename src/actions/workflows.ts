@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { supabaseServer, verifyStaff } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import type {
   WorkflowDueDateBase,
   WorkflowEntityType,
@@ -361,10 +362,10 @@ export async function getAllWorkflows() {
     if (personIds.length > 0) {
       const { data: persons } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName")
+        .select("id, firstName, lastName, suffix")
         .in("id", personIds);
       for (const p of persons || []) {
-        personNames.set(p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim());
+        personNames.set(p.id, formatFullName(p.firstName, p.lastName, p.suffix));
       }
     }
 
@@ -744,11 +745,11 @@ export async function getUpcomingWorkflowStepsForUser(userId: string, limit = 5)
     if (personIds.length > 0) {
       const { data: persons } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName")
+        .select("id, firstName, lastName, suffix")
         .in("id", personIds);
 
       for (const p of persons || []) {
-        personNames.set(p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim());
+        personNames.set(p.id, formatFullName(p.firstName, p.lastName, p.suffix));
       }
     }
 
@@ -841,11 +842,11 @@ export async function getEntityDocumentUrl(entityType: WorkflowEntityType, entit
       if (client?.personId) {
         const { data: person } = await supabaseServer
           .from("people")
-          .select("firstName, lastName")
+          .select("firstName, lastName, suffix")
           .eq("id", client.personId)
           .single();
         if (person) {
-          name = `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "Client";
+          name = formatFullName(person.firstName, person.lastName, person.suffix, "Client");
         }
       }
       return { success: true, documentUrl: client?.documentUrl || null, name };

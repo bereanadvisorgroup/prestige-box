@@ -17,6 +17,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sportsTeams } from "@/data/sports-teams";
+import { formatPersonName } from "@/lib/utils";
 import type { Client, PaymentAccount } from "@/types/crm";
 
 export function GeneralTab({
@@ -95,7 +96,7 @@ export function GeneralTab({
     if (!referredByType || referredByType === "none") return "";
     if (referredByType === "client") {
       const match = allClients.find((c) => c.id === referredById);
-      return match ? `${match.person?.firstName || ""} ${match.person?.lastName || ""}`.trim() : "";
+      return match ? formatPersonName(match.person, "") : "";
     }
     if (referredByType === "company") {
       const match = allCompanies.find((c) => c.id === referredByCompanyId);
@@ -103,7 +104,7 @@ export function GeneralTab({
     }
     if (referredByType === "person") {
       const match = allPeople.find((p) => p.id === referredByPersonId);
-      return match ? `${match.firstName || ""} ${match.lastName || ""}`.trim() : "";
+      return match ? formatPersonName(match, "") : "";
     }
     if (referredByType === "referral_type") {
       const match = allReferralTypes.find((rt) => rt.id === referredByReferralTypeId);
@@ -143,7 +144,7 @@ export function GeneralTab({
     const list = allClients.filter((c) => c.id !== client.id);
     if (!referrerSearchQuery) return list;
     return list.filter((c) => {
-      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`.toLowerCase();
+      const name = formatPersonName(c.person, "").toLowerCase();
       return name.includes(referrerSearchQuery.toLowerCase());
     });
   }, [allClients, client.id, referrerSearchQuery]);
@@ -156,7 +157,7 @@ export function GeneralTab({
   const personOptions = useMemo(() => {
     if (!referrerSearchQuery) return allPeople;
     return allPeople.filter((p) => {
-      const name = `${p.firstName || ""} ${p.lastName || ""}`.toLowerCase();
+      const name = formatPersonName(p, "").toLowerCase();
       return name.includes(referrerSearchQuery.toLowerCase());
     });
   }, [allPeople, referrerSearchQuery]);
@@ -337,7 +338,7 @@ export function GeneralTab({
 
                       {referredByType === "client" &&
                         clientOptions.map((c) => {
-                          const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`.trim();
+                          const name = formatPersonName(c.person);
                           return (
                             <ComboboxItem key={c.id} value={c.id} label={name}>
                               {name}
@@ -354,7 +355,7 @@ export function GeneralTab({
 
                       {referredByType === "person" &&
                         personOptions.map((p) => {
-                          const name = `${p.firstName || ""} ${p.lastName || ""}`.trim();
+                          const name = formatPersonName(p);
                           return (
                             <ComboboxItem key={p.id} value={p.id} label={name}>
                               {name}
@@ -402,9 +403,7 @@ export function GeneralTab({
                       key={refClient.id}
                       className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-sm">
-                        {refClient.person?.firstName} {refClient.person?.lastName}
-                      </span>
+                      <span className="font-medium text-sm">{formatPersonName(refClient.person)}</span>
                       <Link href={`/dashboard/crm/clients/${refClient.id}`}>
                         <Button
                           variant="ghost"

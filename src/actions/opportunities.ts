@@ -60,7 +60,7 @@ export async function getOpportunities(filters?: {
       if (personIds.length > 0) {
         const { data: people, error: peopleError } = await supabaseServer
           .from("people")
-          .select("id, firstName, lastName, photoUrl")
+          .select("id, firstName, lastName, suffix, photoUrl")
           .in("id", personIds);
 
         if (!peopleError && people) {
@@ -114,7 +114,7 @@ export async function getOpportunity(id: string) {
     if (record?.client?.personId) {
       const { data: person, error: personError } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName")
+        .select("id, firstName, lastName, suffix")
         .eq("id", record.client.personId)
         .single();
 
@@ -421,7 +421,7 @@ export async function getAssignedActiveOpportunitiesForUser(userId: string) {
       if (personIds.length > 0) {
         const { data: people, error: peopleError } = await supabaseServer
           .from("people")
-          .select("id, firstName, lastName, photoUrl")
+          .select("id, firstName, lastName, suffix, photoUrl")
           .in("id", personIds);
 
         if (!peopleError && people) {

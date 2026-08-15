@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 
 export type ReferralNodeType = "Client" | "Company" | "Person" | "Advisor";
 
@@ -68,7 +69,7 @@ export async function getReferralsReportData() {
         .select(
           "id, personId, referredById, referredByType, referredByCompanyId, referredByPersonId, referredByReferralTypeId, referredByEventId, referredByAdvisorId, createdAt",
         ),
-      supabaseServer.from("people").select("id, firstName, lastName"),
+      supabaseServer.from("people").select("id, firstName, lastName, suffix"),
       supabaseServer.from("companies").select("id, name, dba"),
       supabaseServer.from("referral_types").select("id, name"),
       supabaseServer.from("events").select("id, title"),
@@ -84,8 +85,8 @@ export async function getReferralsReportData() {
     const usersMap = new Map((users || []).map((u) => [u.uid, u]));
     const clientsMap = new Map(clientRows.map((c) => [c.id, c]));
 
-    const personName = (p?: { firstName: string | null; lastName: string | null }) =>
-      `${p?.firstName || ""} ${p?.lastName || ""}`.trim() || "Unknown Person";
+    const personName = (p?: { firstName: string | null; lastName: string | null; suffix?: string | null }) =>
+      formatFullName(p?.firstName, p?.lastName, p?.suffix, "Unknown Person");
     const clientName = (c: ClientRow) => {
       const p = c.personId ? peopleMap.get(c.personId) : undefined;
       return p ? personName(p) : "Unknown Client";

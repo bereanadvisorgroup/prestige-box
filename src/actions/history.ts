@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabase.server";
+import { formatFullName } from "@/lib/utils";
 import type { ChangeHistory, ChangeHistoryEntityType, ChangeHistoryWithEntity } from "@/types/crm";
 
 const TABLE = "change_history";
@@ -49,10 +50,10 @@ async function resolveEntityNames(rows: ChangeHistory[]): Promise<Map<string, st
     if (personIds.length > 0) {
       const { data: people } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName")
+        .select("id, firstName, lastName, suffix")
         .in("id", personIds);
       for (const p of people || []) {
-        peopleMap.set(p.id, `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim());
+        peopleMap.set(p.id, formatFullName(p.firstName, p.lastName, p.suffix));
       }
     }
     for (const c of clients || []) names.set(c.id, peopleMap.get(c.personId) || "Unknown Client");

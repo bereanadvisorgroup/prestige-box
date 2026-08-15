@@ -53,3 +53,31 @@ export function formatPhoneNumber(phoneNumber: string | undefined | null) {
   }
   return phoneNumber;
 }
+
+/**
+ * Formats a person's full name with suffix if present: "[firstName] [lastName] [suffix]"
+ */
+export function formatFullName(
+  firstName?: string | null,
+  lastName?: string | null,
+  suffix?: string | null,
+  fallback = "",
+): string {
+  const parts = [firstName?.trim(), lastName?.trim(), suffix?.trim()].filter(Boolean);
+  return parts.join(" ") || fallback;
+}
+
+/**
+ * Formats a person object's full name with suffix: "[firstName] [lastName] [suffix]"
+ */
+export function formatPersonName(
+  person?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    suffix?: string | null;
+  } | null,
+  fallback = "Unknown Person",
+): string {
+  if (!person) return fallback;
+  return formatFullName(person.firstName, person.lastName, person.suffix, fallback);
+}

@@ -6,6 +6,7 @@ import { getClients } from "@/actions/clients";
 import { getHouseholdActiveRollupClients } from "@/actions/households";
 import { EmploymentTab } from "@/app/(main)/dashboard/crm/clients/[id]/_components/tabs/employment-tab";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPersonName } from "@/lib/utils";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
 
@@ -33,7 +34,7 @@ export default async function HouseholdEmploymentPage({ params }: HouseholdEmplo
         activeClients.map((client) => (
           <div key={client.id} className="space-y-2">
             <h3 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">
-              Client: {client.person ? `${client.person.firstName} ${client.person.lastName}` : client.id}
+              Client: {formatPersonName(client.person, client.id)}
             </h3>
             <EmploymentTab client={client} />
           </div>

@@ -6,6 +6,7 @@ import { getCustodians } from "@/actions/custodians";
 import { getFinancialAccountTypes } from "@/actions/financial-account-types";
 import { getMoneyManagers } from "@/actions/money-managers";
 import { getPeople } from "@/actions/people";
+import { formatPersonName } from "@/lib/utils";
 
 import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
 import { MoneyManagerAccountsManager } from "./_components/money-manager-accounts-manager";
@@ -47,7 +48,7 @@ export default async function MoneyManagersPage({ params }: Props) {
 
   const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
 

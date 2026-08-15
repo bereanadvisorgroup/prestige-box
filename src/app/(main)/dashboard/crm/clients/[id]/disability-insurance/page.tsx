@@ -5,6 +5,7 @@ import { getCompanies } from "@/actions/companies";
 import { getDisabilityInsuranceCompanies } from "@/actions/disability-insurance-companies";
 import { getInsuranceAgencies } from "@/actions/insurance-agencies";
 import { getPeople } from "@/actions/people";
+import { formatPersonName } from "@/lib/utils";
 
 import type { BeneficiaryParty } from "../_components/insurance-policy-manager";
 import { DisabilityInsuranceManager } from "./_components/disability-insurance-manager";
@@ -33,7 +34,7 @@ export default async function DisabilityInsurancePage({ params }: Props) {
 
   const people: BeneficiaryParty[] = (peopleResult.success ? (peopleResult.people ?? []) : []).map((p) => ({
     id: p.id as string,
-    name: [p.firstName, p.lastName].filter(Boolean).join(" ").trim() || "Unnamed person",
+    name: formatPersonName(p, "Unnamed person"),
     kind: "person" as const,
   }));
   const companies: BeneficiaryParty[] = (allCompaniesResult.success ? (allCompaniesResult.companies ?? []) : []).map(

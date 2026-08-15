@@ -5,13 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Check, Eye, EyeOff, MapPin, Plus, Trash2 } from "lucide-react";
+import { Camera, Check, MapPin, Plus, Trash2 } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
 import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
+import { PersonDuplicateChecker } from "@/components/features/crm/person-duplicate-checker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SsnInput } from "@/components/ui/ssn-input";
 import { getSocialAvatarUrl } from "@/lib/social";
 import { supabase } from "@/lib/supabase.client";
 import { getInitials } from "@/lib/utils";
@@ -91,35 +91,59 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     toast.success("Photo removed!");
   };
 
-  const defaultEmails = person?.emails?.length
-    ? person.emails
-    : [{ id: crypto.randomUUID(), address: "", type: "Personal" as const, isPrimary: true }];
+  const defaultEmails =
+    person?.emails && person.emails.length > 0
+      ? person.emails.map((e) => ({
+          id: e.id || crypto.randomUUID(),
+          address: e.address ?? "",
+          type: e.type || "Personal",
+          isPrimary: Boolean(e.isPrimary),
+        }))
+      : [{ id: crypto.randomUUID(), address: "", type: "Personal" as const, isPrimary: true }];
 
-  const defaultPhones = person?.phones?.length
-    ? person.phones
-    : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
+  const defaultPhones =
+    person?.phones && person.phones.length > 0
+      ? person.phones.map((ph) => ({
+          id: ph.id || crypto.randomUUID(),
+          number: ph.number ?? "",
+          type: ph.type || "Mobile",
+          isPrimary: Boolean(ph.isPrimary),
+        }))
+      : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
 
-  const defaultSocialMedia = person?.socialMedia?.length ? person.socialMedia : [];
+  const defaultSocialMedia = (person?.socialMedia || []).map((sm) => ({
+    id: sm.id || crypto.randomUUID(),
+    type: sm.type || "Facebook",
+    url: sm.url ?? "",
+    isPrimary: Boolean(sm.isPrimary),
+    useProfilePhoto: Boolean(sm.useProfilePhoto),
+  }));
 
-  const defaultAddresses = person?.addresses?.length
-    ? person.addresses
-    : person?.addressIds?.length
-      ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
-      : [];
+  const defaultAddresses =
+    person?.addresses && person.addresses.length > 0
+      ? person.addresses.map((a) => ({
+          id: a.id,
+          type: a.type || "Home",
+          isPrimary: Boolean(a.isPrimary),
+        }))
+      : person?.addressIds?.length
+        ? person.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
+        : [];
 
-  const sanitizePerson = (p?: Person): Person | undefined => {
+  const sanitizePerson = (p?: Person): PersonFormInput | undefined => {
     if (!p) return undefined;
     return {
       ...p,
       prefix: p.prefix ?? "",
+      firstName: p.firstName ?? "",
       middleName: p.middleName ?? "",
       lastName: p.lastName ?? "",
       suffix: p.suffix ?? "",
       photoUrl: p.photoUrl ?? "",
-      emails: p.emails || defaultEmails,
-      phones: p.phones || defaultPhones,
-      socialMedia: p.socialMedia || defaultSocialMedia,
-      addresses: p.addresses || defaultAddresses,
+      emails: defaultEmails,
+      phones: defaultPhones,
+      socialMedia: defaultSocialMedia,
+      addresses: defaultAddresses,
       addressIds: p.addressIds || defaultAddresses.map((a) => a.id),
     };
   };
@@ -344,7 +368,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     <FormItem className="md:col-span-1">
                       <FormLabel>Prefix</FormLabel>
                       <FormControl>
-                        <Input list="prefixes" placeholder="Mr." {...field} />
+                        <Input list="prefixes" placeholder="Mr." {...field} value={field.value ?? ""} />
                       </FormControl>
                       <datalist id="prefixes">
                         <option value="Mr." />
@@ -364,7 +388,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     <FormItem className="md:col-span-1">
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" {...field} />
+                        <Input placeholder="John" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -377,7 +401,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     <FormItem className="md:col-span-1">
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Quincy" {...field} />
+                        <Input placeholder="Quincy" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -390,7 +414,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     <FormItem className="md:col-span-1">
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} />
+                        <Input placeholder="Doe" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -403,7 +427,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                     <FormItem className="md:col-span-1">
                       <FormLabel>Suffix</FormLabel>
                       <FormControl>
-                        <Input list="suffixes" placeholder="Jr." {...field} />
+                        <Input list="suffixes" placeholder="Jr." {...field} value={field.value ?? ""} />
                       </FormControl>
                       <datalist id="suffixes">
                         <option value="Jr." />
@@ -417,6 +441,13 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   )}
                 />
               </div>
+
+              {/* Duplicate Person Checker */}
+              <PersonDuplicateChecker
+                firstName={form.watch("firstName")}
+                lastName={form.watch("lastName")}
+                excludePersonId={person?.id}
+              />
 
               {/* Emails Section */}
               <div className="space-y-3 pt-4">
@@ -450,6 +481,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                 placeholder="email@example.com"
                                 type="email"
                                 {...inputField}
+                                value={inputField.value ?? ""}
                                 className={fieldState.isDirty && !fieldState.invalid && inputField.value ? "pr-10" : ""}
                               />
                               {fieldState.isDirty && !fieldState.invalid && inputField.value && (
@@ -467,7 +499,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       render={({ field: selectField }) => (
                         <FormItem className="w-full sm:w-32">
                           <FormLabel className="text-xs">Type</FormLabel>
-                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value || "Personal"}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Type" />
@@ -493,7 +525,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                             <input
                               type="radio"
                               name="primaryEmail"
-                              checked={checkField.value}
+                              checked={Boolean(checkField.value)}
                               onChange={() => {
                                 // Set all to false, then this to true
                                 const currentEmails = form.getValues("emails") || [];
@@ -549,7 +581,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                         <FormItem className="flex-1">
                           <FormLabel className="text-xs">Number</FormLabel>
                           <FormControl>
-                            <PhoneInput placeholder="555-000-0000" {...inputField} />
+                            <PhoneInput placeholder="555-000-0000" {...inputField} value={inputField.value ?? ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -561,7 +593,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       render={({ field: selectField }) => (
                         <FormItem className="w-full sm:w-32">
                           <FormLabel className="text-xs">Type</FormLabel>
-                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value || "Mobile"}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Type" />
@@ -590,7 +622,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                             <input
                               type="radio"
                               name="primaryPhone"
-                              checked={checkField.value}
+                              checked={Boolean(checkField.value)}
                               onChange={() => {
                                 const currentPhones = form.getValues("phones") || [];
                                 currentPhones.forEach((_, i) => {
@@ -651,7 +683,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                         <FormItem className="flex-1">
                           <FormLabel className="text-xs">URL</FormLabel>
                           <FormControl>
-                            <Input placeholder="https://..." {...inputField} />
+                            <Input placeholder="https://..." {...inputField} value={inputField.value ?? ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -663,7 +695,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                       render={({ field: selectField }) => (
                         <FormItem className="w-full sm:w-32">
                           <FormLabel className="text-xs">Type</FormLabel>
-                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value || "Facebook"}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Type" />
@@ -691,7 +723,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                             <input
                               type="radio"
                               name="primarySocialMedia"
-                              checked={checkField.value}
+                              checked={Boolean(checkField.value)}
                               onChange={() => {
                                 const currentSM = form.getValues("socialMedia") || [];
                                 currentSM.forEach((_, i) => {
@@ -714,7 +746,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           <FormControl>
                             <input
                               type="checkbox"
-                              checked={checkField.value}
+                              checked={Boolean(checkField.value)}
                               onChange={(e) => {
                                 const checked = e.target.checked;
                                 const currentSM = form.getValues("socialMedia") || [];
@@ -796,7 +828,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           render={({ field: selectField }) => (
                             <FormItem className="w-full sm:w-32">
                               <FormLabel className="text-xs">Type</FormLabel>
-                              <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                              <Select onValueChange={selectField.onChange} defaultValue={selectField.value || "Home"}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Type" />
@@ -823,7 +855,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                                 <input
                                   type="radio"
                                   name="primaryAddress"
-                                  checked={checkField.value}
+                                  checked={Boolean(checkField.value)}
                                   onChange={() => {
                                     const currentAddresses = form.getValues("addresses") || [];
                                     currentAddresses.forEach((_, i) => {

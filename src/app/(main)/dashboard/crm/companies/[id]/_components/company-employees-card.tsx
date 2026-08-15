@@ -5,7 +5,7 @@ import { ArrowUpRight, Briefcase } from "lucide-react";
 import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPersonName, formatPhoneNumber } from "@/lib/utils";
 
 export interface CompanyEmployeeDisplayItem {
   id?: string;
@@ -18,9 +18,12 @@ export interface CompanyEmployeeDisplayItem {
     id?: string;
     firstName?: string | null;
     lastName?: string | null;
+    suffix?: string | null;
     photoUrl?: string | null;
     email?: string | null;
     phone?: string | null;
+    emails?: Array<{ address?: string; email?: string; isPrimary?: boolean; type?: string }> | null;
+    phones?: Array<{ number?: string; phone?: string; isPrimary?: boolean; type?: string }> | null;
   } | null;
 }
 
@@ -53,13 +56,28 @@ export function CompanyEmployeesCard({ employees = [] }: CompanyEmployeesCardPro
               <tbody className="divide-y">
                 {employees.map((employee) => {
                   const person = employee.person;
-                  const name = person
-                    ? `${person.firstName || ""} ${person.lastName || ""}`.trim() || "Unknown Person"
-                    : "Unknown Person";
+                  const name = formatPersonName(person);
                   const linkHref =
                     employee.isClient && employee.clientId
                       ? `/dashboard/crm/clients/${employee.clientId}`
                       : `/dashboard/crm/people/${employee.personId}`;
+
+                  const phone =
+                    person?.phone ||
+                    (Array.isArray(person?.phones)
+                      ? person.phones.find((p: { isPrimary?: boolean; number?: string }) => p?.isPrimary)?.number ||
+                        person.phones.find((p: { isPrimary?: boolean; phone?: string }) => p?.isPrimary)?.phone ||
+                        person.phones[0]?.number ||
+                        person.phones[0]?.phone
+                      : undefined);
+                  const email =
+                    person?.email ||
+                    (Array.isArray(person?.emails)
+                      ? person.emails.find((e: { isPrimary?: boolean; address?: string }) => e?.isPrimary)?.address ||
+                        person.emails.find((e: { isPrimary?: boolean; email?: string }) => e?.isPrimary)?.email ||
+                        person.emails[0]?.address ||
+                        person.emails[0]?.email
+                      : undefined);
 
                   return (
                     <tr key={employee.id || employee.personId} className="transition-colors hover:bg-muted/5">
@@ -102,10 +120,10 @@ export function CompanyEmployeesCard({ employees = [] }: CompanyEmployeesCardPro
                         )}
                       </td>
                       <td className="p-4 text-xs text-muted-foreground">
-                        {person?.phone ? (
-                          <p>{formatPhoneNumber(person.phone)}</p>
-                        ) : person?.email ? (
-                          <p className="truncate max-w-[160px]">{person.email}</p>
+                        {phone ? (
+                          <p>{formatPhoneNumber(phone)}</p>
+                        ) : email ? (
+                          <p className="truncate max-w-[160px]">{email}</p>
                         ) : (
                           <span className="text-muted-foreground/40 italic">N/A</span>
                         )}

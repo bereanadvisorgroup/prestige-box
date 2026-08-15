@@ -8,6 +8,7 @@ import { PersonDialog } from "@/app/(main)/dashboard/crm/people/_components/pers
 import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Button } from "@/components/ui/button";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
+import { formatPersonName } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 interface PersonSearchSelectProps {
@@ -30,7 +31,7 @@ export function PersonSearchSelect({
   const selectedPerson = people.find((p) => p.id === value);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const selectedName = selectedPerson ? `${selectedPerson.firstName} ${selectedPerson.lastName}` : "";
+  const selectedName = selectedPerson ? formatPersonName(selectedPerson) : "";
 
   // Sync searchQuery with selected person when value changes
   useEffect(() => {
@@ -43,7 +44,7 @@ export function PersonSearchSelect({
     if (selectedName && searchQuery === selectedName) {
       return people;
     }
-    return people.filter((p) => `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()));
+    return people.filter((p) => formatPersonName(p).toLowerCase().includes(searchQuery.toLowerCase()));
   }, [people, searchQuery, selectedName]);
 
   return (
@@ -53,7 +54,7 @@ export function PersonSearchSelect({
         if (typeof val === "string") {
           onValueChange(val);
           const person = people.find((p) => p.id === val);
-          if (person) setSearchQuery(`${person.firstName} ${person.lastName}`);
+          if (person) setSearchQuery(formatPersonName(person));
         } else if (val === null) {
           onValueChange("");
           setSearchQuery("");
@@ -87,13 +88,11 @@ export function PersonSearchSelect({
         </div>
         <ComboboxList>
           {filteredPeople.map((p) => (
-            <ComboboxItem key={p.id} value={p.id!} label={`${p.firstName} ${p.lastName}`}>
+            <ComboboxItem key={p.id} value={p.id!} label={formatPersonName(p)}>
               <div className="flex items-center gap-2">
                 <PersonAvatar photoUrl={p.photoUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />
                 <div className="flex flex-col">
-                  <span className="font-medium">
-                    {p.firstName} {p.lastName}
-                  </span>
+                  <span className="font-medium">{formatPersonName(p)}</span>
                   <span className="text-muted-foreground text-xs">
                     {p.emails?.find((e) => e.isPrimary)?.address || p.emails?.[0]?.address || "No Email"}
                   </span>
