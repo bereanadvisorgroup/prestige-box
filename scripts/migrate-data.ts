@@ -399,12 +399,66 @@ async function runMigration() {
   console.log(`Starting migration using data file: ${jsonPath}`);
   console.log(`Connected to database host: ${dbUrl!.split("@")[1] || "PostgreSQL"}`);
 
-  // 1. Pre-Migration Table Reset
-  console.log("\n--- STEP 1: Truncating existing tables ---");
-  await sql`
-    TRUNCATE TABLE note_associations, notes, company_employees, company_owners, households, companies, clients, people, addresses CASCADE;
-  `;
-  console.log("Existing tables successfully truncated.");
+  // 1. Pre-Migration Schema Validation & Table Reset
+  console.log("\n--- STEP 1: Ensuring required schema tables exist & truncating existing tables ---");
+  await sql.unsafe(`
+    CREATE TABLE IF NOT EXISTS "company_employees" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+      "companyId" uuid NOT NULL,
+      "personId" uuid NOT NULL,
+      "jobTitle" text,
+      "createdAt" timestamp with time zone DEFAULT now(),
+      "updatedAt" timestamp with time zone DEFAULT now()
+    );
+  `);
+
+  await sql.unsafe(`
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'company_employees_companyId_companies_id_fk'
+      ) THEN
+        ALTER TABLE "company_employees" ADD CONSTRAINT "company_employees_companyId_companies_id_fk" FOREIGN KEY ("companyId") REFERENCES "public"."companies"("id") ON DELETE cascade ON UPDATE no action;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'company_employees_personId_people_id_fk'
+      ) THEN
+        ALTER TABLE "company_employees" ADD CONSTRAINT "company_employees_personId_people_id_fk" FOREIGN KEY ("personId") REFERENCES "public"."people"("id") ON DELETE cascade ON UPDATE no action;
+      END IF;
+    END $$;
+  `);
+
+  await sql.unsafe(`
+    CREATE INDEX IF NOT EXISTS "idx_company_employees_companyId" ON "company_employees" ("companyId");
+    CREATE INDEX IF NOT EXISTS "idx_company_employees_personId" ON "company_employees" ("personId");
+  `);
+
+  const targetTables = [
+    "note_associations",
+    "notes",
+    "company_employees",
+    "company_owners",
+    "households",
+    "companies",
+    "clients",
+    "people",
+    "addresses",
+  ];
+
+  const existingTablesRes = await sql.unsafe<{ table_name: string }[]>(`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+      AND table_name IN ('note_associations', 'notes', 'company_employees', 'company_owners', 'households', 'companies', 'clients', 'people', 'addresses');
+  `);
+  const existingTableNames = existingTablesRes.map((r) => r.table_name);
+
+  if (existingTableNames.length > 0) {
+    const tableListStr = existingTableNames.map((t) => `"${t}"`).join(", ");
+    await sql.unsafe(`TRUNCATE TABLE ${tableListStr} CASCADE;`);
+    console.log(`Successfully truncated tables: ${tableListStr}`);
+  }
 
   // 2. Read and Parse JSON Data
   console.log("\n--- STEP 2: Loading JSON file into memory ---");
