@@ -102,9 +102,9 @@ async function updateUserEmails() {
           SET
             email = ${newEmail},
             email_confirmed_at = COALESCE(email_confirmed_at, now()),
-            email_change = NULL,
-            email_change_token_new = NULL,
-            email_change_token_current = NULL,
+            email_change = '',
+            email_change_token_new = '',
+            email_change_token_current = '',
             email_change_confirm_status = 0,
             raw_user_meta_data = CASE
               WHEN raw_user_meta_data ? 'email' THEN
