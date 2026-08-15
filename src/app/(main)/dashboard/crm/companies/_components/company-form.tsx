@@ -200,15 +200,6 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
   }, [watchedOwners]);
   const watchedPersonIds = watchedOwners.map((o) => o.personId);
 
-  const filteredPeople = useMemo(() => {
-    const base = availablePeople.filter((p) => !watchedPersonIds.includes(p.id!));
-    if (!personSearchQuery) return base;
-    return base.filter((p) => {
-      const name = `${p.firstName || ""} ${p.lastName || ""}`;
-      return name.toLowerCase().includes(personSearchQuery.toLowerCase());
-    });
-  }, [availablePeople, personSearchQuery, watchedPersonIds]);
-
   const watchedEmployees =
     useWatch({
       control: form.control,
@@ -216,14 +207,27 @@ export function CompanyForm({ company, initialOwners = [], initialEmployees = []
     }) || [];
   const watchedEmployeePersonIds = watchedEmployees.map((e) => e.personId);
 
+  const allAssignedPersonIds = useMemo(() => {
+    return new Set([...watchedPersonIds, ...watchedEmployeePersonIds]);
+  }, [watchedPersonIds, watchedEmployeePersonIds]);
+
+  const filteredPeople = useMemo(() => {
+    const base = availablePeople.filter((p) => !allAssignedPersonIds.has(p.id!));
+    if (!personSearchQuery) return base;
+    return base.filter((p) => {
+      const name = `${p.firstName || ""} ${p.lastName || ""}`;
+      return name.toLowerCase().includes(personSearchQuery.toLowerCase());
+    });
+  }, [availablePeople, personSearchQuery, allAssignedPersonIds]);
+
   const filteredPeopleForEmployees = useMemo(() => {
-    const base = availablePeople.filter((p) => !watchedEmployeePersonIds.includes(p.id!));
+    const base = availablePeople.filter((p) => !allAssignedPersonIds.has(p.id!));
     if (!employeeSearchQuery) return base;
     return base.filter((p) => {
       const name = `${p.firstName || ""} ${p.lastName || ""}`;
       return name.toLowerCase().includes(employeeSearchQuery.toLowerCase());
     });
-  }, [availablePeople, employeeSearchQuery, watchedEmployeePersonIds]);
+  }, [availablePeople, employeeSearchQuery, allAssignedPersonIds]);
 
   async function onSubmit(values: CompanyFormValues) {
     try {

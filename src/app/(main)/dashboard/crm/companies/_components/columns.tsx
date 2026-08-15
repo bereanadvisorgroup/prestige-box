@@ -15,6 +15,7 @@ import type { Company } from "@/types/crm";
 export type EnrichedCompany = Company & {
   isLinked?: boolean;
   owners?: { id: string }[];
+  employees?: { id: string }[];
   advisorName?: string | null;
 };
 
@@ -99,6 +100,18 @@ export const columns = (onDelete: (company: Company) => void, role?: string): Co
       return (
         <span className="text-sm">
           {count} {count === 1 ? "Owner" : "Owners"}
+        </span>
+      );
+    },
+  },
+  {
+    id: "employeesCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Employees" />,
+    cell: ({ row }: { row: Row<EnrichedCompany> }) => {
+      const count = row.original.employees?.length || 0;
+      return (
+        <span className="text-sm">
+          {count} {count === 1 ? "Employee" : "Employees"}
         </span>
       );
     },

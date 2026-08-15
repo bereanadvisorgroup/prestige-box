@@ -1,6 +1,6 @@
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import * as crypto from "crypto";
 import postgres from "postgres";
 
 // Load environment variables from .env.local
@@ -15,7 +15,12 @@ if (fs.existsSync(envPath)) {
     .filter((l: string) => l && !l.startsWith("#"));
   const match = activeLines.find((l: string) => l.startsWith("SUPABASE_DIRECT_URL="));
   if (match) {
-    dbUrl = match.split("=").slice(1).join("=").trim().replace(/^['"]|['"]$/g, "");
+    dbUrl = match
+      .split("=")
+      .slice(1)
+      .join("=")
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
   }
 }
 
@@ -39,7 +44,10 @@ const sql = postgres(dbUrl, {
 // Helper to extract shortened title from body content
 function getShortenedTitle(content: string | null | undefined): string {
   if (!content) return "Imported Note";
-  const cleanStr = content.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  const cleanStr = content
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!cleanStr) return "Imported Note";
 
   const firstSentence = cleanStr.split(/(?<=[.?!])\s+/)[0] || cleanStr;
@@ -77,7 +85,10 @@ function getContactTags(c: any): string[] {
     return c.tags.map((t: any) => String(t).trim()).filter(Boolean);
   }
   if (typeof c.tags === "string") {
-    return c.tags.split(",").map((t: string) => t.trim()).filter(Boolean);
+    return c.tags
+      .split(",")
+      .map((t: string) => t.trim())
+      .filter(Boolean);
   }
   return [];
 }
@@ -292,7 +303,11 @@ function normalizeAddress(addr: any): {
 // Helper to normalize person suffix (Jr, Sr, II, III, IV, etc.)
 function normalizeSuffix(suffix: string | null | undefined): string {
   if (!suffix) return "";
-  let clean = suffix.trim().replace(/[.,;]+$/, "").trim().toUpperCase();
+  let clean = suffix
+    .trim()
+    .replace(/[.,;]+$/, "")
+    .trim()
+    .toUpperCase();
   if (clean === "JUNIOR") clean = "JR";
   if (clean === "SENIOR") clean = "SR";
   if (clean === "2ND") clean = "II";
@@ -345,11 +360,7 @@ function exportContactsToCsv(contacts: any[], outputPath: string) {
 }
 
 // Generic helper to flush array of rows in batches
-async function flushBatch<T>(
-  batch: T[],
-  batchSize: number,
-  insertFn: (chunk: T[]) => Promise<void>
-) {
+async function flushBatch<T>(batch: T[], batchSize: number, insertFn: (chunk: T[]) => Promise<void>) {
   for (let i = 0; i < batch.length; i += batchSize) {
     const chunk = batch.slice(i, i + batchSize);
     await insertFn(chunk);
@@ -404,28 +415,56 @@ async function runMigration() {
   const notes = data.notes || [];
   const comments = data.comments || [];
 
-  console.log(`JSON parsed successfully: ${contacts.length} contacts, ${notes.length} notes, ${comments.length} comments.`);
+  console.log(
+    `JSON parsed successfully: ${contacts.length} contacts, ${notes.length} notes, ${comments.length} comments.`,
+  );
+
+  interface CompanyOwnerResult {
+    id?: string;
+    personId: string;
+    clientId: string | null;
+    originalId: number | null;
+    name: string;
+    role: string | null;
+    ownershipPercentage: number | string;
+    isClient: boolean;
+  }
+
+  interface CompanyEmployeeResult {
+    id?: string;
+    personId: string;
+    clientId: string | null;
+    originalId: number | null;
+    name: string;
+    jobTitle: string | null;
+    isClient: boolean;
+  }
 
   // Result trackers
-  const contactResultsMap = new Map<number, {
-    originalId: number;
-    name: string;
-    type: string;
-    tags: string[];
-    status: "successful" | "ignored";
-    reason: string;
-    clientId: string | null;
-    companyId: string | null;
-    householdId: string | null;
-    personId?: string | null;
-    entityType: string | null;
-    notesNotImported: {
-      id?: number;
-      title: string;
-      contentSnippet: string;
+  const contactResultsMap = new Map<
+    number,
+    {
+      originalId: number;
+      name: string;
+      type: string;
+      tags: string[];
+      status: "successful" | "ignored" | "deduplicated";
       reason: string;
-    }[];
-  }>();
+      clientId: string | null;
+      companyId: string | null;
+      householdId: string | null;
+      personId?: string | null;
+      entityType: string | null;
+      owners?: CompanyOwnerResult[];
+      employees?: CompanyEmployeeResult[];
+      notesNotImported: {
+        id?: number;
+        title: string;
+        contentSnippet: string;
+        reason: string;
+      }[];
+    }
+  >();
 
   const fdcMailingContacts: any[] = [];
   const adcpaContacts: any[] = [];
@@ -482,7 +521,9 @@ async function runMigration() {
     }
   }
 
-  console.log(`\nTag filtering complete: ${contactsToImport.length} contacts to import, ${fdcMailingContacts.length} FDC Mailing List contacts, ${adcpaContacts.length} ADCPA contacts.`);
+  console.log(
+    `\nTag filtering complete: ${contactsToImport.length} contacts to import, ${fdcMailingContacts.length} FDC Mailing List contacts, ${adcpaContacts.length} ADCPA contacts.`,
+  );
 
   // Export CSV files to /migration/ directory
   const fdcCsvPath = path.resolve(process.cwd(), "migration/FDC_MailingList.csv");
@@ -499,14 +540,23 @@ async function runMigration() {
   const clientIdMap = new Map<number, string>();
   const companyIdMap = new Map<number, string>();
   const householdIdMap = new Map<number, string>();
+  const personDetailsMap = new Map<string, { personId: string; clientId: string; name: string; originalId: number }>();
 
-  const allPeople: Array<{ legacyId: number; personId: string; clientId: string; firstName: string; lastName: string }> = [];
+  const allPeople: Array<{
+    legacyId: number;
+    personId: string;
+    clientId: string;
+    firstName: string;
+    lastName: string;
+  }> = [];
 
   const personContacts = contactsToImport.filter((c: any) => c.type === "Person");
   const companyContacts = contactsToImport.filter((c: any) => c.type === "Organization");
   const householdContacts = contactsToImport.filter((c: any) => c.type === "Household");
 
-  console.log(`\nFound ${personContacts.length} Person contacts, ${companyContacts.length} Organization contacts, ${householdContacts.length} Household contacts to import.`);
+  console.log(
+    `\nFound ${personContacts.length} Person contacts, ${companyContacts.length} Organization contacts, ${householdContacts.length} Household contacts to import.`,
+  );
 
   // Prepare batch buffers
   const addressesRows: any[] = [];
@@ -667,6 +717,13 @@ async function runMigration() {
     const suffix = primaryContact.suffix ? primaryContact.suffix.trim() : null;
     const fullName = [firstName, lastName, suffix].filter(Boolean).join(" ");
 
+    personDetailsMap.set(personUuid, {
+      personId: personUuid,
+      clientId: clientUuid,
+      name: fullName,
+      originalId: primaryContact.id,
+    });
+
     allPeople.push({
       legacyId: primaryContact.id,
       personId: personUuid,
@@ -811,13 +868,15 @@ async function runMigration() {
       updatedAt: primaryContact.updated_at ? new Date(primaryContact.updated_at) : new Date(),
     });
 
-    const jobTitle = groupMembers.find((m) => m.job_title || m.occupation)?.job_title || groupMembers.find((m) => m.occupation)?.occupation || null;
+    const jobTitle =
+      groupMembers.find((m) => m.job_title || m.occupation)?.job_title ||
+      groupMembers.find((m) => m.occupation)?.occupation ||
+      null;
     const orgName = groupMembers.find((m) => m.organization_name)?.organization_name || "";
     const startDate = groupMembers.find((m) => m.occupation_start_date)?.occupation_start_date || null;
 
-    const employments = jobTitle || orgName
-      ? [{ title: jobTitle || "Professional", employerName: orgName, startDate }]
-      : [];
+    const employments =
+      jobTitle || orgName ? [{ title: jobTitle || "Professional", employerName: orgName, startDate }] : [];
 
     const driversLicense = {
       number: groupMembers.find((m) => m.drivers_license_number)?.drivers_license_number || null,
@@ -842,13 +901,17 @@ async function runMigration() {
       personalInterests: groupMembers.find((m) => m.personal_interests)?.personal_interests || null,
       importantInformation: groupMembers.find((m) => m.important_information)?.important_information || null,
       agreements: {
-        signedFeeAgreementDate: groupMembers.find((m) => m.signed_fee_agreement_date)?.signed_fee_agreement_date || null,
-        signedIpsAgreementDate: groupMembers.find((m) => m.signed_ips_agreement_date)?.signed_ips_agreement_date || null,
+        signedFeeAgreementDate:
+          groupMembers.find((m) => m.signed_fee_agreement_date)?.signed_fee_agreement_date || null,
+        signedIpsAgreementDate:
+          groupMembers.find((m) => m.signed_ips_agreement_date)?.signed_ips_agreement_date || null,
         signedFpAgreementDate: groupMembers.find((m) => m.signed_fp_agreement_date)?.signed_fp_agreement_date || null,
         lastAdvOfferingDate: groupMembers.find((m) => m.last_adv_offering_date)?.last_adv_offering_date || null,
-        initialCrsOfferingDate: groupMembers.find((m) => m.initial_crs_offering_date)?.initial_crs_offering_date || null,
+        initialCrsOfferingDate:
+          groupMembers.find((m) => m.initial_crs_offering_date)?.initial_crs_offering_date || null,
         lastCrsOfferingDate: groupMembers.find((m) => m.last_crs_offering_date)?.last_crs_offering_date || null,
-        lastPrivacyOfferingDate: groupMembers.find((m) => m.last_privacy_offering_date)?.last_privacy_offering_date || null,
+        lastPrivacyOfferingDate:
+          groupMembers.find((m) => m.last_privacy_offering_date)?.last_privacy_offering_date || null,
       },
     };
 
@@ -884,7 +947,9 @@ async function runMigration() {
     }
   }
 
-  console.log(`Deduplication summary: ${personGroups.size} unique people created from ${personContacts.length} source records. (${duplicatesMerged} duplicate records merged).`);
+  console.log(
+    `Deduplication summary: ${personGroups.size} unique people created from ${personContacts.length} source records. (${duplicatesMerged} duplicate records merged).`,
+  );
 
   // --- STEP 4: Build Organization & Household Batches ---
   console.log("\n--- STEP 4: Preparing Organizations & Households ---");
@@ -897,6 +962,8 @@ async function runMigration() {
     if (contactResult) {
       contactResult.companyId = companyUuid;
       contactResult.entityType = "company";
+      contactResult.owners = [];
+      contactResult.employees = [];
     }
 
     let addressId: string | null = null;
@@ -943,15 +1010,11 @@ async function runMigration() {
     const membersList: Array<{ clientId: string; role: string }> = [];
 
     if (hLastName) {
-      const matchingPeople = allPeople.filter(
-        (p) => p.lastName.toLowerCase() === hLastName.toLowerCase()
-      );
+      const matchingPeople = allPeople.filter((p) => p.lastName.toLowerCase() === hLastName.toLowerCase());
 
       let matchedIndex = 0;
       for (const fName of hFirstNames) {
-        const found = matchingPeople.find(
-          (p) => p.firstName.toLowerCase() === fName.toLowerCase()
-        );
+        const found = matchingPeople.find((p) => p.firstName.toLowerCase() === fName.toLowerCase());
         if (found) {
           const role = matchedIndex === 0 ? "HEAD" : matchedIndex === 1 ? "SPOUSE" : "DEPENDENT";
           membersList.push({ clientId: found.clientId, role });
@@ -977,37 +1040,70 @@ async function runMigration() {
     });
   }
 
-  // Company Employee links (with deduplication per company)
-  const companyEmployeeMap = new Map<
-    string,
-    {
-      companyId: string;
-      personId: string;
-      jobTitle: string | null;
-      createdAt: Date;
-      updatedAt: Date;
+  // Company Owner vs Employee links (with deduplication per company)
+  // If role or job title contains "owner" (case-insensitive), associate to Owners.
+  // Else default to Employees.
+  // Make sure not to duplicate people in owners or employees.
+
+  const isOwnerRole = (title: string | null | undefined): boolean => {
+    if (!title) return false;
+    return /owner/i.test(title);
+  };
+
+  interface CompanyAssociation {
+    id: string;
+    companyId: string;
+    personId: string;
+    role: string | null;
+    isOwner: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+
+  const companyAssociationMap = new Map<string, CompanyAssociation>();
+
+  const processAssociation = (
+    companyId: string,
+    personId: string,
+    rawRole: string | null | undefined,
+    createdAt?: Date | string | null,
+    updatedAt?: Date | string | null,
+  ) => {
+    const pairKey = `${companyId}|${personId}`;
+    const role = (rawRole || "").trim() || null;
+    const isOwner = isOwnerRole(role);
+    const cDate = createdAt ? new Date(createdAt) : new Date();
+    const uDate = updatedAt ? new Date(updatedAt) : new Date();
+
+    if (!companyAssociationMap.has(pairKey)) {
+      companyAssociationMap.set(pairKey, {
+        id: crypto.randomUUID(),
+        companyId,
+        personId,
+        role,
+        isOwner,
+        createdAt: cDate,
+        updatedAt: uDate,
+      });
+    } else {
+      const existing = companyAssociationMap.get(pairKey)!;
+      // If the new association indicates owner status, promote to owner
+      if (isOwner && !existing.isOwner) {
+        existing.isOwner = true;
+        if (role) existing.role = role;
+      } else if (role && !existing.role) {
+        existing.role = role;
+      }
     }
-  >();
+  };
 
   // 1. Link from person's organization_id
   for (const c of personContacts) {
     if (c.organization_id && companyIdMap.has(c.organization_id) && personIdMap.has(c.id)) {
       const companyId = companyIdMap.get(c.organization_id)!;
       const personId = personIdMap.get(c.id)!;
-      const pairKey = `${companyId}|${personId}`;
       const jobTitle = (c.job_title || c.occupation || "").trim() || null;
-
-      if (!companyEmployeeMap.has(pairKey)) {
-        companyEmployeeMap.set(pairKey, {
-          companyId,
-          personId,
-          jobTitle,
-          createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-          updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
-        });
-      } else if (jobTitle && !companyEmployeeMap.get(pairKey)!.jobTitle) {
-        companyEmployeeMap.get(pairKey)!.jobTitle = jobTitle;
-      }
+      processAssociation(companyId, personId, jobTitle, c.created_at, c.updated_at);
     }
   }
 
@@ -1018,34 +1114,92 @@ async function runMigration() {
       for (const rel of c.contact_related_contacts) {
         if (rel.related_contact_id && personIdMap.has(rel.related_contact_id)) {
           const personId = personIdMap.get(rel.related_contact_id)!;
-          const pairKey = `${companyId}|${personId}`;
           const relTitle = rel.relationship && rel.relationship.trim() ? rel.relationship.trim() : null;
-
-          if (!companyEmployeeMap.has(pairKey)) {
-            companyEmployeeMap.set(pairKey, {
-              companyId,
-              personId,
-              jobTitle: relTitle,
-              createdAt: c.created_at ? new Date(c.created_at) : new Date(),
-              updatedAt: c.updated_at ? new Date(c.updated_at) : new Date(),
-            });
-          } else if (relTitle && !companyEmployeeMap.get(pairKey)!.jobTitle) {
-            companyEmployeeMap.get(pairKey)!.jobTitle = relTitle;
-          }
+          processAssociation(companyId, personId, relTitle, c.created_at, c.updated_at);
         }
       }
     }
   }
 
-  for (const emp of companyEmployeeMap.values()) {
-    companyEmployeesRows.push({
-      id: crypto.randomUUID(),
-      companyId: emp.companyId,
-      personId: emp.personId,
-      jobTitle: emp.jobTitle,
-      createdAt: emp.createdAt,
-      updatedAt: emp.updatedAt,
-    });
+  // 3. Link from person's contact_related_contacts pointing to company
+  for (const c of personContacts) {
+    if (Array.isArray(c.contact_related_contacts) && personIdMap.has(c.id)) {
+      const personId = personIdMap.get(c.id)!;
+      for (const rel of c.contact_related_contacts) {
+        if (rel.related_contact_id && companyIdMap.has(rel.related_contact_id)) {
+          const companyId = companyIdMap.get(rel.related_contact_id)!;
+          const relTitle = rel.relationship && rel.relationship.trim() ? rel.relationship.trim() : null;
+          processAssociation(companyId, personId, relTitle, c.created_at, c.updated_at);
+        }
+      }
+    }
+  }
+
+  for (const assoc of companyAssociationMap.values()) {
+    if (assoc.isOwner) {
+      companyOwnersRows.push({
+        id: assoc.id,
+        companyId: assoc.companyId,
+        personId: assoc.personId,
+        ownershipPercentage: 0,
+        createdAt: assoc.createdAt,
+        updatedAt: assoc.updatedAt,
+      });
+    } else {
+      companyEmployeesRows.push({
+        id: assoc.id,
+        companyId: assoc.companyId,
+        personId: assoc.personId,
+        jobTitle: assoc.role,
+        createdAt: assoc.createdAt,
+        updatedAt: assoc.updatedAt,
+      });
+    }
+  }
+
+  // Populate owners and employees on company contact results for results.json
+  for (const c of companyContacts) {
+    const companyUuid = companyIdMap.get(c.id);
+    if (!companyUuid) continue;
+
+    const contactResult = contactResultsMap.get(c.id);
+    if (!contactResult) continue;
+
+    const compAssocs = Array.from(companyAssociationMap.values()).filter((a) => a.companyId === companyUuid);
+
+    const ownersList: CompanyOwnerResult[] = compAssocs
+      .filter((a) => a.isOwner)
+      .map((a) => {
+        const pInfo = personDetailsMap.get(a.personId);
+        return {
+          id: a.id,
+          personId: a.personId,
+          clientId: pInfo?.clientId || null,
+          originalId: pInfo?.originalId ?? null,
+          name: pInfo?.name || "Unknown",
+          role: a.role,
+          ownershipPercentage: 0,
+          isClient: Boolean(pInfo?.clientId),
+        };
+      });
+
+    const employeesList: CompanyEmployeeResult[] = compAssocs
+      .filter((a) => !a.isOwner)
+      .map((a) => {
+        const pInfo = personDetailsMap.get(a.personId);
+        return {
+          id: a.id,
+          personId: a.personId,
+          clientId: pInfo?.clientId || null,
+          originalId: pInfo?.originalId ?? null,
+          name: pInfo?.name || "Unknown",
+          jobTitle: a.role,
+          isClient: Boolean(pInfo?.clientId),
+        };
+      });
+
+    contactResult.owners = ownersList;
+    contactResult.employees = employeesList;
   }
 
   // --- STEP 5: Prepare Notes & Comments Batches ---
@@ -1075,9 +1229,8 @@ async function runMigration() {
     let targetEntityId: string | null = null;
     let skipReason = "";
 
-    const firstResource = Array.isArray(n.related_resources) && n.related_resources.length > 0
-      ? n.related_resources[0]
-      : null;
+    const firstResource =
+      Array.isArray(n.related_resources) && n.related_resources.length > 0 ? n.related_resources[0] : null;
 
     if (firstResource && firstResource.id != null) {
       targetContactId = Number(firstResource.id);
@@ -1299,7 +1452,17 @@ async function runMigration() {
     });
   }
 
-  // 6. Company Employees
+  // 6. Company Owners
+  if (companyOwnersRows.length > 0) {
+    console.log(`Flushing ${companyOwnersRows.length} company owners...`);
+    await flushBatch(companyOwnersRows, 500, async (chunk) => {
+      await sql`
+        INSERT INTO company_owners ${(sql as any)(chunk, "id", "companyId", "personId", "ownershipPercentage", "createdAt", "updatedAt")}
+      `;
+    });
+  }
+
+  // 7. Company Employees
   if (companyEmployeesRows.length > 0) {
     console.log(`Flushing ${companyEmployeesRows.length} company employees...`);
     await flushBatch(companyEmployeesRows, 500, async (chunk) => {
@@ -1309,7 +1472,7 @@ async function runMigration() {
     });
   }
 
-  // 7. Notes
+  // 8. Notes
   if (notesRows.length > 0) {
     console.log(`Flushing ${notesRows.length} notes...`);
     await flushBatch(notesRows, 500, async (chunk) => {
@@ -1319,7 +1482,7 @@ async function runMigration() {
     });
   }
 
-  // 8. Note Associations
+  // 9. Note Associations
   if (noteAssocRows.length > 0) {
     console.log(`Flushing ${noteAssocRows.length} note associations...`);
     await flushBatch(noteAssocRows, 500, async (chunk) => {
@@ -1350,6 +1513,7 @@ async function runMigration() {
       duplicatePeopleMerged: duplicatesMerged,
       nicknameConversionsCount: nicknameConversions.length,
       companiesInserted: companiesRows.length,
+      companyOwnersInserted: companyOwnersRows.length,
       companyEmployeesInserted: companyEmployeesRows.length,
       householdsInserted: householdsRows.length,
       addressesInserted: addressesRows.length,
@@ -1396,18 +1560,27 @@ async function runMigration() {
 
   console.log(`\n================ MIGRATION SUCCESSFUL ===============`);
   console.log(`Duration: ${durationSeconds} seconds`);
-  console.log(`Total Contacts: ${contacts.length} (${contactsToImport.length} imported, ${fdcMailingContacts.length + adcpaContacts.length} ignored)`);
+  console.log(
+    `Total Contacts: ${contacts.length} (${contactsToImport.length} imported, ${fdcMailingContacts.length + adcpaContacts.length} ignored)`,
+  );
   console.log(`  - FDC Mailing List CSV: ${fdcCsvPath} (${fdcMailingContacts.length} contacts)`);
   console.log(`  - ADCPA CSV: ${adcpaCsvPath} (${adcpaContacts.length} contacts)`);
-  console.log(`Person Deduplication: ${duplicatesMerged} duplicate records merged, ${nicknameConversions.length} nickname transitions/merges recorded`);
-  console.log(`Address Deduplication: ${duplicateAddressesMerged} duplicate address occurrences merged across ${multiEntityAddressesCount} shared locations (${addressesRows.length} unique addresses created)`);
+  console.log(
+    `Person Deduplication: ${duplicatesMerged} duplicate records merged, ${nicknameConversions.length} nickname transitions/merges recorded`,
+  );
+  console.log(
+    `Address Deduplication: ${duplicateAddressesMerged} duplicate address occurrences merged across ${multiEntityAddressesCount} shared locations (${addressesRows.length} unique addresses created)`,
+  );
   console.log(`People inserted: ${peopleRows.length}`);
   console.log(`Clients inserted: ${clientsRows.length}`);
   console.log(`Companies inserted: ${companiesRows.length}`);
+  console.log(`Company Owners inserted: ${companyOwnersRows.length}`);
   console.log(`Company Employees inserted: ${companyEmployeesRows.length}`);
   console.log(`Households inserted: ${householdsRows.length}`);
   console.log(`Addresses inserted: ${addressesRows.length}`);
-  console.log(`Notes inserted: ${notesRows.length} (${noteResults.filter((nr) => nr.status === "ignored").length} notes skipped/not imported)`);
+  console.log(
+    `Notes inserted: ${notesRows.length} (${noteResults.filter((nr) => nr.status === "ignored").length} notes skipped/not imported)`,
+  );
   console.log(`Note Associations inserted: ${noteAssocRows.length}`);
   console.log(`Skipped Items (Notes/Comments): ${skippedItems.length}`);
   console.log(`Detailed Results saved to: ${resultsPath}`);

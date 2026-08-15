@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
+import { normalizePerson } from "@/lib/crm-normalize";
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { PERSON_PROFILE_FIELDS } from "@/lib/history/fields";
 import { recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
-import { fetchAllRows } from "@/lib/fetch-chunks";
-import { normalizePerson } from "@/lib/crm-normalize";
 import { syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "people";

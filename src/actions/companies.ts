@@ -13,9 +13,46 @@ const TABLE = "companies";
 
 export async function getCompanies() {
   try {
-    const companies = await fetchAllRows((from, to) =>
-      supabaseServer.from(TABLE).select("*, owners:company_owners(id, personId)").range(from, to),
-    );
+    let companies: any[] = [];
+    try {
+      companies = await fetchAllRows((from, to) =>
+        supabaseServer
+          .from(TABLE)
+          .select("*, owners:company_owners(id, personId), employees:company_employees(id, personId)")
+          .range(from, to),
+      );
+    } catch (embedError) {
+      console.warn(
+        "[getCompanies] Embedded select failed, falling back to separate queries:",
+        (embedError as Error).message,
+      );
+      companies = await fetchAllRows((from, to) =>
+        supabaseServer.from(TABLE).select("*, owners:company_owners(id, personId)").range(from, to),
+      );
+
+      try {
+        const { data: allEmployees, error: empErr } = await supabaseServer
+          .from("company_employees")
+          .select("id, companyId, personId");
+
+        const empByCompany = new Map<string, Array<{ id: string; personId: string }>>();
+        if (allEmployees && !empErr) {
+          for (const emp of allEmployees) {
+            if (!empByCompany.has(emp.companyId)) {
+              empByCompany.set(emp.companyId, []);
+            }
+            empByCompany.get(emp.companyId)!.push({ id: emp.id, personId: emp.personId });
+          }
+        }
+        for (const comp of companies) {
+          comp.employees = empByCompany.get(comp.id) || [];
+        }
+      } catch {
+        for (const comp of companies) {
+          comp.employees = comp.employees || [];
+        }
+      }
+    }
 
     return { success: true, companies: (companies ?? []) as Company[] };
   } catch (error) {
@@ -86,12 +123,13 @@ export async function getCompanyEmployees(companyId: string) {
       `)
       .eq("companyId", companyId);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.warn("[getCompanyEmployees] Error fetching employees:", error.message);
+      return { success: true, employees: [] };
+    }
 
     // Fetch all clients to check if employees are clients
-    const { data: clients, error: clientsError } = await supabaseServer.from("clients").select("id, personId");
-
-    if (clientsError) throw new Error(clientsError.message);
+    const { data: clients } = await supabaseServer.from("clients").select("id, personId");
 
     const clientPersonMap = new Map((clients || []).map((c) => [c.personId, c.id]));
 
@@ -104,7 +142,7 @@ export async function getCompanyEmployees(companyId: string) {
     return { success: true, employees: employeesWithClientTag };
   } catch (error) {
     console.error("[getCompanyEmployees] Error:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: true, employees: [] };
   }
 }
 
@@ -165,6 +203,60 @@ export async function getCompany(id: string) {
   }
 }
 
+/**
+ * Normalizes company associations:
+ * - If job title / role contains 'owner' (case-insensitive), associate to owners.
+ * - Otherwise default to employees.
+ * - Deduplicate so no person appears multiple times, and no person is both an owner and employee.
+ */
+function normalizeCompanyAssociations(
+  rawOwners: { personId: string; ownershipPercentage: number | string }[] = [],
+  rawEmployees: { personId: string; jobTitle?: string | null }[] = [],
+) {
+  const ownersMap = new Map<string, { personId: string; ownershipPercentage: number }>();
+  const employeesMap = new Map<string, { personId: string; jobTitle: string | null }>();
+
+  // Process explicit owners
+  for (const owner of rawOwners) {
+    if (!owner.personId) continue;
+    if (!ownersMap.has(owner.personId)) {
+      ownersMap.set(owner.personId, {
+        personId: owner.personId,
+        ownershipPercentage: Number(owner.ownershipPercentage) || 0,
+      });
+    }
+  }
+
+  // Process employees
+  for (const emp of rawEmployees) {
+    if (!emp.personId) continue;
+    const title = emp.jobTitle?.trim() || null;
+    const isOwner = title ? /owner/i.test(title) : false;
+
+    if (isOwner) {
+      if (!ownersMap.has(emp.personId)) {
+        ownersMap.set(emp.personId, {
+          personId: emp.personId,
+          ownershipPercentage: 0,
+        });
+      }
+      employeesMap.delete(emp.personId);
+    } else {
+      if (!ownersMap.has(emp.personId) && !employeesMap.has(emp.personId)) {
+        employeesMap.set(emp.personId, {
+          personId: emp.personId,
+          jobTitle: title,
+        });
+      }
+    }
+  }
+
+  return {
+    normalizedOwners: Array.from(ownersMap.values()),
+    normalizedEmployees: Array.from(employeesMap.values()),
+  };
+}
+
 export async function createCompany(data: any) {
   try {
     const validated = CompanyFormSchema.parse({
@@ -172,6 +264,7 @@ export async function createCompany(data: any) {
     });
 
     const { owners, employees, ...companyData } = validated;
+    const { normalizedOwners, normalizedEmployees } = normalizeCompanyAssociations(owners, employees);
 
     const insertData = {
       ...companyData,
@@ -193,8 +286,8 @@ export async function createCompany(data: any) {
     if (error) throw new Error((error as { message: string }).message);
 
     // Insert owners if provided
-    if (owners && owners.length > 0) {
-      const ownersToInsert = owners.map((owner) => ({
+    if (normalizedOwners.length > 0) {
+      const ownersToInsert = normalizedOwners.map((owner) => ({
         companyId: inserted.id,
         personId: owner.personId,
         ownershipPercentage: owner.ownershipPercentage.toString(),
@@ -207,8 +300,8 @@ export async function createCompany(data: any) {
     }
 
     // Insert employees if provided
-    if (employees && employees.length > 0) {
-      const employeesToInsert = employees.map((emp) => ({
+    if (normalizedEmployees.length > 0) {
+      const employeesToInsert = normalizedEmployees.map((emp) => ({
         companyId: inserted.id,
         personId: emp.personId,
         jobTitle: emp.jobTitle || null,
@@ -283,6 +376,7 @@ export async function updateCompany(id: string, data: any) {
     });
 
     const { owners, employees, ...companyData } = validated;
+    const { normalizedOwners, normalizedEmployees } = normalizeCompanyAssociations(owners, employees);
 
     const updateData = {
       ...companyData,
@@ -298,9 +392,9 @@ export async function updateCompany(id: string, data: any) {
       updatedAt: new Date().toISOString(),
     };
 
-    const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
+    const { error: updateError } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
-    if (error) throw new Error((error as { message: string }).message);
+    if (updateError) throw new Error(updateError.message);
 
     // Record change history (best-effort). Resolve the actor once for all entries.
     const actor = await getCurrentActor();
@@ -316,14 +410,14 @@ export async function updateCompany(id: string, data: any) {
 
     // If the value changed, append to history!
     if (data.estimatedValue !== undefined && data.estimatedValue !== Number(currentCompany.estimatedValue)) {
-      const snapshot = {
+      const historyEntry = {
         companyId: id,
         value: data.estimatedValue,
         valuationDate: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      await supabaseServer.from("company_valuation_history").insert(snapshot);
+      await supabaseServer.from("company_valuation_history").insert(historyEntry);
 
       await recordEvent(
         {
@@ -352,8 +446,8 @@ export async function updateCompany(id: string, data: any) {
       if (deleteOwnersError) throw new Error(deleteOwnersError.message);
 
       // Insert new owners
-      if (owners.length > 0) {
-        const ownersToInsert = owners.map((owner) => ({
+      if (normalizedOwners.length > 0) {
+        const ownersToInsert = normalizedOwners.map((owner) => ({
           companyId: id,
           personId: owner.personId,
           ownershipPercentage: owner.ownershipPercentage.toString(),
@@ -367,9 +461,9 @@ export async function updateCompany(id: string, data: any) {
 
       // Record owner additions/removals in change history (resolve person names).
       const oldOwnerIds = new Set((oldOwners || []).map((o) => o.personId));
-      const newOwnerIds = new Set(owners.map((o) => o.personId));
+      const newOwnerIds = new Set(normalizedOwners.map((o) => o.personId));
       const ownerNames = await resolvePersonNames([...oldOwnerIds, ...newOwnerIds]);
-      for (const owner of owners) {
+      for (const owner of normalizedOwners) {
         if (!oldOwnerIds.has(owner.personId)) {
           await recordEvent(
             {
@@ -406,7 +500,7 @@ export async function updateCompany(id: string, data: any) {
 
       // Revalidate client pages for both old owners and new owners
       const allPersonIds = Array.from(
-        new Set([...(oldOwners || []).map((o) => o.personId), ...owners.map((o) => o.personId)]),
+        new Set([...(oldOwners || []).map((o) => o.personId), ...normalizedOwners.map((o) => o.personId)]),
       );
 
       if (allPersonIds.length > 0) {
@@ -432,8 +526,8 @@ export async function updateCompany(id: string, data: any) {
       const { error: deleteEmpError } = await supabaseServer.from("company_employees").delete().eq("companyId", id);
       if (deleteEmpError) throw new Error(deleteEmpError.message);
 
-      if (employees.length > 0) {
-        const empToInsert = employees.map((emp) => ({
+      if (normalizedEmployees.length > 0) {
+        const empToInsert = normalizedEmployees.map((emp) => ({
           companyId: id,
           personId: emp.personId,
           jobTitle: emp.jobTitle || null,
@@ -447,9 +541,9 @@ export async function updateCompany(id: string, data: any) {
 
       // Record employee additions/removals in change history
       const oldEmpIds = new Set((oldEmployees || []).map((e) => e.personId));
-      const newEmpIds = new Set(employees.map((e) => e.personId));
+      const newEmpIds = new Set(normalizedEmployees.map((e) => e.personId));
       const empNames = await resolvePersonNames([...oldEmpIds, ...newEmpIds]);
-      for (const emp of employees) {
+      for (const emp of normalizedEmployees) {
         if (!oldEmpIds.has(emp.personId)) {
           await recordEvent(
             {

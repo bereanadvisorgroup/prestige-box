@@ -2,28 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 
+import { normalizeClient, normalizePerson } from "@/lib/crm-normalize";
+import { fetchAllRows } from "@/lib/fetch-chunks";
 import { CLIENT_PROFILE_FIELDS } from "@/lib/history/fields";
 import { recordEvent, recordFieldDiffs } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Client, ClientSchema } from "@/types/crm";
 
-import { fetchAllRows } from "@/lib/fetch-chunks";
-import { normalizeClient, normalizePerson } from "@/lib/crm-normalize";
 import { removeAutoTask, syncAnniversaryForClient, syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "clients";
 
 export async function getClients() {
   try {
-    const clients = await fetchAllRows((from, to) =>
-      supabaseServer.from(TABLE).select("*").range(from, to),
-    );
+    const clients = await fetchAllRows((from, to) => supabaseServer.from(TABLE).select("*").range(from, to));
 
     if (!clients || clients.length === 0) return { success: true, clients: [] };
 
-    const people = await fetchAllRows((from, to) =>
-      supabaseServer.from("people").select("*").range(from, to),
-    );
+    const people = await fetchAllRows((from, to) => supabaseServer.from("people").select("*").range(from, to));
 
     const peopleMap = (people || []).reduce(
       (acc, person) => {
@@ -69,7 +65,11 @@ export async function getClient(id: string) {
       throw new Error((personError as { message: string }).message);
     }
 
-    return { success: true, client: normalizeClient(client) as Client, person: person ? normalizePerson(person) : null };
+    return {
+      success: true,
+      client: normalizeClient(client) as Client,
+      person: person ? normalizePerson(person) : null,
+    };
   } catch (error) {
     console.error(`[getClient] Error:`, error);
     return { success: false, error: (error as { message: string }).message };
