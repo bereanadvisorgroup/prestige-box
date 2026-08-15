@@ -24,25 +24,94 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const resolve = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // 1. Check if OAuth provider / Supabase returned an error in hash or query parameters
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashString = window.location.hash.startsWith("#")
+        ? window.location.hash.substring(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hashString);
 
-      if (!user) {
-        router.replace("/login");
+      const error =
+        hashParams.get("error") ||
+        searchParams.get("error") ||
+        hashParams.get("oauth_error") ||
+        searchParams.get("oauth_error");
+
+      const errorCode =
+        hashParams.get("error_code") ||
+        searchParams.get("error_code") ||
+        hashParams.get("oauth_error_code") ||
+        searchParams.get("oauth_error_code");
+
+      const errorDesc =
+        hashParams.get("error_description") ||
+        searchParams.get("error_description") ||
+        hashParams.get("oauth_error_description") ||
+        searchParams.get("oauth_error_description") ||
+        hashParams.get("msg") ||
+        searchParams.get("msg") ||
+        hashParams.get("message") ||
+        searchParams.get("message");
+
+      if (error || errorDesc) {
+        const fullErrorMsg = errorDesc
+          ? decodeURIComponent(errorDesc.replace(/\+/g, " "))
+          : error || "OAuth authentication failed";
+
+        console.error("❌ [OAuth Callback] Received error from OAuth provider / Supabase:", {
+          error,
+          errorCode,
+          errorDesc: fullErrorMsg,
+          search: window.location.search,
+          hash: window.location.hash,
+          fullUrl: window.location.href,
+        });
+
+        const targetParams = new URLSearchParams();
+        if (error) targetParams.set("oauth_error", error);
+        if (errorCode) targetParams.set("oauth_error_code", errorCode);
+        if (fullErrorMsg) targetParams.set("oauth_error_description", fullErrorMsg);
+
+        router.replace(`/login?${targetParams.toString()}`);
         return;
       }
 
+      // 2. Exchange code / retrieve authenticated session
+      const {
+        data: { user },
+        error: getUserError,
+      } = await supabase.auth.getUser();
+
+      if (getUserError || !user) {
+        console.error("❌ [OAuth Callback] Failed to retrieve authenticated user:", {
+          error: getUserError,
+          search: window.location.search,
+          hash: window.location.hash,
+          fullUrl: window.location.href,
+        });
+
+        const desc =
+          getUserError?.message ||
+          "Could not establish a valid session. Please verify that your Google OAuth credentials and redirect URIs match.";
+        const targetParams = new URLSearchParams();
+        targetParams.set("oauth_error", "session_not_found");
+        targetParams.set("oauth_error_description", desc);
+
+        router.replace(`/login?${targetParams.toString()}`);
+        return;
+      }
+
+      console.log("✅ [OAuth Callback] Authenticated user session found:", user.email, `(${user.id})`);
       setUser(user);
 
-      // 1. Primary lookup by uid
+      // 3. Primary lookup by uid
       let { data: userData, error: fetchError } = await supabase
         .from("users")
         .select("*")
         .eq("uid", user.id)
         .maybeSingle();
 
-      // 2. Fallback lookup by email if uid didn't match
+      // 4. Fallback lookup by email if uid didn't match
       if (!userData && !fetchError && user.email) {
         const { data: emailMatchedUser, error: emailError } = await supabase
           .from("users")
@@ -66,13 +135,15 @@ export default function AuthCallbackPage() {
       if (!userData) {
         if (fetchError) {
           // Transient fetch error — don't delete or bounce to no-account.
-          console.error("Profile fetch error on OAuth callback:", fetchError);
-          toast.error("Could not load your profile. Please try signing in again.");
-          router.replace("/login");
+          console.error("❌ [OAuth Callback] Profile fetch error on OAuth callback:", fetchError);
+          const targetParams = new URLSearchParams();
+          targetParams.set("oauth_error", "profile_fetch_error");
+          targetParams.set("oauth_error_description", "Could not load your profile. Please try signing in again.");
+          router.replace(`/login?${targetParams.toString()}`);
           return;
         }
         // No whitelisted profile row for this authenticated user.
-        // Sign out safely — NEVER delete user account.
+        console.warn("⚠️ [OAuth Callback] No whitelisted profile row for user:", user.email);
         await supabase.auth.signOut();
         router.replace(`/login/no-account?email=${encodeURIComponent(user.email ?? "")}`);
         return;

@@ -1,10 +1,13 @@
+import { getLatestRelease } from "@/data/releases";
+
 import packageJson from "../../package.json";
 
 const currentYear = new Date().getFullYear();
+const latestRelease = getLatestRelease();
 
 export const APP_CONFIG = {
   name: "Prestige Box",
-  version: packageJson.version,
+  version: latestRelease?.version || packageJson.version,
   copyright: `© ${currentYear}, Prestige Box.`,
   meta: {
     title: "Prestige Box",

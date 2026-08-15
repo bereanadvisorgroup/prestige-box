@@ -26,13 +26,21 @@ import {
   clientPolicies,
   clients,
   companies,
+  companyEmployees,
   companyOwners,
+  companyValuationHistory,
   disabilityInsuranceCompanies,
   households,
   lawFirms,
   lifeInsuranceCompanies,
   longTermCareInsurance,
   moneyManagers,
+  noteAssociations,
+  noteAttachments,
+  noteNotifications,
+  noteReactions,
+  notes,
+  noteVotes,
   people,
   propertyAndCasualtyFirms,
   recordKeepers,
@@ -65,6 +73,24 @@ interface PaymentAccount {
   routingNumber: string;
 }
 
+interface SeedNoteAttachment {
+  kind: "file" | "link";
+  fileName?: string;
+  fileUrl?: string;
+  fileSize?: number;
+  mimeType?: string;
+  linkUrl?: string;
+  linkTitle?: string;
+  linkProvider?: string;
+}
+
+interface CompanyNoteTemplate {
+  title: string;
+  body: string;
+  attachment?: SeedNoteAttachment;
+  replies: string[];
+}
+
 /** Next upcoming occurrence (this year or next) of an annually recurring date. Mirrors task-sync. */
 function nextAnnualOccurrence(dateStr: string): Date {
   const [, mm, dd] = dateStr.slice(0, 10).split("-").map(Number);
@@ -93,6 +119,12 @@ async function main() {
     // 1. Clean up existing data in correct order
     console.log("🧹 Cleaning up existing CRM records...");
 
+    await db.delete(noteNotifications);
+    await db.delete(noteVotes);
+    await db.delete(noteReactions);
+    await db.delete(noteAttachments);
+    await db.delete(noteAssociations);
+    await db.delete(notes);
     await db.delete(taskAssignees);
     await db.delete(taskAssociations);
     await db.delete(tasks);
@@ -107,6 +139,8 @@ async function main() {
     await db.delete(actuarialFirms);
     await db.delete(banks);
     await db.delete(propertyAndCasualtyFirms);
+    await db.delete(companyValuationHistory);
+    await db.delete(companyEmployees);
     await db.delete(companyOwners);
     await db.delete(companies);
     await db.delete(assetHistory);
@@ -251,7 +285,7 @@ async function main() {
     console.log("📍 Seeding addresses...");
     const addressIds: string[] = [];
     const addressData: (typeof addresses.$inferInsert)[] = [];
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 40; i++) {
       const addressId = faker.string.uuid();
       addressIds.push(addressId);
       addressData.push({
@@ -270,7 +304,7 @@ async function main() {
     console.log("👤 Seeding people...");
     const peopleIds: string[] = [];
     const peopleData: (typeof people.$inferInsert)[] = [];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 75; i++) {
       const pId = faker.string.uuid();
       peopleIds.push(pId);
       const fName = faker.person.firstName();
@@ -637,14 +671,35 @@ async function main() {
       await db.insert(assetHistory).values(assetHistoryData);
     }
 
-    // 8. Seed Companies
-    console.log("🏢 Seeding companies...");
+    // 8. Seed Companies, Owners & Employees
+    console.log("🏢 Seeding companies, owners, and employees...");
     const companyData: (typeof companies.$inferInsert)[] = [];
     const companyOwnersData: (typeof companyOwners.$inferInsert)[] = [];
+    const companyEmployeesData: (typeof companyEmployees.$inferInsert)[] = [];
+
+    const jobTitles = [
+      "Chief Executive Officer",
+      "Chief Operating Officer",
+      "Chief Financial Officer",
+      "Chief Technology Officer",
+      "VP of Operations",
+      "VP of Sales & Business Development",
+      "Director of Human Resources",
+      "Senior Financial Analyst",
+      "Lead Product Manager",
+      "Controller",
+      "General Counsel",
+      "Director of Marketing",
+      "Operations Coordinator",
+      "Head of Customer Success",
+      "Office Manager",
+    ];
 
     for (let i = 0; i < 10; i++) {
       const randomAddressId = faker.helpers.arrayElement(addressIds);
       const companyId = faker.string.uuid();
+      const companyAdvisorId = faker.helpers.arrayElement(assignableUserIds);
+      const estimatedValue = faker.number.int({ min: 1000000, max: 30000000 }).toString();
 
       companyData.push({
         id: companyId,
@@ -652,6 +707,8 @@ async function main() {
         dba: `${faker.company.name()} DBA`,
         ein: faker.helpers.fromRegExp(/[0-9]{2}-[0-9]{7}/),
         addressId: randomAddressId,
+        advisorId: companyAdvisorId,
+        estimatedValue,
         website: faker.internet.url(),
         phone: faker.phone.number(),
         situsRecords: [
@@ -670,16 +727,17 @@ async function main() {
       });
 
       // Seed 1-3 owners for each company
-      const randomPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 3 }));
+      const randomOwnerPeopleIds = faker.helpers.arrayElements(peopleIds, faker.number.int({ min: 1, max: 3 }));
+      const ownerPersonSet = new Set(randomOwnerPeopleIds);
       let remainingPercent = 100.0;
-      for (let j = 0; j < randomPeopleIds.length; j++) {
-        const isLast = j === randomPeopleIds.length - 1;
+      for (let j = 0; j < randomOwnerPeopleIds.length; j++) {
+        const isLast = j === randomOwnerPeopleIds.length - 1;
         let percent = 0;
         if (isLast) {
           percent = remainingPercent;
         } else {
           const min = 10;
-          const max = remainingPercent - (randomPeopleIds.length - 1 - j) * 10;
+          const max = remainingPercent - (randomOwnerPeopleIds.length - 1 - j) * 10;
           percent = max > min ? faker.number.float({ min, max, fractionDigits: 2 }) : min;
         }
         remainingPercent -= percent;
@@ -687,14 +745,37 @@ async function main() {
         companyOwnersData.push({
           id: faker.string.uuid(),
           companyId,
-          personId: randomPeopleIds[j],
+          personId: randomOwnerPeopleIds[j],
           ownershipPercentage: percent.toFixed(2),
+        });
+      }
+
+      // Seed 2-5 non-owner employees for each company (mix of client and non-client people)
+      const potentialEmployeePeopleIds = peopleIds.filter((pId) => !ownerPersonSet.has(pId));
+      const employeePeopleCount = faker.number.int({ min: 2, max: 5 });
+      const selectedEmployeePeopleIds = faker.helpers.arrayElements(potentialEmployeePeopleIds, employeePeopleCount);
+      const usedTitles = new Set<string>();
+
+      for (const empPersonId of selectedEmployeePeopleIds) {
+        const availableTitles = jobTitles.filter((t) => !usedTitles.has(t));
+        const title = faker.helpers.arrayElement(availableTitles.length > 0 ? availableTitles : jobTitles);
+        usedTitles.add(title);
+
+        companyEmployeesData.push({
+          id: faker.string.uuid(),
+          companyId,
+          personId: empPersonId,
+          jobTitle: title,
+          createdAt: faker.date.past({ years: 2 }),
         });
       }
     }
     await db.insert(companies).values(companyData);
     if (companyOwnersData.length > 0) {
       await db.insert(companyOwners).values(companyOwnersData);
+    }
+    if (companyEmployeesData.length > 0) {
+      await db.insert(companyEmployees).values(companyEmployeesData);
     }
 
     // 9. Seed Client Policies
@@ -1086,6 +1167,237 @@ async function main() {
     if (taskAssociationData.length > 0) await db.insert(taskAssociations).values(taskAssociationData);
 
     console.log(`✅ Inserted ${taskData.length} tasks (manual + auto).`);
+
+    // 18. Seed Notes (Threaded notes for companies with attachments, reactions, votes, and replies)
+    console.log("📝 Seeding company notes and threaded discussions...");
+    const noteData: (typeof notes.$inferInsert)[] = [];
+    const noteAssociationData: (typeof noteAssociations.$inferInsert)[] = [];
+    const noteAttachmentData: (typeof noteAttachments.$inferInsert)[] = [];
+    const noteReactionData: (typeof noteReactions.$inferInsert)[] = [];
+    const noteVoteData: (typeof noteVotes.$inferInsert)[] = [];
+
+    const companyNoteTemplates: CompanyNoteTemplate[] = [
+      {
+        title: "Q3 Financial & Valuation Strategy Review",
+        body: "<p>Conducted quarterly strategic review with the leadership team. Discussed updated company valuation and potential dividend distribution schedules.</p><ul><li>Operating margins up 14% year-over-year</li><li>Evaluated buy-sell agreement funding adequacy</li><li>Recommended setting up dedicated deferred compensation plan</li></ul><p>Next steps: Follow up with corporate legal counsel and finalize valuation model.</p>",
+        attachment: {
+          kind: "file",
+          fileName: "Q3_Financial_Valuation_Report.pdf",
+          fileUrl: "https://example.com/docs/q3_valuation_report.pdf",
+          fileSize: 2450000,
+          mimeType: "application/pdf",
+        },
+        replies: [
+          "<p>Reviewed the valuation summary with the executive team. Everyone agrees with the proposed equity structure. 👍</p>",
+          "<p>I will coordinate with the CPA firm to ensure the tax distribution projections align with year-end goals. 📅</p>",
+        ],
+      },
+      {
+        title: "401(k) Safe Harbor Restructuring & Fee Benchmark",
+        body: "<p>Completed benchmarking analysis of current retirement plan administrative fees against industry peers.</p><p>Key findings:</p><ul><li>Opportunity to transition to a safe harbor match structure to eliminate non-discrimination testing constraints</li><li>Proposed recordkeeper fee reduction of 18 bps</li></ul><p>Advisor team will draft employer contribution modeling schedule by month-end.</p>",
+        attachment: {
+          kind: "link",
+          linkTitle: "Retirement Plan Benchmark Comparison Portal",
+          linkUrl: "https://drive.google.com/drive/folders/401k_fee_review",
+          linkProvider: "google-drive",
+        },
+        replies: [
+          "<p>Great fee reduction proposal. The HR Director indicated they want to present this at the next committee meeting.</p>",
+        ],
+      },
+      {
+        title: "Key-Person Life & Disability Insurance Audit",
+        body: "<p>Reviewed existing commercial life and disability policies protecting executive partners.</p><p>Recommended increasing key-person term coverage to match the recent valuation expansion. Current coverage leaves an estimated 30% gap based on latest capitalization figures.</p>",
+        replies: [
+          "<p>Carrier quotes for additional coverage have been requested. Will upload proposal summaries once received.</p>",
+          "<p>Underwriting packets prepared for both executive partners. 🚀</p>",
+        ],
+      },
+      {
+        title: "Corporate Situs & Multi-State Nexus Assessment",
+        body: "<p>Assessed remote workforce tax implications across secondary jurisdictions with external tax counsel.</p><p>Action item: Ensure physical and economic nexus registrations remain fully compliant in state filings.</p>",
+        attachment: {
+          kind: "file",
+          fileName: "Multi_State_Nexus_Memo.pdf",
+          fileUrl: "https://example.com/docs/nexus_memo.pdf",
+          fileSize: 1120000,
+          mimeType: "application/pdf",
+        },
+        replies: ["<p>Confirmed with legal counsel; filings submitted for state clearance.</p>"],
+      },
+      {
+        title: "Executive Deferred Compensation (NQDC) Architecture",
+        body: "<p>Presented non-qualified deferred compensation (NQDC) plan structure to incentivize key executive retention.</p><ul><li>Plan vesting schedule: 5-year graded</li><li>Rabbi trust funding vehicle options evaluated</li></ul><p>HR Director will circulate plan summary to participating executives.</p>",
+        replies: ["<p>Draft plan document uploaded to the client portal for final legal sign-off. 📝</p>"],
+      },
+      {
+        title: "Succession Planning & Buy-Sell Funding Analysis",
+        body: "<p>Met with founding partners regarding long-term ownership transfer timeline and cross-purchase agreement structures.</p><p>Drafted schedule of asset transfers and insurance funding requirements.</p>",
+        attachment: {
+          kind: "file",
+          fileName: "Succession_Roadmap_2026.pdf",
+          fileUrl: "https://example.com/docs/succession_roadmap.pdf",
+          fileSize: 3100000,
+          mimeType: "application/pdf",
+        },
+        replies: ["<p>Founders approved the phased transition plan. Scheduled follow-up for next quarter.</p>"],
+      },
+    ];
+
+    for (const company of companyData) {
+      const companyId = company.id ?? "";
+      // Pick 2-4 distinct templates for each company
+      const selectedTemplates = faker.helpers.arrayElements(companyNoteTemplates, faker.number.int({ min: 2, max: 4 }));
+
+      for (const tpl of selectedTemplates) {
+        const rootNoteId = faker.string.uuid();
+        const authorId = faker.helpers.arrayElement(assignableUserIds);
+        const createdAt = faker.date.recent({ days: 60 });
+        const voterIds = faker.helpers.arrayElements(
+          assignableUserIds,
+          faker.number.int({ min: 0, max: Math.min(3, assignableUserIds.length) }),
+        );
+
+        // Record votes for root note
+        for (const voterId of voterIds) {
+          noteVoteData.push({
+            id: faker.string.uuid(),
+            noteId: rootNoteId,
+            userId: voterId,
+            value: 1,
+            createdAt: faker.date.between({ from: createdAt, to: new Date() }),
+          });
+        }
+
+        // Add 1-2 emoji reactions
+        const reactorIds = faker.helpers.arrayElements(
+          assignableUserIds,
+          faker.number.int({ min: 0, max: Math.min(2, assignableUserIds.length) }),
+        );
+        const emojis = ["👍", "❤️", "🚀", "💡", "👀", "🙌"];
+        for (const reactorId of reactorIds) {
+          noteReactionData.push({
+            id: faker.string.uuid(),
+            noteId: rootNoteId,
+            userId: reactorId,
+            emoji: faker.helpers.arrayElement(emojis),
+            createdAt: faker.date.between({ from: createdAt, to: new Date() }),
+          });
+        }
+
+        // Add attachment if specified in template
+        if (tpl.attachment) {
+          noteAttachmentData.push({
+            id: faker.string.uuid(),
+            noteId: rootNoteId,
+            kind: tpl.attachment.kind,
+            fileName: tpl.attachment.fileName ?? null,
+            fileUrl: tpl.attachment.fileUrl ?? null,
+            fileSize: tpl.attachment.fileSize ?? null,
+            mimeType: tpl.attachment.mimeType ?? null,
+            linkUrl: tpl.attachment.linkUrl ?? null,
+            linkTitle: tpl.attachment.linkTitle ?? null,
+            linkProvider: tpl.attachment.linkProvider ?? null,
+            createdAt,
+          });
+        }
+
+        // Create root note
+        noteData.push({
+          id: rootNoteId,
+          parentId: null,
+          rootId: rootNoteId,
+          depth: 0,
+          title: tpl.title,
+          body: tpl.body,
+          authorId,
+          score: voterIds.length,
+          isDeleted: false,
+          createdAt,
+          updatedAt: createdAt,
+        });
+
+        // Associate note to company
+        noteAssociationData.push({
+          id: faker.string.uuid(),
+          noteId: rootNoteId,
+          entityType: "company",
+          entityId: companyId,
+          createdAt,
+        });
+
+        // Add replies (depth 1 and optional depth 2)
+        let parentReplyId = rootNoteId;
+        for (let rIdx = 0; rIdx < tpl.replies.length; rIdx++) {
+          const replyId = faker.string.uuid();
+          const replyAuthorId = faker.helpers.arrayElement(assignableUserIds);
+          const replyCreatedAt = faker.date.between({ from: createdAt, to: new Date() });
+          const isDepth2 = rIdx > 0 && faker.datatype.boolean({ probability: 0.5 });
+          const actualDepth = isDepth2 ? 2 : 1;
+          const actualParentId = isDepth2 ? parentReplyId : rootNoteId;
+
+          const replyVoterIds = faker.helpers.arrayElements(
+            assignableUserIds,
+            faker.number.int({ min: 0, max: Math.min(2, assignableUserIds.length) }),
+          );
+          for (const voterId of replyVoterIds) {
+            noteVoteData.push({
+              id: faker.string.uuid(),
+              noteId: replyId,
+              userId: voterId,
+              value: 1,
+              createdAt: replyCreatedAt,
+            });
+          }
+
+          const replyReactorIds = faker.helpers.arrayElements(assignableUserIds, faker.number.int({ min: 0, max: 1 }));
+          for (const reactorId of replyReactorIds) {
+            noteReactionData.push({
+              id: faker.string.uuid(),
+              noteId: replyId,
+              userId: reactorId,
+              emoji: faker.helpers.arrayElement(emojis),
+              createdAt: replyCreatedAt,
+            });
+          }
+
+          noteData.push({
+            id: replyId,
+            parentId: actualParentId,
+            rootId: rootNoteId,
+            depth: actualDepth,
+            title: null,
+            body: tpl.replies[rIdx],
+            authorId: replyAuthorId,
+            score: replyVoterIds.length,
+            isDeleted: false,
+            createdAt: replyCreatedAt,
+            updatedAt: replyCreatedAt,
+          });
+
+          if (!isDepth2) {
+            parentReplyId = replyId;
+          }
+        }
+      }
+    }
+
+    if (noteData.length > 0) {
+      await db.insert(notes).values(noteData);
+    }
+    if (noteAssociationData.length > 0) {
+      await db.insert(noteAssociations).values(noteAssociationData);
+    }
+    if (noteAttachmentData.length > 0) {
+      await db.insert(noteAttachments).values(noteAttachmentData);
+    }
+    if (noteVoteData.length > 0) {
+      await db.insert(noteVotes).values(noteVoteData);
+    }
+    if (noteReactionData.length > 0) {
+      await db.insert(noteReactions).values(noteReactionData);
+    }
+    console.log(`📝 Inserted ${noteData.length} note threads and replies across companies.`);
 
     console.log("🎉 Seeding completed successfully!");
   } catch (error) {

@@ -28,14 +28,13 @@ import { getAdvisors } from "@/actions/users";
 import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
 import { LogoUpload } from "@/components/features/crm/logo-upload";
 import { Button } from "@/components/ui/button";
-import { formatPersonName } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } from "@/components/ui/combobox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, formatPersonName } from "@/lib/utils";
 import {
   type Address,
   type Company,

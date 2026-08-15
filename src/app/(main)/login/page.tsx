@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Fingerprint, Loader2, Lock, Mail } from "lucide-react";
+import { AlertCircle, Fingerprint, Loader2, Lock, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -59,30 +59,78 @@ export default function LoginPage() {
   const { setUser, setProfile, setLoading, isLoading } = useAuthStore();
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<{ title: string; message: string; code?: string } | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const checkError = (queryString: string) => {
-        const params = new URLSearchParams(queryString);
-        const error = params.get("error");
-        const errorCode = params.get("error_code");
-        const errorDescription = params.get("error_description");
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashString = window.location.hash.startsWith("#")
+        ? window.location.hash.substring(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hashString);
 
-        return (
-          error === "server_error" ||
-          errorCode === "unexpected_failure" ||
-          errorDescription?.toLowerCase().includes("saving new user") ||
-          errorDescription?.toLowerCase().includes("contact our office")
-        );
-      };
+      const error = hashParams.get("error") || searchParams.get("error") || searchParams.get("oauth_error");
 
-      const hasHashError = window.location.hash && checkError(window.location.hash.substring(1));
-      const hasSearchError = window.location.search && checkError(window.location.search.substring(1));
+      const errorCode =
+        hashParams.get("error_code") || searchParams.get("error_code") || searchParams.get("oauth_error_code");
 
-      if (hasHashError || hasSearchError) {
-        // Clear url parameters and hash to prevent redirection loop
+      const errorDescription =
+        hashParams.get("error_description") ||
+        searchParams.get("error_description") ||
+        searchParams.get("oauth_error_description") ||
+        hashParams.get("msg") ||
+        searchParams.get("msg") ||
+        hashParams.get("message") ||
+        searchParams.get("message");
+
+      if (error || errorCode || errorDescription) {
+        const rawDesc = errorDescription ? decodeURIComponent(errorDescription.replace(/\+/g, " ")) : "";
+
+        console.error("❌ [Login Page] OAuth Error Detected:", {
+          error,
+          errorCode,
+          errorDescription: rawDesc,
+          search: window.location.search,
+          hash: window.location.hash,
+        });
+
+        // If the error explicitly indicates non-existent whitelisted account
+        if (rawDesc.toLowerCase().includes("saving new user") || rawDesc.toLowerCase().includes("contact our office")) {
+          window.history.replaceState(null, "", window.location.pathname);
+          router.push("/login/no-account");
+          return;
+        }
+
+        // Format user-friendly error title & message
+        let title = "Authentication Error";
+        let message = rawDesc || "An unexpected error occurred during login.";
+
+        if (error === "access_denied") {
+          title = "Access Denied";
+          message =
+            rawDesc || "Sign-in was cancelled or access was rejected by your organization's Google Workspace settings.";
+        } else if (
+          rawDesc.toLowerCase().includes("user already registered") ||
+          rawDesc.toLowerCase().includes("already linked")
+        ) {
+          title = "Account Link Error";
+          message =
+            "An account with this email exists but is not linked to your Google account. Please ensure Automatic Linking is enabled in Supabase or contact support.";
+        } else if (rawDesc.toLowerCase().includes("redirect_uri_mismatch")) {
+          title = "Configuration Mismatch";
+          message = "Redirect URI mismatch in Google Cloud Console or Supabase URL configuration.";
+        }
+
+        setOauthError({
+          title,
+          message,
+          code: errorCode || error || undefined,
+        });
+
+        toast.error(`${title}: ${message}`);
+
+        // Clear URL parameters without page reload so refreshing doesn't replay the error
         window.history.replaceState(null, "", window.location.pathname);
-        router.push("/login/no-account");
       }
     }
   }, [router]);
@@ -270,8 +318,10 @@ export default function LoginPage() {
 
   const handleOAuthSignIn = async (provider: "google" | "azure") => {
     try {
+      setOauthError(null);
       setIsOAuthLoading(provider);
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log(`🔑 [Login Page] Initiating OAuth sign-in with provider: ${provider}...`);
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -283,8 +333,15 @@ export default function LoginPage() {
         },
       });
       if (error) throw error;
+      console.log(`🌐 [Login Page] OAuth initiated successfully, redirecting...`, data);
     } catch (err: unknown) {
-      toast.error((err as Error).message || `Could not authenticate with ${provider}.`);
+      console.error(`❌ [Login Page] OAuth Initiation Error (${provider}):`, err);
+      const message = (err as Error).message || `Could not authenticate with ${provider}.`;
+      setOauthError({
+        title: `${provider === "google" ? "Google" : "Microsoft"} Sign-In Error`,
+        message,
+      });
+      toast.error(message);
       setIsOAuthLoading(null);
     }
   };
@@ -304,6 +361,30 @@ export default function LoginPage() {
 
         {/* Secure Portal Title */}
         <div className="mb-5 text-center font-semibold text-neutral-500 text-xs">Secure Client & Advisor Portal</div>
+
+        {/* OAuth / Auth Error Banner */}
+        {oauthError && (
+          <div className="fade-in slide-in-from-top-2 mb-5 flex animate-in flex-col gap-1.5 rounded-xl border border-red-300 bg-red-50/90 p-4 text-red-900 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-red-700 text-xs">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span>{oauthError.title}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOauthError(null)}
+                className="font-semibold text-red-500 text-xs hover:text-red-800"
+                aria-label="Dismiss error"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="pl-6 text-red-800 text-xs leading-relaxed">{oauthError.message}</p>
+            {oauthError.code && (
+              <p className="pl-6 font-mono text-[10px] text-red-600 opacity-75">Code: {oauthError.code}</p>
+            )}
+          </div>
+        )}
 
         {/* 1. Passkey - Preferred login method */}
         <div className="mb-5">

@@ -216,6 +216,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
 import { NavMain } from "./nav-main";
+import { SidebarVersion } from "./sidebar-version";
 
 const getClientSidebarItems = (clientId: string, counts: Record<string, number>): NavGroup[] => [
   {
@@ -666,7 +667,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={filteredSidebarItems} />
       </SidebarContent>
-      <SidebarFooter />
+      <SidebarFooter>
+        <SidebarVersion />
+      </SidebarFooter>
     </Sidebar>
   );
 }
