@@ -19,13 +19,12 @@
     "generate:presets": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' src/scripts/generate-theme-presets.ts",
     "db:seed": "ts-node --project tsconfig.seed.json src/db/seed.ts",
     "db:migrate": "node --experimental-strip-types --no-warnings scripts/migrate-data.ts",
+    "db:update-emails": "node --experimental-strip-types --no-warnings scripts/update-user-emails.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx}": [
-      "biome check --write --no-errors-on-unmatched"
-    ]
+    "*.{js,ts,jsx,tsx}": ["biome check --write --no-errors-on-unmatched"]
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
