@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AxiomWebVitals } from "next-axiom";
 
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { EnvironmentBanner } from "@/components/ui/environment-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_CONFIG } from "@/config/app-config";
 import { fontVars } from "@/lib/fonts/registry";
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <AuthProvider>
             {children}
             <Toaster />
+            <EnvironmentBanner />
           </AuthProvider>
         </PreferencesStoreProvider>
       </body>
