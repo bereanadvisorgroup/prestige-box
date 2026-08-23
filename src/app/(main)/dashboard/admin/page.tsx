@@ -7,6 +7,7 @@ import {
   Clock,
   Database,
   DollarSign,
+  ListFilter,
   Settings,
   ShieldCheck,
   Tag,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { getBusinessContact } from "@/actions/settings";
+import { getTaskCategories } from "@/actions/task-categories";
 import { getTeams } from "@/actions/teams";
 import { getUsers } from "@/actions/users";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,7 +23,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSocialAvatarUrl } from "@/lib/social";
 
 export default async function AdminDashboardPage() {
-  const [usersResult, contactResult, teamsResult] = await Promise.all([getUsers(), getBusinessContact(), getTeams()]);
+  const [usersResult, contactResult, teamsResult, categoriesResult] = await Promise.all([
+    getUsers(),
+    getBusinessContact(),
+    getTeams(),
+    getTaskCategories(),
+  ]);
 
   if (!usersResult.success) {
     return (
@@ -372,6 +379,54 @@ export default async function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="pt-2">
               <p className="text-sm text-muted-foreground">Create, edit, and manage automated Workflows.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/admin/task-categories" className="group block h-full">
+          <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="space-y-1.5 pr-4">
+                <CardTitle className="flex items-center gap-1.5 font-bold text-xl transition-colors group-hover:text-primary">
+                  Task Categories
+                  <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
+                </CardTitle>
+              </div>
+              <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <ListFilter className="h-6 w-6" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              {categoriesResult.success &&
+              categoriesResult.taskCategories &&
+              categoriesResult.taskCategories.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-between border-b border-muted/40 pb-2">
+                    <span className="font-extrabold text-2xl tracking-tight">
+                      {categoriesResult.taskCategories.length}
+                    </span>
+                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      {categoriesResult.taskCategories.length === 1 ? "Active Category" : "Active Categories"}
+                    </span>
+                  </div>
+                  <div className="space-y-1 pt-1">
+                    {categoriesResult.taskCategories.slice(0, 3).map((c) => (
+                      <div key={c.id} className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground truncate max-w-[180px]">{c.name}</span>
+                      </div>
+                    ))}
+                    {categoriesResult.taskCategories.length > 3 && (
+                      <p className="text-[11px] text-muted-foreground italic pt-0.5">
+                        +{categoriesResult.taskCategories.length - 3} more categories
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Create, edit, delete, and bulk reassign task categories.
+                </p>
+              )}
             </CardContent>
           </Card>
         </Link>

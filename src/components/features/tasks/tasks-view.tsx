@@ -5,13 +5,14 @@ import * as React from "react";
 import { KanbanSquare, List, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { getTaskCategories } from "@/actions/task-categories";
 import { getTasks, type TaskFilter, updateTaskStatus } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { ClientHeaderPortal } from "@/app/(main)/dashboard/crm/clients/[id]/_components/client-header-portal";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAuthStore } from "@/stores/auth.store";
-import type { TaskAssociation, TaskStatus, TaskWithRelations } from "@/types/crm";
+import { DEFAULT_TASK_CATEGORIES, type TaskAssociation, type TaskStatus, type TaskWithRelations } from "@/types/crm";
 
 import { TaskBoard } from "./task-board";
 import { applyTaskFilters, defaultTaskFilters, type TaskFilterState, TaskFilters } from "./task-filters";
@@ -49,6 +50,7 @@ export function TasksView({
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<TaskWithRelations | null>(null);
   const [assigneeOptions, setAssigneeOptions] = React.useState<{ value: string; label: string }[]>([]);
+  const [categoryOptions, setCategoryOptions] = React.useState<string[]>(Array.from(DEFAULT_TASK_CATEGORIES));
 
   // On the global tasks page, default the assignee filter to the signed-in user; otherwise show all.
   const [filters, setFilters] = React.useState<TaskFilterState>(() => ({
@@ -62,9 +64,13 @@ export function TasksView({
 
   const load = React.useCallback(async () => {
     setLoading(true);
-    const res = await getTasks(scope ?? {});
-    if (res.success && res.tasks) setTasks(res.tasks);
-    else toast.error(res.error || "Failed to load tasks");
+    const [tasksRes, categoriesRes] = await Promise.all([getTasks(scope ?? {}), getTaskCategories()]);
+    if (tasksRes.success && tasksRes.tasks) setTasks(tasksRes.tasks);
+    else toast.error(tasksRes.error || "Failed to load tasks");
+
+    if (categoriesRes.success && categoriesRes.taskCategories && categoriesRes.taskCategories.length > 0) {
+      setCategoryOptions(categoriesRes.taskCategories.map((c) => c.name));
+    }
     setLoading(false);
   }, [scope]);
 
@@ -81,7 +87,7 @@ export function TasksView({
 
         const params = new URLSearchParams(window.location.search);
         params.delete("editTask");
-        const newRelativePathQuery = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+        const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
         window.history.replaceState(null, "", newRelativePathQuery);
       }
     }
@@ -215,6 +221,7 @@ export function TasksView({
         filters={filters}
         onChange={updateFilters}
         assigneeOptions={assigneeOptions}
+        categoryOptions={categoryOptions}
         showClientCompanyFilters={isGlobalScope(scope)}
         isFiltered={isFiltered}
         onClear={handleClearFilters}

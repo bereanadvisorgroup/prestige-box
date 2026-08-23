@@ -1005,18 +1005,31 @@ export interface UpcomingPayment {
 // --- Task Management ---
 
 export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "Complete"]);
-export const TaskCategorySchema = z.enum(["Other", "Birthday", "Wedding Anniversary", "Policy Renewal"]);
 export const TaskPrioritySchema = z.enum(["Low", "Medium", "High"]);
 export const TaskSourceSchema = z.enum(["manual", "auto"]);
 export const TaskSourceTypeSchema = z.enum(["birthday", "anniversary", "renewal"]);
 export const TaskAssociationEntitySchema = z.enum(["client", "company"]);
 
+export const TaskCategorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+export type TaskCategory = z.infer<typeof TaskCategorySchema>;
+
+export type TaskCategoryWithCount = TaskCategory & {
+  taskCount?: number;
+  isLinked?: boolean;
+};
+
+export const DEFAULT_TASK_CATEGORIES = ["Other", "Birthday", "Wedding Anniversary", "Policy Renewal"] as const;
+export const TaskCategories = DEFAULT_TASK_CATEGORIES;
+
 export const TaskStatuses = TaskStatusSchema.options;
-export const TaskCategories = TaskCategorySchema.options;
 export const TaskPriorities = TaskPrioritySchema.options;
 
 export type TaskStatus = z.infer<typeof TaskStatusSchema>;
-export type TaskCategory = z.infer<typeof TaskCategorySchema>;
 export type TaskPriority = z.infer<typeof TaskPrioritySchema>;
 export type TaskSource = z.infer<typeof TaskSourceSchema>;
 export type TaskSourceType = z.infer<typeof TaskSourceTypeSchema>;
@@ -1042,7 +1055,7 @@ export const TaskSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Task name is required"),
   status: TaskStatusSchema.default("New"),
-  category: TaskCategorySchema.default("Other"),
+  category: z.string().min(1, "Category is required"),
   priority: TaskPrioritySchema.default("Low"),
   description: z.string().nullable().optional(),
   attachments: z.array(TaskAttachmentSchema).default([]),

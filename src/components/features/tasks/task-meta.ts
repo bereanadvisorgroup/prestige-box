@@ -1,4 +1,4 @@
-import type { TaskCategory, TaskPriority, TaskStatus } from "@/types/crm";
+import type { TaskPriority, TaskStatus } from "@/types/crm";
 
 /** Ordered status columns for the Kanban board. */
 export const TASK_STATUS_ORDER: TaskStatus[] = ["New", "In Process", "Waiting Input", "Complete"];
@@ -16,9 +16,17 @@ export const PRIORITY_STYLES: Record<TaskPriority, string> = {
   High: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
-export const CATEGORY_STYLES: Record<TaskCategory, string> = {
+export const CATEGORY_STYLES: Record<string, string> = {
   Other: "bg-slate-100 text-slate-600 border-slate-200",
   Birthday: "bg-pink-100 text-pink-700 border-pink-200",
   "Wedding Anniversary": "bg-violet-100 text-violet-700 border-violet-200",
   "Policy Renewal": "bg-cyan-100 text-cyan-700 border-cyan-200",
 };
+
+export function getCategoryStyle(category?: string | null): string {
+  if (!category) return "bg-slate-100 text-slate-600 border-slate-200";
+  return (
+    CATEGORY_STYLES[category] ||
+    "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
+  );
+}

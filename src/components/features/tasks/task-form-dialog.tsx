@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { getTaskCategories } from "@/actions/task-categories";
 import { createTask, updateTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/lib/supabase.client";
 import { formatPersonName } from "@/lib/utils";
 import {
+  DEFAULT_TASK_CATEGORIES,
   type TaskAssociation,
   type TaskAttachment,
-  TaskCategories,
   type TaskFormInput,
   TaskFormSchema,
   type TaskFormValues,
@@ -79,6 +80,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
   const [uploading, setUploading] = React.useState(false);
   const [assigneeOptions, setAssigneeOptions] = React.useState<MultiSelectOption[]>([]);
   const [associationOptions, setAssociationOptions] = React.useState<MultiSelectOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = React.useState<string[]>(Array.from(DEFAULT_TASK_CATEGORIES));
   const [entityDocMap, setEntityDocMap] = React.useState<Map<string, EntityDocInfo>>(new Map());
 
   // Google Drive Picker state
@@ -90,7 +92,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
     defaultValues: {
       name: "",
       status: "New",
-      category: "Other",
+      category: DEFAULT_TASK_CATEGORIES[0] || "Other",
       priority: "Low",
       description: "",
       attachments: [],
@@ -121,7 +123,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
       form.reset({
         name: "",
         status: "New",
-        category: "Other",
+        category: categoryOptions[0] || DEFAULT_TASK_CATEGORIES[0] || "Other",
         priority: "Low",
         description: "",
         attachments: [],
@@ -132,13 +134,36 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
     }
   }, [open, task]);
 
-  // Load assignee (admin/advisor) and association (client/company) options once.
+  // Load assignee (admin/advisor), association (client/company), and task category options.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: options loading is keyed to open and task
   React.useEffect(() => {
     if (!open) return;
     let cancelled = false;
     (async () => {
-      const [usersRes, clientsRes, companiesRes] = await Promise.all([getUsers(), getClients(), getCompanies()]);
+      const [usersRes, clientsRes, companiesRes, categoriesRes] = await Promise.all([
+        getUsers(),
+        getClients(),
+        getCompanies(),
+        getTaskCategories(),
+      ]);
       if (cancelled) return;
+
+      if (categoriesRes.success && categoriesRes.taskCategories && categoriesRes.taskCategories.length > 0) {
+        const names = categoriesRes.taskCategories.map((c) => c.name);
+        // Ensure current task's category is present in options if editing
+        if (task?.category && !names.includes(task.category)) {
+          names.unshift(task.category);
+        }
+        setCategoryOptions(names);
+
+        // Default new tasks to the first available category from the database
+        if (!task && names.length > 0) {
+          const currentCategory = form.getValues("category");
+          if (!currentCategory || !names.includes(currentCategory)) {
+            form.setValue("category", names[0], { shouldValidate: true });
+          }
+        }
+      }
 
       if (usersRes.success && usersRes.users) {
         setAssigneeOptions(
@@ -193,7 +218,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, task?.category]);
 
   // Watch form associations to compute entities with documentUrl
   const formAssociations = form.watch("associations") ?? [];
@@ -371,15 +396,17 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel>
+                        Category <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || categoryOptions[0] || ""}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {TaskCategories.map((c) => (
+                          {categoryOptions.map((c) => (
                             <SelectItem key={c} value={c}>
                               {c}
                             </SelectItem>

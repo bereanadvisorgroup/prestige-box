@@ -8,13 +8,14 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { getTaskCategories } from "@/actions/task-categories";
 import { createTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/stores/auth.store";
-import type { TaskWithRelations } from "@/types/crm";
+import { DEFAULT_TASK_CATEGORIES, type TaskWithRelations } from "@/types/crm";
 
 interface CompanyTasksCardProps {
   companyId: string;
@@ -27,26 +28,30 @@ export function CompanyTasksCard({ companyId, initialTasks }: CompanyTasksCardPr
   const [tasks, setTasks] = useState<TaskWithRelations[]>(initialTasks);
   const [taskName, setTaskName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const [defaultCategory, setDefaultCategory] = useState<string>(DEFAULT_TASK_CATEGORIES[0] || "Other");
 
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
 
   useEffect(() => {
-    getUsers().then((res) => {
-      if (res.success && res.users) {
-        setUsers(res.users);
+    Promise.all([getUsers(), getTaskCategories()]).then(([usersRes, catRes]) => {
+      if (usersRes.success && usersRes.users && usersRes.users.length > 0) {
+        setAssigneeId(profile?.uid || usersRes.users[0].uid);
+      }
+      if (catRes.success && catRes.taskCategories && catRes.taskCategories.length > 0) {
+        setDefaultCategory(catRes.taskCategories[0].name);
       }
     });
-  }, []);
+  }, [profile?.uid]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskName.trim()) return;
 
-    const assigneeId = profile?.uid || users[0]?.uid;
-    if (!assigneeId) {
+    const targetAssigneeId = assigneeId || profile?.uid;
+    if (!targetAssigneeId) {
       toast.error("No valid assignee could be found for the task.");
       return;
     }
@@ -59,10 +64,10 @@ export function CompanyTasksCard({ companyId, initialTasks }: CompanyTasksCardPr
       const res = await createTask({
         name: taskName.trim(),
         status: "New",
-        category: "Other",
+        category: defaultCategory,
         priority: "Medium",
         dueDate: dueDate.toISOString(),
-        assigneeIds: [assigneeId],
+        assigneeIds: [targetAssigneeId],
         associations: [{ entityType: "company", entityId: companyId }],
         attachments: [],
       });
@@ -74,8 +79,9 @@ export function CompanyTasksCard({ companyId, initialTasks }: CompanyTasksCardPr
       } else {
         throw new Error(res.error || "Failed to create task");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create task");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to create task";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

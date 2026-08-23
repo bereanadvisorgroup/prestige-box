@@ -5,9 +5,9 @@ import { format } from "date-fns";
 
 import { DataTableColumnHeader } from "@/components/features/data-table/data-table-column-header";
 import { Badge } from "@/components/ui/badge";
-import type { TaskCategory, TaskPriority, TaskStatus, TaskWithRelations } from "@/types/crm";
+import type { TaskPriority, TaskStatus, TaskWithRelations } from "@/types/crm";
 
-import { CATEGORY_STYLES, PRIORITY_STYLES, STATUS_STYLES } from "./task-meta";
+import { getCategoryStyle, PRIORITY_STYLES, STATUS_STYLES } from "./task-meta";
 
 function DueDate({ row }: { row: Row<TaskWithRelations> }) {
   const raw = row.original.dueDate;
@@ -52,7 +52,7 @@ export const taskColumns: ColumnDef<TaskWithRelations>[] = [
     accessorKey: "category",
     header: "Category",
     cell: ({ row }) => (
-      <Badge variant="outline" className={CATEGORY_STYLES[row.original.category as TaskCategory]}>
+      <Badge variant="outline" className={getCategoryStyle(row.original.category)}>
         {row.original.category}
       </Badge>
     ),

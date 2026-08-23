@@ -6,7 +6,7 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TaskCategories, TaskPriorities, TaskStatuses, type TaskWithRelations } from "@/types/crm";
+import { DEFAULT_TASK_CATEGORIES, TaskPriorities, TaskStatuses, type TaskWithRelations } from "@/types/crm";
 
 export type DueInFilter = "all" | "overdue" | "today" | "week" | "month";
 
@@ -18,7 +18,7 @@ export interface TaskFilterState {
   dueIn: DueInFilter;
   clientName: string;
   companyName: string;
-  category: string; // "all" | TaskCategory
+  category: string; // "all" | string
 }
 
 export const defaultTaskFilters: TaskFilterState = {
@@ -91,6 +91,7 @@ interface TaskFiltersProps {
   onChange: (patch: Partial<TaskFilterState>) => void;
   /** Admin/advisor users available as assignees. */
   assigneeOptions: { value: string; label: string }[];
+  categoryOptions?: string[];
   showClientCompanyFilters?: boolean;
   isFiltered?: boolean;
   onClear?: () => void;
@@ -100,6 +101,7 @@ export function TaskFilters({
   filters,
   onChange,
   assigneeOptions,
+  categoryOptions = Array.from(DEFAULT_TASK_CATEGORIES),
   showClientCompanyFilters = false,
   isFiltered = false,
   onClear,
@@ -230,7 +232,7 @@ export function TaskFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {TaskCategories.map((c) => (
+                {categoryOptions.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
                   </SelectItem>

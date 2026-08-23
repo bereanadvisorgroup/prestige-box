@@ -2,7 +2,7 @@ import "server-only";
 
 import { supabaseServer } from "@/lib/supabase.server";
 import { formatFullName } from "@/lib/utils";
-import type { TaskCategory, TaskSourceType } from "@/types/crm";
+import type { TaskSourceType } from "@/types/crm";
 
 /**
  * Auto-generated task engine.
@@ -49,7 +49,7 @@ interface UpsertArgs {
   sourceRefId: string;
   name: string;
   dueDate: string; // YYYY-MM-DD
-  category: TaskCategory;
+  category: string;
   assigneeUserId?: string | null;
   association: Association;
 }

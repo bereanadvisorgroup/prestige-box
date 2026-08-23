@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { TaskStatus, TaskWithRelations } from "@/types/crm";
 
-import { CATEGORY_STYLES, PRIORITY_STYLES, STATUS_STYLES, TASK_STATUS_ORDER } from "./task-meta";
+import { getCategoryStyle, PRIORITY_STYLES, STATUS_STYLES, TASK_STATUS_ORDER } from "./task-meta";
 
 interface TaskBoardProps {
   tasks: TaskWithRelations[];
@@ -48,7 +48,7 @@ function TaskCard({ task, onClick, dragging }: { task: TaskWithRelations; onClic
           {task.priority}
         </Badge>
         {task.category !== "Other" && (
-          <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", CATEGORY_STYLES[task.category])}>
+          <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px]", getCategoryStyle(task.category))}>
             {task.category}
           </Badge>
         )}

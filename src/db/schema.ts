@@ -373,6 +373,14 @@ export const referralTypes = pgTable("referral_types", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 15f. Task Categories Table
+export const taskCategories = pgTable("task_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").unique().notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
 // 15e. Events Table
 export const events = pgTable("events", {
   id: uuid("id").primaryKey().defaultRandom(),
