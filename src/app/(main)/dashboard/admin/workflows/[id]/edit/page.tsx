@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getTeams } from "@/actions/teams";
-import { getWorkflowTemplate } from "@/actions/workflow-templates";
+import { getWorkflowTemplate, getWorkflowTemplates } from "@/actions/workflow-templates";
 
 import { TemplateBuilder } from "../../_components/template-builder";
 
@@ -11,17 +11,24 @@ interface EditWorkflowPageProps {
 
 export default async function EditWorkflowPage({ params }: EditWorkflowPageProps) {
   const { id } = await params;
-  const [result, teamsRes] = await Promise.all([getWorkflowTemplate(id), getTeams()]);
+  const [result, teamsRes, templatesRes] = await Promise.all([
+    getWorkflowTemplate(id),
+    getTeams(),
+    getWorkflowTemplates(),
+  ]);
 
   if (!result.success || !result.template) {
     notFound();
   }
 
   const teams = teamsRes.success ? teamsRes.teams || [] : [];
+  const availableTemplates = templatesRes.success
+    ? (templatesRes.templates || []).map((t) => ({ id: t.id, name: t.name }))
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 md:px-6">
-      <TemplateBuilder template={result.template} teams={teams} />
+      <TemplateBuilder template={result.template} teams={teams} availableTemplates={availableTemplates} />
     </div>
   );
 }

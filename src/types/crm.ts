@@ -74,6 +74,8 @@ export const PersonSchema = z.object({
   socialMedia: z.array(SocialMediaAccountSchema).default([]),
   addresses: z.array(PersonAddressSchema).default([]),
   addressIds: z.array(z.string()).default([]),
+  documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -136,6 +138,8 @@ export const HouseholdSchema = z.object({
   headAndSpouse: z.string().optional(),
   dependentCount: z.number().optional(),
   totalMembersCount: z.number().optional(),
+  documentUrl: z.string().optional().nullable(),
+  notebookUrl: z.string().optional().nullable(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

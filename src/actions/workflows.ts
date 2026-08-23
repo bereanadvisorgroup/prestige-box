@@ -9,6 +9,7 @@ import type {
   WorkflowEntityType,
   WorkflowInstance,
   WorkflowInstanceStep,
+  WorkflowOutcome,
 } from "@/types/workflows";
 
 const INSTANCES_TABLE = "workflow_instances";
@@ -462,7 +463,7 @@ export async function deleteWorkflow(id: string) {
 }
 
 /**
- * Complete a workflow step, select the outcome, and copy the next step from template.
+ * Complete a workflow step, select the outcome, trigger any connected workflow, and copy the next step from template.
  */
 export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
   try {
@@ -476,20 +477,28 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
 
     if (stepError || !step) throw new Error("Workflow step not found.");
 
+    const { data: instance, error: instanceError } = await supabaseServer
+      .from(INSTANCES_TABLE)
+      .select("*")
+      .eq("id", step.instanceId)
+      .single();
+
+    if (instanceError || !instance) throw new Error("Workflow instance not found.");
+
     const now = new Date();
-    let selectedOutcome = null;
-    let nextStepId = null;
+    let selectedOutcome: WorkflowOutcome | null = null;
+    let nextStepId: string | null = null;
 
     if (outcomeId && step.outcomes) {
-      const outcome = (step.outcomes as any[]).find((o) => o.id === outcomeId);
+      const outcome = (step.outcomes as WorkflowOutcome[]).find((o) => o.id === outcomeId);
       if (outcome) {
         selectedOutcome = outcome;
-        nextStepId = outcome.nextStepId;
+        nextStepId = outcome.nextStepId || null;
       }
-    } else if (step.outcomes && step.outcomes.length === 1) {
+    } else if (step.outcomes && (step.outcomes as WorkflowOutcome[]).length === 1) {
       // Auto-select if there is exactly 1 outcome
-      selectedOutcome = step.outcomes[0];
-      nextStepId = step.outcomes[0].nextStepId;
+      selectedOutcome = (step.outcomes as WorkflowOutcome[])[0];
+      nextStepId = selectedOutcome.nextStepId || null;
     }
 
     // Update current step to completed
@@ -505,6 +514,30 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
 
     if (updateError) throw new Error((updateError as { message: string }).message);
 
+    // If selected outcome triggers another workflow, instantiate it for the same entity
+    let triggeredWorkflowId: string | null = null;
+    let triggeredWorkflowName: string | null = null;
+
+    if (selectedOutcome?.triggerWorkflowTemplateId) {
+      const triggerRes = await createWorkflowFromTemplate(
+        selectedOutcome.triggerWorkflowTemplateId,
+        instance.entityType as WorkflowEntityType,
+        instance.entityId,
+      );
+
+      if (triggerRes.success && triggerRes.id) {
+        triggeredWorkflowId = triggerRes.id;
+        const { data: triggeredTpl } = await supabaseServer
+          .from("workflow_templates")
+          .select("name")
+          .eq("id", selectedOutcome.triggerWorkflowTemplateId)
+          .single();
+        triggeredWorkflowName = triggeredTpl?.name || "Triggered Workflow";
+      } else {
+        console.error("[completeWorkflowStep] Failed to trigger workflow from outcome:", triggerRes.error);
+      }
+    }
+
     // If there is a next step, copy it
     if (nextStepId) {
       const { data: nextTemplateStep, error: nextStepError } = await supabaseServer
@@ -519,11 +552,6 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
         let dueDate: string | null = null;
         if (nextTemplateStep.setDueDate && nextTemplateStep.dueDays) {
           if (nextTemplateStep.dueDateBase === "workflow_start") {
-            const { data: instance } = await supabaseServer
-              .from(INSTANCES_TABLE)
-              .select("startDate")
-              .eq("id", step.instanceId)
-              .single();
             if (instance?.startDate) {
               dueDate = addDays(new Date(instance.startDate), nextTemplateStep.dueDays);
             }
@@ -565,15 +593,13 @@ export async function completeWorkflowStep(stepId: string, outcomeId?: string) {
         .eq("id", step.instanceId);
     }
 
-    const { data: instance } = await supabaseServer
-      .from(INSTANCES_TABLE)
-      .select("entityType, entityId")
-      .eq("id", step.instanceId)
-      .single();
+    revalidateWorkflowPaths(instance.entityType as WorkflowEntityType, instance.entityId, step.instanceId);
 
-    if (instance) revalidateWorkflowPaths(instance.entityType, instance.entityId, step.instanceId);
-
-    return { success: true };
+    return {
+      success: true,
+      triggeredWorkflowId,
+      triggeredWorkflowName,
+    };
   } catch (error) {
     console.error("[completeWorkflowStep] Error:", error);
     return { success: false, error: (error as Error).message };

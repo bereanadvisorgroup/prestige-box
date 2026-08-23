@@ -65,6 +65,8 @@ export const PERSON_PROFILE_FIELDS: FieldConfig[] = [
   { name: "emails", label: "Email Addresses" },
   { name: "phones", label: "Phone Numbers" },
   { name: "addresses", label: "Addresses" },
+  { name: "documentUrl", label: "Document URL" },
+  { name: "notebookUrl", label: "Notebook URL" },
 ];
 
 // Client policy fields (client_policies table). Subtype is derived from the insurance type.

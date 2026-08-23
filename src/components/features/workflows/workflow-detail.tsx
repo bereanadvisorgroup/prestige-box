@@ -216,12 +216,24 @@ export function WorkflowDetail({ entityType, entityId, workflow, teams }: Workfl
 
     setPendingStepId(step.id);
     try {
-      const result = completed ? await completeWorkflowStep(step.id) : await reopenWorkflowStep(step.id);
-
-      if (result.success) {
-        router.refresh();
+      if (completed) {
+        const result = await completeWorkflowStep(step.id);
+        if (result.success) {
+          if (result.triggeredWorkflowName) {
+            toast.success(`Step completed. Triggered workflow "${result.triggeredWorkflowName}" started!`);
+          }
+          router.refresh();
+        } else {
+          toast.error(result.error || "Failed to update step");
+        }
       } else {
-        toast.error(result.error || "Failed to update step");
+        const result = await reopenWorkflowStep(step.id);
+        if (result.success) {
+          toast.success("Step reopened");
+          router.refresh();
+        } else {
+          toast.error(result.error || "Failed to update step");
+        }
       }
     } catch (_error) {
       toast.error("An unexpected error occurred");
@@ -237,7 +249,11 @@ export function WorkflowDetail({ entityType, entityId, workflow, teams }: Workfl
     try {
       const result = await completeWorkflowStep(step.id, outcomeId);
       if (result.success) {
-        toast.success("Step completed");
+        if (result.triggeredWorkflowName) {
+          toast.success(`Step completed. Triggered workflow "${result.triggeredWorkflowName}" started!`);
+        } else {
+          toast.success("Step completed");
+        }
         router.refresh();
       } else {
         toast.error(result.error || "Failed to complete step");
@@ -534,11 +550,14 @@ export function WorkflowDetail({ entityType, entityId, workflow, teams }: Workfl
                             key={outcome.id}
                             size="sm"
                             variant="outline"
-                            className="border-primary/40 font-semibold text-primary text-xs shadow-sm transition-all hover:scale-[1.02] hover:bg-primary hover:text-primary-foreground active:scale-95"
+                            className="border-primary/40 font-semibold text-primary text-xs shadow-sm transition-all hover:scale-[1.02] hover:bg-primary hover:text-primary-foreground active:scale-95 flex items-center gap-1.5"
                             onClick={() => handleCompleteStep(step, outcome.id)}
                             disabled={!!pendingStepId}
                           >
-                            {outcome.name}
+                            <span>{outcome.name}</span>
+                            {outcome.triggerWorkflowTemplateId && (
+                              <span className="text-[10px] opacity-80 font-normal">⚡ (triggers workflow)</span>
+                            )}
                           </Button>
                         ))}
                       </div>

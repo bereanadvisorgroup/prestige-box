@@ -18,12 +18,27 @@ import { type WorkflowTemplate, WorkflowTemplateSchema, type WorkflowTemplateSte
 
 import { FlowEditor } from "./flow-editor";
 
+interface FlowGraphNode {
+  id: string;
+  type?: string;
+  position?: { x: number; y: number };
+  data?: Record<string, unknown>;
+}
+
+interface FlowGraphEdge {
+  id?: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+}
+
 interface TemplateBuilderProps {
   template?: WorkflowTemplate;
   teams?: Array<{ id: string; name: string }>;
+  availableTemplates?: Array<{ id: string; name: string }>;
 }
 
-export function TemplateBuilder({ template, teams = [] }: TemplateBuilderProps) {
+export function TemplateBuilder({ template, teams = [], availableTemplates = [] }: TemplateBuilderProps) {
   const router = useRouter();
   const [name, setName] = useState(template?.name ?? "");
   const [description, setDescription] = useState(template?.description ?? "");
@@ -49,7 +64,7 @@ export function TemplateBuilder({ template, teams = [] }: TemplateBuilderProps) 
   const stepsRef = useRef<WorkflowTemplateStep[]>(template?.steps ?? []);
 
   const handleFlowChange = useCallback(
-    (updatedGraph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => {
+    (updatedGraph: { nodes: FlowGraphNode[]; edges: FlowGraphEdge[] }, updatedSteps: WorkflowTemplateStep[]) => {
       graphRef.current = updatedGraph;
       stepsRef.current = updatedSteps;
 
@@ -73,7 +88,7 @@ export function TemplateBuilder({ template, teams = [] }: TemplateBuilderProps) 
 
     const currentGraph = graphRef.current;
     // Check if we have a connection from start to some step
-    const startEdge = (currentGraph.edges || []).find((e: any) => e.source === "start");
+    const startEdge = (currentGraph.edges || []).find((e: FlowGraphEdge) => e.source === "start");
     if (!startEdge) {
       toast.error("Connect the green 'Start' node to your first step!");
       return;
@@ -212,13 +227,19 @@ export function TemplateBuilder({ template, teams = [] }: TemplateBuilderProps) 
           <h2 className="font-semibold text-xl">Workflow Graph Editor</h2>
         </div>
 
-        <FlowEditor initialGraph={initialGraph} steps={stepsRef.current} teams={teams} onChange={handleFlowChange} />
+        <FlowEditor
+          initialGraph={initialGraph}
+          steps={stepsRef.current}
+          teams={teams}
+          availableTemplates={availableTemplates}
+          onChange={handleFlowChange}
+        />
       </div>
     </div>
   );
 }
 
-function checkGraphConnectivity(nodes: any[], edges: any[], steps: WorkflowTemplateStep[]) {
+function checkGraphConnectivity(nodes: FlowGraphNode[], edges: FlowGraphEdge[], steps: WorkflowTemplateStep[]) {
   const adjList = new Map<string, string[]>();
   for (const node of nodes) {
     adjList.set(node.id, []);

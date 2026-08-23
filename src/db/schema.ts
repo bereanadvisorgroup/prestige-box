@@ -42,6 +42,8 @@ export const people = pgTable("people", {
   socialMedia: jsonb("socialMedia").default(sql`'[]'::jsonb`),
   addresses: jsonb("addresses").default(sql`'[]'::jsonb`),
   addressIds: uuid("addressIds").array().default(sql`'{}'::uuid[]`),
+  documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
@@ -52,6 +54,8 @@ export const households = pgTable("households", {
   name: text("name").notNull(),
   addressId: uuid("addressId"),
   members: jsonb("memberIds").default(sql`'[]'::jsonb`),
+  documentUrl: text("documentUrl"),
+  notebookUrl: text("notebookUrl"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });

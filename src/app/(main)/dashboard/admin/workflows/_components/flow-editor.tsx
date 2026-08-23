@@ -5,10 +5,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addEdge,
   Background,
+  type Connection,
   Controls,
+  type Edge,
+  type EdgeChange,
   Handle,
   MarkerType,
   MiniMap,
+  type Node,
+  type NodeChange,
   Position,
   ReactFlow,
   useEdgesState,
@@ -46,8 +51,10 @@ import {
   DUE_DATE_BASE_LABELS,
   formatResponsibilityLabel,
   WORKFLOW_DUE_DATE_BASES,
+  type WorkflowDueDateBase,
   WORKFLOW_DUE_DAYS,
   WORKFLOW_PRIORITIES,
+  type WorkflowPriority,
   type WorkflowAttachment,
   type WorkflowOutcome,
   type WorkflowTemplateStep,
@@ -91,9 +98,23 @@ function EndNode() {
 // ---------------------------------------------------------------------------
 // Step Node (Custom React Flow Node)
 // ---------------------------------------------------------------------------
-function StepNode({ data, selected }: any) {
+interface StepNodeData {
+  label?: string;
+  step: WorkflowTemplateStep;
+  teams?: Array<{ id: string; name: string }>;
+  availableTemplates?: Array<{ id: string; name: string }>;
+  onEdit: () => void;
+}
+
+interface StepNodeProps {
+  data: StepNodeData;
+  selected?: boolean;
+}
+
+function StepNode({ data, selected }: StepNodeProps) {
   const step = data.step;
   const outcomes = step.outcomes || [];
+  const availableTemplates: Array<{ id: string; name: string }> = data.availableTemplates || [];
 
   return (
     <Card
@@ -147,15 +168,25 @@ function StepNode({ data, selected }: any) {
       {outcomes.length === 0 ? (
         <Handle type="source" position={Position.Right} id="default" className="w-2.5 h-2.5 bg-primary/70" />
       ) : (
-        outcomes.map((outcome: any, idx: number) => {
+        outcomes.map((outcome: WorkflowOutcome, idx: number) => {
           const percent = outcomes.length === 1 ? 50 : 20 + (idx / (outcomes.length - 1)) * 60;
+          const triggeredTemplate = availableTemplates.find((t) => t.id === outcome.triggerWorkflowTemplateId);
+
           return (
             <div key={outcome.id}>
               <span
                 style={{ top: `${percent}%` }}
-                className="absolute right-2.5 -translate-y-1/2 pr-1.5 text-[9px] font-bold text-muted-foreground bg-popover px-1 border rounded shadow-sm pointer-events-none z-10 opacity-80"
+                className="absolute right-2.5 -translate-y-1/2 pr-1.5 text-[9px] font-bold text-muted-foreground bg-popover px-1.5 py-0.5 border rounded shadow-sm pointer-events-none z-10 opacity-90 flex items-center gap-1 max-w-[140px]"
               >
-                {outcome.name}
+                <span className="truncate">{outcome.name}</span>
+                {triggeredTemplate && (
+                  <span
+                    className="text-[8px] text-amber-600 dark:text-amber-400 font-semibold truncate flex items-center gap-0.5 shrink-0"
+                    title={`Triggers: ${triggeredTemplate.name}`}
+                  >
+                    ⚡ {triggeredTemplate.name}
+                  </span>
+                )}
               </span>
               <Handle
                 type="source"
@@ -176,19 +207,21 @@ function StepNode({ data, selected }: any) {
 // Main Flow Editor Component
 // ---------------------------------------------------------------------------
 interface FlowEditorProps {
-  initialGraph: { nodes: any[]; edges: any[] };
+  initialGraph: { nodes: Node[]; edges: Edge[] };
   steps: WorkflowTemplateStep[];
   teams?: Array<{ id: string; name: string }>;
-  onChange: (graph: { nodes: any[]; edges: any[] }, updatedSteps: WorkflowTemplateStep[]) => void;
+  availableTemplates?: Array<{ id: string; name: string }>;
+  onChange: (graph: { nodes: Node[]; edges: Edge[] }, updatedSteps: WorkflowTemplateStep[]) => void;
 }
 
-export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEditorProps) {
+export function FlowEditor({ initialGraph, steps, teams = [], availableTemplates = [], onChange }: FlowEditorProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialGraph.nodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialGraph.edges || []);
   const [editingStep, setEditingStep] = useState<WorkflowTemplateStep | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [newOutcomeName, setNewOutcomeName] = useState("");
+  const [newTriggerWorkflowTemplateId, setNewTriggerWorkflowTemplateId] = useState<string>("none");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Maintain actual step values in a map for easy updates
@@ -256,6 +289,8 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
             ...n.data,
             label: step?.name || n.data.label,
             step,
+            teams,
+            availableTemplates,
           },
         };
       }
@@ -263,11 +298,11 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
     });
 
     onChange({ nodes: graphNodes, edges }, updatedSteps);
-  }, [nodes, edges, stepMap, onChange]);
+  }, [nodes, edges, stepMap, onChange, teams, availableTemplates]);
 
   // Hook nodes and edges change
   const handleNodesChange = useCallback(
-    (changes: any) => {
+    (changes: NodeChange[]) => {
       onNodesChange(changes);
       // Grab the latest nodes after changes are applied
       setNodes((nds) => {
@@ -297,15 +332,15 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
   );
 
   const handleEdgesChange = useCallback(
-    (changes: any) => {
+    (changes: EdgeChange[]) => {
       onEdgesChange(changes);
     },
     [onEdgesChange],
   );
 
   const onConnect = useCallback(
-    (connection: any) => {
-      const edge = {
+    (connection: Connection) => {
+      const edge: Edge = {
         ...connection,
         id: `e-${connection.source}-${connection.target}-${connection.sourceHandle || "default"}`,
         markerEnd: { type: MarkerType.ArrowClosed },
@@ -316,7 +351,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
   );
 
   const onEdgeDoubleClick = useCallback(
-    (_event: any, edge: any) => {
+    (_event: React.MouseEvent, edge: Edge) => {
       setEdges((eds) => eds.filter((e) => e.id !== edge.id));
       toast.success("Connection removed");
     },
@@ -346,6 +381,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
               ...node.data,
               step: step || node.data.step,
               teams,
+              availableTemplates,
               onEdit: () => startEditStep(node.id),
             },
           };
@@ -353,7 +389,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
         return node;
       }),
     );
-  }, [stepMap, startEditStep, setNodes, teams]);
+  }, [stepMap, startEditStep, setNodes, teams, availableTemplates]);
 
   // Add a new step to the canvas
   const handleAddStep = () => {
@@ -388,6 +424,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
         label: step.name,
         step,
         teams,
+        availableTemplates,
         onEdit: () => startEditStep(newId),
       },
     };
@@ -469,12 +506,23 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
       id: crypto.randomUUID(),
       name: newOutcomeName.trim(),
       nextStepId: null,
+      triggerWorkflowTemplateId: newTriggerWorkflowTemplateId !== "none" ? newTriggerWorkflowTemplateId : null,
     };
 
     updateEditingStep({
       outcomes: [...(editingStep.outcomes || []), nextOutcome],
     });
     setNewOutcomeName("");
+    setNewTriggerWorkflowTemplateId("none");
+  };
+
+  // Update trigger workflow for an existing outcome
+  const handleUpdateOutcomeTrigger = (outcomeId: string, templateId: string) => {
+    if (!editingStep) return;
+    const outcomes = (editingStep.outcomes || []).map((o) =>
+      o.id === outcomeId ? { ...o, triggerWorkflowTemplateId: templateId === "none" ? null : templateId } : o,
+    );
+    updateEditingStep({ outcomes });
   };
 
   // Remove outcome from step
@@ -494,8 +542,10 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
   return (
     <>
       {isMaximized && (
-        <div
-          className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        <button
+          type="button"
+          aria-label="Close maximized flow view"
+          className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm transition-opacity duration-300 border-none cursor-default"
           onClick={() => setIsMaximized(false)}
         />
       )}
@@ -585,44 +635,102 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
 
                 {/* Outcomes Management */}
                 <div className="rounded-md border p-4 space-y-3 bg-muted/5">
-                  <h4 className="font-semibold text-sm">Step Outcomes (Branching Paths)</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Define outcomes. Each outcome will appear as an output handle on the node to connect to the next
-                    step.
-                  </p>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-sm">Step Outcomes (Branching Paths & Triggers)</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Define step outcomes. Each outcome connects to a next step on the canvas and can optionally
+                      trigger another workflow upon selection.
+                    </p>
+                  </div>
 
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g. Approved, Rejected, Completed"
-                      value={newOutcomeName}
-                      onChange={(e) => setNewOutcomeName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddOutcome()}
-                    />
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddOutcome}>
-                      Add
+                  <div className="space-y-2 rounded-md border bg-background p-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-outcome-name" className="text-xs font-medium">
+                        Outcome Name
+                      </Label>
+                      <Input
+                        id="new-outcome-name"
+                        placeholder="e.g. Approved, Rejected, Completed"
+                        value={newOutcomeName}
+                        onChange={(e) => setNewOutcomeName(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleAddOutcome()}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-outcome-trigger" className="text-xs font-medium">
+                        Trigger Another Workflow (Optional)
+                      </Label>
+                      <Select value={newTriggerWorkflowTemplateId} onValueChange={setNewTriggerWorkflowTemplateId}>
+                        <SelectTrigger id="new-outcome-trigger" className="w-full text-xs">
+                          <SelectValue placeholder="None (Don't trigger workflow)" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[120]">
+                          <SelectItem value="none">None (Don't trigger workflow)</SelectItem>
+                          {availableTemplates.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleAddOutcome}
+                      className="w-full font-semibold mt-1"
+                      disabled={!newOutcomeName.trim()}
+                    >
+                      <Plus className="mr-1.5 h-3.5 w-3.5" />
+                      Add Outcome
                     </Button>
                   </div>
 
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {(editingStep.outcomes || []).map((outcome) => (
                       <div
                         key={outcome.id}
-                        className="flex justify-between items-center bg-card border rounded p-2 text-sm"
+                        className="flex flex-col gap-2 bg-card border rounded-md p-2.5 text-sm shadow-xs"
                       >
-                        <span className="font-medium text-xs">{outcome.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive hover:text-destructive"
-                          onClick={() => handleRemoveOutcome(outcome.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-xs text-foreground">{outcome.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveOutcome(outcome.id)}
+                            title="Remove outcome"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1 border-t">
+                          <span className="text-[11px] text-muted-foreground shrink-0">Trigger:</span>
+                          <Select
+                            value={outcome.triggerWorkflowTemplateId || "none"}
+                            onValueChange={(val) => handleUpdateOutcomeTrigger(outcome.id, val)}
+                          >
+                            <SelectTrigger className="h-7 text-[11px] w-full bg-muted/20">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[120]">
+                              <SelectItem value="none">None (Don't trigger workflow)</SelectItem>
+                              {availableTemplates.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     ))}
                     {(editingStep.outcomes || []).length === 0 && (
-                      <div className="text-center text-xs text-muted-foreground py-2 italic border border-dashed rounded">
+                      <div className="text-center text-xs text-muted-foreground py-3 italic border border-dashed rounded bg-background">
                         No branching outcomes. Step will lead to the next node by default.
                       </div>
                     )}
@@ -655,7 +763,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
                     <Label htmlFor="step-priority">Priority</Label>
                     <Select
                       value={editingStep.priority}
-                      onValueChange={(val) => updateEditingStep({ priority: val as any })}
+                      onValueChange={(val) => updateEditingStep({ priority: val as WorkflowPriority })}
                     >
                       <SelectTrigger id="step-priority" className="w-full">
                         <SelectValue />
@@ -708,7 +816,7 @@ export function FlowEditor({ initialGraph, steps, teams = [], onChange }: FlowEd
 
                       <Select
                         value={editingStep.dueDateBase ?? "workflow_start"}
-                        onValueChange={(val) => updateEditingStep({ dueDateBase: val as any })}
+                        onValueChange={(val) => updateEditingStep({ dueDateBase: val as WorkflowDueDateBase })}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue />

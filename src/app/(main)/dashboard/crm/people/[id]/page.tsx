@@ -38,6 +38,8 @@ import { Button } from "@/components/ui/button";
 import { getPersonPhotoUrl } from "@/lib/social";
 import { formatPersonName, getInitials } from "@/lib/utils";
 
+import { PersonDocumentsButton } from "./_components/person-documents-button";
+import { PersonNotebookButton } from "./_components/person-notebook-button";
 import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
 interface PersonPageProps {
@@ -256,12 +258,16 @@ export default async function PersonPage({ params }: PersonPageProps) {
             </div>
           </div>
         </div>
-        <Link href={`/dashboard/crm/people/${person.id}/edit`}>
-          <Button>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit Person
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <PersonDocumentsButton person={person} />
+          <PersonNotebookButton person={person} />
+          <Link href={`/dashboard/crm/people/${person.id}/edit`}>
+            <Button>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Person
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <PersonProfileTabs

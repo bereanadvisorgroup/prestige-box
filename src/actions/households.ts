@@ -235,6 +235,8 @@ export async function createHousehold(data: Partial<Household>) {
       name: validated.name,
       addressId: validated.addressId || null,
       memberIds: validated.members || fallbackMembers,
+      documentUrl: validated.documentUrl || null,
+      notebookUrl: validated.notebookUrl || null,
       createdAt: validated.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -260,6 +262,8 @@ export async function updateHousehold(id: string, data: Partial<Household>) {
 
     if (data.name !== undefined) dbPayload.name = data.name;
     if (data.addressId !== undefined) dbPayload.addressId = data.addressId || null;
+    if (data.documentUrl !== undefined) dbPayload.documentUrl = data.documentUrl || null;
+    if (data.notebookUrl !== undefined) dbPayload.notebookUrl = data.notebookUrl || null;
 
     const rawMemberIds = (data as unknown as { memberIds?: HouseholdMember[] }).memberIds;
     if (data.members !== undefined) {

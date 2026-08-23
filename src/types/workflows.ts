@@ -64,6 +64,7 @@ export const WorkflowOutcomeSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Outcome name is required"),
   nextStepId: z.string().optional().nullable(),
+  triggerWorkflowTemplateId: z.string().optional().nullable(),
 });
 
 export type WorkflowOutcome = z.infer<typeof WorkflowOutcomeSchema>;

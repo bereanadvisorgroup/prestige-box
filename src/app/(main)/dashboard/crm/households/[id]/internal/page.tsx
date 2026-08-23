@@ -25,7 +25,9 @@ import { WorkflowStepsCard } from "@/app/(main)/dashboard/crm/clients/[id]/_comp
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { HouseholdDocumentsButton } from "../_components/household-documents-button";
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
+import { HouseholdNotebookButton } from "../_components/household-notebook-button";
 
 interface HouseholdInternalPageProps {
   params: Promise<{
@@ -116,6 +118,8 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
   return (
     <div className="space-y-6 py-4">
       <HouseholdHeaderPortal sectionName="Internal Overview">
+        <HouseholdDocumentsButton household={household} />
+        <HouseholdNotebookButton household={household} />
         <Link href={`/dashboard/crm/households/${household.id}/edit`}>
           <Button size="sm">
             <Pencil className="mr-2 h-4 w-4" />
