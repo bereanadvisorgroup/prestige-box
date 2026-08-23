@@ -329,6 +329,7 @@ export function PropertyAndCasualtyForm({ propertyAndCasualtyFirm }: PropertyAnd
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                             />
                             <div>

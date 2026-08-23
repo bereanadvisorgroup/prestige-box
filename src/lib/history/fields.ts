@@ -60,6 +60,7 @@ export const PERSON_PROFILE_FIELDS: FieldConfig[] = [
   { name: "middleName", label: "Middle Name" },
   { name: "lastName", label: "Last Name" },
   { name: "suffix", label: "Suffix" },
+  { name: "goesBy", label: "Goes By" },
   { name: "photoUrl", label: "Photo" },
   { name: "emails", label: "Email Addresses" },
   { name: "phones", label: "Phone Numbers" },

@@ -76,6 +76,7 @@ export async function getCompanyOwners(companyId: string) {
           firstName,
           lastName,
           suffix,
+          goesBy,
           photoUrl
         )
       `)
@@ -119,6 +120,7 @@ export async function getCompanyEmployees(companyId: string) {
           firstName,
           lastName,
           suffix,
+          goesBy,
           photoUrl,
           emails,
           phones

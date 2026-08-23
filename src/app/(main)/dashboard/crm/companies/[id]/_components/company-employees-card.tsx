@@ -19,6 +19,7 @@ export interface CompanyEmployeeDisplayItem {
     firstName?: string | null;
     lastName?: string | null;
     suffix?: string | null;
+    goesBy?: string | null;
     photoUrl?: string | null;
     email?: string | null;
     phone?: string | null;
@@ -87,6 +88,7 @@ export function CompanyEmployeesCard({ employees = [] }: CompanyEmployeesCardPro
                             photoUrl={person?.photoUrl}
                             firstName={person?.firstName}
                             lastName={person?.lastName}
+                            goesBy={person?.goesBy}
                             size="sm"
                           />
                           <Link

@@ -35,6 +35,7 @@ export const people = pgTable("people", {
   middleName: text("middleName"),
   lastName: text("lastName").notNull(),
   suffix: text("suffix"),
+  goesBy: text("goesBy"),
   photoUrl: text("photoUrl"),
   emails: jsonb("emails").default(sql`'[]'::jsonb`),
   phones: jsonb("phones").default(sql`'[]'::jsonb`),

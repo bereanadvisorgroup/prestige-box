@@ -58,7 +58,12 @@ export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedP
       const name = row.getValue("name") as string;
       return (
         <div className="flex items-center gap-2">
-          <PersonAvatar photoUrl={getPersonPhotoUrl(person)} firstName={person.firstName} lastName={person.lastName} />
+          <PersonAvatar
+            photoUrl={getPersonPhotoUrl(person)}
+            firstName={person.firstName}
+            lastName={person.lastName}
+            goesBy={person.goesBy}
+          />
           <Link
             href={`/dashboard/crm/people/${person.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

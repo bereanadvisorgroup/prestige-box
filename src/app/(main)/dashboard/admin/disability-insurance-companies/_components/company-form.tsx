@@ -25,6 +25,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { formatPersonName } from "@/lib/utils";
 import {
   type Company,
   type DisabilityInsuranceCompany,
@@ -279,12 +280,11 @@ export function CompanyForm({ company }: CompanyFormProps) {
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                             />
                             <div>
-                              <p className="font-medium text-sm">
-                                {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-                              </p>
+                              <p className="font-medium text-sm">{formatPersonName(person, "Unknown Person")}</p>
                               <p className="text-muted-foreground text-xs">
                                 {person?.emails?.find((e) => e.isPrimary)?.address ||
                                   person?.emails?.[0]?.address ||

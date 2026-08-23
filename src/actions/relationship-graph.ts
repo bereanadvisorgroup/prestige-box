@@ -40,7 +40,7 @@ export async function getRelationshipGraphData() {
       { data: moneyManagers },
       { data: recordKeepers },
     ] = await Promise.all([
-      supabaseServer.from("people").select("id, firstName, lastName, suffix, addressIds"),
+      supabaseServer.from("people").select("id, firstName, lastName, suffix, addressIds, goesBy"),
       supabaseServer.from("addresses").select("id, street1, city, state"),
       supabaseServer.from("households").select("id, name, addressId, memberIds"),
       supabaseServer.from("clients").select("id, personId"),

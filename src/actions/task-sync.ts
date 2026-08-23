@@ -141,7 +141,7 @@ export async function syncBirthdayForPerson(personId: string): Promise<void> {
 
     const { data: person } = await supabaseServer
       .from("people")
-      .select("firstName, lastName, suffix")
+      .select("firstName, lastName, suffix, goesBy")
       .eq("id", personId)
       .maybeSingle();
     const birthDate = (client.pii as { birthDate?: string } | null)?.birthDate;
@@ -154,7 +154,7 @@ export async function syncBirthdayForPerson(personId: string): Promise<void> {
     await upsertAutoTask({
       sourceType: "birthday",
       sourceRefId: personId,
-      name: `${person?.firstName ?? "Client"}'s Birthday`,
+      name: `${person?.goesBy || person?.firstName || "Client"}'s Birthday`,
       dueDate: nextAnnualOccurrence(birthDate),
       category: "Birthday",
       assigneeUserId: client.advisorId,
@@ -185,10 +185,10 @@ export async function syncAnniversaryForClient(clientId: string): Promise<void> 
 
     const { data: person } = await supabaseServer
       .from("people")
-      .select("firstName, lastName, suffix")
+      .select("firstName, lastName, suffix, goesBy")
       .eq("id", client.personId)
       .maybeSingle();
-    const clientName = formatFullName(person?.firstName, person?.lastName, person?.suffix, "Client");
+    const clientName = formatFullName(person?.firstName, person?.lastName, person?.suffix, "Client", person?.goesBy);
 
     await upsertAutoTask({
       sourceType: "anniversary",

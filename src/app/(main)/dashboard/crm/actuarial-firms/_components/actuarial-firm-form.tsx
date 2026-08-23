@@ -327,6 +327,7 @@ export function ActuarialFirmForm({ actuarialFirm }: ActuarialFirmFormProps) {
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                             />
                             <div>

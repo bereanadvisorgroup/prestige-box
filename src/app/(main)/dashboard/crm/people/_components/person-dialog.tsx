@@ -34,6 +34,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
       middleName: "",
       lastName: "",
       suffix: "",
+      goesBy: "",
       phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
       emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
       addressIds: [],
@@ -48,6 +49,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
         middleName: "",
         lastName: "",
         suffix: "",
+        goesBy: "",
         phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
         emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
         addressIds: [],
@@ -122,7 +124,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="middleName"
@@ -144,6 +146,19 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                     <FormLabel>Suffix (Optional)</FormLabel>
                     <FormControl>
                       <Input placeholder="Jr., III" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="goesBy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Goes By (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bob" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

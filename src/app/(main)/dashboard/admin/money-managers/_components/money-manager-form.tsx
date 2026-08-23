@@ -26,6 +26,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPersonName } from "@/lib/utils";
 import {
   type Address,
   type Client,
@@ -138,7 +139,7 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
     const base = availableClients.filter((client) => !watchedClientIds.includes(client.id!));
     if (!clientSearchQuery) return base;
     return base.filter((c) => {
-      const name = `${c.person?.firstName || ""} ${c.person?.lastName || ""}`;
+      const name = formatPersonName(c.person);
       return name.toLowerCase().includes(clientSearchQuery.toLowerCase());
     });
   }, [availableClients, clientSearchQuery, watchedClientIds]);
@@ -349,12 +350,11 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                             />
                             <div>
-                              <p className="font-medium text-sm">
-                                {person ? `${person.firstName} ${person.lastName}` : "Unknown Person"}
-                              </p>
+                              <p className="font-medium text-sm">{formatPersonName(person, "Unknown Person")}</p>
                               <p className="text-muted-foreground text-xs">
                                 {person?.emails?.find((e) => e.isPrimary)?.address ||
                                   person?.emails?.[0]?.address ||
@@ -443,15 +443,11 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
                   <ComboboxContent>
                     <ComboboxList>
                       {filteredClients.map((client) => {
-                        const person = (client as { person?: { firstName: string; lastName: string } }).person;
+                        const person = (client as { person?: Person }).person;
                         if (!person) return null;
                         return (
-                          <ComboboxItem
-                            key={client.id}
-                            value={client.id!}
-                            label={`${person.firstName} ${person.lastName}`}
-                          >
-                            {person.firstName} {person.lastName}
+                          <ComboboxItem key={client.id} value={client.id!} label={formatPersonName(person)}>
+                            {formatPersonName(person)}
                           </ComboboxItem>
                         );
                       })}
@@ -466,14 +462,14 @@ export function MoneyManagerForm({ moneyManager }: MoneyManagerFormProps) {
                 )}
                 {(form.watch("clientIds") || []).map((clientId) => {
                   const client = availableClients.find((c) => c.id === clientId);
-                  const person = (client as { person?: { firstName: string; lastName: string } })?.person;
+                  const person = (client as { person?: Person })?.person;
                   return (
                     <Badge
                       key={clientId}
                       variant="secondary"
                       className="gap-1 bg-secondary px-3 py-1 font-medium text-secondary-foreground shadow-sm"
                     >
-                      {person ? `${person.firstName} ${person.lastName}` : "Unknown Client"}
+                      {person ? formatPersonName(person) : "Unknown Client"}
                       <button
                         type="button"
                         onClick={() => handleToggleClient(clientId)}

@@ -283,6 +283,7 @@ export function ClientForm({ client }: ClientFormProps) {
                   photoUrl={selectedPerson.photoUrl}
                   firstName={selectedPerson.firstName}
                   lastName={selectedPerson.lastName}
+                  goesBy={selectedPerson.goesBy}
                   size="default"
                 />
                 <div className="grid gap-1">

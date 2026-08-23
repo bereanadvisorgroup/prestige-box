@@ -150,10 +150,17 @@ export async function getPaymentsForMonth(month: number, year: number) {
             firstName?: string;
             lastName?: string;
             suffix?: string;
+            goesBy?: string;
             photoUrl?: string;
           } | null;
           const clientName = clientPerson
-            ? formatFullName(clientPerson.firstName, clientPerson.lastName, clientPerson.suffix, "Unknown Client")
+            ? formatFullName(
+                clientPerson.firstName,
+                clientPerson.lastName,
+                clientPerson.suffix,
+                "Unknown Client",
+                clientPerson.goesBy,
+              )
             : "Unknown Client";
 
           payments.push({

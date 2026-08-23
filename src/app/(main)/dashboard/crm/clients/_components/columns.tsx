@@ -29,7 +29,12 @@ export const columns = (onDelete: (client: Client) => void): ColumnDef<EnrichedC
       if (!person) return "-";
       return (
         <div className="flex items-center gap-2">
-          <PersonAvatar photoUrl={person.photoUrl} firstName={person.firstName} lastName={person.lastName} />
+          <PersonAvatar
+            photoUrl={person.photoUrl}
+            firstName={person.firstName}
+            lastName={person.lastName}
+            goesBy={person.goesBy}
+          />
           <Link
             href={`/dashboard/crm/clients/${row.original.id}`}
             className="flex items-center gap-1 font-medium text-primary hover:underline"

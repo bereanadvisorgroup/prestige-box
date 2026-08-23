@@ -67,18 +67,22 @@ export async function getHouseholds() {
       }
 
       const peopleData = await fetchInChunks(Array.from(personIdsToFetch), async (chunk) => {
-        const { data } = await supabaseServer.from("people").select("id, firstName, lastName, suffix").in("id", chunk);
+        const { data } = await supabaseServer
+          .from("people")
+          .select("id, firstName, lastName, suffix, goesBy")
+          .in("id", chunk);
         return (data || []) as {
           id: string;
           firstName: string | null;
           lastName: string | null;
           suffix: string | null;
+          goesBy: string | null;
         }[];
       });
 
       for (const p of peopleData) {
         if (p.id) {
-          personNameMap[p.id] = formatFullName(p.firstName, p.lastName, p.suffix);
+          personNameMap[p.id] = formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy);
         }
       }
 

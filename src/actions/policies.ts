@@ -93,13 +93,13 @@ export async function getClientPolicies() {
     if (personIds.length > 0) {
       const { data: people, error: peopleError } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName, suffix, photoUrl")
+        .select("id, firstName, lastName, suffix, photoUrl, goesBy")
         .in("id", personIds);
       if (peopleError) throw new Error((peopleError as { message: string }).message);
       peopleMap = (people || []).reduce(
         (acc, p) => {
           acc[p.id] = {
-            name: formatFullName(p.firstName, p.lastName, p.suffix),
+            name: formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy),
             photoUrl: p.photoUrl || null,
           };
           return acc;

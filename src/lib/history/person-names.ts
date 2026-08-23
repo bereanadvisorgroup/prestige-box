@@ -12,9 +12,12 @@ export async function resolvePersonNames(ids: Array<string | null | undefined>):
   const unique = Array.from(new Set(ids.filter((id): id is string => !!id)));
   if (unique.length === 0) return map;
 
-  const { data } = await supabaseServer.from("people").select("id, firstName, lastName, suffix").in("id", unique);
+  const { data } = await supabaseServer
+    .from("people")
+    .select("id, firstName, lastName, suffix, goesBy")
+    .in("id", unique);
   for (const p of data ?? []) {
-    const name = formatFullName(p.firstName, p.lastName, p.suffix);
+    const name = formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy);
     map.set(p.id, name || p.id);
   }
   return map;

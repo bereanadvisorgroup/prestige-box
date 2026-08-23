@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Heart, Plus, ShieldCheck, Tag, Trash2, UserCheck, Users } from "lucide-react";
+import { Heart, MapPin, Plus, ShieldCheck, Tag, Trash2, UserCheck, Users } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { getAddresses } from "@/actions/addresses";
+import { getClients } from "@/actions/clients";
 import { createHousehold, updateHousehold } from "@/actions/households";
 import { getPeople } from "@/actions/people";
 import { AddressSearchSelect } from "@/components/features/crm/address-search-select";
@@ -33,6 +34,7 @@ import { Switch } from "@/components/ui/switch";
 import { formatPersonName } from "@/lib/utils";
 import {
   type Address,
+  type Client,
   type Household,
   type HouseholdFormInput,
   HouseholdFormSchema,
@@ -63,15 +65,16 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
+  const [availableClients, setAvailableClients] = useState<Client[]>([]);
   const [newCustomTagMap, setNewCustomTagMap] = useState<Record<number, string>>({});
 
-  const form = useForm<HouseholdFormInput, any, HouseholdFormValues>({
+  const form = useForm<HouseholdFormInput, unknown, HouseholdFormValues>({
     resolver: zodResolver(HouseholdFormSchema),
     defaultValues: household
       ? {
           id: household.id,
           name: household.name,
-          addressId: household.addressId,
+          addressId: household.addressId ?? "",
           members: household.members || [],
         }
       : {
@@ -88,7 +91,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const [addrResult, peopleResult] = await Promise.all([getAddresses(), getPeople()]);
+      const [addrResult, peopleResult, clientsResult] = await Promise.all([getAddresses(), getPeople(), getClients()]);
 
       if (addrResult.success && addrResult.addresses) {
         setAvailableAddresses(addrResult.addresses);
@@ -96,9 +99,45 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
       if (peopleResult.success && peopleResult.people) {
         setAvailablePeople(peopleResult.people);
       }
+      if (clientsResult.success && clientsResult.clients) {
+        setAvailableClients(clientsResult.clients);
+      }
     }
     fetchData();
   }, []);
+
+  const resolvePerson = (id?: string | null): Person | undefined => {
+    if (!id) return undefined;
+    const directPerson = availablePeople.find((p) => p.id === id);
+    if (directPerson) return directPerson;
+    const client = availableClients.find((c) => c.id === id);
+    if (client?.personId) {
+      return (
+        availablePeople.find((p) => p.id === client.personId) ||
+        (client as unknown as { person?: Person }).person ||
+        undefined
+      );
+    }
+    return undefined;
+  };
+
+  const getPersonAddresses = (person?: Person | null): Address[] => {
+    if (!person) return [];
+    const addrIds: string[] = [];
+    if (person.addresses && Array.isArray(person.addresses)) {
+      const primary = person.addresses.find((a) => a.isPrimary);
+      if (primary?.id) addrIds.push(primary.id);
+      for (const a of person.addresses) {
+        if (a.id && !addrIds.includes(a.id)) addrIds.push(a.id);
+      }
+    }
+    if (person.addressIds && Array.isArray(person.addressIds)) {
+      for (const id of person.addressIds) {
+        if (id && !addrIds.includes(id)) addrIds.push(id);
+      }
+    }
+    return addrIds.map((id) => availableAddresses.find((a) => a.id === id)).filter((a): a is Address => !!a && !!a.id);
+  };
 
   const headIndex = fields.findIndex((f) => f.role === "HEAD");
   const spouseIndex = fields.findIndex((f) => ["SPOUSE", "PARTNER"].includes(f.role));
@@ -220,8 +259,12 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
 
       if (result.success) {
         toast.success(isEditing ? "Household updated successfully" : "Household created successfully");
-        router.push("/dashboard/crm/households");
-        router.refresh();
+        if (isEditing) {
+          router.refresh();
+        } else {
+          router.push("/dashboard/crm/households");
+          router.refresh();
+        }
       } else {
         toast.error(result.error || `Failed to ${isEditing ? "update" : "create"} household`);
       }
@@ -262,21 +305,107 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
               <FormField
                 control={form.control}
                 name="addressId"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Household Address</FormLabel>
-                    <AddressSearchSelect
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      addresses={availableAddresses}
-                      onAddressCreated={(newAddr) => {
-                        setAvailableAddresses((prev) => [...prev, newAddr]);
-                        field.onChange(newAddr.id);
-                      }}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const currentAddressId = field.value;
+                  const headPerson = headMember ? resolvePerson(headMember.clientId) : undefined;
+                  const spousePerson = spouseMember ? resolvePerson(spouseMember.clientId) : undefined;
+
+                  const headAddresses = getPersonAddresses(headPerson);
+                  const spouseAddresses = getPersonAddresses(spousePerson);
+
+                  const headAddr = headAddresses[0];
+                  const spouseAddr = spouseAddresses[0];
+
+                  const hasSuggestedAddresses = !currentAddressId && (!!headAddr || !!spouseAddr);
+                  const isSameAddress = headAddr && spouseAddr && headAddr.id === spouseAddr.id;
+
+                  const formatShortAddr = (addr: Address) => {
+                    return `${addr.street1}${addr.city ? `, ${addr.city}` : ""}${addr.state ? `, ${addr.state}` : ""}`;
+                  };
+
+                  return (
+                    <FormItem className="flex flex-col space-y-3">
+                      <FormLabel>Household Address</FormLabel>
+                      <AddressSearchSelect
+                        value={field.value ?? undefined}
+                        onValueChange={field.onChange}
+                        addresses={availableAddresses}
+                        onAddressCreated={(newAddr) => {
+                          setAvailableAddresses((prev) => [...prev, newAddr]);
+                          field.onChange(newAddr.id);
+                        }}
+                      />
+
+                      {hasSuggestedAddresses && (
+                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2">
+                          <div className="flex items-center gap-1.5 font-medium text-xs text-foreground">
+                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                            <span>Suggested Address from Household Leaders</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            This household currently has no address. Associate an address from the Head of Household or
+                            Spouse:
+                          </p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {isSameAddress && headAddr ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs font-medium gap-1.5 bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+                                onClick={() => {
+                                  field.onChange(headAddr.id);
+                                  toast.success("Associated Head & Spouse address");
+                                }}
+                              >
+                                <Users className="h-3.5 w-3.5 text-primary" />
+                                <span>Use Head & Spouse Address ({formatShortAddr(headAddr)})</span>
+                              </Button>
+                            ) : (
+                              <>
+                                {headAddr && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs font-medium gap-1.5 bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+                                    onClick={() => {
+                                      field.onChange(headAddr.id);
+                                      toast.success(
+                                        `Associated ${headPerson ? formatPersonName(headPerson) : "Head of Household"}'s address`,
+                                      );
+                                    }}
+                                  >
+                                    <UserCheck className="h-3.5 w-3.5 text-primary" />
+                                    <span>Use Head's Address ({formatShortAddr(headAddr)})</span>
+                                  </Button>
+                                )}
+                                {spouseAddr && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs font-medium gap-1.5 bg-background hover:bg-rose-500/10 hover:text-rose-600 hover:border-rose-300 transition-colors"
+                                    onClick={() => {
+                                      field.onChange(spouseAddr.id);
+                                      toast.success(
+                                        `Associated ${spousePerson ? formatPersonName(spousePerson) : "Spouse"}'s address`,
+                                      );
+                                    }}
+                                  >
+                                    <Heart className="h-3.5 w-3.5 text-rose-500" />
+                                    <span>Use Spouse's Address ({formatShortAddr(spouseAddr)})</span>
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 
@@ -307,7 +436,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                   <CardContent className="space-y-3 pt-1">
                     {headMember ? (
                       (() => {
-                        const person = availablePeople.find((p) => p.id === headMember.clientId);
+                        const person = resolvePerson(headMember.clientId);
                         const isTrustee = (headMember.tags || []).includes("Trustee");
 
                         return (
@@ -422,7 +551,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                   <CardContent className="space-y-3 pt-1">
                     {spouseMember ? (
                       (() => {
-                        const person = availablePeople.find((p) => p.id === spouseMember.clientId);
+                        const person = resolvePerson(spouseMember.clientId);
                         const isTrustee = (spouseMember.tags || []).includes("Trustee");
 
                         return (
@@ -563,7 +692,7 @@ export function HouseholdForm({ household }: HouseholdFormProps) {
                 {fields.map((field, index) => {
                   if (index === headIndex || index === spouseIndex) return null;
 
-                  const person = availablePeople.find((p) => p.id === field.clientId);
+                  const person = resolvePerson(field.clientId);
                   const currentRole = form.watch(`members.${index}.role`);
                   const isDescendant = isDescendantRole(currentRole);
                   const tags = form.watch(`members.${index}.tags`) || [];

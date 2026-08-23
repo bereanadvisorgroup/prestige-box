@@ -67,6 +67,7 @@ export const PersonSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
   suffix: z.string().optional(),
+  goesBy: z.string().optional().nullable(),
   photoUrl: z.string().optional().nullable(),
   emails: z.array(EmailAddressSchema).default([]),
   phones: z.array(PhoneNumberSchema).default([]),
@@ -128,7 +129,7 @@ export const HouseholdMemberSchema = z.object({
 export const HouseholdSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Household name is required"),
-  addressId: z.string(),
+  addressId: z.string().optional().nullable(),
   members: z.array(HouseholdMemberSchema).min(1, "At least one member is required"),
   headName: z.string().optional(),
   spouseName: z.string().optional(),

@@ -56,6 +56,7 @@ interface AddressProfileTabsProps {
     firstName: string;
     lastName: string;
     suffix?: string | null;
+    goesBy?: string | null;
     photoUrl: string | null | undefined;
     email: string;
     phone: string;
@@ -332,6 +333,7 @@ export function AddressProfileTabs({
                                 photoUrl={person.photoUrl}
                                 firstName={person.firstName}
                                 lastName={person.lastName}
+                                goesBy={person.goesBy}
                                 size="sm"
                               />
                               <div className="space-y-1">

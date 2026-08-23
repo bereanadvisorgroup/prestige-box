@@ -128,6 +128,7 @@ export interface DuplicatePersonMatch {
   middleName?: string | null;
   lastName: string;
   suffix?: string | null;
+  goesBy?: string | null;
   photoUrl?: string | null;
   primaryEmail?: string | null;
   primaryPhone?: string | null;
@@ -155,7 +156,7 @@ export async function findDuplicatePeople({ firstName, lastName, excludePersonId
 
     let query = supabaseServer
       .from(TABLE)
-      .select("id, prefix, firstName, middleName, lastName, suffix, photoUrl, emails, phones")
+      .select("id, prefix, firstName, middleName, lastName, suffix, goesBy, photoUrl, emails, phones")
       .ilike("lastName", cleanLast);
 
     if (excludePersonId) {
@@ -174,10 +175,12 @@ export async function findDuplicatePeople({ firstName, lastName, excludePersonId
     for (const raw of candidates) {
       const person = normalizePerson(raw);
       const candFirst = (person.firstName || "").trim().toLowerCase();
+      const candGoesBy = (person.goesBy || "").trim().toLowerCase();
       const isExact = candFirst === cleanFirst.toLowerCase();
-      const isNickMatch = firstVariants.has(candFirst);
+      const isGoesByMatch = candGoesBy.length > 0 && candGoesBy === cleanFirst.toLowerCase();
+      const isNickMatch = firstVariants.has(candFirst) || (candGoesBy.length > 0 && firstVariants.has(candGoesBy));
 
-      if (isExact || isNickMatch) {
+      if (isExact || isGoesByMatch || isNickMatch) {
         const emails = person.emails || [];
         const phones = person.phones || [];
 
@@ -194,11 +197,12 @@ export async function findDuplicatePeople({ firstName, lastName, excludePersonId
           middleName: person.middleName || null,
           lastName: person.lastName || "",
           suffix: person.suffix || null,
+          goesBy: person.goesBy || null,
           photoUrl: person.photoUrl || null,
           primaryEmail,
           primaryPhone,
-          isExactMatch: isExact,
-          matchedName: person.firstName || "",
+          isExactMatch: isExact || isGoesByMatch,
+          matchedName: person.goesBy || person.firstName || "",
           inputName: cleanFirst,
         });
       }

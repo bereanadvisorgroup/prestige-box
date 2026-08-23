@@ -22,7 +22,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSocialAvatarUrl } from "@/lib/social";
 import { supabase } from "@/lib/supabase.client";
-import { getInitials } from "@/lib/utils";
+import { formatFullName, getInitials } from "@/lib/utils";
 import { type Address, type Person, type PersonFormInput, PersonFormSchema, type PersonFormValues } from "@/types/crm";
 
 interface PersonFormProps {
@@ -139,6 +139,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       middleName: p.middleName ?? "",
       lastName: p.lastName ?? "",
       suffix: p.suffix ?? "",
+      goesBy: p.goesBy ?? "",
       photoUrl: p.photoUrl ?? "",
       emails: defaultEmails,
       phones: defaultPhones,
@@ -157,6 +158,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       middleName: "",
       lastName: "",
       suffix: "",
+      goesBy: "",
       photoUrl: "",
       emails: defaultEmails,
       phones: defaultPhones,
@@ -311,7 +313,15 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                           className="object-cover"
                         />
                         <AvatarFallback className="bg-primary/5 font-bold text-lg text-primary">
-                          {getInitials(`${form.watch("firstName")} ${form.watch("lastName")}`)}
+                          {getInitials(
+                            formatFullName(
+                              form.watch("firstName"),
+                              form.watch("lastName"),
+                              null,
+                              "",
+                              form.watch("goesBy"),
+                            ),
+                          )}
                         </AvatarFallback>
                       </Avatar>
                     );
@@ -360,12 +370,12 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
                 <FormField
                   control={form.control}
                   name="prefix"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-1">
                       <FormLabel>Prefix</FormLabel>
                       <FormControl>
                         <Input list="prefixes" placeholder="Mr." {...field} value={field.value ?? ""} />
@@ -385,7 +395,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-1">
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
                         <Input placeholder="John" {...field} value={field.value ?? ""} />
@@ -398,7 +408,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   control={form.control}
                   name="middleName"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-1">
                       <FormLabel>Middle Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Quincy" {...field} value={field.value ?? ""} />
@@ -411,7 +421,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   control={form.control}
                   name="lastName"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-1">
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Doe" {...field} value={field.value ?? ""} />
@@ -424,7 +434,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                   control={form.control}
                   name="suffix"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-1">
+                    <FormItem className="col-span-1">
                       <FormLabel>Suffix</FormLabel>
                       <FormControl>
                         <Input list="suffixes" placeholder="Jr." {...field} value={field.value ?? ""} />
@@ -436,6 +446,19 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                         <option value="III" />
                         <option value="PhD" />
                       </datalist>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="goesBy"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1">
+                      <FormLabel>Goes By</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Johnny" {...field} value={field.value ?? ""} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

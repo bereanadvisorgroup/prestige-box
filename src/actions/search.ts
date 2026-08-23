@@ -25,8 +25,10 @@ export async function globalSearch(
     // 1. Search People
     const peoplePromise = supabaseServer
       .from("people")
-      .select("id, firstName, lastName, suffix")
-      .or(`firstName.ilike.${ilikeQuery},lastName.ilike.${ilikeQuery},suffix.ilike.${ilikeQuery}`)
+      .select("id, firstName, lastName, suffix, goesBy")
+      .or(
+        `firstName.ilike.${ilikeQuery},lastName.ilike.${ilikeQuery},suffix.ilike.${ilikeQuery},goesBy.ilike.${ilikeQuery}`,
+      )
       .limit(10);
 
     // 2. Search Addresses
@@ -181,7 +183,7 @@ export async function globalSearch(
       for (const p of peopleRes.data) {
         results.push({
           id: p.id,
-          title: formatFullName(p.firstName, p.lastName, p.suffix),
+          title: formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy),
           subtitle: "Person",
           url: `/dashboard/crm/people/${p.id}`,
           type: "People",
@@ -231,7 +233,7 @@ export async function globalSearch(
           if (person) {
             results.push({
               id: c.id,
-              title: formatFullName(person.firstName, person.lastName, person.suffix),
+              title: formatFullName(person.firstName, person.lastName, person.suffix, "", person.goesBy),
               subtitle: "Client",
               url: `/dashboard/crm/clients/${c.id}`,
               type: "Clients",

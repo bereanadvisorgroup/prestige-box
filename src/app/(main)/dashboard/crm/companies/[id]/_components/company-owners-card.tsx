@@ -19,6 +19,7 @@ export interface CompanyOwnerDisplayItem {
     firstName?: string | null;
     lastName?: string | null;
     suffix?: string | null;
+    goesBy?: string | null;
     photoUrl?: string | null;
   } | null;
 }
@@ -71,6 +72,7 @@ export function CompanyOwnersCard({ owners = [], estimatedValue = 0 }: CompanyOw
                             photoUrl={person?.photoUrl}
                             firstName={person?.firstName}
                             lastName={person?.lastName}
+                            goesBy={person?.goesBy}
                             size="sm"
                           />
                           <Link

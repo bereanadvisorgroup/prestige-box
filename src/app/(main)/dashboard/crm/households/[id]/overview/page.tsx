@@ -143,6 +143,7 @@ export default async function HouseholdOverviewPage({ params }: HouseholdOvervie
                             photoUrl={person.photoUrl}
                             firstName={person.firstName}
                             lastName={person.lastName}
+                            goesBy={person.goesBy}
                             size="sm"
                           />
                           <div className="space-y-1">

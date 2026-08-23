@@ -76,7 +76,13 @@ function NodeCard({
 
   return (
     <div className="relative flex w-[160px] flex-col items-center gap-3 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md">
-      <PersonAvatar photoUrl={person?.photoUrl} firstName={person?.firstName} lastName={person?.lastName} size="lg" />
+      <PersonAvatar
+        photoUrl={person?.photoUrl}
+        firstName={person?.firstName}
+        lastName={person?.lastName}
+        goesBy={person?.goesBy}
+        size="lg"
+      />
       <div className="text-center">
         <p className="line-clamp-1 font-semibold text-foreground text-sm" title={formatPersonName(person)}>
           {formatPersonName(person)}

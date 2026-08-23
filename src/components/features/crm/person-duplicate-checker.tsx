@@ -142,7 +142,7 @@ export function PersonDuplicateChecker({
         <div className="mt-3 space-y-2.5 border-amber-200/70 border-t pt-3 dark:border-amber-900/40">
           <div className="divide-y divide-amber-200/50 rounded-lg border border-amber-200/60 bg-background/80 dark:divide-amber-900/30 dark:border-amber-900/40 dark:bg-card/90">
             {duplicates.map((dup) => {
-              const fullName = formatFullName(dup.firstName, dup.lastName, dup.suffix, "Unnamed Person");
+              const fullName = formatFullName(dup.firstName, dup.lastName, dup.suffix, "Unnamed Person", dup.goesBy);
               return (
                 <div
                   key={dup.id}
@@ -153,6 +153,7 @@ export function PersonDuplicateChecker({
                       photoUrl={dup.photoUrl}
                       firstName={dup.firstName}
                       lastName={dup.lastName}
+                      goesBy={dup.goesBy}
                       size="sm"
                       className="border border-border/40"
                     />

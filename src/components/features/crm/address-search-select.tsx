@@ -10,7 +10,7 @@ import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem, ComboboxList } 
 import type { Address } from "@/types/crm";
 
 interface AddressSearchSelectProps {
-  value?: string;
+  value?: string | null;
   onValueChange: (value: string) => void;
   addresses: Address[];
   onAddressCreated: (address: Address) => void;

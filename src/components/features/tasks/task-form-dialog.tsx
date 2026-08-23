@@ -13,7 +13,6 @@ import { getCompanies } from "@/actions/companies";
 import { createTask, updateTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
-import { formatPersonName } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase.client";
+import { formatPersonName } from "@/lib/utils";
 import {
   type TaskAssociation,
   type TaskAttachment,

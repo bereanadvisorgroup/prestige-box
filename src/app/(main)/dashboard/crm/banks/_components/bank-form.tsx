@@ -325,6 +325,7 @@ export function BankForm({ bank }: BankFormProps) {
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                             />
                             <div>

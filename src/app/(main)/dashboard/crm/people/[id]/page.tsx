@@ -36,7 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPersonPhotoUrl } from "@/lib/social";
-import { formatPersonName } from "@/lib/utils";
+import { formatPersonName, getInitials } from "@/lib/utils";
 
 import { PersonProfileTabs } from "./_components/person-profile-tabs";
 
@@ -134,7 +134,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     .map((res) => (res.success && res.address ? res.address : null))
     .filter(Boolean) as any[];
 
-  const initials = `${person.firstName[0] || ""}${person.lastName[0] || ""}`.toUpperCase();
+  const initials = getInitials(formatPersonName(person));
 
   const hasAnyAssociation =
     associatedClient ||
@@ -169,8 +169,8 @@ export default async function PersonPage({ params }: PersonPageProps) {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-bold text-3xl tracking-tight">
                 {person.prefix && `${person.prefix} `}
-                {person.firstName} {person.middleName && `${person.middleName} `}
-                {person.lastName}
+                {person.goesBy?.trim() ? person.goesBy.trim() : person.firstName}
+                {!person.goesBy?.trim() && person.middleName ? ` ${person.middleName}` : ""} {person.lastName}
                 {person.suffix && `, ${person.suffix}`}
               </h1>
             </div>

@@ -90,7 +90,13 @@ export function PersonSearchSelect({
           {filteredPeople.map((p) => (
             <ComboboxItem key={p.id} value={p.id!} label={formatPersonName(p)}>
               <div className="flex items-center gap-2">
-                <PersonAvatar photoUrl={p.photoUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />
+                <PersonAvatar
+                  photoUrl={p.photoUrl}
+                  firstName={p.firstName}
+                  lastName={p.lastName}
+                  goesBy={p.goesBy}
+                  size="sm"
+                />
                 <div className="flex flex-col">
                   <span className="font-medium">{formatPersonName(p)}</span>
                   <span className="text-muted-foreground text-xs">

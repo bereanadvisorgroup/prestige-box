@@ -327,6 +327,7 @@ export function AccountingFirmForm({ accountingFirm }: AccountingFirmFormProps) 
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                               fallbackIcon={<ReceiptText className="h-3 w-3 text-muted-foreground" />}
                             />

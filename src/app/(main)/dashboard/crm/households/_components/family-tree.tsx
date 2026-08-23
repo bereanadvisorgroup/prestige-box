@@ -207,6 +207,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                         photoUrl={m.person?.photoUrl}
                         firstName={m.person?.firstName}
                         lastName={m.person?.lastName}
+                        goesBy={m.person?.goesBy}
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
@@ -244,6 +245,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                       photoUrl={headMember.person?.photoUrl}
                       firstName={headMember.person?.firstName}
                       lastName={headMember.person?.lastName}
+                      goesBy={headMember.person?.goesBy}
                       size="default"
                     />
                     <div className="min-w-0 flex-1">
@@ -279,6 +281,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                       photoUrl={spouseMember.person?.photoUrl}
                       firstName={spouseMember.person?.firstName}
                       lastName={spouseMember.person?.lastName}
+                      goesBy={spouseMember.person?.goesBy}
                       size="default"
                     />
                     <div className="min-w-0 flex-1">
@@ -339,6 +342,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             photoUrl={m.person?.photoUrl}
                             firstName={m.person?.firstName}
                             lastName={m.person?.lastName}
+                            goesBy={m.person?.goesBy}
                             size="sm"
                           />
                           <div className="min-w-0 flex-1">
@@ -384,6 +388,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             photoUrl={m.person?.photoUrl}
                             firstName={m.person?.firstName}
                             lastName={m.person?.lastName}
+                            goesBy={m.person?.goesBy}
                             size="sm"
                           />
                           <div>
@@ -422,6 +427,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             photoUrl={m.person?.photoUrl}
                             firstName={m.person?.firstName}
                             lastName={m.person?.lastName}
+                            goesBy={m.person?.goesBy}
                             size="sm"
                           />
                           <div>
@@ -470,6 +476,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                         photoUrl={m.person?.photoUrl}
                         firstName={m.person?.firstName}
                         lastName={m.person?.lastName}
+                        goesBy={m.person?.goesBy}
                         size="sm"
                       />
                       <div className="min-w-0 flex-1">
@@ -546,6 +553,7 @@ export function FamilyTree({ household, members }: FamilyTreeProps) {
                             photoUrl={person.photoUrl}
                             firstName={person.firstName}
                             lastName={person.lastName}
+                            goesBy={person.goesBy}
                             size="sm"
                           />
                           <span>{formatPersonName(person)}</span>

@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Trophy } from "lucide-react";
+import { Pencil, Trophy } from "lucide-react";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
@@ -21,6 +22,7 @@ import { ReferredByCard } from "@/app/(main)/dashboard/crm/clients/[id]/_compone
 import { SportsTeamsCard } from "@/app/(main)/dashboard/crm/clients/[id]/_components/sports-teams-card";
 import { TasksCard } from "@/app/(main)/dashboard/crm/clients/[id]/_components/tasks-card";
 import { WorkflowStepsCard } from "@/app/(main)/dashboard/crm/clients/[id]/_components/workflow-steps-card";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { HouseholdHeaderPortal } from "../_components/household-header-portal";
@@ -113,7 +115,14 @@ export default async function HouseholdInternalPage({ params }: HouseholdInterna
 
   return (
     <div className="space-y-6 py-4">
-      <HouseholdHeaderPortal sectionName="Internal Overview" />
+      <HouseholdHeaderPortal sectionName="Internal Overview">
+        <Link href={`/dashboard/crm/households/${household.id}/edit`}>
+          <Button size="sm">
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Household
+          </Button>
+        </Link>
+      </HouseholdHeaderPortal>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Six Cards Grid in 3x2 Layout */}

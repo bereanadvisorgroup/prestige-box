@@ -327,6 +327,7 @@ export function InsuranceAgencyForm({ insuranceAgency }: InsuranceAgencyFormProp
                               photoUrl={person?.photoUrl}
                               firstName={person?.firstName}
                               lastName={person?.lastName}
+                              goesBy={person?.goesBy}
                               size="sm"
                               fallbackIcon={<Shield className="h-3 w-3 text-muted-foreground" />}
                             />

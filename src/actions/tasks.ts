@@ -52,9 +52,11 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
     const { data: clients } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);
     const personIds = Array.from(new Set((clients || []).map((c) => c.personId)));
     const { data: people } = personIds.length
-      ? await supabaseServer.from("people").select("id, firstName, lastName, suffix").in("id", personIds)
+      ? await supabaseServer.from("people").select("id, firstName, lastName, suffix, goesBy").in("id", personIds)
       : { data: [] };
-    const peopleMap = new Map((people || []).map((p) => [p.id, formatFullName(p.firstName, p.lastName, p.suffix)]));
+    const peopleMap = new Map(
+      (people || []).map((p) => [p.id, formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy)]),
+    );
     for (const c of clients || []) {
       names.set(`client:${c.id}`, peopleMap.get(c.personId) || "Unknown client");
     }

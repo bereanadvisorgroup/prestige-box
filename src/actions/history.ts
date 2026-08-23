@@ -50,10 +50,10 @@ async function resolveEntityNames(rows: ChangeHistory[]): Promise<Map<string, st
     if (personIds.length > 0) {
       const { data: people } = await supabaseServer
         .from("people")
-        .select("id, firstName, lastName, suffix")
+        .select("id, firstName, lastName, suffix, goesBy")
         .in("id", personIds);
       for (const p of people || []) {
-        peopleMap.set(p.id, formatFullName(p.firstName, p.lastName, p.suffix));
+        peopleMap.set(p.id, formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy));
       }
     }
     for (const c of clients || []) names.set(c.id, peopleMap.get(c.personId) || "Unknown Client");
