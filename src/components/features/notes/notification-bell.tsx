@@ -49,7 +49,14 @@ export function NotificationBell() {
     return () => clearInterval(t);
   }, [isStaff, load]);
 
-  // 2. Real-time push subscription for active logged-in sessions
+  // 2. Immediate load when user ID becomes available
+  React.useEffect(() => {
+    if (isStaff && userUid) {
+      load();
+    }
+  }, [isStaff, userUid, load]);
+
+  // 3. Real-time push subscription for active logged-in sessions
   React.useEffect(() => {
     if (!isStaff || !userUid) return;
 
@@ -58,89 +65,85 @@ export function NotificationBell() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "note_notifications",
-          filter: `recipientId=eq.${userUid}`,
         },
         (payload) => {
-          const row = payload.new as NoteNotification;
-          const newNotification: NoteNotification = {
-            id: row.id,
-            noteId: row.noteId,
-            rootId: row.rootId ?? null,
-            actorName: row.actorName ?? null,
-            type: row.type as "mention" | "reply",
-            preview: row.preview ?? null,
-            isRead: row.isRead ?? false,
-            createdAt: row.createdAt,
-          };
+          if (payload.eventType === "INSERT") {
+            const row = payload.new as Record<string, unknown>;
+            const targetRecipient = (row.recipientId || row.recipient_id) as string | undefined;
+            if (targetRecipient !== userUid) return;
 
-          // Update local state immediately
-          setItems((prev) => {
-            if (prev.some((item) => item.id === newNotification.id)) return prev;
-            return [newNotification, ...prev];
-          });
-          setUnread((u) => u + 1);
+            const newNotification: NoteNotification = {
+              id: row.id as string,
+              noteId: (row.noteId || row.note_id) as string,
+              rootId: ((row.rootId || row.root_id) as string) ?? null,
+              actorName: ((row.actorName || row.actor_name) as string) ?? null,
+              type: (row.type as "mention" | "reply") || "mention",
+              preview: (row.preview as string) ?? null,
+              isRead: (row.isRead as boolean) ?? false,
+              createdAt: (row.createdAt || row.created_at || new Date().toISOString()) as string,
+            };
 
-          // Push live interactive in-app toast notification
-          toast(newNotification.preview || "You received a new note notification", {
-            description:
-              newNotification.type === "mention"
-                ? "You were tagged in a note."
-                : "Someone replied to your note thread.",
-            icon:
-              newNotification.type === "mention" ? (
-                <AtSign className="h-4 w-4 text-primary" />
-              ) : (
-                <MessageSquare className="h-4 w-4 text-primary" />
-              ),
-            action: {
-              label: "View",
-              onClick: async () => {
-                setItems((prev) => prev.map((i) => (i.id === newNotification.id ? { ...i, isRead: true } : i)));
-                setUnread((u) => Math.max(0, u - 1));
-                await markNotificationRead(newNotification.id);
-                router.push(`/dashboard/crm/notes/${newNotification.rootId ?? newNotification.noteId}`);
+            // Update local state immediately
+            setItems((prev) => {
+              if (prev.some((item) => item.id === newNotification.id)) return prev;
+              return [newNotification, ...prev];
+            });
+            setUnread((u) => u + 1);
+
+            // Push live interactive in-app toast notification
+            toast(newNotification.preview || "You received a new note notification", {
+              description:
+                newNotification.type === "mention"
+                  ? "You were tagged in a note."
+                  : "Someone replied to your note thread.",
+              icon:
+                newNotification.type === "mention" ? (
+                  <AtSign className="h-4 w-4 text-primary" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                ),
+              action: {
+                label: "View",
+                onClick: async () => {
+                  setItems((prev) => prev.map((i) => (i.id === newNotification.id ? { ...i, isRead: true } : i)));
+                  setUnread((u) => Math.max(0, u - 1));
+                  await markNotificationRead(newNotification.id);
+                  router.push(`/dashboard/crm/notes/${newNotification.rootId ?? newNotification.noteId}`);
+                },
               },
-            },
-            duration: 7000,
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "note_notifications",
-          filter: `recipientId=eq.${userUid}`,
-        },
-        (payload) => {
-          const updated = payload.new as NoteNotification;
-          setItems((prev) => {
-            const next = prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item));
-            setUnread(next.filter((i) => !i.isRead).length);
-            return next;
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "note_notifications",
-          filter: `recipientId=eq.${userUid}`,
-        },
-        (payload) => {
-          const oldId = (payload.old as { id?: string })?.id;
-          if (!oldId) return;
-          setItems((prev) => {
-            const next = prev.filter((item) => item.id !== oldId);
-            setUnread(next.filter((i) => !i.isRead).length);
-            return next;
-          });
+              duration: 7000,
+            });
+          } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as Record<string, unknown>;
+            const targetRecipient = (updated.recipientId || updated.recipient_id) as string | undefined;
+            if (targetRecipient && targetRecipient !== userUid) return;
+
+            setItems((prev) => {
+              const next = prev.map((item) => {
+                if (item.id === updated.id) {
+                  return {
+                    ...item,
+                    isRead: (updated.isRead as boolean) ?? item.isRead,
+                    preview: (updated.preview as string) ?? item.preview,
+                  };
+                }
+                return item;
+              });
+              setUnread(next.filter((i) => !i.isRead).length);
+              return next;
+            });
+          } else if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id?: string })?.id;
+            if (!oldId) return;
+            setItems((prev) => {
+              const next = prev.filter((item) => item.id !== oldId);
+              setUnread(next.filter((i) => !i.isRead).length);
+              return next;
+            });
+          }
         },
       )
       .subscribe();
