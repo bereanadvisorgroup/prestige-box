@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-08-23
+
+### Added
+- **Outcome-Based Workflow Triggers**: Trigger and instantiate follow-up workflows automatically based on the selected outcome of a workflow step.
+- **Configurable Task Categories**: Administrator capability to configure, create, and manage available Task categories directly in system settings.
+- **Person "Goes By" (Preferred Name) Field**: Added "Goes By" field across individual profiles, with database-wide fallback logic displaying the preferred name before falling back to the first name across all views and tables.
+- **Household Address Quick-Actions**: Quick-action button(s) on the household edit form to associate and link the address from the Head of Household or Spouse when the household lacks an address.
+- **Household Internal Quick Edit**: Direct Edit action button in the upper right corner of the Household Internal landing page.
+
+### Changed
+- **Household Edit Form Persistence**: Saving updates on the household edit form now keeps the user on the form instead of redirecting back to the households list.
+- **In-App Note Tag Notifications**: Replaced external email notifications with real-time in-app system notifications whenever a user is @tagged in a note.
+
+---
+
 ## [1.0.0] - 2026-08-15
 
 ### Added

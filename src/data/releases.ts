@@ -19,6 +19,64 @@ export interface ReleaseNote {
 
 export const RELEASES: ReleaseNote[] = [
   {
+    version: "1.1.0",
+    date: "2026-08-23",
+    title: "Workflow Chaining, Custom Task Categories & Household Improvements",
+    summary:
+      "Prestige Box 1.1.0 delivers outcome-based workflow automation triggers, administrator-configurable task categories, full support for person 'Goes By' preferred names, and enhanced household workflows including address inheritance.",
+    highlights: [
+      "Outcome-based workflow triggering to chain follow-up workflows upon step completion",
+      "Administrator management of customizable task categories",
+      "System-wide 'Goes By' preferred name adoption with fallback to first name",
+      "Enhanced household editing flow with address quick-actions and direct internal edit button",
+      "In-app system notifications replacing email alerts when @tagged in notes",
+    ],
+    items: [
+      {
+        category: "feature",
+        text: "Outcome-Based Workflow Triggers",
+        detail:
+          "Trigger and instantiate follow-up workflows automatically based on the selected outcome of a workflow step.",
+      },
+      {
+        category: "feature",
+        text: "Configurable Task Categories",
+        detail:
+          "Administrators can now customize, create, and manage available Task categories directly from Admin settings.",
+      },
+      {
+        category: "feature",
+        text: "Person 'Goes By' Preferred Name System",
+        detail:
+          "Added a 'Goes By' field across people records, updating all database display locations to prioritize the preferred name before falling back to the first name.",
+      },
+      {
+        category: "improvement",
+        text: "Household Address Quick-Action Buttons",
+        detail:
+          "Quickly link and inherit the address of the Head of Household or Spouse with one click when editing a household without an address.",
+      },
+      {
+        category: "improvement",
+        text: "Household Edit Form Retention",
+        detail:
+          "Updating a household now keeps the user on the edit form for continuous workflow rather than redirecting back to the households table.",
+      },
+      {
+        category: "improvement",
+        text: "Household Internal Landing Page Edit Action",
+        detail:
+          "Added a direct Edit button in the upper right corner of the Household Internal workspace landing page for faster navigation.",
+      },
+      {
+        category: "improvement",
+        text: "In-App System Notifications for Note Mentions",
+        detail:
+          "Replaced external email notifications with real-time in-app system notifications whenever a user is @tagged in a note.",
+      },
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-08-15",
     title: "Official Release & Core Platform Enhancements",

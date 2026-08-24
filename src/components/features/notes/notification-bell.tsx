@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { formatDistanceToNow } from "date-fns";
 import { AtSign, Bell, MessageSquare, X } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   clearAllNotifications,
@@ -16,6 +17,7 @@ import {
 } from "@/actions/notes";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/lib/supabase.client";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import type { NoteNotification } from "@/types/notes";
@@ -25,6 +27,7 @@ const POLL_MS = 60_000;
 export function NotificationBell() {
   const profile = useAuthStore((s) => s.profile);
   const isStaff = profile?.role === "admin" || profile?.role === "advisor";
+  const userUid = profile?.uid;
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<NoteNotification[]>([]);
@@ -38,12 +41,114 @@ export function NotificationBell() {
     }
   }, []);
 
+  // 1. Initial persistent load upon login & fallback polling
   React.useEffect(() => {
     if (!isStaff) return;
     load();
     const t = setInterval(load, POLL_MS);
     return () => clearInterval(t);
   }, [isStaff, load]);
+
+  // 2. Real-time push subscription for active logged-in sessions
+  React.useEffect(() => {
+    if (!isStaff || !userUid) return;
+
+    const channel = supabase
+      .channel(`realtime:note_notifications:${userUid}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "note_notifications",
+          filter: `recipientId=eq.${userUid}`,
+        },
+        (payload) => {
+          const row = payload.new as NoteNotification;
+          const newNotification: NoteNotification = {
+            id: row.id,
+            noteId: row.noteId,
+            rootId: row.rootId ?? null,
+            actorName: row.actorName ?? null,
+            type: row.type as "mention" | "reply",
+            preview: row.preview ?? null,
+            isRead: row.isRead ?? false,
+            createdAt: row.createdAt,
+          };
+
+          // Update local state immediately
+          setItems((prev) => {
+            if (prev.some((item) => item.id === newNotification.id)) return prev;
+            return [newNotification, ...prev];
+          });
+          setUnread((u) => u + 1);
+
+          // Push live interactive in-app toast notification
+          toast(newNotification.preview || "You received a new note notification", {
+            description:
+              newNotification.type === "mention"
+                ? "You were tagged in a note."
+                : "Someone replied to your note thread.",
+            icon:
+              newNotification.type === "mention" ? (
+                <AtSign className="h-4 w-4 text-primary" />
+              ) : (
+                <MessageSquare className="h-4 w-4 text-primary" />
+              ),
+            action: {
+              label: "View",
+              onClick: async () => {
+                setItems((prev) => prev.map((i) => (i.id === newNotification.id ? { ...i, isRead: true } : i)));
+                setUnread((u) => Math.max(0, u - 1));
+                await markNotificationRead(newNotification.id);
+                router.push(`/dashboard/crm/notes/${newNotification.rootId ?? newNotification.noteId}`);
+              },
+            },
+            duration: 7000,
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "note_notifications",
+          filter: `recipientId=eq.${userUid}`,
+        },
+        (payload) => {
+          const updated = payload.new as NoteNotification;
+          setItems((prev) => {
+            const next = prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item));
+            setUnread(next.filter((i) => !i.isRead).length);
+            return next;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "note_notifications",
+          filter: `recipientId=eq.${userUid}`,
+        },
+        (payload) => {
+          const oldId = (payload.old as { id?: string })?.id;
+          if (!oldId) return;
+          setItems((prev) => {
+            const next = prev.filter((item) => item.id !== oldId);
+            setUnread(next.filter((i) => !i.isRead).length);
+            return next;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isStaff, userUid, router]);
 
   if (!isStaff) return null;
 

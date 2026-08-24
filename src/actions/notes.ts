@@ -2,8 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { Resend } from "resend";
-
 import { getCurrentActor, recordEvent } from "@/lib/history/record";
 import { sanitizeNoteHtml } from "@/lib/sanitize";
 import { supabaseServer } from "@/lib/supabase.server";
@@ -367,26 +365,9 @@ async function insertAttachments(noteId: string, attachments: NoteAttachment[]) 
   await supabaseServer.from(ATTACHMENTS).insert(rows);
 }
 
-function mentionEmailHtml(args: { recipientName: string; actorName: string; noteTitle: string; link: string }) {
-  return `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #0e3e58;">You were mentioned in a note</h2>
-      <p>Hello ${args.recipientName || "there"},</p>
-      <p><strong>${args.actorName}</strong> mentioned you in the note
-        <strong>"${args.noteTitle}"</strong>.</p>
-      <div style="margin: 30px 0;">
-        <a href="${args.link}" style="background-color: #0e3e58; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View note</a>
-      </div>
-      <p style="color: #666; font-size: 14px;">Or paste this link into your browser:</p>
-      <p style="color: #666; font-size: 14px; word-break: break-all;">${args.link}</p>
-    </div>
-  `;
-}
-
 /**
- * Records in-app notifications for mentioned users (and the parent author on a
- * reply), and emails mentioned users via Resend. Best-effort: email failures
- * are logged and never break note creation.
+ * Records persistent in-app notifications for mentioned users and the parent note author on replies.
+ * These records are immediately available to offline users upon login and broadcast in real-time to active sessions.
  */
 async function notifyUsers(args: {
   noteId: string;
@@ -423,38 +404,6 @@ async function notifyUsers(args: {
     isRead: false,
   }));
   await supabaseServer.from(NOTIFICATIONS).insert(rows);
-
-  // Email mentioned users only.
-  const mentionIds = Array.from(recipients.entries())
-    .filter(([, type]) => type === "mention")
-    .map(([uid]) => uid);
-  if (mentionIds.length === 0 || !process.env.RESEND_API_KEY) return;
-
-  try {
-    const { data: users } = await supabaseServer.from("users").select("uid, email, firstName").in("uid", mentionIds);
-    const link = `${args.origin ?? ""}/dashboard/crm/notes/${args.rootId}`;
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    await Promise.all(
-      (users || [])
-        .filter((u) => u.email)
-        .map((u) =>
-          resend.emails.send({
-            from: "Prestige Advisors <noreply@contact.bereanadvisorgroup.com>",
-            to: u.email,
-            subject: `${args.actorName} mentioned you in "${args.noteTitle}"`,
-            html: mentionEmailHtml({
-              recipientName: u.firstName ?? "",
-              actorName: args.actorName,
-              noteTitle: args.noteTitle,
-              link,
-            }),
-          }),
-        ),
-    );
-  } catch (err) {
-    console.error("[notifyUsers] Failed to send mention emails:", err);
-  }
 }
 
 export async function createNote(values: NoteFormValues, origin?: string) {
