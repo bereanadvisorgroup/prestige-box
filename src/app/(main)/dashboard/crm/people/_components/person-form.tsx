@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
-import { AddressAutocomplete } from "@/components/features/crm/address-autocomplete";
+import { AddressSearchAndAdd } from "@/components/features/crm/address-search-and-add";
 import { PersonDuplicateChecker } from "@/components/features/crm/person-duplicate-checker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,6 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [availableAddresses, setAvailableAddresses] = useState<Address[]>([]);
-  const [addressSearchQuery, setAddressSearchQuery] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -214,7 +213,24 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     fetchAddresses();
   }, []);
 
-  const handleAddressSelect = async (addressData: Omit<Address, "id" | "createdAt">) => {
+  const handleSelectExistingAddress = (address: Address) => {
+    if (!address.id) return;
+    const currentAddresses = form.getValues("addresses") || [];
+    if (currentAddresses.some((a) => a.id === address.id)) {
+      toast.info("This address is already attached to this person.");
+      return;
+    }
+
+    const isFirst = currentAddresses.length === 0;
+    appendAddress({
+      id: address.id,
+      type: "Home",
+      isPrimary: isFirst,
+    });
+    toast.success("Address added");
+  };
+
+  const handleSelectGooglePlace = async (addressData: Omit<Address, "id" | "createdAt">) => {
     let addressId: string | undefined;
     const existing = availableAddresses.find(
       (a) =>
@@ -238,15 +254,23 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
       }
     }
 
-    if (!(form.getValues("addresses") || []).some((a) => a.id === addressId)) {
-      const isFirst = (form.getValues("addresses") || []).length === 0;
+    const currentAddresses = form.getValues("addresses") || [];
+    if (!currentAddresses.some((a) => a.id === addressId)) {
+      const isFirst = currentAddresses.length === 0;
       appendAddress({
         id: addressId!,
         type: "Home",
         isPrimary: isFirst,
       });
+      toast.success("Address added");
+    } else {
+      toast.info("This address is already attached to this person.");
     }
-    setAddressSearchQuery("");
+  };
+
+  const handleManualAddressCreated = (address: Address) => {
+    if (!address.id) return;
+    setAvailableAddresses((prev) => (prev.some((a) => a.id === address.id) ? prev : [...prev, address]));
   };
 
   async function onSubmit(values: PersonFormValues) {
@@ -805,11 +829,13 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
 
               <div className="mb-4 space-y-2">
                 <FormLabel>Search & Add Address</FormLabel>
-                <AddressAutocomplete
-                  value={addressSearchQuery}
-                  onValueChange={setAddressSearchQuery}
-                  onAddressSelect={handleAddressSelect}
-                  placeholder="Start typing an address using Google Places..."
+                <AddressSearchAndAdd
+                  addresses={availableAddresses}
+                  selectedAddressIds={(form.watch("addresses") || []).map((a) => a.id)}
+                  onSelectExistingAddress={handleSelectExistingAddress}
+                  onSelectGooglePlace={handleSelectGooglePlace}
+                  onAddressCreated={handleManualAddressCreated}
+                  placeholder="Search stored addresses or start typing a new one..."
                 />
               </div>
 

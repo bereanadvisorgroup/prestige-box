@@ -19,10 +19,20 @@ import { type Address, type AddressFormInput, AddressFormSchema, type AddressFor
 interface AddressDialogProps {
   onAddressCreated: (address: Address) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddressDialog({
+  onAddressCreated,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: AddressDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (nextOpen: boolean) => controlledOnOpenChange?.(nextOpen) : setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<AddressFormInput, any, AddressFormValues>({
@@ -73,13 +83,15 @@ export function AddressDialog({ onAddressCreated, trigger }: AddressDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" type="button">
-            <Plus className="mr-2 h-4 w-4" /> New Address
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger !== null && (trigger || !isControlled) && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline" size="sm" type="button">
+              <Plus className="mr-2 h-4 w-4" /> New Address
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Add New Address</DialogTitle>
