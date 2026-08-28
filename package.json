@@ -1,6 +1,6 @@
 {
   "name": "@bereanadivsorgroup/prestige-box",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "packageManager": "pnpm@11.18.0",
   "engines": {
     "pnpm": ">=11.0.0",
@@ -24,7 +24,9 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx}": ["biome check --write --no-errors-on-unmatched"]
+    "*.{js,ts,jsx,tsx}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
