@@ -1,4 +1,4 @@
-import { formatFullName, formatPersonName, getInitials } from "./utils";
+import { formatFullName, formatLegalFullName, formatPersonLegalName, formatPersonName, getInitials } from "./utils";
 
 function testPersonNameFormatting() {
   console.log("--- Running Person Name Formatting Tests (with Goes By) ---");
@@ -89,6 +89,45 @@ function testPersonNameFormatting() {
   console.assert(
     formatPersonName(undefined, "Unknown") === "Unknown",
     `Expected "Unknown", got "${formatPersonName(undefined, "Unknown")}"`,
+  );
+
+  // 9. Legal name formatting: Prefix FirstName MiddleName LastName Suffix "Goes By"
+  console.assert(
+    formatLegalFullName("Dr.", "Christopher", "Alexander", "Roob", "Jr.", "Christ") ===
+      'Dr. Christopher Alexander Roob Jr. "Christ"',
+    `Expected 'Dr. Christopher Alexander Roob Jr. "Christ"', got '${formatLegalFullName("Dr.", "Christopher", "Alexander", "Roob", "Jr.", "Christ")}'`,
+  );
+
+  console.assert(
+    formatLegalFullName(null, "Christ", null, "Roob", null, null) === "Christ Roob",
+    `Expected 'Christ Roob', got '${formatLegalFullName(null, "Christ", null, "Roob", null, null)}'`,
+  );
+
+  const fullPerson = {
+    prefix: "Dr.",
+    firstName: "Christopher",
+    middleName: "Alexander",
+    lastName: "Roob",
+    suffix: "Jr.",
+    goesBy: "Christ",
+  };
+  console.assert(
+    formatPersonLegalName(fullPerson) === 'Dr. Christopher Alexander Roob Jr. "Christ"',
+    `Expected 'Dr. Christopher Alexander Roob Jr. "Christ"', got '${formatPersonLegalName(fullPerson)}'`,
+  );
+
+  const simplePerson = {
+    firstName: "Christ",
+    lastName: "Roob",
+  };
+  console.assert(
+    formatPersonLegalName(simplePerson) === "Christ Roob",
+    `Expected 'Christ Roob', got '${formatPersonLegalName(simplePerson)}'`,
+  );
+
+  console.assert(
+    formatPersonLegalName(null, "") === "",
+    `Expected empty string for null person, got '${formatPersonLegalName(null, "")}'`,
   );
 
   console.log("✔ All Person Name Formatting Tests passed successfully!");

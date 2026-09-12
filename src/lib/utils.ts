@@ -85,3 +85,55 @@ export function formatPersonName(
   if (!person) return fallback;
   return formatFullName(person.firstName, person.lastName, person.suffix, fallback, person.goesBy);
 }
+
+/**
+ * Formats a person's full legal name: "[prefix] [firstName] [middleName] [lastName] [suffix] [\"goesBy\"]"
+ * Fields included: Prefix, FirstName, MiddleName, LastName, Suffix, "Goes By" (quoted).
+ */
+export function formatLegalFullName(
+  prefix?: string | null,
+  firstName?: string | null,
+  middleName?: string | null,
+  lastName?: string | null,
+  suffix?: string | null,
+  goesBy?: string | null,
+  fallback = "",
+): string {
+  const formattedGoesBy = goesBy?.trim() ? `"${goesBy.trim()}"` : undefined;
+  const parts = [
+    prefix?.trim(),
+    firstName?.trim(),
+    middleName?.trim(),
+    lastName?.trim(),
+    suffix?.trim(),
+    formattedGoesBy,
+  ].filter(Boolean);
+
+  return parts.join(" ") || fallback;
+}
+
+/**
+ * Formats a person object's full legal name: "[prefix] [firstName] [middleName] [lastName] [suffix] [\"goesBy\"]"
+ */
+export function formatPersonLegalName(
+  person?: {
+    prefix?: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    suffix?: string | null;
+    goesBy?: string | null;
+  } | null,
+  fallback = "",
+): string {
+  if (!person) return fallback;
+  return formatLegalFullName(
+    person.prefix,
+    person.firstName,
+    person.middleName,
+    person.lastName,
+    person.suffix,
+    person.goesBy,
+    fallback,
+  );
+}

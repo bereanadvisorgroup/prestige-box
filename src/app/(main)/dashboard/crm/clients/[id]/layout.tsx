@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getClient } from "@/actions/clients";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatPersonName } from "@/lib/utils";
+import { formatPersonLegalName, formatPersonName } from "@/lib/utils";
 import type { Person } from "@/types/crm";
 
 interface LayoutProps {
@@ -22,6 +22,7 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
 
   const person = clientResult.person as Person | null;
   const clientName = formatPersonName(person, "Client Profile");
+  const legalName = formatPersonLegalName(person);
   const initials = `${person?.firstName?.[0] || ""}${person?.lastName?.[0] || ""}`.toUpperCase();
 
   return (
@@ -42,6 +43,7 @@ export default async function ClientDetailLayout({ children, params }: LayoutPro
               </span>
               <span id="client-header-section-name" className="text-muted-foreground/80 font-normal" />
             </h1>
+            {legalName && <p className="mt-1 text-sm text-muted-foreground font-normal">{legalName}</p>}
           </div>
         </div>
         <div id="client-header-actions" className="flex gap-2 items-center" />
