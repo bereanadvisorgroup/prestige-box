@@ -71,10 +71,11 @@ async function upsertAutoTask(args: UpsertArgs): Promise<void> {
     let taskId: string;
     if (existing) {
       const updates: Record<string, unknown> = { name, category, dueDate, updatedAt: now };
-      // Rolling to a fresh occurrence: revive a completed task for the new cycle.
-      if (existing.status === "Complete") {
+      // Rolling to a fresh occurrence: revive a completed or archived task for the new cycle.
+      if (existing.status === "Complete" || existing.status === "Archived") {
         updates.status = "New";
         updates.completeDate = null;
+        updates.archiveDate = null;
       }
       await supabaseServer.from(TASKS).update(updates).eq("id", existing.id);
       taskId = existing.id;

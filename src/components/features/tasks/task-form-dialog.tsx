@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { Calendar, FileText, Folder, HardDrive, Loader2, Paperclip, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -74,6 +74,25 @@ const parseAssocKey = (key: string): TaskAssociation => {
 };
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
+
+const formatDayDiff = (created?: string | null, target?: string | null): string => {
+  if (!created || !target) return "0 days";
+  try {
+    const days = Math.max(0, differenceInCalendarDays(new Date(target), new Date(created)));
+    return `${days} ${days === 1 ? "day" : "days"}`;
+  } catch {
+    return "0 days";
+  }
+};
+
+const formatTaskDate = (isoString?: string | null): string => {
+  if (!isoString) return "";
+  try {
+    return format(new Date(isoString), "M/d/yyyy");
+  } catch {
+    return "";
+  }
+};
 
 export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations = [], onSaved }: TaskFormDialogProps) {
   const isEditing = !!task?.id;
@@ -451,11 +470,24 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 />
               </div>
 
-              {isEditing && (task?.createdAt || (status === "Complete" && task?.completeDate)) && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  {task?.createdAt && <span>Created {format(new Date(task.createdAt), "MMM d, yyyy")}</span>}
-                  {status === "Complete" && task?.completeDate && (
-                    <span>Completed {format(new Date(task.completeDate), "MMM d, yyyy")}</span>
+              {isEditing && task?.createdAt && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground text-xs">
+                  <span>Created: {formatTaskDate(task.createdAt)}</span>
+                  {task.updatedAt && (
+                    <span>
+                      Last Update: {formatTaskDate(task.updatedAt)} ({formatDayDiff(task.createdAt, task.updatedAt)})
+                    </span>
+                  )}
+                  {task.completeDate && (
+                    <span>
+                      Completed: {formatTaskDate(task.completeDate)} ({formatDayDiff(task.createdAt, task.completeDate)}
+                      )
+                    </span>
+                  )}
+                  {task.archiveDate && (
+                    <span>
+                      Archived: {formatTaskDate(task.archiveDate)} ({formatDayDiff(task.createdAt, task.archiveDate)})
+                    </span>
                   )}
                 </div>
               )}

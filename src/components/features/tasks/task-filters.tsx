@@ -5,7 +5,7 @@ import { Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DEFAULT_TASK_CATEGORIES, TaskPriorities, TaskStatuses, type TaskWithRelations } from "@/types/crm";
 
 export type DueInFilter = "all" | "overdue" | "today" | "week" | "month";
@@ -49,7 +49,7 @@ function matchesDueIn(task: TaskWithRelations, dueIn: DueInFilter, now: Date): b
   const today = startOfDay(now);
   switch (dueIn) {
     case "overdue":
-      return task.status !== "Complete" && due < today;
+      return task.status !== "Complete" && task.status !== "Archived" && due < today;
     case "today":
       return isToday(due);
     case "week":
@@ -70,7 +70,11 @@ export function applyTaskFilters(
   const term = filters.name.trim().toLowerCase();
   return tasks.filter((t) => {
     if (term && !t.name.toLowerCase().includes(term)) return false;
-    if (filters.status !== "all" && t.status !== filters.status) return false;
+    if (filters.status !== "all") {
+      if (t.status !== filters.status) return false;
+    } else {
+      if (t.status === "Archived") return false;
+    }
     if (filters.priority !== "all" && t.priority !== filters.priority) return false;
     if (filters.assignee !== "all" && !t.assignees.some((a) => a.userId === filters.assignee)) return false;
     if (!matchesDueIn(t, filters.dueIn, now)) return false;
@@ -85,8 +89,7 @@ export function applyTaskFilters(
     }
     if (filters.personName && filters.personName.trim() !== "") {
       const pTerm = filters.personName.trim().toLowerCase();
-      if (!t.associations.some((a) => a.entityType === "person" && a.name.toLowerCase().includes(pTerm)))
-        return false;
+      if (!t.associations.some((a) => a.entityType === "person" && a.name.toLowerCase().includes(pTerm))) return false;
     }
     if (filters.category !== "all" && t.category !== filters.category) return false;
     return true;
@@ -102,6 +105,7 @@ interface TaskFiltersProps {
   showClientCompanyFilters?: boolean;
   isFiltered?: boolean;
   onClear?: () => void;
+  showArchiveStatus?: boolean;
 }
 
 export function TaskFilters({
@@ -112,6 +116,7 @@ export function TaskFilters({
   showClientCompanyFilters = false,
   isFiltered = false,
   onClear,
+  showArchiveStatus = false,
 }: TaskFiltersProps) {
   return (
     <div className="flex flex-col gap-3">
@@ -204,11 +209,17 @@ export function TaskFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {TaskStatuses.map((s) => (
+                {TaskStatuses.filter((s) => s !== "Archived").map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
                   </SelectItem>
                 ))}
+                {showArchiveStatus && (
+                  <>
+                    <SelectSeparator />
+                    <SelectItem value="Archived">Archived</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
 

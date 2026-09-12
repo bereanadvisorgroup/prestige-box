@@ -1012,7 +1012,7 @@ export interface UpcomingPayment {
 
 // --- Task Management ---
 
-export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "Complete"]);
+export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "Complete", "Archived"]);
 export const TaskPrioritySchema = z.enum(["Low", "Medium", "High"]);
 export const TaskSourceSchema = z.enum(["manual", "auto"]);
 export const TaskSourceTypeSchema = z.enum(["birthday", "anniversary", "renewal"]);
@@ -1069,6 +1069,7 @@ export const TaskSchema = z.object({
   attachments: z.array(TaskAttachmentSchema).default([]),
   dueDate: z.string().min(1, "Due date is required"), // ISO date-time
   completeDate: z.string().nullable().optional(), // system-managed
+  archiveDate: z.string().nullable().optional(), // system-managed
   source: TaskSourceSchema.default("manual"),
   sourceType: TaskSourceTypeSchema.nullable().optional(),
   sourceRefId: z.string().nullable().optional(),
@@ -1097,6 +1098,7 @@ export type TaskWithRelations = Task & {
 // Form payload: assignees & associations are edited inline and persisted to junction tables.
 export const TaskFormSchema = TaskSchema.omit({
   completeDate: true,
+  archiveDate: true,
   source: true,
   sourceType: true,
   sourceRefId: true,

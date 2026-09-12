@@ -145,15 +145,31 @@ export function TasksView({
   async function handleStatusChange(taskId: string, status: TaskStatus) {
     // Optimistic update; revert on failure.
     const prev = tasks;
+    const now = new Date().toISOString();
     setTasks((cur) =>
-      cur.map((t) =>
-        t.id === taskId ? { ...t, status, completeDate: status === "Complete" ? new Date().toISOString() : null } : t,
-      ),
+      cur.map((t) => {
+        if (t.id !== taskId) return t;
+        const completeDate =
+          status === "Complete" ? t.completeDate || now : status === "Archived" ? t.completeDate : null;
+        const archiveDate = status === "Archived" ? t.archiveDate || now : null;
+        return { ...t, status, completeDate, archiveDate, updatedAt: now };
+      }),
     );
     const res = await updateTaskStatus(taskId, status);
     if (!res.success) {
       setTasks(prev);
       toast.error(res.error || "Failed to update status");
+    } else if (status === "Archived") {
+      toast.success("Task archived");
+    }
+  }
+
+  function handleViewChange(v: string) {
+    if (!v) return;
+    const nextView = v as "board" | "list";
+    setView(nextView);
+    if (nextView === "board" && filters.status === "Archived") {
+      updateFilters({ status: "all" });
     }
   }
 
@@ -179,12 +195,7 @@ export function TasksView({
 
       {useHeaderPortal ? (
         <div className="flex justify-end">
-          <ToggleGroup
-            type="single"
-            value={view}
-            onValueChange={(v) => v && setView(v as "board" | "list")}
-            variant="outline"
-          >
+          <ToggleGroup type="single" value={view} onValueChange={handleViewChange} variant="outline">
             <ToggleGroupItem value="board" aria-label="Board View" title="Board View">
               <KanbanSquare className="h-4 w-4" />
             </ToggleGroupItem>
@@ -200,12 +211,7 @@ export function TasksView({
             {description && <p className="text-muted-foreground text-sm">{description}</p>}
           </div>
           <div className="flex items-center gap-2">
-            <ToggleGroup
-              type="single"
-              value={view}
-              onValueChange={(v) => v && setView(v as "board" | "list")}
-              variant="outline"
-            >
+            <ToggleGroup type="single" value={view} onValueChange={handleViewChange} variant="outline">
               <ToggleGroupItem value="board" aria-label="Board View" title="Board View">
                 <KanbanSquare className="h-4 w-4" />
               </ToggleGroupItem>
@@ -228,6 +234,7 @@ export function TasksView({
         showClientCompanyFilters={isGlobalScope(scope)}
         isFiltered={isFiltered}
         onClear={handleClearFilters}
+        showArchiveStatus={view === "list"}
       />
 
       {loading ? (

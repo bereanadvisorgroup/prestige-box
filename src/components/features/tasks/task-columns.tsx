@@ -13,7 +13,8 @@ function DueDate({ row }: { row: Row<TaskWithRelations> }) {
   const raw = row.original.dueDate;
   if (!raw) return <span className="text-muted-foreground text-sm">—</span>;
   const d = new Date(raw);
-  const isOverdue = row.original.status !== "Complete" && d.getTime() < Date.now();
+  const isOverdue =
+    row.original.status !== "Complete" && row.original.status !== "Archived" && d.getTime() < Date.now();
   return (
     <span className={`text-sm ${isOverdue ? "font-medium text-rose-600" : ""}`}>
       {format(d, "MMM d, yyyy")}

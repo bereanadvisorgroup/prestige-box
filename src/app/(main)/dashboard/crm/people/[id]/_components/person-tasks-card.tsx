@@ -99,7 +99,7 @@ export function PersonTasksCard({ personId, initialTasks = [], onViewAllClick }:
     }
   };
 
-  const activeTasks = (tasks || []).filter((t) => t.status !== "Complete");
+  const activeTasks = (tasks || []).filter((t) => t.status !== "Complete" && t.status !== "Archived");
 
   return (
     <Card className="border-none shadow-md flex flex-col h-full min-h-[220px]">

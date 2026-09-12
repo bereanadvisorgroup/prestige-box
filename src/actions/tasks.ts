@@ -40,6 +40,20 @@ function resolveCompleteDate(
   if (nextStatus === "Complete") {
     return prevStatus === "Complete" && prevComplete ? prevComplete : new Date().toISOString();
   }
+  if (nextStatus === "Archived") {
+    return prevComplete;
+  }
+  return null;
+}
+
+function resolveArchiveDate(
+  prevStatus: string | undefined,
+  nextStatus: string,
+  prevArchive: string | null,
+): string | null {
+  if (nextStatus === "Archived") {
+    return prevStatus === "Archived" && prevArchive ? prevArchive : new Date().toISOString();
+  }
   return null;
 }
 
@@ -236,6 +250,7 @@ export async function createTask(values: TaskFormValues) {
       attachments: parsed.attachments ?? [],
       dueDate: parsed.dueDate,
       completeDate: resolveCompleteDate(undefined, parsed.status, null),
+      archiveDate: resolveArchiveDate(undefined, parsed.status, null),
       source: "manual" as const,
       createdBy: actor.actorId,
       createdAt: now,
@@ -283,6 +298,7 @@ export async function updateTask(id: string, values: TaskFormValues) {
       attachments: parsed.attachments ?? [],
       dueDate: parsed.dueDate,
       completeDate: resolveCompleteDate(current.status, parsed.status, current.completeDate ?? null),
+      archiveDate: resolveArchiveDate(current.status, parsed.status, current.archiveDate ?? null),
       updatedAt: new Date().toISOString(),
     };
 
@@ -331,7 +347,7 @@ export async function updateTask(id: string, values: TaskFormValues) {
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   try {
     const [{ data: current }, { data: assocRows }] = await Promise.all([
-      supabaseServer.from(TABLE).select("status, completeDate, name").eq("id", id).single(),
+      supabaseServer.from(TABLE).select("status, completeDate, archiveDate, name").eq("id", id).single(),
       supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", id),
     ]);
     if (!current) return { success: false, error: "Task not found" };
@@ -341,6 +357,7 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
       .update({
         status,
         completeDate: resolveCompleteDate(current.status, status, current.completeDate ?? null),
+        archiveDate: resolveArchiveDate(current.status, status, current.archiveDate ?? null),
         updatedAt: new Date().toISOString(),
       })
       .eq("id", id);
@@ -414,6 +431,7 @@ export async function getUpcomingTasksForUser(userId: string, limit = 5) {
       .select("*")
       .in("id", taskIds)
       .neq("status", "Complete")
+      .neq("status", "Archived")
       .order("dueDate", { ascending: true })
       .limit(limit);
     if (error) throw new Error(error.message);

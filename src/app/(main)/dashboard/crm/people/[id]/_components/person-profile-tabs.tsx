@@ -792,11 +792,7 @@ export function PersonProfileTabs({
           {/* Tasks Tab */}
           <TabsContent value="tasks" className="m-0 border-0 outline-none">
             <div className="p-6">
-              <TasksView
-                scope={{ personId: person.id }}
-                title="Tasks"
-                useHeaderPortal={false}
-              />
+              <TasksView scope={{ personId: person.id }} title="Tasks" useHeaderPortal={false} />
             </div>
           </TabsContent>
 

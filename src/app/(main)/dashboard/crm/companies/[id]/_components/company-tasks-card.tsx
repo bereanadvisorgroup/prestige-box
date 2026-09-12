@@ -87,7 +87,7 @@ export function CompanyTasksCard({ companyId, initialTasks }: CompanyTasksCardPr
     }
   };
 
-  const activeTasks = tasks.filter((t) => t.status !== "Complete");
+  const activeTasks = tasks.filter((t) => t.status !== "Complete" && t.status !== "Archived");
 
   return (
     <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
