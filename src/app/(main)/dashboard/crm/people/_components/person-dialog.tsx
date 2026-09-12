@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { createPerson } from "@/actions/people";
 import { PersonDuplicateChecker } from "@/components/features/crm/person-duplicate-checker";
+import { PersonTagInput } from "@/components/features/crm/person-tag-input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -38,6 +39,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
       phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
       emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
       addressIds: [],
+      tags: [],
     },
   });
 
@@ -53,6 +55,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
         phones: [{ id: crypto.randomUUID(), number: "", type: "Mobile", isPrimary: true }],
         emails: [{ id: crypto.randomUUID(), address: "", type: "Personal", isPrimary: true }],
         addressIds: [],
+        tags: [],
       });
     }
   }, [open, form.reset]);
@@ -207,6 +210,24 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags</FormLabel>
+                  <FormControl>
+                    <PersonTagInput
+                      value={field.value || []}
+                      onChange={(updated) => field.onChange(updated)}
+                      placeholder="Type to search or create tags..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-end gap-3 border-t pt-6 font-semibold">
               <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={isLoading}>

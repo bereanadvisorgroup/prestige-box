@@ -1,12 +1,13 @@
 "use no memo";
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 
-import { Plus, Search, X } from "lucide-react";
+import { Plus, RotateCcw, Search, X } from "lucide-react";
 
+import { getTags } from "@/actions/tags";
 import { DataTable } from "@/components/features/data-table/data-table";
 import { DataTablePagination } from "@/components/features/data-table/data-table-pagination";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,32 @@ export function PeopleTable({ data }: PeopleTableProps) {
   const [deletePerson, setDeletePerson] = useState<Person | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [selectedRelation, setSelectedRelation] = useState("all");
+  const [selectedTag, setSelectedTag] = useState("all");
+  const [systemTags, setSystemTags] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getTags().then((res) => {
+      if (isMounted && res.success && res.tags) {
+        setSystemTags(res.tags.map((t) => t.name));
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const allAvailableTags = useMemo(() => {
+    const tagSet = new Set<string>(systemTags);
+    for (const p of data) {
+      if (p.tags) {
+        for (const t of p.tags) {
+          if (t?.trim()) tagSet.add(t.trim());
+        }
+      }
+    }
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+  }, [data, systemTags]);
 
   const tableColumns = useMemo(() => columns(setDeletePerson), []);
 
@@ -41,6 +68,15 @@ export function PeopleTable({ data }: PeopleTableProps) {
     table.getColumn("name")?.setFilterValue(value);
   };
 
+  const handleTagFilterChange = (value: string) => {
+    setSelectedTag(value);
+    if (value === "all") {
+      table.getColumn("tags")?.setFilterValue(undefined);
+    } else {
+      table.getColumn("tags")?.setFilterValue(value);
+    }
+  };
+
   const handleRelationFilterChange = (value: string) => {
     setSelectedRelation(value);
     if (value === "all") {
@@ -50,17 +86,31 @@ export function PeopleTable({ data }: PeopleTableProps) {
     }
   };
 
+  const hasActiveFilters = Boolean(
+    searchValue.trim() ||
+      selectedTag !== "all" ||
+      selectedRelation !== "all" ||
+      (table.getState().columnFilters && table.getState().columnFilters.length > 0),
+  );
+
+  const handleClearFilters = () => {
+    setSearchValue("");
+    setSelectedTag("all");
+    setSelectedRelation("all");
+    table.resetColumnFilters();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex w-full max-w-3xl flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
+        <div className="flex w-full max-w-4xl flex-col gap-4 sm:flex-row sm:items-center sm:gap-3">
           <div>
             <h1 className="font-bold text-3xl tracking-tight">People</h1>
           </div>
           <div className="relative w-full max-w-xs sm:mt-2">
             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name..."
+              placeholder="Search name, email, phone, or tag..."
               value={searchValue}
               onChange={(event) => handleSearchChange(event.target.value)}
               className="bg-background pr-9 pl-9"
@@ -76,7 +126,22 @@ export function PeopleTable({ data }: PeopleTableProps) {
               </button>
             )}
           </div>
-          <div className="w-full max-w-[200px] sm:mt-2">
+          <div className="w-full max-w-[160px] sm:mt-2">
+            <Select value={selectedTag} onValueChange={handleTagFilterChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All Tags" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tags</SelectItem>
+                {allAvailableTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-full max-w-[180px] sm:mt-2">
             <Select value={selectedRelation} onValueChange={handleRelationFilterChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Relations" />
@@ -93,6 +158,17 @@ export function PeopleTable({ data }: PeopleTableProps) {
               </SelectContent>
             </Select>
           </div>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 shrink-0 gap-1.5 px-2.5 text-muted-foreground text-xs hover:text-foreground sm:mt-2"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Clear Filter
+            </Button>
+          )}
         </div>
         <Button asChild className="shrink-0 font-semibold shadow-sm">
           <Link href="/dashboard/crm/people/new">

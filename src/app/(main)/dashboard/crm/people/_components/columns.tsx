@@ -51,7 +51,39 @@ export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedP
   {
     id: "name",
     accessorFn: (row) => formatPersonName(row),
-    filterFn: "includesString",
+    filterFn: (row, _columnId, filterValue: string) => {
+      if (!filterValue) return true;
+      const term = filterValue.toLowerCase().trim();
+      const person = row.original;
+
+      // 1. Name search
+      const fullName = formatPersonName(person).toLowerCase();
+      const goesBy = (person.goesBy || "").toLowerCase();
+      if (fullName.includes(term) || goesBy.includes(term)) return true;
+
+      // 2. Email search
+      const emails = (person.emails || []).map((e) => (e.address || "").toLowerCase());
+      if (emails.some((e) => e.includes(term))) return true;
+
+      // 3. Phone search (matches formatted string or cleaned digits)
+      const cleanDigits = term.replace(/\D/g, "");
+      const phones = (person.phones || []).map((p) => p.number || "");
+      if (
+        phones.some((p) => {
+          if (p.toLowerCase().includes(term)) return true;
+          if (cleanDigits && p.replace(/\D/g, "").includes(cleanDigits)) return true;
+          return false;
+        })
+      ) {
+        return true;
+      }
+
+      // 4. Tags search
+      const tags = (person.tags || []).map((t) => t.toLowerCase());
+      if (tags.some((t) => t.includes(term))) return true;
+
+      return false;
+    },
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     cell: ({ row }: { row: Row<EnrichedPerson> }) => {
       const person = row.original;
@@ -76,20 +108,56 @@ export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedP
     },
   },
   {
-    id: "email",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
-    cell: ({ row }: { row: Row<Person> }) => {
-      const email =
-        row.original.emails?.find((e) => e.isPrimary)?.address || row.original.emails?.[0]?.address || "N/A";
-      return <span>{email}</span>;
+    id: "contact",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Contact" />,
+    cell: ({ row }: { row: Row<EnrichedPerson> }) => {
+      const email = row.original.emails?.find((e) => e.isPrimary)?.address || row.original.emails?.[0]?.address;
+      const phone = row.original.phones?.find((p) => p.isPrimary)?.number || row.original.phones?.[0]?.number;
+
+      if (!email && !phone) {
+        return <span className="text-muted-foreground/45 text-xs italic">N/A</span>;
+      }
+
+      return (
+        <div className="flex flex-col gap-0.5 text-xs">
+          {email && (
+            <span className="max-w-[220px] truncate font-medium text-foreground" title={email}>
+              {email}
+            </span>
+          )}
+          {phone && <span className="text-muted-foreground">{formatPhoneNumber(phone)}</span>}
+        </div>
+      );
     },
   },
   {
-    id: "mobilePhone",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Phone" />,
-    cell: ({ row }: { row: Row<Person> }) => {
-      const phone = row.original.phones?.find((p) => p.isPrimary)?.number || row.original.phones?.[0]?.number;
-      return <span>{formatPhoneNumber(phone) || "N/A"}</span>;
+    id: "tags",
+    accessorFn: (row) => (row.tags || []).join(", "),
+    filterFn: (row, _columnId, filterValue: string) => {
+      if (!filterValue || filterValue === "all") return true;
+      const tags = (row.original.tags || []).map((t) => t.toLowerCase());
+      return tags.includes((filterValue as string).toLowerCase());
+    },
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Tags" />,
+    cell: ({ row }: { row: Row<EnrichedPerson> }) => {
+      const tags = row.original.tags || [];
+      if (tags.length === 0) {
+        return <span className="text-muted-foreground/45 text-xs italic">None</span>;
+      }
+
+      return (
+        <div className="flex max-w-[220px] flex-wrap gap-1">
+          {tags.map((tag) => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="bg-secondary/70 px-1.5 py-0.5 font-normal text-[11px] text-secondary-foreground leading-tight"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      );
     },
   },
   {

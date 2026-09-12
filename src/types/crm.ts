@@ -76,9 +76,17 @@ export const PersonSchema = z.object({
   addressIds: z.array(z.string()).default([]),
   documentUrl: z.string().optional().nullable(),
   notebookUrl: z.string().optional().nullable(),
+  tags: z.array(z.string()).default([]),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
+
+export const TagSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Tag name cannot be empty"),
+  createdAt: z.string().optional(),
+});
+export type Tag = z.infer<typeof TagSchema>;
 
 export const HouseholdMemberRole = z.enum([
   "HEAD",

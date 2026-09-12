@@ -13,6 +13,7 @@ import { createAddress, getAddresses } from "@/actions/addresses";
 import { createPerson, updatePerson } from "@/actions/people";
 import { AddressSearchAndAdd } from "@/components/features/crm/address-search-and-add";
 import { PersonDuplicateChecker } from "@/components/features/crm/person-duplicate-checker";
+import { PersonTagInput } from "@/components/features/crm/person-tag-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,6 +90,7 @@ const sanitizePerson = (p?: Person): PersonFormInput | undefined => {
     socialMedia: getSocialMedia(p),
     addresses: addresses,
     addressIds: p.addressIds || addresses.map((a) => a.id),
+    tags: p.tags || [],
   };
 };
 
@@ -168,6 +170,7 @@ export function PersonForm({ person, onSuccess, onCancel, isDialog }: PersonForm
       socialMedia: getSocialMedia(person),
       addresses: getAddressesList(person),
       addressIds: getAddressesList(person).map((a) => a.id),
+      tags: person?.tags || [],
     },
   });
 
@@ -493,6 +496,27 @@ export function PersonForm({ person, onSuccess, onCancel, isDialog }: PersonForm
             lastName={form.watch("lastName")}
             excludePersonId={person?.id}
           />
+
+          {/* Tags Section */}
+          <div className="space-y-2 pt-2">
+            <FormLabel className="text-sm font-medium">Tags</FormLabel>
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <PersonTagInput
+                      value={field.value || []}
+                      onChange={(updated) => field.onChange(updated)}
+                      placeholder="Type to search or create tags..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Emails Section */}
           <div className="space-y-3 pt-4">

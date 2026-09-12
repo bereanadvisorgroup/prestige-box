@@ -15,6 +15,7 @@ import {
   Scale,
   Shield,
   ShieldAlert,
+  Tag,
   TrendingUp,
   User,
 } from "lucide-react";
@@ -278,6 +279,20 @@ export default async function PersonPage({ params }: PersonPageProps) {
               )}
               {!hasAnyAssociation && <Badge variant="outline">Contact</Badge>}
             </div>
+            {person.tags && person.tags.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                {person.tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="gap-1 bg-muted/60 px-2 py-0.5 font-normal text-muted-foreground text-xs"
+                  >
+                    <Tag className="h-3 w-3 opacity-60" />
+                    <span>{tag}</span>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

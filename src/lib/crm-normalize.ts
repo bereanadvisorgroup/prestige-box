@@ -36,6 +36,7 @@ export function normalizePerson(person: any): Person {
     phones: safelyParseJsonArray(person.phones),
     socialMedia: safelyParseJsonArray(person.socialMedia),
     addresses: safelyParseJsonArray(person.addresses),
+    tags: safelyParseJsonArray(person.tags),
   };
 }
 
