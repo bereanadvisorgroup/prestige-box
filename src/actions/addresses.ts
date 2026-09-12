@@ -39,21 +39,35 @@ export async function getAddress(id: string) {
 
 export async function createAddress(data: Partial<Address>) {
   try {
+    const sanitizedData = {
+      street1: (data.street1 || "").trim(),
+      street2: data.street2 ? data.street2.trim() : null,
+      city: (data.city || "").trim(),
+      state: (data.state || "").trim(),
+      zipCode: (data.zipCode || "").trim(),
+      country: (data.country || "USA").trim(),
+    };
+
+    if (!sanitizedData.street1) {
+      throw new Error("Street address is required");
+    }
+
     const validated = AddressSchema.parse({
-      ...data,
+      ...sanitizedData,
       createdAt: new Date().toISOString(),
     });
 
     const { data: inserted, error } = await supabaseServer.from(TABLE).insert(validated).select().single();
 
-    if (error) throw new Error((error as { message: string }).message);
+    if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/addresses");
 
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error(`[createAddress] Error:`, error);
-    return { success: false, error: (error as { message: string }).message };
+    const message = error instanceof Error ? error.message : "Failed to create address";
+    return { success: false, error: message };
   }
 }
 

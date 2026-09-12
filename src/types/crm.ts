@@ -6,9 +6,9 @@ export const AddressSchema = z.object({
   id: z.string().optional(),
   street1: z.string().min(1, "Street 1 is required"),
   street2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(1, "Zip code is required"),
+  city: z.string().optional().default(""),
+  state: z.string().optional().default(""),
+  zipCode: z.string().optional().default(""),
   country: z.string().default("USA"),
   createdAt: z.string().optional(),
 });

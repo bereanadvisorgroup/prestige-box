@@ -152,24 +152,38 @@ export function AddressSearchAndAdd({
               if (types.includes("route")) route = component.short_name;
               if (types.includes("locality")) {
                 city = component.long_name;
+              } else if (!city && types.includes("sublocality_level_1")) {
+                city = component.long_name;
               } else if (!city && types.includes("sublocality")) {
                 city = component.long_name;
               } else if (!city && types.includes("postal_town")) {
                 city = component.long_name;
+              } else if (!city && types.includes("neighborhood")) {
+                city = component.long_name;
+              } else if (!city && types.includes("administrative_area_level_2")) {
+                city = component.long_name;
               }
               if (types.includes("administrative_area_level_1")) state = component.short_name;
-              if (types.includes("postal_code")) zipCode = component.short_name;
+              if (types.includes("postal_code")) {
+                zipCode = component.short_name;
+              } else if (!zipCode && types.includes("postal_code_prefix")) {
+                zipCode = component.short_name;
+              }
               if (types.includes("country")) country = component.short_name;
             }
 
-            const street1 = `${streetNumber} ${route}`.trim() || prediction.structured_formatting.main_text;
+            const street1 =
+              `${streetNumber} ${route}`.trim() ||
+              prediction.structured_formatting.main_text ||
+              place.formatted_address ||
+              "Unknown Address";
 
             await onSelectGooglePlace({
               street1,
-              city,
-              state,
-              zipCode,
-              country,
+              city: city || "",
+              state: state || "",
+              zipCode: zipCode || "",
+              country: country || "USA",
             });
 
             setQuery("");

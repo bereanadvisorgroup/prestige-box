@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 
+import { getAddress } from "@/actions/addresses";
 import { getClientAssetHistory } from "@/actions/assets";
 import { getClient } from "@/actions/clients";
 import { getPerson } from "@/actions/people";
+import type { Address } from "@/types/crm";
 
 import { ClientHeaderPortal } from "../_components/client-header-portal";
 import { ContactCard } from "../_components/contact-card";
@@ -31,13 +33,26 @@ export default async function ClientPage({ params }: ClientPageProps) {
   const historyData = historyResult.success && historyResult.historyData ? historyResult.historyData : [];
   const person = personResult.success && personResult.person ? personResult.person : null;
 
+  let addresses: Address[] = [];
+  if (person) {
+    const addressIds = person.addressIds?.length
+      ? person.addressIds
+      : (person.addresses || []).map((a) => a.id).filter(Boolean);
+    if (addressIds.length > 0) {
+      const addressResults = await Promise.all(addressIds.map((addrId) => getAddress(addrId)));
+      addresses = addressResults
+        .map((res) => (res.success && res.address ? res.address : null))
+        .filter(Boolean) as Address[];
+    }
+  }
+
   return (
     <div className="py-4">
       <ClientHeaderPortal sectionName="Overview" />
       <div className="flex flex-col gap-8">
         {person && (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <ContactCard person={person} />
+            <ContactCard person={person} addresses={addresses} />
             <PersonalInfoCard client={client} />
           </div>
         )}
