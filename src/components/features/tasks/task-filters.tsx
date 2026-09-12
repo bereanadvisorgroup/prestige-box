@@ -18,6 +18,7 @@ export interface TaskFilterState {
   dueIn: DueInFilter;
   clientName: string;
   companyName: string;
+  personName: string;
   category: string; // "all" | string
 }
 
@@ -29,6 +30,7 @@ export const defaultTaskFilters: TaskFilterState = {
   dueIn: "all",
   clientName: "",
   companyName: "",
+  personName: "",
   category: "all",
 };
 
@@ -79,6 +81,11 @@ export function applyTaskFilters(
     if (filters.companyName.trim() !== "") {
       const coTerm = filters.companyName.trim().toLowerCase();
       if (!t.associations.some((a) => a.entityType === "company" && a.name.toLowerCase().includes(coTerm)))
+        return false;
+    }
+    if (filters.personName && filters.personName.trim() !== "") {
+      const pTerm = filters.personName.trim().toLowerCase();
+      if (!t.associations.some((a) => a.entityType === "person" && a.name.toLowerCase().includes(pTerm)))
         return false;
     }
     if (filters.category !== "all" && t.category !== filters.category) return false;
@@ -168,6 +175,26 @@ export function TaskFilters({
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
                   <span className="sr-only">Clear company filter</span>
+                </button>
+              )}
+            </div>
+
+            <div className="relative min-w-[150px] flex-1">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Filter by person…"
+                value={filters.personName}
+                onChange={(e) => onChange({ personName: e.target.value })}
+                className="pl-9 pr-9"
+              />
+              {filters.personName && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ personName: "" })}
+                  className="-translate-y-1/2 absolute top-1/2 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                  <span className="sr-only">Clear person filter</span>
                 </button>
               )}
             </div>

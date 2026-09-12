@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
+import { getPeople } from "@/actions/people";
 import { getTaskCategories } from "@/actions/task-categories";
 import { createTask, updateTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
@@ -60,7 +61,7 @@ interface TaskFormDialogProps {
 }
 
 interface EntityDocInfo {
-  entityType: "client" | "company";
+  entityType: "client" | "company" | "person";
   entityId: string;
   name: string;
   documentUrl?: string | null;
@@ -140,11 +141,12 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
     if (!open) return;
     let cancelled = false;
     (async () => {
-      const [usersRes, clientsRes, companiesRes, categoriesRes] = await Promise.all([
+      const [usersRes, clientsRes, companiesRes, categoriesRes, peopleRes] = await Promise.all([
         getUsers(),
         getClients(),
         getCompanies(),
         getTaskCategories(),
+        getPeople(),
       ]);
       if (cancelled) return;
 
@@ -208,6 +210,20 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
               entityId: c.id,
               name: label,
               documentUrl: c.documentUrl,
+            });
+          }
+        }
+      }
+      if (peopleRes.success && peopleRes.people) {
+        for (const p of peopleRes.people) {
+          const label = formatPersonName(p, "Unnamed person");
+          opts.push({ value: `person:${p.id}`, label, group: "People" });
+          if (p.id) {
+            docMap.set(`person:${p.id}`, {
+              entityType: "person",
+              entityId: p.id,
+              name: label,
+              documentUrl: p.documentUrl,
             });
           }
         }
@@ -315,7 +331,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -342,7 +358,23 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 )}
               />
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <FormField
+                  control={form.control}
+                  name="dueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Calendar className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
+                          <Input type="date" className="pl-9" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="status"
@@ -419,69 +451,52 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 />
               </div>
 
+              {isEditing && (task?.createdAt || (status === "Complete" && task?.completeDate)) && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  {task?.createdAt && <span>Created {format(new Date(task.createdAt), "MMM d, yyyy")}</span>}
+                  {status === "Complete" && task?.completeDate && (
+                    <span>Completed {format(new Date(task.completeDate), "MMM d, yyyy")}</span>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="dueDate"
+                  name="assigneeIds"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Due Date</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Calendar className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                          <Input type="date" className="pl-9" {...field} />
-                        </div>
-                      </FormControl>
+                      <FormLabel>Assignees</FormLabel>
+                      <MultiSelect
+                        options={assigneeOptions}
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                        placeholder="Assign to admins or advisors…"
+                        searchPlaceholder="Search team…"
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {/* Create / Complete dates are system-managed and shown read-only when editing. */}
-                {isEditing && (
-                  <div className="flex flex-col justify-end gap-1 text-muted-foreground text-sm">
-                    {task?.createdAt && <div>Created {format(new Date(task.createdAt), "MMM d, yyyy")}</div>}
-                    {status === "Complete" && task?.completeDate && (
-                      <div>Completed {format(new Date(task.completeDate), "MMM d, yyyy")}</div>
-                    )}
-                  </div>
-                )}
+
+                <FormField
+                  control={form.control}
+                  name="associations"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Associations</FormLabel>
+                      <MultiSelect
+                        options={associationOptions}
+                        value={(field.value ?? []).map(assocKey)}
+                        onChange={(keys) => field.onChange(keys.map(parseAssocKey))}
+                        placeholder="Link clients, companies, or people…"
+                        searchPlaceholder="Search clients, companies, people…"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-
-              <FormField
-                control={form.control}
-                name="assigneeIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assignees</FormLabel>
-                    <MultiSelect
-                      options={assigneeOptions}
-                      value={field.value ?? []}
-                      onChange={field.onChange}
-                      placeholder="Assign to admins or advisors…"
-                      searchPlaceholder="Search team…"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="associations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Associations</FormLabel>
-                    <MultiSelect
-                      options={associationOptions}
-                      value={(field.value ?? []).map(assocKey)}
-                      onChange={(keys) => field.onChange(keys.map(parseAssocKey))}
-                      placeholder="Link clients or companies…"
-                      searchPlaceholder="Search clients & companies…"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}

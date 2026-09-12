@@ -31,10 +31,11 @@ interface TasksViewProps {
 function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
   if (scope?.clientId) return [{ entityType: "client", entityId: scope.clientId }];
   if (scope?.companyId) return [{ entityType: "company", entityId: scope.companyId }];
+  if (scope?.personId) return [{ entityType: "person", entityId: scope.personId }];
   return [];
 }
 
-const isGlobalScope = (scope?: TaskFilter) => !scope?.clientId && !scope?.companyId;
+const isGlobalScope = (scope?: TaskFilter) => !scope?.clientId && !scope?.companyId && !scope?.personId;
 
 export function TasksView({
   scope,
@@ -120,6 +121,7 @@ export function TasksView({
       filters.dueIn !== "all" ||
       filters.clientName !== "" ||
       filters.companyName !== "" ||
+      filters.personName !== "" ||
       filters.category !== "all"
     );
   }, [filters, scope, profile]);
@@ -133,6 +135,7 @@ export function TasksView({
       dueIn: "all",
       clientName: "",
       companyName: "",
+      personName: "",
       category: "all",
     });
   }, [scope, profile]);

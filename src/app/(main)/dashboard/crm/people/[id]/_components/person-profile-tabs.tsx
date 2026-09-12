@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import { NotesView } from "@/components/features/notes/notes-view";
+import { TasksView } from "@/components/features/tasks/tasks-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,10 +50,12 @@ import type {
   Person,
   PropertyAndCasualtyFirm,
   RecordKeeper,
+  TaskWithRelations,
 } from "@/types/crm";
 import type { NoteSummary } from "@/types/notes";
 
 import { PersonNotesCard } from "./person-notes-card";
+import { PersonTasksCard } from "./person-tasks-card";
 
 interface PersonProfileTabsProps {
   person: Person;
@@ -70,6 +73,7 @@ interface PersonProfileTabsProps {
   associatedMoneyManagers: MoneyManager[];
   associatedRecordKeepers: RecordKeeper[];
   notes: NoteSummary[];
+  tasks?: TaskWithRelations[];
 }
 
 function AssociationCardList({
@@ -158,6 +162,7 @@ export function PersonProfileTabs({
   associatedMoneyManagers,
   associatedRecordKeepers,
   notes,
+  tasks = [],
 }: PersonProfileTabsProps) {
   const [activeTab, setActiveTab] = React.useState("general");
 
@@ -269,6 +274,12 @@ export function PersonProfileTabs({
               </TabsTrigger>
             )}
             <TabsTrigger
+              value="tasks"
+              className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              Tasks
+            </TabsTrigger>
+            <TabsTrigger
               value="notes"
               className="rounded-md px-2.5 py-1 font-medium text-xs transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
@@ -280,11 +291,12 @@ export function PersonProfileTabs({
         <div className="mt-8 overflow-hidden rounded-xl bg-background/50 backdrop-blur-sm">
           {/* General Tab */}
           <TabsContent value="general" className="m-0 border-0 outline-none">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="space-y-6">
+            <div className="space-y-8">
+              {/* Top Row: Contact Details & Associated Locations */}
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 {/* Contact Details */}
-                <Card className="border-none bg-gradient-to-b from-card to-muted/20 shadow-md">
-                  <CardHeader className="bg-muted/30 pb-4">
+                <Card className="border-none shadow-md flex flex-col h-full">
+                  <CardHeader className="border-b bg-muted/10 pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Contact className="h-5 w-5 text-primary" /> Contact Details
                     </CardTitle>
@@ -377,7 +389,7 @@ export function PersonProfileTabs({
                 </Card>
 
                 {/* Associated Locations */}
-                <Card className="border-none shadow-md">
+                <Card className="border-none shadow-md flex flex-col h-full">
                   <CardHeader className="border-b bg-muted/10 pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <MapPin className="h-5 w-5 text-primary" /> Associated Locations
@@ -431,7 +443,9 @@ export function PersonProfileTabs({
                 </Card>
               </div>
 
-              <div className="space-y-6">
+              {/* Bottom Row: Tasks & Notes Cards */}
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <PersonTasksCard personId={person.id!} initialTasks={tasks} />
                 <PersonNotesCard personId={person.id!} initialNotes={notes} onNoteClick={() => setActiveTab("notes")} />
               </div>
             </div>
@@ -774,6 +788,17 @@ export function PersonProfileTabs({
               />
             </TabsContent>
           )}
+
+          {/* Tasks Tab */}
+          <TabsContent value="tasks" className="m-0 border-0 outline-none">
+            <div className="p-6">
+              <TasksView
+                scope={{ personId: person.id }}
+                title="Tasks"
+                useHeaderPortal={false}
+              />
+            </div>
+          </TabsContent>
 
           {/* Notes Tab */}
           <TabsContent value="notes" className="m-0 border-0 outline-none">

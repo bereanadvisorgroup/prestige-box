@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { Loader2, Plus } from "lucide-react";
+import { FileText, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { createNote } from "@/actions/notes";
@@ -63,13 +63,13 @@ export function PersonNotesCard({ personId, initialNotes, onNoteClick }: PersonN
   const recentNotes = notes.slice(0, 3); // Display top 3 recent notes
 
   return (
-    <Card className="border-none shadow-sm transition-shadow hover:shadow-md flex flex-col h-full min-h-[220px]">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-medium tracking-tight text-neutral-800 dark:text-neutral-200">
-          Notes:
+    <Card className="border-none shadow-md flex flex-col h-full min-h-[220px]">
+      <CardHeader className="border-b bg-muted/10 pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <FileText className="h-5 w-5 text-primary" /> Notes
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-between">
+      <CardContent className="pt-6 flex-1 flex flex-col justify-between">
         <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 max-h-[160px] scrollbar-thin">
           {recentNotes.length > 0 ? (
             recentNotes.map((note) => (

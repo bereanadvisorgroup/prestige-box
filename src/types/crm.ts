@@ -1008,7 +1008,7 @@ export const TaskStatusSchema = z.enum(["New", "In Process", "Waiting Input", "C
 export const TaskPrioritySchema = z.enum(["Low", "Medium", "High"]);
 export const TaskSourceSchema = z.enum(["manual", "auto"]);
 export const TaskSourceTypeSchema = z.enum(["birthday", "anniversary", "renewal"]);
-export const TaskAssociationEntitySchema = z.enum(["client", "company"]);
+export const TaskAssociationEntitySchema = z.enum(["client", "company", "person"]);
 
 export const TaskCategorySchema = z.object({
   id: z.string().optional(),

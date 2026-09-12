@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,11 +34,13 @@ import { getNotes } from "@/actions/notes";
 import { getPerson } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
+import { getTasks } from "@/actions/tasks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPersonPhotoUrl } from "@/lib/social";
 import { formatPersonName, getInitials } from "@/lib/utils";
+import type { TaskWithRelations } from "@/types/crm";
 
 import { PersonDocumentsButton } from "./_components/person-documents-button";
 import { PersonNotebookButton } from "./_components/person-notebook-button";
@@ -58,7 +62,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   const person = result.person;
 
-  // Fetch roles/associations and notes
+  // Fetch roles/associations, notes, and tasks
   const [
     clientsRes,
     lawFirmsRes,
@@ -73,6 +77,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     moneyRes,
     recordRes,
     notesRes,
+    tasksRes,
   ] = await Promise.all([
     getClients(),
     getLawFirms(),
@@ -87,6 +92,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getMoneyManagers(),
     getRecordKeepers(),
     getNotes({ personId: id }),
+    getTasks({ personId: id }),
   ]);
 
   const associatedClient =
@@ -153,6 +159,22 @@ export default async function PersonPage({ params }: PersonPageProps) {
     associatedRecordKeepers.length > 0;
 
   const notes = notesRes.success && notesRes.notes ? notesRes.notes : [];
+
+  // Fetch any tasks associated with the client record if this person is also a client
+  let clientTasks: TaskWithRelations[] = [];
+  if (associatedClient?.id) {
+    const clientTasksRes = await getTasks({ clientId: associatedClient.id });
+    if (clientTasksRes.success && clientTasksRes.tasks) {
+      clientTasks = clientTasksRes.tasks;
+    }
+  }
+
+  const personTasks = tasksRes.success && tasksRes.tasks ? tasksRes.tasks : [];
+  const taskMap = new Map<string, TaskWithRelations>();
+  for (const t of [...personTasks, ...clientTasks]) {
+    if (t.id) taskMap.set(t.id, t);
+  }
+  const tasks = Array.from(taskMap.values());
 
   return (
     <div className="fade-in mx-auto w-full max-w-6xl animate-in space-y-8 px-4 py-8 duration-500 md:px-6">
@@ -286,6 +308,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
         associatedMoneyManagers={associatedMoneyManagers}
         associatedRecordKeepers={associatedRecordKeepers}
         notes={notes}
+        tasks={tasks}
       />
     </div>
   );

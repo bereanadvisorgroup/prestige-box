@@ -23,6 +23,7 @@ export interface TaskFilter {
   clientId?: string;
   clientIds?: string[];
   companyId?: string;
+  personId?: string;
   assigneeId?: string;
 }
 
@@ -42,17 +43,18 @@ function resolveCompleteDate(
   return null;
 }
 
-/** Resolves display names for a set of associations (clients via person, companies directly). */
+/** Resolves display names for a set of associations (clients via person, companies directly, people directly). */
 async function resolveAssociationNames(rows: { entityType: string; entityId: string }[]): Promise<Map<string, string>> {
   const names = new Map<string, string>(); // key: `${entityType}:${entityId}`
   const clientIds = Array.from(new Set(rows.filter((r) => r.entityType === "client").map((r) => r.entityId)));
   const companyIds = Array.from(new Set(rows.filter((r) => r.entityType === "company").map((r) => r.entityId)));
+  const personIds = Array.from(new Set(rows.filter((r) => r.entityType === "person").map((r) => r.entityId)));
 
   if (clientIds.length > 0) {
     const { data: clients } = await supabaseServer.from("clients").select("id, personId").in("id", clientIds);
-    const personIds = Array.from(new Set((clients || []).map((c) => c.personId)));
-    const { data: people } = personIds.length
-      ? await supabaseServer.from("people").select("id, firstName, lastName, suffix, goesBy").in("id", personIds)
+    const clientPersonIds = Array.from(new Set((clients || []).map((c) => c.personId)));
+    const { data: people } = clientPersonIds.length
+      ? await supabaseServer.from("people").select("id, firstName, lastName, suffix, goesBy").in("id", clientPersonIds)
       : { data: [] };
     const peopleMap = new Map(
       (people || []).map((p) => [p.id, formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy)]),
@@ -65,6 +67,16 @@ async function resolveAssociationNames(rows: { entityType: string; entityId: str
   if (companyIds.length > 0) {
     const { data: companies } = await supabaseServer.from("companies").select("id, name").in("id", companyIds);
     for (const c of companies || []) names.set(`company:${c.id}`, c.name || "Unknown company");
+  }
+
+  if (personIds.length > 0) {
+    const { data: people } = await supabaseServer
+      .from("people")
+      .select("id, firstName, lastName, suffix, goesBy")
+      .in("id", personIds);
+    for (const p of people || []) {
+      names.set(`person:${p.id}`, formatFullName(p.firstName, p.lastName, p.suffix, "", p.goesBy) || "Unknown person");
+    }
   }
 
   return names;
@@ -132,9 +144,9 @@ export async function getTasks(filter: TaskFilter = {}) {
         .in("entityId", filter.clientIds);
       if (error) throw new Error(error.message);
       taskIds = Array.from(new Set((data || []).map((r) => r.taskId)));
-    } else if (filter.clientId || filter.companyId) {
-      const entityType = filter.clientId ? "client" : "company";
-      const entityId = (filter.clientId ?? filter.companyId) as string;
+    } else if (filter.clientId || filter.companyId || filter.personId) {
+      const entityType = filter.clientId ? "client" : filter.companyId ? "company" : "person";
+      const entityId = (filter.clientId ?? filter.companyId ?? filter.personId) as string;
       const { data, error } = await supabaseServer
         .from(ASSOCIATIONS)
         .select("taskId")
@@ -200,6 +212,15 @@ async function syncJunctions(taskId: string, values: Pick<TaskFormValues, "assig
   ]);
 }
 
+function revalidateTaskAssociations(associations?: { entityType: string; entityId: string }[]) {
+  revalidatePath("/dashboard/crm/tasks");
+  for (const a of associations || []) {
+    if (a.entityType === "client") revalidatePath(`/dashboard/crm/clients/${a.entityId}`);
+    if (a.entityType === "company") revalidatePath(`/dashboard/crm/companies/${a.entityId}`);
+    if (a.entityType === "person") revalidatePath(`/dashboard/crm/people/${a.entityId}`);
+  }
+}
+
 export async function createTask(values: TaskFormValues) {
   try {
     const parsed = TaskFormSchema.parse(values);
@@ -237,7 +258,7 @@ export async function createTask(values: TaskFormValues) {
       actor,
     );
 
-    revalidatePath("/dashboard/crm/tasks");
+    revalidateTaskAssociations(parsed.associations);
     return { success: true, id: inserted.id as string };
   } catch (error) {
     console.error("[createTask] Error:", error);
@@ -298,7 +319,7 @@ export async function updateTask(id: string, values: TaskFormValues) {
       );
     }
 
-    revalidatePath("/dashboard/crm/tasks");
+    revalidateTaskAssociations(parsed.associations);
     return { success: true };
   } catch (error) {
     console.error("[updateTask] Error:", error);
@@ -309,11 +330,10 @@ export async function updateTask(id: string, values: TaskFormValues) {
 /** Lightweight status-only update used by the Kanban board drag interaction. */
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   try {
-    const { data: current } = await supabaseServer
-      .from(TABLE)
-      .select("status, completeDate, name")
-      .eq("id", id)
-      .single();
+    const [{ data: current }, { data: assocRows }] = await Promise.all([
+      supabaseServer.from(TABLE).select("status, completeDate, name").eq("id", id).single(),
+      supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", id),
+    ]);
     if (!current) return { success: false, error: "Task not found" };
 
     const { error } = await supabaseServer
@@ -340,7 +360,7 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
       });
     }
 
-    revalidatePath("/dashboard/crm/tasks");
+    revalidateTaskAssociations(assocRows || []);
     return { success: true };
   } catch (error) {
     console.error("[updateTaskStatus] Error:", error);
@@ -350,7 +370,10 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
 
 export async function deleteTask(id: string) {
   try {
-    const { data: current } = await supabaseServer.from(TABLE).select("name").eq("id", id).single();
+    const [{ data: current }, { data: assocRows }] = await Promise.all([
+      supabaseServer.from(TABLE).select("name").eq("id", id).single(),
+      supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", id),
+    ]);
     // Junction rows are removed by ON DELETE CASCADE.
     const { error } = await supabaseServer.from(TABLE).delete().eq("id", id);
     if (error) throw new Error(error.message);
@@ -363,7 +386,7 @@ export async function deleteTask(id: string) {
       summary: `Task "${current?.name ?? id}" deleted`,
     });
 
-    revalidatePath("/dashboard/crm/tasks");
+    revalidateTaskAssociations(assocRows || []);
     return { success: true };
   } catch (error) {
     console.error("[deleteTask] Error:", error);
