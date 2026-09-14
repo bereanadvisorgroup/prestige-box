@@ -66,8 +66,8 @@ jobs:
           SUPABASE_DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
           NODE_OPTIONS: "--dns-result-order=ipv4first"
         run: |
-          pnpm dlx tsx src/db/migrate.ts
-          pnpm dlx tsx src/db/seed.ts
+          pnpm dlx --allow-build=esbuild tsx src/db/migrate.ts
+          pnpm dlx --allow-build=esbuild tsx src/db/seed.ts
 
       - name: Install Vercel CLI
         run: npm install -g vercel
@@ -128,7 +128,7 @@ jobs:
         env:
           SUPABASE_DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
           NODE_OPTIONS: "--dns-result-order=ipv4first"
-        run: pnpm dlx tsx src/db/migrate.ts
+        run: pnpm dlx --allow-build=esbuild tsx src/db/migrate.ts
 
       - name: Install Vercel CLI
         run: npm install -g vercel
@@ -176,7 +176,7 @@ jobs:
         env:
           SUPABASE_DIRECT_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
           NODE_OPTIONS: "--dns-result-order=ipv4first"
-        run: pnpm dlx tsx src/db/migrate.ts
+        run: pnpm dlx --allow-build=esbuild tsx src/db/migrate.ts
 
       - name: Install Vercel CLI
         run: npm install -g vercel
