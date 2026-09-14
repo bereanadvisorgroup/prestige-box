@@ -716,6 +716,91 @@ export const teams = pgTable("teams", {
   updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
 });
 
+// 37. Campaigns Table
+export const campaigns = pgTable("campaigns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  channel: text("channel").notNull(),
+  status: text("status").notNull().default("Active"),
+  budget: numeric("budget", { precision: 12, scale: 2 }).default("0.00"),
+  startDate: timestamp("startDate", { withTimezone: true }),
+  endDate: timestamp("endDate", { withTimezone: true }),
+  targetAudience: text("targetAudience"),
+  description: text("description"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 38. Prospects Table
+export const prospects = pgTable("prospects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  prefix: text("prefix"),
+  firstName: text("firstName").notNull(),
+  middleName: text("middleName"),
+  lastName: text("lastName").notNull(),
+  suffix: text("suffix"),
+  goesBy: text("goesBy"),
+  email: text("email"),
+  phone: text("phone"),
+  company: text("company"),
+  jobTitle: text("jobTitle"),
+  stage: text("stage").notNull().default("New"),
+  score: integer("score").default(0),
+  source: text("source").default("Direct"),
+  assignedRepId: uuid("assignedRepId").references(() => users.uid, { onDelete: "set null" }),
+  primaryCampaignId: uuid("primaryCampaignId").references(() => campaigns.id, { onDelete: "set null" }),
+  utmSource: text("utmSource"),
+  utmMedium: text("utmMedium"),
+  utmCampaign: text("utmCampaign"),
+  utmTerm: text("utmTerm"),
+  utmContent: text("utmContent"),
+  customFields: jsonb("customFields").default(sql`'{}'::jsonb`),
+  convertedClientId: uuid("convertedClientId").references(() => clients.id, { onDelete: "set null" }),
+  convertedPersonId: uuid("convertedPersonId").references(() => people.id, { onDelete: "set null" }),
+  convertedAt: timestamp("convertedAt", { withTimezone: true }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow(),
+});
+
+// 39. Prospect Campaign Attributions Table
+export const prospectCampaignAttributions = pgTable("prospect_campaign_attributions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  prospectId: uuid("prospectId")
+    .notNull()
+    .references(() => prospects.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaignId")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  touchType: text("touchType").notNull().default("Lead Creation"),
+  touchDate: timestamp("touchDate", { withTimezone: true }).defaultNow(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 40. Prospect Custom Fields Table
+export const prospectCustomFields = pgTable("prospect_custom_fields", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  label: text("label").notNull(),
+  fieldType: text("fieldType").notNull(),
+  options: text("options").array().default(sql`'{}'::text[]`),
+  isRequired: boolean("isRequired").default(false),
+  defaultValue: text("defaultValue"),
+  sortOrder: integer("sortOrder").default(0),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
+// 41. Prospect Scoring Rules Table
+export const prospectScoringRules = pgTable("prospect_scoring_rules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  conditionType: text("conditionType").notNull(),
+  conditionValue: text("conditionValue"),
+  points: integer("points").notNull(),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
+});
+
 // 35. Team Members Table (Junction table between teams and users)
 export const teamMembers = pgTable("team_members", {
   id: uuid("id").primaryKey().defaultRandom(),

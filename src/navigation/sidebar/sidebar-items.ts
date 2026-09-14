@@ -2,7 +2,6 @@ import {
   BarChart3,
   Briefcase,
   Building2,
-  Clock,
   DollarSign,
   FileText,
   Home,
@@ -15,6 +14,7 @@ import {
   Shield,
   StickyNote,
   Users,
+  UserStar,
   Workflow,
 } from "lucide-react";
 
@@ -87,6 +87,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Workflows",
         url: "/dashboard/crm/workflows",
         icon: Workflow,
+      },
+      {
+        title: "Prospects",
+        url: "/dashboard/crm/prospects",
+        icon: UserStar,
       },
     ],
   },

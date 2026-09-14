@@ -51,12 +51,12 @@ import {
   DUE_DATE_BASE_LABELS,
   formatResponsibilityLabel,
   WORKFLOW_DUE_DATE_BASES,
-  type WorkflowDueDateBase,
   WORKFLOW_DUE_DAYS,
   WORKFLOW_PRIORITIES,
-  type WorkflowPriority,
   type WorkflowAttachment,
+  type WorkflowDueDateBase,
   type WorkflowOutcome,
+  type WorkflowPriority,
   type WorkflowTemplateStep,
 } from "@/types/workflows";
 

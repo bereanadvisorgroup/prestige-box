@@ -652,7 +652,7 @@ export const CompanyValuationHistorySchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task", "person"]);
+export const ChangeHistoryEntityTypeSchema = z.enum(["client", "company", "task", "person", "prospect"]);
 export const ChangeHistoryActionSchema = z.enum(["created", "updated", "added", "removed", "deleted"]);
 
 export const ChangeHistorySchema = z.object({
