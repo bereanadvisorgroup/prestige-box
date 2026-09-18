@@ -428,6 +428,20 @@ export function ProspectDetailClient({
                   {prospect.jobTitle || <span className="text-muted-foreground/50 italic">None</span>}
                 </span>
               </div>
+              {(prospect.street || prospect.city || prospect.state || prospect.zip) && (
+                <div className="flex items-start justify-between border-b py-1">
+                  <span className="text-muted-foreground">Address</span>
+                  <span className="text-right font-medium text-foreground">
+                    {prospect.street && <span className="block">{prospect.street}</span>}
+                    {prospect.street2 && <span className="block">{prospect.street2}</span>}
+                    {(prospect.city || prospect.state || prospect.zip) && (
+                      <span className="block">
+                        {[prospect.city, prospect.state].filter(Boolean).join(", ")} {prospect.zip || ""}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between border-b py-1">
                 <span className="text-muted-foreground">Lead Source</span>
                 <Badge variant="secondary" className="text-[10px]">

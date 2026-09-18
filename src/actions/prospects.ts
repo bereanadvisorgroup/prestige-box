@@ -322,13 +322,41 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
 
     const now = new Date().toISOString();
 
-    // 1. Prepare and insert Person
+    // 1. Create and associate address record only if prospect has a complete address (street, city, state, zip)
+    let createdAddressId: string | null = null;
+    const hasCompleteAddress = Boolean(
+      prospect.street?.trim() && prospect.city?.trim() && prospect.state?.trim() && prospect.zip?.trim(),
+    );
+
+    if (hasCompleteAddress) {
+      const { data: addressRecord, error: addressErr } = await supabaseServer
+        .from("addresses")
+        .insert({
+          street1: prospect.street!.trim(),
+          street2: prospect.street2?.trim() || null,
+          city: prospect.city!.trim(),
+          state: prospect.state!.trim(),
+          zipCode: prospect.zip!.trim(),
+          country: "USA",
+          createdAt: now,
+          updatedAt: now,
+        })
+        .select()
+        .single();
+
+      if (addressErr) throw new Error(`Failed to create address: ${addressErr.message}`);
+      createdAddressId = addressRecord.id;
+    }
+
+    // 2. Prepare and insert Person
     const emails = prospect.email
       ? [{ id: crypto.randomUUID(), address: prospect.email, type: "Work" as const, isPrimary: true }]
       : [];
     const phones = prospect.phone
       ? [{ id: crypto.randomUUID(), number: prospect.phone, type: "Work" as const, isPrimary: true }]
       : [];
+    const addresses = createdAddressId ? [{ id: createdAddressId, type: "Home" as const, isPrimary: true }] : [];
+    const addressIds = createdAddressId ? [createdAddressId] : [];
 
     const personPayload = {
       prefix: prospect.prefix || null,
@@ -339,6 +367,8 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
       goesBy: prospect.goesBy || null,
       emails,
       phones,
+      addresses,
+      addressIds,
       tags: ["Converted Prospect"],
       createdAt: now,
       updatedAt: now,
@@ -352,7 +382,7 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
 
     if (personErr) throw new Error(`Failed to create person: ${personErr.message}`);
 
-    // 2. Prepare and insert Client
+    // 3. Prepare and insert Client
     const effectiveAdvisorId = advisorId || prospect.assignedRepId || null;
     const clientPayload = {
       personId: person.id,
@@ -431,6 +461,7 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
     revalidatePath(`/dashboard/crm/prospects/${prospectId}`);
     revalidatePath("/dashboard/crm/clients");
     revalidatePath("/dashboard/crm/people");
+    revalidatePath("/dashboard/crm/addresses");
 
     return {
       success: true,

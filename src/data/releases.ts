@@ -19,6 +19,65 @@ export interface ReleaseNote {
 
 export const RELEASES: ReleaseNote[] = [
   {
+    version: "1.3.0",
+    date: "2026-09-18",
+    title: "Prospects Pipeline, Campaign Tracking & Lead Scoring Engine",
+    summary:
+      "Prestige Box 1.3.0 introduces a comprehensive Prospects module for end-to-end lead qualification, visual pipeline management, multi-touch campaign attribution, automated lead scoring, customizable fields, and one-click conversion to CRM clients.",
+    highlights: [
+      "Interactive Prospect Pipeline with Kanban drag-and-drop and customizable stage transitions",
+      "Multi-channel marketing campaign tracking with multi-touch attribution (First, Lead Creation, Mid, Last Touch)",
+      "Rule-based lead scoring engine with automatic point calculations and Cold/Warm/Hot lead temperatures",
+      "One-click 'Convert to Client' workflow creating unified Client and Person CRM records seamlessly",
+      "Robust CSV bulk importer with dynamic column mapping and flexible deduplication strategies",
+      "Dynamic prospect custom fields with support for text, numbers, dates, dropdowns, and booleans",
+    ],
+    items: [
+      {
+        category: "feature",
+        text: "Full Lifecycle Prospects Management",
+        detail:
+          "Manage leads through stages (New, Contacted, Qualified, Appt Scheduled, Closed Won, Closed Lost) across searchable table and interactive Kanban views.",
+      },
+      {
+        category: "feature",
+        text: "Automated Lead Scoring Engine",
+        detail:
+          "Configure dynamic scoring rules based on job titles, profile completeness, stages, and sources to calculate real-time scores and lead temperatures (Cold, Warm, Hot).",
+      },
+      {
+        category: "feature",
+        text: "Multi-Touch Campaign Attribution",
+        detail:
+          "Track marketing campaigns across channels with touchpoint attribution (First Touch, Lead Creation, Mid Touch, Last Touch) and ROI analytics such as cost per prospect and conversion rates.",
+      },
+      {
+        category: "feature",
+        text: "One-Click Convert to Client",
+        detail:
+          "Seamlessly convert qualified prospects into active CRM Clients and People records while preserving communication history and metadata.",
+      },
+      {
+        category: "feature",
+        text: "CSV Bulk Import Engine",
+        detail:
+          "Import prospect lists with visual column mapping, validation error reporting, and configurable deduplication handling (skip, overwrite, update empty).",
+      },
+      {
+        category: "feature",
+        text: "Prospect Custom Fields",
+        detail:
+          "Define tailored custom attributes (text, number, date, dropdowns, booleans) to capture firm-specific prospect information.",
+      },
+      {
+        category: "feature",
+        text: "Quick Communications & Activity Logging",
+        detail:
+          "Log calls and outbound emails with quick-action modals directly from prospect cards and landing pages.",
+      },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-09-18",
     title: "People Tagging, Task Archiving & Client Experience Enhancements",

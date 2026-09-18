@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { createProspect, updateProspect } from "@/actions/prospects";
@@ -72,6 +72,11 @@ export function ProspectDialog({
     assignedRepId: "",
     primaryCampaignId: "",
     notes: "",
+    street: "",
+    street2: "",
+    city: "",
+    state: "",
+    zip: "",
     utmSource: "",
     utmMedium: "",
     utmCampaign: "",
@@ -98,6 +103,11 @@ export function ProspectDialog({
         assignedRepId: prospect.assignedRepId || "",
         primaryCampaignId: prospect.primaryCampaignId || "",
         notes: prospect.notes || "",
+        street: prospect.street || "",
+        street2: prospect.street2 || "",
+        city: prospect.city || "",
+        state: prospect.state || "",
+        zip: prospect.zip || "",
         utmSource: prospect.utmSource || "",
         utmMedium: prospect.utmMedium || "",
         utmCampaign: prospect.utmCampaign || "",
@@ -130,6 +140,11 @@ export function ProspectDialog({
         assignedRepId: "",
         primaryCampaignId: "",
         notes: "",
+        street: "",
+        street2: "",
+        city: "",
+        state: "",
+        zip: "",
         utmSource: "",
         utmMedium: "",
         utmCampaign: "",
@@ -166,6 +181,11 @@ export function ProspectDialog({
         assignedRepId: formData.assignedRepId || null,
         primaryCampaignId: formData.primaryCampaignId || null,
         notes: formData.notes?.trim() && formData.notes !== "<p></p>" ? formData.notes : null,
+        street: formData.street.trim() || null,
+        street2: formData.street2.trim() || null,
+        city: formData.city.trim() || null,
+        state: formData.state.trim() || null,
+        zip: formData.zip.trim() || null,
         utmSource: formData.utmSource.trim() || null,
         utmMedium: formData.utmMedium.trim() || null,
         utmCampaign: formData.utmCampaign.trim() || null,
@@ -212,7 +232,7 @@ export function ProspectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEdit ? "Edit Prospect" : "New Prospect"}</DialogTitle>
@@ -225,7 +245,7 @@ export function ProspectDialog({
 
           <div className="space-y-4 py-4">
             {/* Name Fields */}
-            <div className="grid grid-cols-6 gap-2.5">
+            <div className="grid grid-cols-8 gap-2.5">
               <div className="col-span-2 space-y-1.5 sm:col-span-1">
                 <Label htmlFor="prefix" className="text-xs">
                   Prefix
@@ -272,9 +292,6 @@ export function ProspectDialog({
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="suffix" className="text-xs">
                   Suffix
@@ -288,7 +305,7 @@ export function ProspectDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="goesBy" className="text-xs">
-                  Goes By / Preferred Name
+                  Goes By
                 </Label>
                 <Input
                   id="goesBy"
@@ -349,6 +366,78 @@ export function ProspectDialog({
                   onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
                   placeholder="e.g. Chief Executive Officer"
                 />
+              </div>
+            </div>
+
+            {/* Address Fields */}
+            <div className="space-y-2 rounded-lg border bg-muted/15 p-3">
+              <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+                <MapPin className="h-3.5 w-3.5 text-primary" />
+                <span>Address</span>
+              </div>
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="street" className="text-[11px] text-muted-foreground">
+                    Street Address
+                  </Label>
+                  <Input
+                    id="street"
+                    value={formData.street}
+                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                    placeholder="e.g. 123 Financial Way"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="street2" className="text-[11px] text-muted-foreground">
+                    Street Address 2 (Apt, Suite, Unit)
+                  </Label>
+                  <Input
+                    id="street2"
+                    value={formData.street2}
+                    onChange={(e) => setFormData({ ...formData, street2: e.target.value })}
+                    placeholder="e.g. Suite 400"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-6 gap-2">
+                  <div className="col-span-3 space-y-1">
+                    <Label htmlFor="city" className="text-[11px] text-muted-foreground">
+                      City
+                    </Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      placeholder="e.g. Charlotte"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="col-span-1 space-y-1">
+                    <Label htmlFor="state" className="text-[11px] text-muted-foreground">
+                      State
+                    </Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      placeholder="NC"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label htmlFor="zip" className="text-[11px] text-muted-foreground">
+                      ZIP
+                    </Label>
+                    <Input
+                      id="zip"
+                      value={formData.zip}
+                      onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+                      placeholder="28202"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

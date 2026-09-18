@@ -118,8 +118,13 @@ function autoMatchHeader(header: string, customFields: ProspectCustomField[]): s
   if (["utmmedium"].includes(h)) return "utmMedium";
   if (["utmcampaign", "campaign"].includes(h)) return "utmCampaign";
   if (["utmterm"].includes(h)) return "utmTerm";
-  if (["utmcontent"].includes(h)) return "utmContent";
-  if (["notes", "note", "description", "comments", "memo"].includes(h)) return "notes";
+  if (["notes", "note", "description", "comments", "memo", "prospectnotes"].includes(h)) return "notes";
+  if (["street", "street1", "address", "addressline1", "streetaddress", "addr1", "address1", "streetaddr"].includes(h))
+    return "street";
+  if (["street2", "address2", "addressline2", "suite", "apt", "unit", "addr2", "ste"].includes(h)) return "street2";
+  if (["city", "town", "municipality"].includes(h)) return "city";
+  if (["state", "province", "region", "st"].includes(h)) return "state";
+  if (["zip", "zipcode", "postalcode", "postal", "postcode", "zip5"].includes(h)) return "zip";
 
   // Check custom fields
   for (const cf of customFields) {
@@ -274,6 +279,11 @@ export function CsvImporterModal({
     { value: "utmTerm", label: "UTM Term" },
     { value: "utmContent", label: "UTM Content" },
     { value: "notes", label: "Notes" },
+    { value: "street", label: "Street Address" },
+    { value: "street2", label: "Street Address 2 (Apt/Suite)" },
+    { value: "city", label: "City" },
+    { value: "state", label: "State / Province" },
+    { value: "zip", label: "ZIP / Postal Code" },
     ...customFields.map((cf) => ({
       value: `customFields.${cf.name}`,
       label: `[Custom] ${cf.label}`,
@@ -370,7 +380,7 @@ export function CsvImporterModal({
               <p className="font-medium text-foreground">Tips for best results:</p>
               <ul className="list-inside list-disc space-y-0.5">
                 <li>PrestigeBox fields: Prefix, First Name, Middle Name, Last Name, Suffix, Goes By.</li>
-                <li>Contact & Company info: Email, Phone, Company, Job Title, Stage, Source, UTM.</li>
+                <li>Contact & Address: Email, Phone, Company, Job Title, Street, City, State, ZIP, Notes.</li>
                 <li>Custom fields configured in PrestigeBox will be auto-detected.</li>
                 <li>Deduplication matches existing prospects by Email or Phone.</li>
               </ul>
