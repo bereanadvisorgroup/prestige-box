@@ -38,6 +38,7 @@ export async function createProspectScoringRule(data: Partial<ProspectScoringRul
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/score-rules");
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error("[createProspectScoringRule] Error:", error);
@@ -58,6 +59,7 @@ export async function updateProspectScoringRule(id: string, data: Partial<Prospe
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/score-rules");
     return { success: true };
   } catch (error) {
     console.error("[updateProspectScoringRule] Error:", error);
@@ -71,6 +73,7 @@ export async function deleteProspectScoringRule(id: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/score-rules");
     return { success: true };
   } catch (error) {
     console.error("[deleteProspectScoringRule] Error:", error);

@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   Plus,
   RefreshCw,
-  Sparkles,
   Table as TableIcon,
   TrendingUp,
   UserCheck,
@@ -20,10 +19,8 @@ import {
 import { toast } from "sonner";
 
 import { deleteProspect, recalculateAllScores } from "@/actions/prospects";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   EnrichedCampaign,
   EnrichedProspect,
@@ -32,20 +29,17 @@ import type {
   ProspectStage,
 } from "@/types/prospects";
 
-import { CampaignsSection } from "./campaigns-section";
 import { ConvertToClientDialog } from "./convert-to-client-dialog";
 import { CsvImporterModal } from "./csv-importer-modal";
-import { CustomFieldsSection } from "./custom-fields-section";
 import { KanbanBoard } from "./kanban-board";
 import { ProspectDialog } from "./prospect-dialog";
 import { ProspectsTable } from "./prospects-table";
-import { ScoringRulesSection } from "./scoring-rules-section";
 
 interface ProspectsClientProps {
   initialProspects: EnrichedProspect[];
   initialCampaigns: EnrichedCampaign[];
   customFields: ProspectCustomField[];
-  scoringRules: ProspectScoringRule[];
+  scoringRules?: ProspectScoringRule[];
   advisors: { uid: string; name: string }[];
 }
 
@@ -53,7 +47,7 @@ export function ProspectsClient({
   initialProspects,
   initialCampaigns,
   customFields,
-  scoringRules,
+  scoringRules: _scoringRules,
   advisors,
 }: ProspectsClientProps) {
   const router = useRouter();
@@ -62,7 +56,6 @@ export function ProspectsClient({
   const [prospects, setProspects] = React.useState<EnrichedProspect[]>(initialProspects);
   const [campaigns, setCampaigns] = React.useState<EnrichedCampaign[]>(initialCampaigns);
   const [viewMode, setViewMode] = React.useState<"kanban" | "table">("kanban");
-  const [activeTab, setActiveTab] = React.useState("pipeline");
 
   // Dialogs state
   const [isProspectDialogOpen, setIsProspectDialogOpen] = React.useState(false);
@@ -153,18 +146,33 @@ export function ProspectsClient({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">Prospects & Campaigns</h1>
-            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-xs">
-              CRM Engine
-            </Badge>
+            <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">Prospects Pipeline</h1>
           </div>
-          <p className="mt-1 text-muted-foreground text-xs sm:text-sm">
-            End-to-end prospect acquisition, multi-touch campaign attribution, and Podio-style flexible lead management.
-          </p>
         </div>
 
         {/* Global action buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1">
+            <Button
+              variant={viewMode === "kanban" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 gap-1 px-2.5 text-xs"
+              onClick={() => setViewMode("kanban")}
+            >
+              <Kanban className="h-3.5 w-3.5" />
+              <span>Kanban</span>
+            </Button>
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 gap-1 px-2.5 text-xs"
+              onClick={() => setViewMode("table")}
+            >
+              <TableIcon className="h-3.5 w-3.5" />
+              <span>Data Table</span>
+            </Button>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
@@ -187,6 +195,27 @@ export function ProspectsClient({
             <span>New Prospect</span>
           </Button>
         </div>
+      </div>
+
+      {/* Main Pipeline Content */}
+      <div className="space-y-4">
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            initialProspects={prospects}
+            campaigns={campaigns}
+            onEdit={handleEditProspect}
+            onConvert={handleConvertProspect}
+            onAddWithStage={handleCreateProspect}
+          />
+        ) : (
+          <ProspectsTable
+            data={prospects}
+            campaigns={campaigns}
+            onEdit={handleEditProspect}
+            onConvert={handleConvertProspect}
+            onDelete={handleDeleteProspect}
+          />
+        )}
       </div>
 
       {/* Top Metric KPI Cards */}
@@ -261,90 +290,6 @@ export function ProspectsClient({
           </CardContent>
         </Card>
       </div>
-
-      {/* Main Module Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex flex-col gap-3 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="bg-muted/60 p-1">
-            <TabsTrigger value="pipeline" className="gap-1.5 text-xs">
-              <Users className="h-3.5 w-3.5" />
-              <span>Prospects Pipeline</span>
-            </TabsTrigger>
-            <TabsTrigger value="campaigns" className="gap-1.5 text-xs">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>Campaigns & Attribution</span>
-            </TabsTrigger>
-            <TabsTrigger value="custom-fields" className="gap-1.5 text-xs">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Custom Fields</span>
-            </TabsTrigger>
-            <TabsTrigger value="scoring-rules" className="gap-1.5 text-xs">
-              <Flame className="h-3.5 w-3.5" />
-              <span>Scoring Rules</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Dual Viewing Mode Toggle (Visible only in pipeline tab) */}
-          {activeTab === "pipeline" && (
-            <div className="flex items-center gap-1 self-start rounded-lg border bg-muted/40 p-1 sm:self-auto">
-              <Button
-                variant={viewMode === "kanban" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 gap-1 px-2.5 text-xs"
-                onClick={() => setViewMode("kanban")}
-              >
-                <Kanban className="h-3.5 w-3.5" />
-                <span>Kanban</span>
-              </Button>
-              <Button
-                variant={viewMode === "table" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 gap-1 px-2.5 text-xs"
-                onClick={() => setViewMode("table")}
-              >
-                <TableIcon className="h-3.5 w-3.5" />
-                <span>Data Table</span>
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* TAB 1: PROSPECTS PIPELINE */}
-        <TabsContent value="pipeline" className="m-0 space-y-4">
-          {viewMode === "kanban" ? (
-            <KanbanBoard
-              initialProspects={prospects}
-              campaigns={campaigns}
-              onEdit={handleEditProspect}
-              onConvert={handleConvertProspect}
-              onAddWithStage={handleCreateProspect}
-            />
-          ) : (
-            <ProspectsTable
-              data={prospects}
-              campaigns={campaigns}
-              onEdit={handleEditProspect}
-              onConvert={handleConvertProspect}
-              onDelete={handleDeleteProspect}
-            />
-          )}
-        </TabsContent>
-
-        {/* TAB 2: CAMPAIGNS & ATTRIBUTION */}
-        <TabsContent value="campaigns" className="m-0">
-          <CampaignsSection campaigns={campaigns} customFields={customFields} onRefresh={handleRefresh} />
-        </TabsContent>
-
-        {/* TAB 3: PODIO CUSTOM FIELDS */}
-        <TabsContent value="custom-fields" className="m-0">
-          <CustomFieldsSection customFields={customFields} onRefresh={handleRefresh} />
-        </TabsContent>
-
-        {/* TAB 4: SCORING RULES */}
-        <TabsContent value="scoring-rules" className="m-0">
-          <ScoringRulesSection rules={scoringRules} onRefresh={handleRefresh} />
-        </TabsContent>
-      </Tabs>
 
       {/* Prospect Create / Edit Dialog */}
       <ProspectDialog

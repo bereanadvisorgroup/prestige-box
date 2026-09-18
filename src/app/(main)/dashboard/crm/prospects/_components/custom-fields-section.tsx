@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { useRouter } from "next/navigation";
+
 import { Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -19,6 +21,11 @@ interface CustomFieldsSectionProps {
 }
 
 export function CustomFieldsSection({ customFields, onRefresh }: CustomFieldsSectionProps) {
+  const router = useRouter();
+  const handleRefresh = () => {
+    onRefresh?.();
+    router.refresh();
+  };
   const [selectedField, setSelectedField] = React.useState<ProspectCustomField | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
@@ -32,7 +39,7 @@ export function CustomFieldsSection({ customFields, onRefresh }: CustomFieldsSec
       const res = await deleteProspectCustomField(field.id!);
       if (res.success) {
         toast.success("Custom field deleted.");
-        onRefresh?.();
+        handleRefresh();
       } else {
         toast.error(res.error || "Failed to delete custom field.");
       }
@@ -46,7 +53,7 @@ export function CustomFieldsSection({ customFields, onRefresh }: CustomFieldsSec
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-foreground text-lg tracking-tight">Podio-Style Dynamic Custom Fields</h3>
+            <h3 className="font-semibold text-foreground text-lg tracking-tight">Style Dynamic Custom Fields</h3>
             <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary text-xs">
               <Sparkles className="h-3 w-3" />
               <span>Extensible Schema</span>
@@ -148,7 +155,7 @@ export function CustomFieldsSection({ customFields, onRefresh }: CustomFieldsSec
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         customField={selectedField}
-        onSuccess={onRefresh}
+        onSuccess={handleRefresh}
       />
     </div>
   );

@@ -6,7 +6,7 @@ export const PROSPECT_STAGES = [
   "New",
   "Contacted",
   "Qualified",
-  "Demo Scheduled",
+  "Appt Scheduled",
   "Closed Won",
   "Closed Lost",
 ] as const;
@@ -113,6 +113,7 @@ export const ProspectSchema = z.object({
   utmCampaign: z.string().nullable().optional(),
   utmTerm: z.string().nullable().optional(),
   utmContent: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
   customFields: z.record(z.string(), z.unknown()).default({}),
   convertedClientId: z.string().nullable().optional(),
   convertedPersonId: z.string().nullable().optional(),

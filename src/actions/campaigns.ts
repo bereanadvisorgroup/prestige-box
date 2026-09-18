@@ -104,6 +104,7 @@ export async function createCampaign(data: Partial<Campaign>) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/campaigns");
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error("[createCampaign] Error:", error);
@@ -124,6 +125,7 @@ export async function updateCampaign(id: string, data: Partial<Campaign>) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/campaigns");
     return { success: true };
   } catch (error) {
     console.error("[updateCampaign] Error:", error);
@@ -148,6 +150,7 @@ export async function deleteCampaign(id: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/campaigns");
     return { success: true };
   } catch (error) {
     console.error("[deleteCampaign] Error:", error);
@@ -168,6 +171,7 @@ export async function addCampaignTouch(data: Partial<ProspectCampaignAttribution
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/campaigns");
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error("[addCampaignTouch] Error:", error);
@@ -181,6 +185,7 @@ export async function deleteCampaignTouch(id: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/campaigns");
     return { success: true };
   } catch (error) {
     console.error("[deleteCampaignTouch] Error:", error);

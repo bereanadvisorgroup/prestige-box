@@ -119,6 +119,7 @@ function autoMatchHeader(header: string, customFields: ProspectCustomField[]): s
   if (["utmcampaign", "campaign"].includes(h)) return "utmCampaign";
   if (["utmterm"].includes(h)) return "utmTerm";
   if (["utmcontent"].includes(h)) return "utmContent";
+  if (["notes", "note", "description", "comments", "memo"].includes(h)) return "notes";
 
   // Check custom fields
   for (const cf of customFields) {
@@ -272,6 +273,7 @@ export function CsvImporterModal({
     { value: "utmCampaign", label: "UTM Campaign" },
     { value: "utmTerm", label: "UTM Term" },
     { value: "utmContent", label: "UTM Content" },
+    { value: "notes", label: "Notes" },
     ...customFields.map((cf) => ({
       value: `customFields.${cf.name}`,
       label: `[Custom] ${cf.label}`,

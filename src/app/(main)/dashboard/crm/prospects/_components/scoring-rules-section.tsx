@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { useRouter } from "next/navigation";
+
 import { Flame, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +23,11 @@ interface ScoringRulesSectionProps {
 }
 
 export function ScoringRulesSection({ rules, onRefresh }: ScoringRulesSectionProps) {
+  const router = useRouter();
+  const handleRefresh = () => {
+    onRefresh?.();
+    router.refresh();
+  };
   const [selectedRule, setSelectedRule] = React.useState<ProspectScoringRule | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isRecalculating, setIsRecalculating] = React.useState(false);
@@ -33,7 +40,7 @@ export function ScoringRulesSection({ rules, onRefresh }: ScoringRulesSectionPro
       const res = await deleteProspectScoringRule(rule.id!);
       if (res.success) {
         toast.success("Scoring rule deleted.");
-        onRefresh?.();
+        handleRefresh();
       } else {
         toast.error(res.error || "Failed to delete scoring rule.");
       }
@@ -48,7 +55,7 @@ export function ScoringRulesSection({ rules, onRefresh }: ScoringRulesSectionPro
       const res = await recalculateAllScores();
       if (res.success) {
         toast.success(`Recalculated scores for all prospects (${res.updatedCount} updated).`);
-        onRefresh?.();
+        handleRefresh();
       } else {
         toast.error(res.error || "Failed to recalculate scores.");
       }
@@ -216,7 +223,12 @@ export function ScoringRulesSection({ rules, onRefresh }: ScoringRulesSectionPro
         </Table>
       </div>
 
-      <ScoringRuleDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} rule={selectedRule} onSuccess={onRefresh} />
+      <ScoringRuleDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        rule={selectedRule}
+        onSuccess={handleRefresh}
+      />
     </div>
   );
 }

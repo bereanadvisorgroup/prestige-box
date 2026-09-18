@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { useRouter } from "next/navigation";
+
 import { DollarSign, FileSpreadsheet, Pencil, Plus, Target, Trash2, TrendingUp, Upload, Users } from "lucide-react";
 import {
   Bar,
@@ -37,6 +39,11 @@ interface CampaignsSectionProps {
 const COLORS = ["#0284c7", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1"];
 
 export function CampaignsSection({ campaigns, customFields = [], onRefresh }: CampaignsSectionProps) {
+  const router = useRouter();
+  const handleRefresh = () => {
+    onRefresh?.();
+    router.refresh();
+  };
   const [selectedCampaign, setSelectedCampaign] = React.useState<EnrichedCampaign | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = React.useState(false);
@@ -82,7 +89,7 @@ export function CampaignsSection({ campaigns, customFields = [], onRefresh }: Ca
       const res = await deleteCampaign(campaign.id!);
       if (res.success) {
         toast.success("Campaign deleted.");
-        onRefresh?.();
+        handleRefresh();
       } else {
         toast.error(res.error || "Failed to delete campaign.");
       }
@@ -396,7 +403,7 @@ export function CampaignsSection({ campaigns, customFields = [], onRefresh }: Ca
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         campaign={selectedCampaign}
-        onSuccess={onRefresh}
+        onSuccess={handleRefresh}
       />
 
       {/* CSV Import Modal for Campaigns */}
@@ -406,7 +413,7 @@ export function CampaignsSection({ campaigns, customFields = [], onRefresh }: Ca
         campaigns={campaigns}
         customFields={customFields}
         initialCampaignId={csvTargetCampaignId}
-        onSuccess={onRefresh}
+        onSuccess={handleRefresh}
       />
     </div>
   );

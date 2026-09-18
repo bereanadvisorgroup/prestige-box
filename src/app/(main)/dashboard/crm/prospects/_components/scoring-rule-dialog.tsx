@@ -110,7 +110,7 @@ export function ScoringRuleDialog({ open, onOpenChange, rule, onSuccess }: Scori
       case "field_is_not_empty":
         return "e.g. phone, company, or customFields.deal_size";
       case "stage_is":
-        return "e.g. Demo Scheduled, Qualified";
+        return "e.g. Appt Scheduled, Qualified";
       case "source_is":
         return "e.g. Website, Inbound, Referral";
       case "inactivity_days":

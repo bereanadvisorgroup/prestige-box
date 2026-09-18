@@ -24,7 +24,12 @@ CREATE TABLE IF NOT EXISTS "prospects" (
   "phone" text,
   "company" text,
   "jobTitle" text,
-  "stage" text NOT NULL DEFAULT 'New', -- New, Contacted, Qualified, Demo Scheduled, Closed Won, Closed Lost
+  "prefix" text,
+  "middleName" text,
+  "suffix" text,
+  "goesBy" text,
+  "notes" text,
+  "stage" text NOT NULL DEFAULT 'New', -- New, Contacted, Qualified, Appt Scheduled, Closed Won, Closed Lost
   "score" integer DEFAULT 0,
   "source" text DEFAULT 'Direct', -- Website, Referral, Cold Outreach, Trade Show, Inbound, Paid Ads, LinkedIn, Other
   "assignedRepId" uuid REFERENCES "users"("uid") ON DELETE SET NULL,
@@ -35,7 +40,7 @@ CREATE TABLE IF NOT EXISTS "prospects" (
   "utmCampaign" text,
   "utmTerm" text,
   "utmContent" text,
-  -- Podio-style dynamic custom fields (key-value dictionary)
+  -- Dynamic custom fields (key-value dictionary)
   "customFields" jsonb DEFAULT '{}'::jsonb,
   -- Bidirectional links / Client conversion fields
   "convertedClientId" uuid REFERENCES "clients"("id") ON DELETE SET NULL,
@@ -56,7 +61,7 @@ CREATE TABLE IF NOT EXISTS "prospect_campaign_attributions" (
   "createdAt" timestamp with time zone DEFAULT now()
 );
 
--- 4. Podio-style Custom Field Definitions
+-- 4. Custom Field Definitions
 CREATE TABLE IF NOT EXISTS "prospect_custom_fields" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "name" text NOT NULL UNIQUE, -- machine key (e.g. deal_size)
@@ -111,7 +116,7 @@ VALUES
   ('Phone Number Provided', 'field_is_not_empty', 'phone', 10, true),
   ('Company Provided', 'field_is_not_empty', 'company', 5, true),
   ('Inbound Web Source', 'source_is', 'Website,Inbound', 10, true),
-  ('Demo Scheduled', 'stage_is', 'Demo Scheduled', 20, true),
+  ('Appt Scheduled', 'stage_is', 'Appt Scheduled', 20, true),
   ('Qualified Stage', 'stage_is', 'Qualified', 15, true),
   ('Inactivity > 30 Days', 'inactivity_days', '30', -15, true)
 ON CONFLICT DO NOTHING;
@@ -125,7 +130,7 @@ VALUES
   ('Referral Partner Program 2026', 'Referral Partner', 'Active', 2500.00, 'Law & Accounting Firm Clients', 'Strategic co-marketing and reciprocal client introductions with law and CPA partners.')
 ON CONFLICT DO NOTHING;
 
--- Seed initial Podio custom field definitions
+-- Seed initial Custom field definitions
 INSERT INTO "prospect_custom_fields" ("name", "label", "fieldType", "options", "isRequired", "defaultValue", "sortOrder")
 VALUES
   ('estimated_investable_assets', 'Est. Investable Assets', 'dropdown', '{"Under $500k", "$500k - $1M", "$1M - $5M", "$5M - $10M", "$10M+"}', false, '$1M - $5M', 1),

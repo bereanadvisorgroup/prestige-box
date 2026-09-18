@@ -19,6 +19,79 @@ export interface ReleaseNote {
 
 export const RELEASES: ReleaseNote[] = [
   {
+    version: "1.2.0",
+    date: "2026-09-18",
+    title: "People Tagging, Task Archiving & Client Experience Enhancements",
+    summary:
+      "Prestige Box 1.2.0 brings key CRM workflow improvements including task archiving and Kanban support, contact tagging with multi-tag filtering, direct person editing and expanded contact cards on client profiles, and Google Places address selection fixes.",
+    highlights: [
+      "Task archiving with drag-and-drop Kanban support, archive filters, and 'Archived on' timestamp tracking",
+      "Tagging system for People records with interactive filtering and badge views",
+      "People-linked tasks allowing direct task tracking on individual person profiles",
+      "Full legal name display and comprehensive Contact Card with direct person editing on Client pages",
+      "Resolved Google Maps Places autocomplete and address re-selection issues",
+    ],
+    items: [
+      {
+        category: "feature",
+        text: "Task Archive Status & Timestamp Tracking",
+        detail:
+          "Introduced an Archive status for tasks along with an 'Archived on' timestamp field in the task edit modal.",
+      },
+      {
+        category: "feature",
+        text: "Drag-and-Drop Tasks to Archive",
+        detail: "Enabled drag-and-drop capability on the Kanban board to easily move tasks into the Archive column.",
+      },
+      {
+        category: "improvement",
+        text: "Task Archive Filter on Client Pages",
+        detail: "Added a dedicated Archive status filter on client task views to toggle active and archived tasks.",
+      },
+      {
+        category: "feature",
+        text: "People Tagging System & Filter by Tags",
+        detail: "Assign custom tags to people records and quickly filter the directory by selected tags.",
+      },
+      {
+        category: "feature",
+        text: "Tasks for People Profiles",
+        detail:
+          "Associate and manage tasks directly within individual people records via a dedicated tasks profile tab.",
+      },
+      {
+        category: "improvement",
+        text: "Full Legal Name Display on Client Profiles",
+        detail:
+          "Added client full legal name display directly beneath the primary client name across client workspace pages.",
+      },
+      {
+        category: "improvement",
+        text: "Direct Person Edit from Client Contact Card",
+        detail:
+          "Added an Edit button in the General Info Contact Card to quickly modify person details without leaving the client page.",
+      },
+      {
+        category: "improvement",
+        text: "Expanded Person Contact Details on Card",
+        detail:
+          "All person contact information including phone numbers, emails, and address details are now fully visible on the Contact Card.",
+      },
+      {
+        category: "fix",
+        text: "Google Maps Address Autocomplete & Population",
+        detail:
+          "Resolved an issue where selecting an address from the Google Places dropdown failed to populate form fields.",
+      },
+      {
+        category: "fix",
+        text: "Address Selection State After Entry",
+        detail:
+          "Fixed an issue where entered addresses were not selectable or selectable states were lost after entry.",
+      },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-08-23",
     title: "Workflow Chaining, Custom Task Categories & Household Improvements",

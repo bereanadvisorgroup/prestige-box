@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { createProspect, updateProspect } from "@/actions/prospects";
+import { RichTextEditor } from "@/components/features/tasks/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -70,6 +71,7 @@ export function ProspectDialog({
     source: "Website",
     assignedRepId: "",
     primaryCampaignId: "",
+    notes: "",
     utmSource: "",
     utmMedium: "",
     utmCampaign: "",
@@ -95,6 +97,7 @@ export function ProspectDialog({
         source: prospect.source || "Website",
         assignedRepId: prospect.assignedRepId || "",
         primaryCampaignId: prospect.primaryCampaignId || "",
+        notes: prospect.notes || "",
         utmSource: prospect.utmSource || "",
         utmMedium: prospect.utmMedium || "",
         utmCampaign: prospect.utmCampaign || "",
@@ -126,6 +129,7 @@ export function ProspectDialog({
         source: "Website",
         assignedRepId: "",
         primaryCampaignId: "",
+        notes: "",
         utmSource: "",
         utmMedium: "",
         utmCampaign: "",
@@ -161,6 +165,7 @@ export function ProspectDialog({
         source: formData.source,
         assignedRepId: formData.assignedRepId || null,
         primaryCampaignId: formData.primaryCampaignId || null,
+        notes: formData.notes?.trim() && formData.notes !== "<p></p>" ? formData.notes : null,
         utmSource: formData.utmSource.trim() || null,
         utmMedium: formData.utmMedium.trim() || null,
         utmCampaign: formData.utmCampaign.trim() || null,
@@ -428,12 +433,22 @@ export function ProspectDialog({
               </div>
             </div>
 
-            {/* Podio-style Dynamic Custom Fields */}
+            {/* Notes WYSIWYG Field */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Notes</Label>
+              <RichTextEditor
+                value={formData.notes}
+                onChange={(html) => setFormData((prev) => ({ ...prev, notes: html }))}
+                placeholder="Add prospect notes..."
+              />
+            </div>
+
+            {/* Dynamic Custom Fields */}
             {customFields.length > 0 && (
               <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
                 <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
                   <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  <span>Custom Fields (Podio Architecture)</span>
+                  <span>Custom Fields</span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

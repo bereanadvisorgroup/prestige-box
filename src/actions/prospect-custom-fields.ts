@@ -43,6 +43,7 @@ export async function createProspectCustomField(data: Partial<ProspectCustomFiel
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/custom-fields");
     return { success: true, id: inserted.id };
   } catch (error) {
     console.error("[createProspectCustomField] Error:", error);
@@ -56,6 +57,7 @@ export async function updateProspectCustomField(id: string, data: Partial<Prospe
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/custom-fields");
     return { success: true };
   } catch (error) {
     console.error("[updateProspectCustomField] Error:", error);
@@ -69,6 +71,7 @@ export async function deleteProspectCustomField(id: string) {
     if (error) throw new Error(error.message);
 
     revalidatePath("/dashboard/crm/prospects");
+    revalidatePath("/dashboard/crm/prospects/custom-fields");
     return { success: true };
   } catch (error) {
     console.error("[deleteProspectCustomField] Error:", error);

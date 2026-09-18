@@ -14,9 +14,11 @@ import {
   Database,
   DollarSign,
   FileText,
+  Flame,
   HeartHandshake,
   HeartPulse,
   Home,
+  Kanban,
   Landmark,
   LayoutDashboard,
   ListTodo,
@@ -24,6 +26,7 @@ import {
   Scale,
   Shield,
   ShieldAlert,
+  Sparkles,
   StickyNote,
   TrendingUp,
   Users,
@@ -524,6 +527,44 @@ const getCompanySidebarItems = (companyId: string, counts: Record<string, number
   },
 ];
 
+const getProspectSidebarItems = (): NavGroup[] => [
+  {
+    id: 40,
+    items: [
+      {
+        title: "Back to Dashboard",
+        url: "/dashboard/crm",
+        icon: ArrowLeft,
+      },
+    ],
+  },
+  {
+    id: 41,
+    items: [
+      {
+        title: "Pipeline",
+        url: "/dashboard/crm/prospects",
+        icon: Kanban,
+      },
+      {
+        title: "Campaigns",
+        url: "/dashboard/crm/prospects/campaigns",
+        icon: TrendingUp,
+      },
+      {
+        title: "Custom Fields",
+        url: "/dashboard/crm/prospects/custom-fields",
+        icon: Sparkles,
+      },
+      {
+        title: "Score Rules",
+        url: "/dashboard/crm/prospects/score-rules",
+        icon: Flame,
+      },
+    ],
+  },
+];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
@@ -555,6 +596,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isClientView = isCrmStaff && clientId;
   const isCompanyView = isCrmStaff && companyId;
   const isHouseholdView = isCrmStaff && householdId;
+  const isProspectView = isCrmStaff && pathname.startsWith("/dashboard/crm/prospects");
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [companyDetails, setCompanyDetails] = useState<{
@@ -630,14 +672,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     };
   }, [clientId, companyId, householdId, pathname]);
 
-  // Filter sidebar items based on user role or client/company/household context
+  // Filter sidebar items based on user role or client/company/household/prospect context
   const filteredSidebarItems = isClientView
     ? getClientSidebarItems(clientId, counts)
     : isHouseholdView
       ? getHouseholdSidebarItems(householdId, counts)
       : isCompanyView
         ? getCompanySidebarItems(companyId, counts)
-        : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
+        : isProspectView
+          ? getProspectSidebarItems()
+          : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
 
   return (
     <Sidebar {...props} variant={variant} collapsible={collapsible}>

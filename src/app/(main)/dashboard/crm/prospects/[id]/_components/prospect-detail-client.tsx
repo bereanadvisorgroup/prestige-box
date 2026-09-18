@@ -109,6 +109,10 @@ export function ProspectDetailClient({
   const [prospect, setProspect] = React.useState<EnrichedProspect>(initialProspect);
   const [attributions, _setAttributions] = React.useState<EnrichedAttribution[]>(initialAttributions);
 
+  React.useEffect(() => {
+    setProspect(initialProspect);
+  }, [initialProspect]);
+
   // Modal dialog states
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = React.useState(false);
@@ -274,7 +278,7 @@ export function ProspectDetailClient({
                   <SelectItem value="New">New</SelectItem>
                   <SelectItem value="Contacted">Contacted</SelectItem>
                   <SelectItem value="Qualified">Qualified</SelectItem>
-                  <SelectItem value="Demo Scheduled">Demo Scheduled</SelectItem>
+                  <SelectItem value="Appt Scheduled">Appt Scheduled</SelectItem>
                   <SelectItem value="Closed Won">Closed Won</SelectItem>
                   <SelectItem value="Closed Lost">Closed Lost</SelectItem>
                 </SelectContent>
@@ -359,7 +363,7 @@ export function ProspectDetailClient({
                 <SelectItem value="New">New</SelectItem>
                 <SelectItem value="Contacted">Contacted</SelectItem>
                 <SelectItem value="Qualified">Qualified</SelectItem>
-                <SelectItem value="Demo Scheduled">Demo Scheduled</SelectItem>
+                <SelectItem value="Appt Scheduled">Appt Scheduled</SelectItem>
                 <SelectItem value="Closed Won">Closed Won</SelectItem>
                 <SelectItem value="Closed Lost">Closed Lost</SelectItem>
               </SelectContent>
@@ -441,12 +445,51 @@ export function ProspectDetailClient({
             </CardContent>
           </Card>
 
-          {/* Podio Dynamic Custom Fields Card */}
+          {/* Notes Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between p-4 pb-2">
+              <CardTitle className="flex items-center gap-1.5 font-semibold text-sm">
+                <StickyNote className="h-4 w-4 text-primary" />
+                <span>Notes</span>
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsEditDialogOpen(true)}
+                title={prospect.notes ? "Edit Notes" : "Add Notes"}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-4 pt-1 text-xs">
+              {prospect.notes ? (
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground text-xs [&_a]:text-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+                  dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(prospect.notes) }}
+                />
+              ) : (
+                <div className="py-2 text-center text-muted-foreground/60 text-xs italic">
+                  No notes added yet.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditDialogOpen(true)}
+                    className="text-primary underline hover:text-primary/80"
+                  >
+                    Add notes
+                  </button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Dynamic Custom Fields Card */}
           <Card>
             <CardHeader className="p-4 pb-2">
               <CardTitle className="flex items-center gap-1.5 font-semibold text-sm">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span>Custom Attributes (Podio)</span>
+                <span>Custom Attributes</span>
               </CardTitle>
               <CardDescription className="text-xs">Dynamic user-defined fields</CardDescription>
             </CardHeader>
