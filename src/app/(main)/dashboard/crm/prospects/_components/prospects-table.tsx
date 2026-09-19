@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { normalizeStateToAbbreviation } from "@/lib/us-states";
+import { normalizeStateToAbbreviation, US_STATES } from "@/lib/us-states";
 import {
   type Campaign,
   type EnrichedProspect,
@@ -51,7 +51,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
   });
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
-  const [cityStateFilter, setCityStateFilter] = React.useState("");
+  const [cityFilter, setCityFilter] = React.useState("");
+  const [stateFilter, setStateFilter] = React.useState<string>("all");
 
   // Filters state
   const [stageFilter, setStageFilter] = React.useState<string>("all");
@@ -93,31 +94,25 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
         }
       }
 
-      // 5. City / State filter
-      if (cityStateFilter.trim()) {
-        const query = cityStateFilter.toLowerCase().trim();
+      // 5. City filter
+      if (cityFilter.trim()) {
+        const query = cityFilter.toLowerCase().trim();
         const city = (item.city || "").toLowerCase();
-        const state = (item.state || "").toLowerCase();
-        const queryAbbr = normalizeStateToAbbreviation(query)?.toLowerCase();
-        const combined = `${city} ${state}`.trim();
-        const combinedComma = `${city}, ${state}`.trim();
-
-        const terms = query.replace(/,/g, " ").split(/\s+/).filter(Boolean);
-
-        const matches =
-          city.includes(query) ||
-          state.includes(query) ||
-          (queryAbbr ? state === queryAbbr : false) ||
-          combined.includes(query) ||
-          combinedComma.includes(query) ||
-          (terms.length > 0 && terms.every((t) => combined.includes(t)));
-
-        if (!matches) {
+        if (!city.includes(query)) {
           return false;
         }
       }
 
-      // 6. Global search filter
+      // 6. State filter
+      if (stateFilter !== "all") {
+        const itemState = item.state?.trim();
+        const itemStateCode = normalizeStateToAbbreviation(itemState);
+        if (itemStateCode !== stateFilter && itemState?.toUpperCase() !== stateFilter) {
+          return false;
+        }
+      }
+
+      // 7. Global search filter
       if (globalFilter.trim()) {
         const query = globalFilter.toLowerCase().trim();
         const fullName = `${item.firstName} ${item.lastName}`.toLowerCase();
@@ -143,7 +138,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
 
       return true;
     });
-  }, [data, stageFilter, sourceFilter, statusFilter, campaignFilter, globalFilter, cityStateFilter]);
+  }, [data, stageFilter, sourceFilter, statusFilter, campaignFilter, globalFilter, cityFilter, stateFilter]);
 
   const tableColumns = React.useMemo(() => columns(onEdit, onConvert, onDelete), [onEdit, onConvert, onDelete]);
 
@@ -275,16 +270,18 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
     sourceFilter !== "all" ||
     statusFilter !== "all" ||
     campaignFilter !== "all" ||
-    globalFilter.trim() !== "" ||
-    cityStateFilter.trim() !== "";
+    stateFilter !== "all" ||
+    cityFilter.trim() !== "" ||
+    globalFilter.trim() !== "";
 
   const clearFilters = () => {
     setStageFilter("all");
     setSourceFilter("all");
     setStatusFilter("all");
     setCampaignFilter("all");
+    setStateFilter("all");
+    setCityFilter("");
     setGlobalFilter("");
-    setCityStateFilter("");
   };
 
   return (
@@ -303,26 +300,42 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
             />
           </div>
 
-          {/* City / State Text Filter */}
-          <div className="relative w-full sm:w-48">
+          {/* City Text Filter */}
+          <div className="relative w-full sm:w-40">
             <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search City, State"
-              value={cityStateFilter}
-              onChange={(e) => setCityStateFilter(e.target.value)}
+              placeholder="Search City"
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
               className="pr-8 pl-8 text-sm"
             />
-            {cityStateFilter && (
+            {cityFilter && (
               <button
                 type="button"
-                onClick={() => setCityStateFilter("")}
+                onClick={() => setCityFilter("")}
                 className="absolute top-2.5 right-2 flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
-                aria-label="Clear city, state search"
+                aria-label="Clear city search"
               >
                 <X className="h-3 w-3" />
               </button>
             )}
           </div>
+
+          {/* State filter */}
+          <Select value={stateFilter} onValueChange={setStateFilter}>
+            <SelectTrigger className="w-[100px] text-xs">
+              <SelectValue placeholder="State">{stateFilter !== "all" ? stateFilter : "All States"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              <SelectItem value="all">All States</SelectItem>
+              {US_STATES.map((st) => (
+                <SelectItem key={st.code} value={st.code}>
+                  <span className="font-semibold">{st.code}</span>
+                  <span className="ml-1.5 font-normal text-muted-foreground text-xs">({st.name})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Stage filter */}
           <Select value={stageFilter} onValueChange={setStageFilter}>
