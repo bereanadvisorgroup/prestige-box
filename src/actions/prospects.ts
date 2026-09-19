@@ -6,6 +6,7 @@ import { fetchAllRows } from "@/lib/fetch-chunks";
 import { getCurrentActor, recordEvent } from "@/lib/history/record";
 import { calculateProspectScore } from "@/lib/scoring";
 import { supabaseServer } from "@/lib/supabase.server";
+import { normalizeStateToAbbreviation } from "@/lib/us-states";
 import { formatFullName } from "@/lib/utils";
 import {
   type CsvHeaderMapping,
@@ -154,6 +155,11 @@ export async function getProspect(id: string) {
 
 export async function createProspect(data: Partial<Prospect>) {
   try {
+    // Normalize address state if provided
+    if (data.state) {
+      data.state = normalizeStateToAbbreviation(data.state) || data.state.trim() || null;
+    }
+
     // Load rules for initial score
     const { data: rules } = await supabaseServer.from(SCORING_RULES).select("*");
     const scoring = calculateProspectScore(data, (rules || []) as ProspectScoringRule[]);
@@ -200,6 +206,11 @@ export async function updateProspect(id: string, data: Partial<Prospect>) {
   try {
     const { data: current } = await supabaseServer.from(PROSPECTS).select("*").eq("id", id).single();
     if (!current) throw new Error("Prospect not found");
+
+    // Normalize address state if provided
+    if (data.state !== undefined) {
+      data.state = data.state ? normalizeStateToAbbreviation(data.state) || data.state.trim() || null : null;
+    }
 
     // Recalculate score with updated attributes
     const { data: rules } = await supabaseServer.from(SCORING_RULES).select("*");
@@ -550,9 +561,16 @@ export async function batchImportProspects(
           if (mapItem.targetField.startsWith("customFields.")) {
             const fieldKey = mapItem.targetField.replace("customFields.", "");
             prospectData.customFields[fieldKey] = strVal;
+          } else if (mapItem.targetField === "state") {
+            prospectData.state = normalizeStateToAbbreviation(strVal) || strVal;
           } else {
             (prospectData as Record<string, unknown>)[mapItem.targetField] = strVal;
           }
+        }
+
+        // Ensure state is translated to 2-letter abbreviation if full state name provided
+        if (prospectData.state) {
+          prospectData.state = normalizeStateToAbbreviation(prospectData.state) || prospectData.state;
         }
 
         // Handle combined name parsing if firstName & lastName aren't both present

@@ -282,7 +282,7 @@ export function CsvImporterModal({
     { value: "street", label: "Street Address" },
     { value: "street2", label: "Street Address 2 (Apt/Suite)" },
     { value: "city", label: "City" },
-    { value: "state", label: "State / Province" },
+    { value: "state", label: "State (2-Letter Code)" },
     { value: "zip", label: "ZIP / Postal Code" },
     ...customFields.map((cf) => ({
       value: `customFields.${cf.name}`,

@@ -43,6 +43,20 @@ export async function getPerson(id: string) {
   }
 }
 
+export async function getPeopleByIds(ids: string[]) {
+  try {
+    if (!ids || ids.length === 0) return { success: true, people: [] };
+    const { data: people, error } = await supabaseServer.from(TABLE).select("*").in("id", ids);
+
+    if (error) throw new Error((error as { message: string }).message);
+
+    return { success: true, people: (people || []).map(normalizePerson) as Person[] };
+  } catch (error) {
+    console.error(`[getPeopleByIds] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
 export async function createPerson(data: Partial<Person>) {
   try {
     const validated = PersonSchema.parse({

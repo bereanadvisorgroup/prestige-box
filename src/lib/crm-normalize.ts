@@ -49,5 +49,6 @@ export function normalizeClient(client: any): Client {
     pii: safelyParseJsonObject(client.pii),
     liabilities: safelyParseJsonArray(client.liabilities),
     mortgages: safelyParseJsonArray(client.mortgages),
+    familyMembers: safelyParseJsonArray(client.familyMembers),
   };
 }

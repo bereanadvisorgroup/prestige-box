@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { normalizeStateToAbbreviation } from "@/lib/us-states";
 import {
   type Campaign,
   type EnrichedProspect,
@@ -97,6 +98,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
         const query = cityStateFilter.toLowerCase().trim();
         const city = (item.city || "").toLowerCase();
         const state = (item.state || "").toLowerCase();
+        const queryAbbr = normalizeStateToAbbreviation(query)?.toLowerCase();
         const combined = `${city} ${state}`.trim();
         const combinedComma = `${city}, ${state}`.trim();
 
@@ -105,6 +107,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
         const matches =
           city.includes(query) ||
           state.includes(query) ||
+          (queryAbbr ? state === queryAbbr : false) ||
           combined.includes(query) ||
           combinedComma.includes(query) ||
           (terms.length > 0 && terms.every((t) => combined.includes(t)));

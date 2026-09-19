@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { normalizeStateToAbbreviation, US_STATES } from "@/lib/us-states";
 import {
   type Campaign,
   type EnrichedProspect,
@@ -106,7 +107,7 @@ export function ProspectDialog({
         street: prospect.street || "",
         street2: prospect.street2 || "",
         city: prospect.city || "",
-        state: prospect.state || "",
+        state: normalizeStateToAbbreviation(prospect.state) || prospect.state || "",
         zip: prospect.zip || "",
         utmSource: prospect.utmSource || "",
         utmMedium: prospect.utmMedium || "",
@@ -165,6 +166,10 @@ export function ProspectDialog({
 
     setIsSubmitting(true);
     try {
+      const normalizedState = formData.state
+        ? normalizeStateToAbbreviation(formData.state) || formData.state.trim() || null
+        : null;
+
       const payload: Partial<Prospect> = {
         prefix: formData.prefix.trim() || null,
         firstName: formData.firstName.trim(),
@@ -184,7 +189,7 @@ export function ProspectDialog({
         street: formData.street.trim() || null,
         street2: formData.street2.trim() || null,
         city: formData.city.trim() || null,
-        state: formData.state.trim() || null,
+        state: normalizedState,
         zip: formData.zip.trim() || null,
         utmSource: formData.utmSource.trim() || null,
         utmMedium: formData.utmMedium.trim() || null,
@@ -400,8 +405,8 @@ export function ProspectDialog({
                     className="h-8 text-xs"
                   />
                 </div>
-                <div className="grid grid-cols-6 gap-2">
-                  <div className="col-span-3 space-y-1">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
+                  <div className="space-y-1 sm:col-span-3">
                     <Label htmlFor="city" className="text-[11px] text-muted-foreground">
                       City
                     </Label>
@@ -413,19 +418,32 @@ export function ProspectDialog({
                       className="h-8 text-xs"
                     />
                   </div>
-                  <div className="col-span-1 space-y-1">
+                  <div className="space-y-1 sm:col-span-1">
                     <Label htmlFor="state" className="text-[11px] text-muted-foreground">
                       State
                     </Label>
-                    <Input
-                      id="state"
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      placeholder="NC"
-                      className="h-8 text-xs"
-                    />
+                    <Select
+                      value={formData.state || "none"}
+                      onValueChange={(val) => setFormData({ ...formData, state: val === "none" ? "" : val })}
+                    >
+                      <SelectTrigger id="state" className="h-8 w-full text-xs">
+                        <SelectValue placeholder="State">{formData.state ? formData.state : undefined}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        <SelectItem value="none">--</SelectItem>
+                        {US_STATES.map((st) => (
+                          <SelectItem key={st.code} value={st.code}>
+                            <span className="font-semibold">{st.code}</span>
+                            <span className="ml-1.5 font-normal text-muted-foreground text-xs">({st.name})</span>
+                          </SelectItem>
+                        ))}
+                        {formData.state && !US_STATES.some((st) => st.code === formData.state) && (
+                          <SelectItem value={formData.state}>{formData.state}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="col-span-2 space-y-1">
+                  <div className="space-y-1 sm:col-span-2">
                     <Label htmlFor="zip" className="text-[11px] text-muted-foreground">
                       ZIP
                     </Label>
