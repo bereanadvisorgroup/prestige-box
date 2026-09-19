@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { fetchAllRows } from "@/lib/fetch-chunks";
-import { recordEvent } from "@/lib/history/record";
+import { getCurrentActor, recordEvent } from "@/lib/history/record";
 import { calculateProspectScore } from "@/lib/scoring";
 import { supabaseServer } from "@/lib/supabase.server";
 import { formatFullName } from "@/lib/utils";
@@ -108,9 +108,13 @@ export async function getProspect(id: string) {
 
     // Fetch notes if any
     const noteIds = (notesAssocRes.data || []).map((na) => na.noteId);
-    const { data: notes } = noteIds.length
+    const { data: notesRaw } = noteIds.length
       ? await supabaseServer.from("notes").select("*").in("id", noteIds).order("createdAt", { ascending: false })
       : { data: [] };
+    const notes = (notesRaw || []).map((n) => ({
+      ...n,
+      content: n.body || "",
+    }));
 
     // Fetch tasks if any
     const taskIds = (tasksAssocRes.data || []).map((ta) => ta.taskId);
@@ -428,11 +432,18 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
     if (prospectUpdateErr) throw new Error(`Failed to update prospect: ${prospectUpdateErr.message}`);
 
     // 4. Create an initial activity Note linked to the prospect and the new client
+    const actor = await getCurrentActor();
     const { data: note } = await supabaseServer
       .from("notes")
       .insert({
+        parentId: null,
+        rootId: null,
+        depth: 0,
         title: "Prospect Converted to Client",
-        content: `<p>Successfully converted prospect <strong>${prospect.firstName} ${prospect.lastName}</strong> into an active client record.</p>`,
+        body: `<p>Successfully converted prospect <strong>${prospect.firstName} ${prospect.lastName}</strong> into an active client record.</p>`,
+        authorId: actor.actorId,
+        score: 0,
+        isDeleted: false,
         createdAt: now,
         updatedAt: now,
       })
@@ -440,6 +451,7 @@ export async function convertProspectToClient(prospectId: string, advisorId?: st
       .maybeSingle();
 
     if (note) {
+      await supabaseServer.from("notes").update({ rootId: note.id }).eq("id", note.id);
       await supabaseServer.from("note_associations").insert([
         { noteId: note.id, entityType: "prospect", entityId: prospectId },
         { noteId: note.id, entityType: "client", entityId: client.id },
@@ -795,6 +807,7 @@ export async function logProspectCall(data: {
   notes?: string;
 }) {
   try {
+    const actor = await getCurrentActor();
     const now = new Date().toISOString();
     const noteTitle = `Call Log: ${data.outcome}`;
     const noteContent = `<p><strong>Call with:</strong> ${data.prospectName}</p><p><strong>Outcome:</strong> ${data.outcome}</p><p><strong>Duration:</strong> ${data.durationMinutes} min</p>${data.notes ? `<p><strong>Discussion:</strong> ${data.notes}</p>` : ""}`;
@@ -802,8 +815,14 @@ export async function logProspectCall(data: {
     const { data: note, error: noteErr } = await supabaseServer
       .from("notes")
       .insert({
+        parentId: null,
+        rootId: null,
+        depth: 0,
         title: noteTitle,
-        content: noteContent,
+        body: noteContent,
+        authorId: actor.actorId,
+        score: 0,
+        isDeleted: false,
         createdAt: now,
         updatedAt: now,
       })
@@ -811,6 +830,8 @@ export async function logProspectCall(data: {
       .single();
 
     if (noteErr) throw new Error(noteErr.message);
+
+    await supabaseServer.from("notes").update({ rootId: note.id }).eq("id", note.id);
 
     await supabaseServer.from("note_associations").insert({
       noteId: note.id,

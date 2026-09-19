@@ -5,6 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { differenceInCalendarDays } from "date-fns";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -12,6 +13,7 @@ import {
   Clock,
   History,
   Mail,
+  MapPin,
   Pencil,
   PhoneCall,
   Plus,
@@ -56,7 +58,8 @@ export interface EnrichedAttribution extends ProspectCampaignAttribution {
 interface NoteItem {
   id: string;
   title?: string | null;
-  content: string;
+  body?: string | null;
+  content?: string | null;
   createdAt: string;
 }
 
@@ -131,6 +134,13 @@ export function ProspectDetailClient({
       .join(" ") || "Prospect";
   const isConverted = !!prospect.convertedClientId || !!convertedClient;
   const convertedClientId = prospect.convertedClientId || convertedClient?.id;
+
+  const daysSinceCreated = React.useMemo(() => {
+    if (!prospect.createdAt) return 0;
+    const createdDate = new Date(prospect.createdAt);
+    if (Number.isNaN(createdDate.getTime())) return 0;
+    return Math.max(0, differenceInCalendarDays(new Date(), createdDate));
+  }, [prospect.createdAt]);
 
   const handleStageChange = async (newStage: ProspectStage) => {
     if (newStage === prospect.stage) return;
@@ -253,14 +263,34 @@ export function ProspectDetailClient({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="font-bold text-foreground text-xl sm:text-2xl">{fullName}</h1>
-                {getScoreBadge(prospect.score ?? 0, prospect.scoreTemperature)}
+                {/* Header Badges & Quick Stats */}
+                <div>
+                  {/* Primary Campaign Attribution */}
+                  {getScoreBadge(prospect.score ?? 0, prospect.scoreTemperature)}
+                  {primaryCampaign && (
+                    <Badge variant="outline" className="gap-1 border-primary/30 text-primary text-xs">
+                      <Target className="h-3 w-3" />
+                      <span>{primaryCampaign.name}</span>
+                    </Badge>
+                  )}
+                  {/* Converted Indicator */}
+                  {isConverted && (
+                    <Badge className="bg-emerald-600 text-[11px] text-white">
+                      <UserCheck className="mr-1 h-3 w-3" />
+                      Converted Client
+                    </Badge>
+                  )}
+                </div>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-3 text-muted-foreground text-xs">
                 {prospect.jobTitle && <span>{prospect.jobTitle}</span>}
                 {prospect.jobTitle && prospect.company && <span>&bull;</span>}
                 {prospect.company && <span className="font-medium text-foreground/80">{prospect.company}</span>}
                 <span>&bull;</span>
-                <span>Created {new Date(prospect.createdAt || Date.now()).toLocaleDateString()}</span>
+                <span>
+                  Created {new Date(prospect.createdAt || Date.now()).toLocaleDateString()} ({daysSinceCreated}{" "}
+                  {daysSinceCreated === 1 ? "day" : "days"} ago)
+                </span>
               </div>
             </div>
           </div>
@@ -270,8 +300,8 @@ export function ProspectDetailClient({
             {/* Stage Selector */}
             <div className="flex items-center gap-1.5">
               <span className="font-medium text-muted-foreground text-xs">Stage:</span>
-              <Select value={prospect.stage} onValueChange={(val) => handleStageChange(val as ProspectStage)}>
-                <SelectTrigger className="h-8 w-36 text-xs">
+              <Select value={prospect.stage} onValueChange={handleStageChange}>
+                <SelectTrigger className="h-7 w-36 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -349,49 +379,6 @@ export function ProspectDetailClient({
             </Button>
           </div>
         </div>
-
-        {/* Header Badges & Quick Stats */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Stage Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="font-medium text-muted-foreground text-xs">Stage:</span>
-            <Select value={prospect.stage} onValueChange={handleStageChange}>
-              <SelectTrigger className="h-7 w-36 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Contacted">Contacted</SelectItem>
-                <SelectItem value="Qualified">Qualified</SelectItem>
-                <SelectItem value="Appt Scheduled">Appt Scheduled</SelectItem>
-                <SelectItem value="Closed Won">Closed Won</SelectItem>
-                <SelectItem value="Closed Lost">Closed Lost</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Score Badge */}
-          <div className="flex items-center gap-1.5">
-            <span className="font-medium text-muted-foreground text-xs">Score:</span>
-            {getScoreBadge(prospect.score, prospect.scoreTemperature)}
-          </div>
-
-          {/* Primary Campaign Attribution */}
-          {primaryCampaign && (
-            <Badge variant="outline" className="gap-1 border-primary/30 text-primary text-xs">
-              <Target className="h-3 w-3" />
-              <span>{primaryCampaign.name}</span>
-            </Badge>
-          )}
-
-          {/* Converted Indicator */}
-          {isConverted && (
-            <Badge className="bg-emerald-600 text-[11px] text-white">
-              <UserCheck className="mr-1 h-3 w-3" />
-              Converted Client
-            </Badge>
-          )}
-        </div>
       </div>
 
       {/* Main Grid: Left side metadata, Right side tabbed timeline */}
@@ -428,20 +415,25 @@ export function ProspectDetailClient({
                   {prospect.jobTitle || <span className="text-muted-foreground/50 italic">None</span>}
                 </span>
               </div>
-              {(prospect.street || prospect.city || prospect.state || prospect.zip) && (
-                <div className="flex items-start justify-between border-b py-1">
-                  <span className="text-muted-foreground">Address</span>
+              <div className="flex items-start justify-between border-b py-1">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
+                  <span>Address</span>
+                </span>
+                {prospect.street || prospect.street2 || prospect.city || prospect.state || prospect.zip ? (
                   <span className="text-right font-medium text-foreground">
                     {prospect.street && <span className="block">{prospect.street}</span>}
-                    {prospect.street2 && <span className="block">{prospect.street2}</span>}
+                    {prospect.street2 && <span className="block text-muted-foreground">{prospect.street2}</span>}
                     {(prospect.city || prospect.state || prospect.zip) && (
                       <span className="block">
                         {[prospect.city, prospect.state].filter(Boolean).join(", ")} {prospect.zip || ""}
                       </span>
                     )}
                   </span>
-                </div>
-              )}
+                ) : (
+                  <span className="font-medium text-foreground">—</span>
+                )}
+              </div>
               <div className="flex items-center justify-between border-b py-1">
                 <span className="text-muted-foreground">Lead Source</span>
                 <Badge variant="secondary" className="text-[10px]">
@@ -755,7 +747,7 @@ export function ProspectDetailClient({
                             <div
                               className="prose prose-sm max-w-none text-muted-foreground text-xs"
                               // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
-                              dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(n.content) }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(n.content || n.body || "") }}
                             />
                           </div>
                         </div>
@@ -809,7 +801,7 @@ export function ProspectDetailClient({
                       </div>
                       <div
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
-                        dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(n.content) }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeNoteHtml(n.content || n.body || "") }}
                         className="text-muted-foreground"
                       />
                     </div>

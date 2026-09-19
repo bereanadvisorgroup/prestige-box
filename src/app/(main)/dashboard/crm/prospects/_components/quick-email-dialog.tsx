@@ -47,9 +47,22 @@ export function QuickEmailDialog({ open, onOpenChange, prospect, onSuccess }: Qu
       return;
     }
 
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(prospect.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, "_blank", "noopener,noreferrer");
+    toast.success("Opening Google Workspace mail client...");
+    onOpenChange(false);
+    onSuccess?.();
+  };
+
+  const handleOpenMailto = () => {
+    if (!prospect.email) {
+      toast.error("No email address listed for this prospect.");
+      return;
+    }
+
     const mailto = `mailto:${prospect.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailto;
-    toast.success("Opening default email client...");
+    toast.success("Opening local email client...");
     onOpenChange(false);
     onSuccess?.();
   };
@@ -93,14 +106,25 @@ export function QuickEmailDialog({ open, onOpenChange, prospect, onSuccess }: Qu
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenMailto}
+            className="text-muted-foreground text-xs hover:text-foreground"
+          >
+            Use Local Mail App
           </Button>
-          <Button onClick={handleOpenClient} className="gap-1.5">
-            <span>Open Email Client</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleOpenClient} className="gap-1.5">
+              <span>Open Default Mail Client</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
