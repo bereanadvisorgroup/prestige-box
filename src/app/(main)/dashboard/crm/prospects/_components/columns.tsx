@@ -126,9 +126,24 @@ export const columns = (
               )}
               <ArrowUpRight className="h-3.5 w-3.5 opacity-60" />
             </Link>
+            {prospect.company && <span className="font-normal text-muted-foreground text-xs">{prospect.company}</span>}
             {prospect.jobTitle && <span className="text-[11px] text-muted-foreground">{prospect.jobTitle}</span>}
           </div>
         </div>
+      );
+    },
+  },
+  {
+    id: "cityState",
+    accessorFn: (row) => [row.city, row.state].filter(Boolean).join(", "),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="City / State" />,
+    cell: ({ row }) => {
+      const { city, state } = row.original;
+      const formatted = [city, state].filter(Boolean).join(", ");
+      return formatted ? (
+        <span className="text-foreground text-sm">{formatted}</span>
+      ) : (
+        <span className="text-muted-foreground/45 text-xs italic">N/A</span>
       );
     },
   },

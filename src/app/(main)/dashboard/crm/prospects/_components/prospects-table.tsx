@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { batchDeleteProspects, batchUpdateProspectStage } from "@/actions/prospects";
 import { DataTablePagination } from "@/components/features/data-table/data-table-pagination";
+import { DataTableViewOptions } from "@/components/features/data-table/data-table-view-options";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,9 +45,12 @@ interface ProspectsTableProps {
 export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDelete }: ProspectsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([{ id: "score", desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
+    company: false,
+  });
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [cityStateFilter, setCityStateFilter] = React.useState("");
 
   // Filters state
   const [stageFilter, setStageFilter] = React.useState<string>("all");
@@ -88,7 +92,29 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
         }
       }
 
-      // 4. Global search filter
+      // 5. City / State filter
+      if (cityStateFilter.trim()) {
+        const query = cityStateFilter.toLowerCase().trim();
+        const city = (item.city || "").toLowerCase();
+        const state = (item.state || "").toLowerCase();
+        const combined = `${city} ${state}`.trim();
+        const combinedComma = `${city}, ${state}`.trim();
+
+        const terms = query.replace(/,/g, " ").split(/\s+/).filter(Boolean);
+
+        const matches =
+          city.includes(query) ||
+          state.includes(query) ||
+          combined.includes(query) ||
+          combinedComma.includes(query) ||
+          (terms.length > 0 && terms.every((t) => combined.includes(t)));
+
+        if (!matches) {
+          return false;
+        }
+      }
+
+      // 6. Global search filter
       if (globalFilter.trim()) {
         const query = globalFilter.toLowerCase().trim();
         const fullName = `${item.firstName} ${item.lastName}`.toLowerCase();
@@ -97,6 +123,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
         const company = (item.company || "").toLowerCase();
         const jobTitle = (item.jobTitle || "").toLowerCase();
         const campaign = (item.primaryCampaignName || "").toLowerCase();
+        const city = (item.city || "").toLowerCase();
+        const state = (item.state || "").toLowerCase();
 
         return (
           fullName.includes(query) ||
@@ -104,13 +132,15 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
           phone.includes(query) ||
           company.includes(query) ||
           jobTitle.includes(query) ||
-          campaign.includes(query)
+          campaign.includes(query) ||
+          city.includes(query) ||
+          state.includes(query)
         );
       }
 
       return true;
     });
-  }, [data, stageFilter, sourceFilter, statusFilter, campaignFilter, globalFilter]);
+  }, [data, stageFilter, sourceFilter, statusFilter, campaignFilter, globalFilter, cityStateFilter]);
 
   const tableColumns = React.useMemo(() => columns(onEdit, onConvert, onDelete), [onEdit, onConvert, onDelete]);
 
@@ -196,6 +226,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
       "Phone",
       "Company",
       "Job Title",
+      "City",
+      "State",
       "Stage",
       "Score",
       "Source",
@@ -212,6 +244,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
       `"${p.phone || ""}"`,
       `"${p.company || ""}"`,
       `"${p.jobTitle || ""}"`,
+      `"${p.city || ""}"`,
+      `"${p.state || ""}"`,
       `"${p.stage || ""}"`,
       p.score ?? 0,
       `"${p.source || "Direct"}"`,
@@ -238,7 +272,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
     sourceFilter !== "all" ||
     statusFilter !== "all" ||
     campaignFilter !== "all" ||
-    globalFilter.trim() !== "";
+    globalFilter.trim() !== "" ||
+    cityStateFilter.trim() !== "";
 
   const clearFilters = () => {
     setStageFilter("all");
@@ -246,6 +281,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
     setStatusFilter("all");
     setCampaignFilter("all");
     setGlobalFilter("");
+    setCityStateFilter("");
   };
 
   return (
@@ -264,9 +300,30 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
             />
           </div>
 
+          {/* City / State Text Filter */}
+          <div className="relative w-full sm:w-48">
+            <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search City, State"
+              value={cityStateFilter}
+              onChange={(e) => setCityStateFilter(e.target.value)}
+              className="pr-8 pl-8 text-sm"
+            />
+            {cityStateFilter && (
+              <button
+                type="button"
+                onClick={() => setCityStateFilter("")}
+                className="absolute top-2.5 right-2 flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label="Clear city, state search"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
           {/* Stage filter */}
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="w-[130px] text-xs">
+            <SelectTrigger className="w-[100px] text-xs">
               <SelectValue placeholder="Stage" />
             </SelectTrigger>
             <SelectContent>
@@ -281,7 +338,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
 
           {/* Source filter */}
           <Select value={sourceFilter} onValueChange={setSourceFilter}>
-            <SelectTrigger className="w-[130px] text-xs">
+            <SelectTrigger className="w-[100px] text-xs">
               <SelectValue placeholder="Source" />
             </SelectTrigger>
             <SelectContent>
@@ -296,7 +353,7 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
 
           {/* Campaign filter */}
           <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-            <SelectTrigger className="w-[150px] text-xs">
+            <SelectTrigger className="w-[130px] text-xs">
               <SelectValue placeholder="Campaign" />
             </SelectTrigger>
             <SelectContent>
@@ -370,6 +427,8 @@ export function ProspectsTable({ data, campaigns = [], onEdit, onConvert, onDele
               </Button>
             </div>
           )}
+
+          <DataTableViewOptions table={table} />
 
           <Button variant="outline" size="sm" onClick={handleExportCsv} className="h-8 gap-1.5 text-xs">
             <Download className="h-3.5 w-3.5" />
