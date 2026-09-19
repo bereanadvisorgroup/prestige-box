@@ -231,8 +231,9 @@ export function CsvImporterModal({
       setStep("summary");
       toast.success(`Import complete! Processed ${res.processed} rows.`);
       onSuccess?.();
-    } catch {
-      toast.error("An error occurred during import execution.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An error occurred during import execution.";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
