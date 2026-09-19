@@ -20,10 +20,9 @@ import { DEFAULT_TASK_CATEGORIES, type TaskWithRelations } from "@/types/crm";
 interface PersonTasksCardProps {
   personId: string;
   initialTasks?: TaskWithRelations[];
-  onViewAllClick?: () => void;
 }
 
-export function PersonTasksCard({ personId, initialTasks = [], onViewAllClick }: PersonTasksCardProps) {
+export function PersonTasksCard({ personId, initialTasks = [] }: PersonTasksCardProps) {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
   const [tasks, setTasks] = useState<TaskWithRelations[]>(initialTasks ?? []);
@@ -104,9 +103,17 @@ export function PersonTasksCard({ personId, initialTasks = [], onViewAllClick }:
   return (
     <Card className="border-none shadow-md flex flex-col h-full min-h-[220px]">
       <CardHeader className="border-b bg-muted/10 pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <CheckSquare className="h-5 w-5 text-primary" /> Tasks
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <CheckSquare className="h-5 w-5 text-primary" /> Tasks
+          </CardTitle>
+          <Link
+            href={`/dashboard/crm/people/${personId}/tasks`}
+            className="flex items-center gap-1 font-medium text-muted-foreground text-xs hover:text-primary transition-colors"
+          >
+            View All <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="pt-6 flex-1 flex flex-col justify-between">
         <div className="flex-1 overflow-y-auto space-y-2 mb-4 pr-1 max-h-[160px] scrollbar-thin">

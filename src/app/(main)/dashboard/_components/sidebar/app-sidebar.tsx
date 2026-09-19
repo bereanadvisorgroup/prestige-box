@@ -29,6 +29,7 @@ import {
   Sparkles,
   StickyNote,
   TrendingUp,
+  User,
   Users,
   Workflow,
 } from "lucide-react";
@@ -37,6 +38,7 @@ import { useShallow } from "zustand/react/shallow";
 import { getClientAssociationCounts } from "@/actions/clients";
 import { getCompanyAssociationCounts } from "@/actions/companies";
 import { getHouseholdAssociationCounts } from "@/actions/households";
+import { getPersonAssociationCounts } from "@/actions/people";
 import { getBusinessContact } from "@/actions/settings";
 
 // ... keep previous code
@@ -565,6 +567,133 @@ const getProspectSidebarItems = (): NavGroup[] => [
   },
 ];
 
+const getPersonSidebarItems = (
+  personId: string,
+  counts: Record<string, number>,
+  isClientActive = false,
+): NavGroup[] => [
+  {
+    id: 50,
+    items: [
+      {
+        title: "Back to People",
+        url: "/dashboard/crm/people",
+        icon: ArrowLeft,
+      },
+    ],
+  },
+  {
+    id: 51,
+    label: "General Info",
+    items: [
+      {
+        title: "General",
+        url: `/dashboard/crm/people/${personId}`,
+        icon: LayoutDashboard,
+      },
+      ...(counts.clientId || counts.isClient || isClientActive
+        ? [
+            {
+              title: "Client Profile",
+              url: `/dashboard/crm/people/${personId}/client`,
+              icon: User,
+            },
+          ]
+        : []),
+      {
+        title: "Notes",
+        url: `/dashboard/crm/people/${personId}/notes`,
+        icon: StickyNote,
+        badge: counts.notes || 0,
+      },
+      {
+        title: "Tasks",
+        url: `/dashboard/crm/people/${personId}/tasks`,
+        icon: ListTodo,
+        badge: counts.tasks || 0,
+      },
+    ],
+  },
+  {
+    id: 52,
+    label: "Vendors",
+    items: [
+      {
+        title: "Life Insurance",
+        url: `/dashboard/crm/people/${personId}/life-insurance`,
+        icon: HeartHandshake,
+        badge: counts.lifeInsurance || 0,
+      },
+      {
+        title: "Disability Insurance",
+        url: `/dashboard/crm/people/${personId}/disability-insurance`,
+        icon: ShieldAlert,
+        badge: counts.disabilityInsurance || 0,
+      },
+      {
+        title: "Long Term Care",
+        url: `/dashboard/crm/people/${personId}/long-term-care`,
+        icon: HeartPulse,
+        badge: counts.longTermCare || 0,
+      },
+      {
+        title: "Property And Casualty",
+        url: `/dashboard/crm/people/${personId}/property-and-casualty`,
+        icon: Shield,
+        badge: counts.propertyAndCasualty || 0,
+      },
+      {
+        title: "Money Managers",
+        url: `/dashboard/crm/people/${personId}/money-managers`,
+        icon: TrendingUp,
+        badge: counts.moneyManagers || 0,
+      },
+      {
+        title: "Record Keepers",
+        url: `/dashboard/crm/people/${personId}/record-keepers`,
+        icon: Database,
+        badge: counts.recordKeepers || 0,
+      },
+    ],
+  },
+  {
+    id: 53,
+    label: "Professional Services",
+    items: [
+      {
+        title: "Accounting Firms",
+        url: `/dashboard/crm/people/${personId}/accounting-firms`,
+        icon: ReceiptText,
+        badge: counts.accountingFirms || 0,
+      },
+      {
+        title: "Insurance Agencies",
+        url: `/dashboard/crm/people/${personId}/insurance-agencies`,
+        icon: Shield,
+        badge: counts.insuranceAgencies || 0,
+      },
+      {
+        title: "Actuarial Firms",
+        url: `/dashboard/crm/people/${personId}/actuarial-firms`,
+        icon: Calculator,
+        badge: counts.actuarialFirms || 0,
+      },
+      {
+        title: "Banks",
+        url: `/dashboard/crm/people/${personId}/banks`,
+        icon: Landmark,
+        badge: counts.banks || 0,
+      },
+      {
+        title: "Law Firms",
+        url: `/dashboard/crm/people/${personId}/law-firms`,
+        icon: Scale,
+        badge: counts.lawFirms || 0,
+      },
+    ],
+  },
+];
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
@@ -593,9 +722,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const householdId =
     householdMatch && householdMatch[1] !== "new" && householdMatch[1] !== "edit" ? householdMatch[1] : null;
 
+  const personMatch = pathname.match(/^\/dashboard\/crm\/people\/([a-zA-Z0-9-]+)/);
+  const personId = personMatch && personMatch[1] !== "new" && personMatch[1] !== "edit" ? personMatch[1] : null;
+
   const isClientView = isCrmStaff && clientId;
   const isCompanyView = isCrmStaff && companyId;
   const isHouseholdView = isCrmStaff && householdId;
+  const isPersonView = isCrmStaff && personId;
   const isProspectView = isCrmStaff && pathname.startsWith("/dashboard/crm/prospects");
 
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -661,6 +794,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             setCounts(res.counts);
           }
         });
+      } else if (personId) {
+        getPersonAssociationCounts(personId).then((res) => {
+          if (res.success && res.counts) {
+            setCounts(res.counts);
+          }
+        });
       }
     };
 
@@ -670,18 +809,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => {
       window.removeEventListener("association-change", fetchCounts);
     };
-  }, [clientId, companyId, householdId, pathname]);
+  }, [clientId, companyId, householdId, personId, pathname]);
 
-  // Filter sidebar items based on user role or client/company/household/prospect context
+  // Filter sidebar items based on user role or client/company/household/person/prospect context
   const filteredSidebarItems = isClientView
     ? getClientSidebarItems(clientId, counts)
     : isHouseholdView
       ? getHouseholdSidebarItems(householdId, counts)
       : isCompanyView
         ? getCompanySidebarItems(companyId, counts)
-        : isProspectView
-          ? getProspectSidebarItems()
-          : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
+        : isPersonView
+          ? getPersonSidebarItems(personId, counts, pathname.endsWith("/client"))
+          : isProspectView
+            ? getProspectSidebarItems()
+            : sidebarItems.filter((group) => !group.allowedRoles || group.allowedRoles.includes(userRole));
 
   return (
     <Sidebar {...props} variant={variant} collapsible={collapsible}>

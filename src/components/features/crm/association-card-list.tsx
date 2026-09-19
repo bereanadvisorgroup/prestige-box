@@ -14,6 +14,7 @@ interface AssociationItem {
   website?: string | null;
   phone?: string | null;
   isLinked?: boolean;
+  title?: string | null;
 }
 
 interface AssociationCardListProps {
@@ -53,7 +54,12 @@ export function AssociationCardList({
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                    <div>
+                      <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                      {item.title && (
+                        <p className="mt-0.5 font-semibold text-[11px] text-muted-foreground">{item.title}</p>
+                      )}
+                    </div>
                     <div className="flex items-center">
                       <Link href={`${linkPrefix}/${item.id}`}>
                         <Button
@@ -143,7 +149,12 @@ export function AssociationCardList({
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                    <div>
+                      <h4 className="font-bold text-foreground text-sm">{item.name}</h4>
+                      {item.title && (
+                        <p className="mt-0.5 font-semibold text-[11px] text-muted-foreground">{item.title}</p>
+                      )}
+                    </div>
                     <div className="flex items-center">
                       <Link href={`${linkPrefix}/${item.id}`}>
                         <Button

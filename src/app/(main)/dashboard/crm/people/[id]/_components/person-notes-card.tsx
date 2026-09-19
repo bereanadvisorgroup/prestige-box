@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { FileText, Loader2, Plus } from "lucide-react";
+import { ArrowUpRight, FileText, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { createNote } from "@/actions/notes";
@@ -16,10 +17,9 @@ import type { NoteSummary } from "@/types/notes";
 interface PersonNotesCardProps {
   personId: string;
   initialNotes: NoteSummary[];
-  onNoteClick?: () => void;
 }
 
-export function PersonNotesCard({ personId, initialNotes, onNoteClick }: PersonNotesCardProps) {
+export function PersonNotesCard({ personId, initialNotes }: PersonNotesCardProps) {
   const router = useRouter();
   const [notes, setNotes] = useState<NoteSummary[]>(initialNotes);
   const [noteBody, setNoteBody] = useState("");
@@ -53,8 +53,9 @@ export function PersonNotesCard({ personId, initialNotes, onNoteClick }: PersonN
       } else {
         throw new Error(res.error || "Failed to add note");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add note");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to add note";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -65,18 +66,26 @@ export function PersonNotesCard({ personId, initialNotes, onNoteClick }: PersonN
   return (
     <Card className="border-none shadow-md flex flex-col h-full min-h-[220px]">
       <CardHeader className="border-b bg-muted/10 pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <FileText className="h-5 w-5 text-primary" /> Notes
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileText className="h-5 w-5 text-primary" /> Notes
+          </CardTitle>
+          <Link
+            href={`/dashboard/crm/people/${personId}/notes`}
+            className="flex items-center gap-1 font-medium text-muted-foreground text-xs hover:text-primary transition-colors"
+          >
+            View All <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
       </CardHeader>
       <CardContent className="pt-6 flex-1 flex flex-col justify-between">
         <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 max-h-[160px] scrollbar-thin">
           {recentNotes.length > 0 ? (
             recentNotes.map((note) => (
-              <div
+              <Link
                 key={note.id}
-                onClick={onNoteClick}
-                className="block border-b border-neutral-100 dark:border-zinc-850 pb-2 last:border-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-zinc-800 p-1.5 rounded transition-colors group cursor-pointer"
+                href={`/dashboard/crm/people/${personId}/notes`}
+                className="block border-b border-neutral-100 dark:border-zinc-850 pb-2 last:border-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-zinc-800 p-1.5 rounded transition-colors group"
               >
                 <div className="flex justify-between items-start gap-2">
                   <span className="font-semibold text-xs text-neutral-750 dark:text-neutral-250 truncate group-hover:text-primary transition-colors">
@@ -89,7 +98,7 @@ export function PersonNotesCard({ personId, initialNotes, onNoteClick }: PersonN
                 <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-0.5 whitespace-pre-wrap break-words">
                   {note.excerpt}
                 </p>
-              </div>
+              </Link>
             ))
           ) : (
             <p className="text-xs text-muted-foreground italic py-2">No recent notes.</p>

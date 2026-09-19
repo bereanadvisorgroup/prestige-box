@@ -214,3 +214,72 @@ export async function findDuplicatePeople({ firstName, lastName, excludePersonId
     return { success: false, duplicates: [] as DuplicatePersonMatch[], error: (error as { message: string }).message };
   }
 }
+
+export async function getPersonAssociationCounts(personId: string) {
+  try {
+    const [
+      clientRes,
+      lawFirmsRes,
+      accountingFirmsRes,
+      insuranceAgenciesRes,
+      actuarialFirmsRes,
+      banksRes,
+      propertyAndCasualtyRes,
+      moneyManagersRes,
+      recordKeepersRes,
+      lifeRes,
+      disabilityRes,
+      ltcRes,
+      notesRes,
+      tasksRes,
+    ] = await Promise.all([
+      supabaseServer.from("clients").select("id").eq("personId", personId).maybeSingle(),
+      supabaseServer.from("law_firms").select("id, personIds"),
+      supabaseServer.from("accounting_firms").select("id, personIds"),
+      supabaseServer.from("insurance_agencies").select("id, personIds"),
+      supabaseServer.from("actuarial_firms").select("id, personIds"),
+      supabaseServer.from("banks").select("id, personIds"),
+      supabaseServer.from("property_and_casualty_firms").select("id, personIds"),
+      supabaseServer.from("money_managers").select("id, personIds"),
+      supabaseServer.from("record_keepers").select("id, personIds"),
+      supabaseServer.from("life_insurance_companies").select("id, personIds"),
+      supabaseServer.from("disability_insurance_companies").select("id, personIds"),
+      supabaseServer.from("long_term_care_insurance").select("id, personIds"),
+      supabaseServer
+        .from("note_associations")
+        .select("noteId", { count: "exact", head: true })
+        .eq("entityType", "person")
+        .eq("entityId", personId),
+      supabaseServer.from("tasks").select("id", { count: "exact", head: true }).eq("personId", personId),
+    ]);
+
+    const filterByIds = (list: { personIds?: string[] | null }[]) =>
+      list.filter((item) => item.personIds?.includes(personId)).length;
+
+    const clientId = clientRes.data?.id;
+
+    return {
+      success: true,
+      counts: {
+        isClient: clientId ? 1 : 0,
+        clientId: clientId || null,
+        accountingFirms: filterByIds(accountingFirmsRes.data || []),
+        insuranceAgencies: filterByIds(insuranceAgenciesRes.data || []),
+        actuarialFirms: filterByIds(actuarialFirmsRes.data || []),
+        banks: filterByIds(banksRes.data || []),
+        lawFirms: filterByIds(lawFirmsRes.data || []),
+        propertyAndCasualty: filterByIds(propertyAndCasualtyRes.data || []),
+        moneyManagers: filterByIds(moneyManagersRes.data || []),
+        recordKeepers: filterByIds(recordKeepersRes.data || []),
+        lifeInsurance: filterByIds(lifeRes.data || []),
+        disabilityInsurance: filterByIds(disabilityRes.data || []),
+        longTermCare: filterByIds(ltcRes.data || []),
+        notes: notesRes.count || 0,
+        tasks: tasksRes.count || 0,
+      },
+    };
+  } catch (error) {
+    console.error(`[getPersonAssociationCounts] Error:`, error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}

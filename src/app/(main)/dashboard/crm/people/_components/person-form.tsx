@@ -36,21 +36,21 @@ interface PersonFormProps {
 const getEmails = (p?: Person) =>
   p?.emails && p.emails.length > 0
     ? p.emails.map((e) => ({
-      id: e.id || crypto.randomUUID(),
-      address: e.address ?? "",
-      type: e.type || "Personal",
-      isPrimary: Boolean(e.isPrimary),
-    }))
+        id: e.id || crypto.randomUUID(),
+        address: e.address ?? "",
+        type: e.type || "Personal",
+        isPrimary: Boolean(e.isPrimary),
+      }))
     : [{ id: crypto.randomUUID(), address: "", type: "Personal" as const, isPrimary: true }];
 
 const getPhones = (p?: Person) =>
   p?.phones && p.phones.length > 0
     ? p.phones.map((ph) => ({
-      id: ph.id || crypto.randomUUID(),
-      number: ph.number ?? "",
-      type: ph.type || "Mobile",
-      isPrimary: Boolean(ph.isPrimary),
-    }))
+        id: ph.id || crypto.randomUUID(),
+        number: ph.number ?? "",
+        type: ph.type || "Mobile",
+        isPrimary: Boolean(ph.isPrimary),
+      }))
     : [{ id: crypto.randomUUID(), number: "", type: "Mobile" as const, isPrimary: true }];
 
 const getSocialMedia = (p?: Person) =>
@@ -65,10 +65,10 @@ const getSocialMedia = (p?: Person) =>
 const getAddressesList = (p?: Person) =>
   p?.addresses && p.addresses.length > 0
     ? p.addresses.map((a) => ({
-      id: a.id,
-      type: a.type || "Home",
-      isPrimary: Boolean(a.isPrimary),
-    }))
+        id: a.id,
+        type: a.type || "Home",
+        isPrimary: Boolean(a.isPrimary),
+      }))
     : p?.addressIds?.length
       ? p.addressIds.map((id, index) => ({ id, type: "Home" as const, isPrimary: index === 0 }))
       : [];
