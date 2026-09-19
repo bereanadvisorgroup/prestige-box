@@ -11,10 +11,12 @@ import {
   Settings,
   ShieldCheck,
   Tag,
+  Tags,
   Users,
 } from "lucide-react";
 
 import { getBusinessContact } from "@/actions/settings";
+import { getTagsWithCounts } from "@/actions/tags";
 import { getTaskCategories } from "@/actions/task-categories";
 import { getTeams } from "@/actions/teams";
 import { getUsers } from "@/actions/users";
@@ -23,11 +25,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSocialAvatarUrl } from "@/lib/social";
 
 export default async function AdminDashboardPage() {
-  const [usersResult, contactResult, teamsResult, categoriesResult] = await Promise.all([
+  const [usersResult, contactResult, teamsResult, categoriesResult, tagsResult] = await Promise.all([
     getUsers(),
     getBusinessContact(),
     getTeams(),
     getTaskCategories(),
+    getTagsWithCounts(),
   ]);
 
   if (!usersResult.success) {
@@ -177,7 +180,7 @@ export default async function AdminDashboardPage() {
               <p className="text-muted-foreground text-sm">
                 Configure contact details, website links, and company branding for the client portal.
               </p>
-              <div className="mt-4 space-y-2 border-t border-muted/40 pt-4 text-xs">
+              <div className="mt-4 space-y-2 border-muted/40 border-t pt-4 text-xs">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-muted-foreground">Email:</span>
                   <span className="truncate font-semibold text-foreground">{initialEmail}</span>
@@ -189,7 +192,7 @@ export default async function AdminDashboardPage() {
                 {initialWebsite && (
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-muted-foreground">Website:</span>
-                    <span className="truncate font-semibold text-foreground max-w-[150px]">
+                    <span className="max-w-[150px] truncate font-semibold text-foreground">
                       {initialWebsite.replace(/^https?:\/\//, "")}
                     </span>
                   </div>
@@ -197,7 +200,7 @@ export default async function AdminDashboardPage() {
                 {primarySocialMedia && (
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-muted-foreground">Social:</span>
-                    <span className="truncate font-semibold text-foreground max-w-[150px]">
+                    <span className="max-w-[150px] truncate font-semibold text-foreground">
                       {primarySocialMedia.type}: {primarySocialMedia.url.replace(/^https?:\/\/(www\.)?/, "")}
                     </span>
                   </div>
@@ -205,7 +208,7 @@ export default async function AdminDashboardPage() {
                 {effectiveLogoUrl && (
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-muted-foreground">Logo:</span>
-                    <div className="relative h-6 w-16 overflow-hidden rounded bg-muted/30 border border-muted/20">
+                    <div className="relative h-6 w-16 overflow-hidden rounded border border-muted/20 bg-muted/30">
                       {/* biome-ignore lint/performance/noImgElement: User uploaded logo, dynamic source */}
                       <img src={effectiveLogoUrl} alt="Company Logo" className="h-full w-full object-contain" />
                     </div>
@@ -232,7 +235,7 @@ export default async function AdminDashboardPage() {
             <CardContent className="pt-2">
               {teamsResult.success && teamsResult.teams && teamsResult.teams.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="flex items-baseline justify-between border-b border-muted/40 pb-2">
+                  <div className="flex items-baseline justify-between border-muted/40 border-b pb-2">
                     <span className="font-extrabold text-2xl tracking-tight">{teamsResult.teams.length}</span>
                     <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
                       {teamsResult.teams.length === 1 ? "Active Team" : "Active Teams"}
@@ -241,19 +244,19 @@ export default async function AdminDashboardPage() {
                   <div className="space-y-1 pt-1">
                     {teamsResult.teams.slice(0, 3).map((t) => (
                       <div key={t.id} className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground truncate max-w-[140px]">{t.name}</span>
+                        <span className="max-w-[140px] truncate font-medium text-foreground">{t.name}</span>
                         <span className="text-muted-foreground">{t.memberCount} members</span>
                       </div>
                     ))}
                     {teamsResult.teams.length > 3 && (
-                      <p className="text-[11px] text-muted-foreground italic pt-0.5">
+                      <p className="pt-0.5 text-[11px] text-muted-foreground italic">
                         +{teamsResult.teams.length - 3} more teams
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Create and manage advisor & admin teams for workflow step assignment.
                 </p>
               )}
@@ -275,7 +278,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Manage lookup values for financial account types used across client and policy forms.
               </p>
             </CardContent>
@@ -296,7 +299,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Manage custodian options used across financial and investment accounts.
               </p>
             </CardContent>
@@ -317,7 +320,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Manage referral types list used as select options on other forms.
               </p>
             </CardContent>
@@ -338,7 +341,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Manage lookup events list used as select options on client referrals and other forms.
               </p>
             </CardContent>
@@ -359,7 +362,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">Create, edit, and manage Oopportunity Pipelines.</p>
+              <p className="text-muted-foreground text-sm">Create, edit, and manage Oopportunity Pipelines.</p>
             </CardContent>
           </Card>
         </Link>
@@ -378,7 +381,7 @@ export default async function AdminDashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-2">
-              <p className="text-sm text-muted-foreground">Create, edit, and manage automated Workflows.</p>
+              <p className="text-muted-foreground text-sm">Create, edit, and manage automated Workflows.</p>
             </CardContent>
           </Card>
         </Link>
@@ -401,7 +404,7 @@ export default async function AdminDashboardPage() {
               categoriesResult.taskCategories &&
               categoriesResult.taskCategories.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="flex items-baseline justify-between border-b border-muted/40 pb-2">
+                  <div className="flex items-baseline justify-between border-muted/40 border-b pb-2">
                     <span className="font-extrabold text-2xl tracking-tight">
                       {categoriesResult.taskCategories.length}
                     </span>
@@ -412,19 +415,72 @@ export default async function AdminDashboardPage() {
                   <div className="space-y-1 pt-1">
                     {categoriesResult.taskCategories.slice(0, 3).map((c) => (
                       <div key={c.id} className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground truncate max-w-[180px]">{c.name}</span>
+                        <span className="max-w-[180px] truncate font-medium text-foreground">{c.name}</span>
                       </div>
                     ))}
                     {categoriesResult.taskCategories.length > 3 && (
-                      <p className="text-[11px] text-muted-foreground italic pt-0.5">
+                      <p className="pt-0.5 text-[11px] text-muted-foreground italic">
                         +{categoriesResult.taskCategories.length - 3} more categories
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Create, edit, delete, and bulk reassign task categories.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/admin/people-tags" className="group block h-full">
+          <Card className="h-full border transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-md">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
+              <div className="space-y-1.5 pr-4">
+                <CardTitle className="flex items-center gap-1.5 font-bold text-xl transition-colors group-hover:text-primary">
+                  People Tags
+                  <ArrowUpRight className="h-4 w-4 -translate-x-1 translate-y-1 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100" />
+                </CardTitle>
+              </div>
+              <div className="shrink-0 rounded-xl bg-primary/10 p-3 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <Tags className="h-6 w-6" />
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              {tagsResult.success && tagsResult.tags && tagsResult.tags.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-between border-muted/40 border-b pb-2">
+                    <span className="font-extrabold text-2xl tracking-tight">{tagsResult.tags.length}</span>
+                    <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      {tagsResult.tags.length === 1 ? "Active Tag" : "Active Tags"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {tagsResult.tags.slice(0, 4).map((t) => (
+                      <span
+                        key={t.id || t.name}
+                        className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium text-xs"
+                        style={{
+                          backgroundColor: `${t.color || "#64748B"}14`,
+                          borderColor: `${t.color || "#64748B"}40`,
+                          color: t.color || "#64748B",
+                        }}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: t.color || "#64748B" }} />
+                        <span className="max-w-[100px] truncate">{t.name}</span>
+                      </span>
+                    ))}
+                    {tagsResult.tags.length > 4 && (
+                      <span className="self-center pl-1 text-[11px] text-muted-foreground italic">
+                        +{tagsResult.tags.length - 4} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Create, edit, and assign colors to tags used across client and people records.
                 </p>
               )}
             </CardContent>

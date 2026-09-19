@@ -47,7 +47,10 @@ const getRelationBadgeStyle = (type: string) => {
   return "bg-slate-50 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300 border-slate-200 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-slate-800/50";
 };
 
-export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedPerson>[] => [
+export const columns = (
+  onDelete: (person: Person) => void,
+  tagColorMap?: Map<string, string>,
+): ColumnDef<EnrichedPerson>[] => [
   {
     id: "name",
     accessorFn: (row) => formatPersonName(row),
@@ -147,15 +150,24 @@ export const columns = (onDelete: (person: Person) => void): ColumnDef<EnrichedP
 
       return (
         <div className="flex max-w-[220px] flex-wrap gap-1">
-          {tags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="secondary"
-              className="bg-secondary/70 px-1.5 py-0.5 font-normal text-[11px] text-secondary-foreground leading-tight"
-            >
-              {tag}
-            </Badge>
-          ))}
+          {tags.map((tag) => {
+            const color = tagColorMap?.get(tag.toLowerCase()) || "#64748B";
+            return (
+              <Badge
+                key={tag}
+                variant="secondary"
+                className="gap-1 border px-1.5 py-0.5 font-normal text-[11px] leading-tight shadow-2xs"
+                style={{
+                  backgroundColor: `${color}14`,
+                  borderColor: `${color}40`,
+                  color: color,
+                }}
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                <span>{tag}</span>
+              </Badge>
+            );
+          })}
         </div>
       );
     },

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
-import type { Person } from "@/types/crm";
+import type { Person, Tag } from "@/types/crm";
 
 import { columns } from "./columns";
 import { DeletePersonAlert } from "./delete-person-alert";
@@ -28,13 +28,13 @@ export function PeopleTable({ data }: PeopleTableProps) {
   const [searchValue, setSearchValue] = useState("");
   const [selectedRelation, setSelectedRelation] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
-  const [systemTags, setSystemTags] = useState<string[]>([]);
+  const [systemTags, setSystemTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     let isMounted = true;
     getTags().then((res) => {
       if (isMounted && res.success && res.tags) {
-        setSystemTags(res.tags.map((t) => t.name));
+        setSystemTags(res.tags);
       }
     });
     return () => {
@@ -42,8 +42,18 @@ export function PeopleTable({ data }: PeopleTableProps) {
     };
   }, []);
 
+  const tagColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of systemTags) {
+      if (t.name) {
+        map.set(t.name.toLowerCase(), t.color || "#64748B");
+      }
+    }
+    return map;
+  }, [systemTags]);
+
   const allAvailableTags = useMemo(() => {
-    const tagSet = new Set<string>(systemTags);
+    const tagSet = new Set<string>(systemTags.map((t) => t.name));
     for (const p of data) {
       if (p.tags) {
         for (const t of p.tags) {
@@ -54,7 +64,7 @@ export function PeopleTable({ data }: PeopleTableProps) {
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [data, systemTags]);
 
-  const tableColumns = useMemo(() => columns(setDeletePerson), []);
+  const tableColumns = useMemo(() => columns(setDeletePerson, tagColorMap), [tagColorMap]);
 
   const table = useDataTableInstance({
     data,
@@ -133,11 +143,20 @@ export function PeopleTable({ data }: PeopleTableProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tags</SelectItem>
-                {allAvailableTags.map((tag) => (
-                  <SelectItem key={tag} value={tag}>
-                    {tag}
-                  </SelectItem>
-                ))}
+                {allAvailableTags.map((tag) => {
+                  const color = tagColorMap.get(tag.toLowerCase()) || "#64748B";
+                  return (
+                    <SelectItem key={tag} value={tag}>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full border border-black/10 shadow-2xs dark:border-white/20"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span>{tag}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

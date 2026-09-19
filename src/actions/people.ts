@@ -10,7 +10,6 @@ import { getNicknameVariants } from "@/lib/nicknames";
 import { supabaseServer } from "@/lib/supabase.server";
 import { type Person, PersonSchema } from "@/types/crm";
 
-import { ensureTagsExist } from "./tags";
 import { syncBirthdayForPerson } from "./task-sync";
 
 const TABLE = "people";
@@ -56,10 +55,6 @@ export async function createPerson(data: Partial<Person>) {
 
     if (error) throw new Error((error as { message: string }).message);
 
-    if (validated.tags && validated.tags.length > 0) {
-      await ensureTagsExist(validated.tags);
-    }
-
     revalidatePath("/dashboard/crm/people");
 
     return { success: true, id: inserted.id };
@@ -82,10 +77,6 @@ export async function updatePerson(id: string, data: Partial<Person>) {
     const { error } = await supabaseServer.from(TABLE).update(updateData).eq("id", id);
 
     if (error) throw new Error((error as { message: string }).message);
-
-    if (data.tags && data.tags.length > 0) {
-      await ensureTagsExist(data.tags);
-    }
 
     // A person's profile change is recorded on the client record that links to them.
     if (current) {

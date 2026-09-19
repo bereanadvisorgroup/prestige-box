@@ -122,19 +122,19 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Seed initial sample campaigns
-INSERT INTO "campaigns" ("name", "channel", "status", "budget", "targetAudience", "description")
-VALUES
-  ('Q1 Executive Wealth Forum', 'Conference', 'Active', 12500.00, 'HNW Business Owners & Executives', 'Annual summit targeted at high net-worth founders and corporate executives.'),
-  ('Google Search - Private Wealth', 'Google Ads', 'Active', 7500.00, 'Individuals searching wealth management', 'High-intent search keyword ads targeting financial advisory and estate planning.'),
-  ('LinkedIn B2B Outreach - Founders', 'LinkedIn Ads', 'Active', 5000.00, 'Tech Founders & Partners', 'Sponsored InMail and executive video spotlight campaigns targeting founders.'),
-  ('Referral Partner Program 2026', 'Referral Partner', 'Active', 2500.00, 'Law & Accounting Firm Clients', 'Strategic co-marketing and reciprocal client introductions with law and CPA partners.')
-ON CONFLICT DO NOTHING;
+-- INSERT INTO "campaigns" ("name", "channel", "status", "budget", "targetAudience", "description")
+-- VALUES
+--   ('Q1 Executive Wealth Forum', 'Conference', 'Active', 12500.00, 'HNW Business Owners & Executives', 'Annual summit targeted at high net-worth founders and corporate executives.'),
+--   ('Google Search - Private Wealth', 'Google Ads', 'Active', 7500.00, 'Individuals searching wealth management', 'High-intent search keyword ads targeting financial advisory and estate planning.'),
+--   ('LinkedIn B2B Outreach - Founders', 'LinkedIn Ads', 'Active', 5000.00, 'Tech Founders & Partners', 'Sponsored InMail and executive video spotlight campaigns targeting founders.'),
+--   ('Referral Partner Program 2026', 'Referral Partner', 'Active', 2500.00, 'Law & Accounting Firm Clients', 'Strategic co-marketing and reciprocal client introductions with law and CPA partners.')
+-- ON CONFLICT DO NOTHING;
 
 -- Seed initial Custom field definitions
-INSERT INTO "prospect_custom_fields" ("name", "label", "fieldType", "options", "isRequired", "defaultValue", "sortOrder")
-VALUES
-  ('estimated_investable_assets', 'Est. Investable Assets', 'dropdown', '{"Under $500k", "$500k - $1M", "$1M - $5M", "$5M - $10M", "$10M+"}', false, '$1M - $5M', 1),
-  ('industry', 'Industry Sector', 'dropdown', '{"Technology", "Healthcare", "Real Estate", "Financial Services", "Manufacturing", "Legal", "Other"}', false, 'Technology', 2),
-  ('decision_timeframe', 'Decision Timeframe', 'dropdown', '{"Immediate (Under 30 days)", "1-3 Months", "3-6 Months", "Evaluating for Next Year"}', false, '1-3 Months', 3),
-  ('preferred_contact_method', 'Preferred Contact Method', 'dropdown', '{"Email", "Phone", "LinkedIn", "In-Person"}', false, 'Email', 4)
-ON CONFLICT DO NOTHING;
+-- INSERT INTO "prospect_custom_fields" ("name", "label", "fieldType", "options", "isRequired", "defaultValue", "sortOrder")
+-- VALUES
+--   ('estimated_investable_assets', 'Est. Investable Assets', 'dropdown', '{"Under $500k", "$500k - $1M", "$1M - $5M", "$5M - $10M", "$10M+"}', false, '$1M - $5M', 1),
+--   ('industry', 'Industry Sector', 'dropdown', '{"Technology", "Healthcare", "Real Estate", "Financial Services", "Manufacturing", "Legal", "Other"}', false, 'Technology', 2),
+--   ('decision_timeframe', 'Decision Timeframe', 'dropdown', '{"Immediate (Under 30 days)", "1-3 Months", "3-6 Months", "Evaluating for Next Year"}', false, '1-3 Months', 3),
+--   ('preferred_contact_method', 'Preferred Contact Method', 'dropdown', '{"Email", "Phone", "LinkedIn", "In-Person"}', false, 'Email', 4)
+-- ON CONFLICT DO NOTHING;

@@ -84,9 +84,16 @@ export const PersonSchema = z.object({
 export const TagSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Tag name cannot be empty"),
+  color: z.string().default("#64748B"),
   createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 export type Tag = z.infer<typeof TagSchema>;
+
+export type TagWithCount = Tag & {
+  peopleCount?: number;
+  isLinked?: boolean;
+};
 
 export const HouseholdMemberRole = z.enum([
   "HEAD",

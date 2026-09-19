@@ -15,7 +15,6 @@ import {
   Scale,
   Shield,
   ShieldAlert,
-  Tag,
   TrendingUp,
   User,
 } from "lucide-react";
@@ -35,6 +34,7 @@ import { getNotes } from "@/actions/notes";
 import { getPerson } from "@/actions/people";
 import { getPropertyAndCasualtyFirms } from "@/actions/property-and-casualty";
 import { getRecordKeepers } from "@/actions/record-keepers";
+import { getTags } from "@/actions/tags";
 import { getTasks } from "@/actions/tasks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +79,7 @@ export default async function PersonPage({ params }: PersonPageProps) {
     recordRes,
     notesRes,
     tasksRes,
+    tagsRes,
   ] = await Promise.all([
     getClients(),
     getLawFirms(),
@@ -94,7 +95,15 @@ export default async function PersonPage({ params }: PersonPageProps) {
     getRecordKeepers(),
     getNotes({ personId: id }),
     getTasks({ personId: id }),
+    getTags(),
   ]);
+
+  const tagColorMap = new Map<string, string>();
+  if (tagsRes.success && tagsRes.tags) {
+    for (const t of tagsRes.tags) {
+      if (t.name) tagColorMap.set(t.name.toLowerCase(), t.color || "#64748B");
+    }
+  }
 
   const associatedClient =
     ((clientsRes.success && clientsRes.clients) || []).find((c) => c.personId === person.id) || null;
@@ -281,16 +290,24 @@ export default async function PersonPage({ params }: PersonPageProps) {
             </div>
             {person.tags && person.tags.length > 0 && (
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                {person.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="gap-1 bg-muted/60 px-2 py-0.5 font-normal text-muted-foreground text-xs"
-                  >
-                    <Tag className="h-3 w-3 opacity-60" />
-                    <span>{tag}</span>
-                  </Badge>
-                ))}
+                {person.tags.map((tag) => {
+                  const color = tagColorMap.get(tag.toLowerCase()) || "#64748B";
+                  return (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="gap-1.5 border px-2.5 py-0.5 font-normal text-xs shadow-2xs"
+                      style={{
+                        backgroundColor: `${color}14`,
+                        borderColor: `${color}40`,
+                        color: color,
+                      }}
+                    >
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                      <span>{tag}</span>
+                    </Badge>
+                  );
+                })}
               </div>
             )}
           </div>

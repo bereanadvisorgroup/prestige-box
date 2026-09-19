@@ -2,10 +2,9 @@
 
 import * as React from "react";
 
-import { Check, Loader2, Plus, Tag as TagIcon, X } from "lucide-react";
-import { toast } from "sonner";
+import { Check, Loader2, X } from "lucide-react";
 
-import { createTag, getTags } from "@/actions/tags";
+import { getTags } from "@/actions/tags";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Tag } from "@/types/crm";
@@ -21,7 +20,7 @@ interface PersonTagInputProps {
 export function PersonTagInput({
   value = [],
   onChange,
-  placeholder = "Add tags...",
+  placeholder = "Search tags...",
   disabled = false,
   className,
 }: PersonTagInputProps) {
@@ -29,7 +28,6 @@ export function PersonTagInput({
   const [inputValue, setInputValue] = React.useState("");
   const [allTags, setAllTags] = React.useState<Tag[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isCreating, setIsCreating] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState<number>(-1);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -84,12 +82,9 @@ export function PersonTagInput({
     return allTags.find((t) => t.name.toLowerCase() === query) || null;
   }, [allTags, query]);
 
-  const canCreate = query.length > 0 && !exactTagMatch;
+  const totalOptionsCount = matchingTags.length;
 
-  // Total selectable options in the dropdown: "create option" (if canCreate) + matching tags
-  const totalOptionsCount = (canCreate ? 1 : 0) + matchingTags.length;
-
-  // Reset highlighted index when query changes
+  // Reset highlighted index when query or results change
   React.useEffect(() => {
     setHighlightedIndex(totalOptionsCount > 0 ? 0 : -1);
   }, [totalOptionsCount]);
@@ -114,70 +109,20 @@ export function PersonTagInput({
     inputRef.current?.focus();
   };
 
-  const handleCreateAndAdd = async (nameToCreate: string) => {
-    const cleanName = nameToCreate.trim().replace(/,/g, "");
-    if (!cleanName) return;
-
-    // If tag is already selected, just clear input
-    if (value.some((v) => v.toLowerCase() === cleanName.toLowerCase())) {
-      setInputValue("");
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-      const res = await createTag(cleanName);
-      if (res.success && res.tag) {
-        const actualName = res.tag.name;
-        // Update local available tags list
-        setAllTags((prev) => {
-          if (prev.some((t) => t.name.toLowerCase() === actualName.toLowerCase())) {
-            return prev;
-          }
-          return [...prev, res.tag as Tag].sort((a, b) => a.name.localeCompare(b.name));
-        });
-
-        // Add to selected tags
-        if (!value.includes(actualName)) {
-          onChange([...value, actualName]);
-        }
-        setInputValue("");
-      } else {
-        toast.error(res.error || "Failed to create tag");
-      }
-    } catch (err) {
-      console.error("Error creating tag:", err);
-      toast.error("Failed to create tag");
-    } finally {
-      setIsCreating(false);
-      inputRef.current?.focus();
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
+    if (e.key === "Enter") {
       e.preventDefault();
       e.stopPropagation();
 
       if (!inputValue.trim()) return;
 
-      // Check if user hit Enter on a highlighted option
-      if (canCreate && highlightedIndex === 0) {
-        handleCreateAndAdd(inputValue);
+      if (highlightedIndex >= 0 && highlightedIndex < matchingTags.length) {
+        handleSelectTag(matchingTags[highlightedIndex].name);
         return;
       }
 
-      const tagIndex = canCreate ? highlightedIndex - 1 : highlightedIndex;
-      if (tagIndex >= 0 && tagIndex < matchingTags.length) {
-        handleSelectTag(matchingTags[tagIndex].name);
-        return;
-      }
-
-      // Fallback: If exact match exists, add it; otherwise create it
       if (exactTagMatch) {
         handleSelectTag(exactTagMatch.name);
-      } else {
-        handleCreateAndAdd(inputValue);
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -206,7 +151,7 @@ export function PersonTagInput({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Visual Input Field with Tags */}
+      {/* Visual Input Field with Selected Tags */}
       <label
         htmlFor={inputId}
         className={cn(
@@ -215,30 +160,39 @@ export function PersonTagInput({
           className,
         )}
       >
-        {value.map((tag) => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className="gap-1 bg-secondary/80 px-2 py-0.5 font-normal text-secondary-foreground text-xs hover:bg-secondary"
-          >
-            <TagIcon className="h-3 w-3 opacity-60" />
-            <span>{tag}</span>
-            {!disabled && (
-              <button
-                type="button"
-                aria-label={`Remove tag ${tag}`}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
-                onClick={(e) => handleRemoveTag(tag, e)}
-                className="ml-0.5 rounded-sm p-0.5 opacity-70 transition-opacity hover:bg-muted-foreground/20 hover:opacity-100"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </Badge>
-        ))}
+        {value.map((tag) => {
+          const matchedTag = allTags.find((t) => t.name.toLowerCase() === tag.toLowerCase());
+          const tagColor = matchedTag?.color || "#64748B";
+          return (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="gap-1.5 border px-2 py-0.5 font-normal text-xs shadow-2xs"
+              style={{
+                backgroundColor: `${tagColor}14`,
+                borderColor: `${tagColor}40`,
+                color: tagColor,
+              }}
+            >
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tagColor }} />
+              <span>{tag}</span>
+              {!disabled && (
+                <button
+                  type="button"
+                  aria-label={`Remove tag ${tag}`}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                  onClick={(e) => handleRemoveTag(tag, e)}
+                  className="ml-0.5 rounded-full p-0.5 opacity-70 transition-opacity hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </Badge>
+          );
+        })}
 
         <input
           ref={inputRef}
@@ -255,10 +209,8 @@ export function PersonTagInput({
           onKeyDown={handleKeyDown}
           placeholder={value.length === 0 ? placeholder : "Add more..."}
           disabled={disabled}
-          className="min-w-[120px] flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
+          className="min-w-[140px] flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
         />
-
-        {isCreating && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
       </label>
 
       {/* Floating Suggestions Dropdown */}
@@ -270,34 +222,15 @@ export function PersonTagInput({
             </div>
           ) : (
             <>
-              {/* Creatable Tag Option */}
-              {canCreate && (
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => handleCreateAndAdd(inputValue)}
-                  className={cn(
-                    "flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-left text-primary text-sm transition-colors",
-                    highlightedIndex === 0 ? "bg-accent" : "hover:bg-accent/60",
-                  )}
-                >
-                  <Plus className="mr-2 h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    Create tag <strong className="font-semibold">"{inputValue.trim()}"</strong>
-                  </span>
-                </button>
-              )}
-
               {/* Matching existing tags */}
               {matchingTags.length > 0 ? (
                 <div className="space-y-0.5">
-                  {canCreate && <div className="my-1 border-border/60 border-t" />}
                   <div className="px-2 py-1 font-medium text-[11px] text-muted-foreground uppercase tracking-wider">
                     {query ? "Matching Tags" : "Available Tags"}
                   </div>
                   {matchingTags.map((tag, idx) => {
-                    const itemIndex = canCreate ? idx + 1 : idx;
                     const isSelected = value.includes(tag.name);
+                    const tagColor = tag.color || "#64748B";
                     return (
                       <button
                         key={tag.id || tag.name}
@@ -312,11 +245,14 @@ export function PersonTagInput({
                         }}
                         className={cn(
                           "flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm transition-colors",
-                          highlightedIndex === itemIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
+                          highlightedIndex === idx ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <TagIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-2xs dark:border-white/20"
+                            style={{ backgroundColor: tagColor }}
+                          />
                           <span className={cn(isSelected && "font-medium text-primary")}>{tag.name}</span>
                         </div>
                         {isSelected && <Check className="h-4 w-4 text-primary" />}
@@ -325,11 +261,12 @@ export function PersonTagInput({
                   })}
                 </div>
               ) : (
-                !canCreate && (
-                  <div className="py-4 text-center text-muted-foreground text-xs">
-                    {allTags.length === 0 ? "No tags created yet. Type to create one." : "No matching tags."}
-                  </div>
-                )
+                <div className="py-4 text-center text-muted-foreground text-xs">
+                  <p>{allTags.length === 0 ? "No tags created yet." : "No matching tags found."}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground/75">
+                    Tags are managed in Admin &gt; People Tags.
+                  </p>
+                </div>
               )}
             </>
           )}

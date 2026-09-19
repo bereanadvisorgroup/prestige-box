@@ -221,7 +221,7 @@ export function PersonDialog({ onPersonCreated, trigger }: PersonDialogProps) {
                     <PersonTagInput
                       value={field.value || []}
                       onChange={(updated) => field.onChange(updated)}
-                      placeholder="Type to search or create tags..."
+                      placeholder="Type to select tags..."
                     />
                   </FormControl>
                   <FormMessage />
