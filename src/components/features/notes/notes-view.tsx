@@ -5,23 +5,12 @@ import * as React from "react";
 import Link from "next/link";
 
 import { formatDistanceToNow } from "date-fns";
-import {
-  ArrowUpDown,
-  Briefcase,
-  Building2,
-  MessageSquare,
-  Paperclip,
-  Plus,
-  Search,
-  StickyNote,
-  TrendingUp,
-  User,
-} from "lucide-react";
+import { ArrowUpDown, MessageSquare, Paperclip, Plus, Search, StickyNote, TrendingUp } from "lucide-react";
 
 import { getNotes, type NoteFilter } from "@/actions/notes";
 import { ClientHeaderPortal } from "@/app/(main)/dashboard/crm/clients/[id]/_components/client-header-portal";
+import { EntityAssociationBadge } from "@/components/features/crm/entity-drawer/entity-association-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,16 +56,13 @@ function NoteSummaryCard({ note }: { note: NoteSummary }) {
           {note.associations.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {note.associations.map((a) => (
-                <Badge key={`${a.entityType}:${a.entityId}`} variant="secondary" className="gap-1">
-                  {a.entityType === "client" ? (
-                    <Briefcase className="h-3 w-3" />
-                  ) : a.entityType === "person" ? (
-                    <User className="h-3 w-3" />
-                  ) : (
-                    <Building2 className="h-3 w-3" />
-                  )}
-                  {a.name}
-                </Badge>
+                <EntityAssociationBadge
+                  key={`${a.entityType}:${a.entityId}`}
+                  entityType={a.entityType}
+                  entityId={a.entityId}
+                  name={a.name}
+                  variant="secondary"
+                />
               ))}
             </div>
           )}

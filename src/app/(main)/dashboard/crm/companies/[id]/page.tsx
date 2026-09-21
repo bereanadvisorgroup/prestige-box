@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { Briefcase, Building2, ExternalLink, Fingerprint, MapPin, Pencil, Phone, UserCog } from "lucide-react";
 
@@ -10,16 +10,16 @@ import { PersonAvatar } from "@/components/features/crm/person-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAuthenticatedUser } from "@/lib/supabase.server";
 import { formatPhoneNumber } from "@/lib/utils";
 
 import { CompanyEmployeesCard } from "./_components/company-employees-card";
+import { CompanyHeaderPortal } from "./_components/company-header-portal";
 import { CompanyOwnersCard } from "./_components/company-owners-card";
 
 interface CompanyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function CompanyPage({ params }: CompanyPageProps) {
@@ -28,22 +28,6 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 
   if (!result.success || !result.company) {
     notFound();
-  }
-
-  const authUser = await getAuthenticatedUser();
-  if (authUser) {
-    const role = authUser.app_metadata?.role || authUser.user_metadata?.role;
-    if (role === "admin" || role === "advisor") {
-      redirect(`/dashboard/crm/companies/${id}/internal`);
-    } else if (!role) {
-      const userRes = await getUser(authUser.id);
-      if (userRes.success && userRes.user) {
-        const dbRole = userRes.user.role;
-        if (dbRole === "admin" || dbRole === "advisor") {
-          redirect(`/dashboard/crm/companies/${id}/internal`);
-        }
-      }
-    }
   }
 
   const company = result.company;
@@ -60,6 +44,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
 
   return (
     <div className="bg-muted/5 p-4 md:p-6 lg:p-8">
+      <CompanyHeaderPortal sectionName="General" />
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-6">
           <Card className="overflow-hidden border-none bg-gradient-to-b from-card to-muted/20 shadow-md">

@@ -22,6 +22,7 @@ import { ArrowUpRight, DollarSign, GitFork, GripVertical, Percent, Plus, Trash2,
 import { toast } from "sonner";
 
 import { updateOpportunity } from "@/actions/opportunities";
+import { EntityAssociationBadge } from "@/components/features/crm/entity-drawer/entity-association-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -104,7 +105,14 @@ function OpportunityCard({
           )}
 
           {opportunity.companyId && opportunity.client?.person && (
-            <p className="text-xs text-muted-foreground">Re: {formatPersonName(opportunity.client.person)}</p>
+            <div className="pt-0.5">
+              <EntityAssociationBadge
+                entityType="client"
+                entityId={opportunity.clientId}
+                name={`Re: ${formatPersonName(opportunity.client.person)}`}
+                className="h-5 px-1.5 text-[10px]"
+              />
+            </div>
           )}
         </div>
         <Badge
@@ -150,6 +158,8 @@ function DraggableCard({ opportunity, onCardClick }: { opportunity: any; onCardC
       >
         <GripVertical className="h-4 w-4" />
       </button>
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: card container click opens dialog while inner link navigates */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: card container click target */}
       <div onClick={onCardClick} className="cursor-pointer">
         <OpportunityCard opportunity={opportunity} dragging={isDragging} onClick={onCardClick} />
       </div>
@@ -475,7 +485,7 @@ export function KanbanBoard({
 
         {/* Drag Overlay */}
         <DragOverlay>
-          {activeOppForOverlay ? <OpportunityCard opportunity={activeOppForOverlay} onClick={() => {}} /> : null}
+          {activeOppForOverlay ? <OpportunityCard opportunity={activeOppForOverlay} onClick={() => undefined} /> : null}
         </DragOverlay>
 
         {/* Bottom Droppable Zones */}

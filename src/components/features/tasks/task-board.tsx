@@ -17,6 +17,7 @@ import {
 import { format } from "date-fns";
 import { Archive, GripVertical } from "lucide-react";
 
+import { EntityAssociationBadge } from "@/components/features/crm/entity-drawer/entity-association-badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { TaskStatus, TaskWithRelations } from "@/types/crm";
@@ -53,20 +54,13 @@ function TaskCard({ task, onClick, dragging }: { task: TaskWithRelations; onClic
           </Badge>
         )}
         {task.associations?.map((a) => (
-          <Badge
+          <EntityAssociationBadge
             key={`${a.entityType}-${a.entityId}`}
-            variant="outline"
-            className={cn(
-              "h-5 px-1.5 text-[10px]",
-              a.entityType === "client"
-                ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800"
-                : a.entityType === "company"
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800"
-                  : "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800",
-            )}
-          >
-            {a.name}
-          </Badge>
+            entityType={a.entityType}
+            entityId={a.entityId}
+            name={a.name}
+            className="h-5 px-1.5 text-[10px]"
+          />
         ))}
       </div>
       <div className="mt-2 flex items-center justify-between text-muted-foreground text-xs">

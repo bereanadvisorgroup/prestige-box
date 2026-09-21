@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatPersonName } from "@/lib/utils";
+import { useEntityDrawerStore } from "@/stores/entity-drawer.store";
 import { OpportunitySchema } from "@/types/crm";
 
 interface OpportunityDialogProps {
@@ -117,6 +118,7 @@ export function OpportunityDialog({
   onSaved,
 }: OpportunityDialogProps) {
   const isEditing = !!opportunity?.id;
+  const openEntityDrawer = useEntityDrawerStore((s) => s.openDrawer);
   const [isSaving, setIsSaving] = React.useState(false);
   const [associationType, setAssociationType] = React.useState<"client" | "company">("client");
   const [activeTab, setActiveTab] = React.useState("details");
@@ -523,59 +525,87 @@ export function OpportunityDialog({
                         <FormField
                           control={form.control}
                           name="clientId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="font-semibold">Client</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value || ""}
-                                disabled={isSaving || isEditing}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="bg-background">
-                                    <SelectValue placeholder="Select a Client" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {clients.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>
-                                      {formatPersonName(c.person, "Unnamed Client")}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                          render={({ field }) => {
+                            const selectedId = field.value;
+                            return (
+                              <FormItem>
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-semibold">Client</FormLabel>
+                                  {selectedId && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openEntityDrawer("client", selectedId)}
+                                      className="text-xs text-primary hover:underline font-medium cursor-pointer"
+                                    >
+                                      View Contact Info
+                                    </button>
+                                  )}
+                                </div>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}
+                                  disabled={isSaving || isEditing}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="bg-background">
+                                      <SelectValue placeholder="Select a Client" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {clients.map((c) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {formatPersonName(c.person, "Unnamed Client")}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
                         />
                       ) : (
                         <FormField
                           control={form.control}
                           name="companyId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="font-semibold">Company</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value || ""}
-                                disabled={isSaving || isEditing}
-                              >
-                                <FormControl>
-                                  <SelectTrigger className="bg-background">
-                                    <SelectValue placeholder="Select a Company" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {companies.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>
-                                      {c.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                          render={({ field }) => {
+                            const selectedId = field.value;
+                            return (
+                              <FormItem>
+                                <div className="flex items-center justify-between">
+                                  <FormLabel className="font-semibold">Company</FormLabel>
+                                  {selectedId && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openEntityDrawer("company", selectedId)}
+                                      className="text-xs text-primary hover:underline font-medium cursor-pointer"
+                                    >
+                                      View Company Info
+                                    </button>
+                                  )}
+                                </div>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value || ""}
+                                  disabled={isSaving || isEditing}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className="bg-background">
+                                      <SelectValue placeholder="Select a Company" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {companies.map((c) => (
+                                      <SelectItem key={c.id} value={c.id}>
+                                        {c.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
                         />
                       )}
                       <FormField
@@ -1099,59 +1129,87 @@ export function OpportunityDialog({
                       <FormField
                         control={form.control}
                         name="clientId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-semibold">Client</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value || ""}
-                              disabled={isSaving || isEditing}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="bg-background">
-                                  <SelectValue placeholder="Select a Client" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {clients.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {formatPersonName(c.person, "Unnamed Client")}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selectedId = field.value;
+                          return (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel className="font-semibold">Client</FormLabel>
+                                {selectedId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openEntityDrawer("client", selectedId)}
+                                    className="text-xs text-primary hover:underline font-medium cursor-pointer"
+                                  >
+                                    View Contact Info
+                                  </button>
+                                )}
+                              </div>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value || ""}
+                                disabled={isSaving || isEditing}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-background">
+                                    <SelectValue placeholder="Select a Client" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {clients.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                      {formatPersonName(c.person, "Unnamed Client")}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     ) : (
                       <FormField
                         control={form.control}
                         name="companyId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-semibold">Company</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value || ""}
-                              disabled={isSaving || isEditing}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="bg-background">
-                                  <SelectValue placeholder="Select a Company" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {companies.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const selectedId = field.value;
+                          return (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel className="font-semibold">Company</FormLabel>
+                                {selectedId && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openEntityDrawer("company", selectedId)}
+                                    className="text-xs text-primary hover:underline font-medium cursor-pointer"
+                                  >
+                                    View Company Info
+                                  </button>
+                                )}
+                              </div>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value || ""}
+                                disabled={isSaving || isEditing}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="bg-background">
+                                    <SelectValue placeholder="Select a Company" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {companies.map((c) => (
+                                    <SelectItem key={c.id} value={c.id}>
+                                      {c.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     )}
                     <FormField

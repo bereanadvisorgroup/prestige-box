@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import { getPreference } from "@/actions/cookies";
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
+import { EntityInfoDrawer } from "@/components/features/crm/entity-drawer/entity-info-drawer";
 import { NotificationBell } from "@/components/features/notes/notification-bell";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -57,6 +58,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
         </header>
         <div className="h-full p-4 md:p-6">{children}</div>
       </SidebarInset>
+      <EntityInfoDrawer />
     </SidebarProvider>
   );
 }

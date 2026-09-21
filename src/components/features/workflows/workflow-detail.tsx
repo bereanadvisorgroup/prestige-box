@@ -28,6 +28,7 @@ import {
   reopenWorkflowStep,
   updateWorkflowDescription,
 } from "@/actions/workflows";
+import { EntityAssociationBadge } from "@/components/features/crm/entity-drawer/entity-association-badge";
 import { GoogleDrivePickerDialog } from "@/components/features/tasks/gdrive-picker-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -320,6 +321,9 @@ export function WorkflowDetail({ entityType, entityId, workflow, teams }: Workfl
                 <CheckCircle2 className="h-3 w-3" />
                 Completed
               </Badge>
+            )}
+            {entityDocInfo && (
+              <EntityAssociationBadge entityType={entityType} entityId={entityId} name={entityDocInfo.name} />
             )}
           </div>
           <p className="text-muted-foreground text-sm">
