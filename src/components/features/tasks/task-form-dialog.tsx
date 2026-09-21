@@ -530,17 +530,22 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div>
+                  ACTION LIST
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <FormLabel>Attachments</FormLabel>

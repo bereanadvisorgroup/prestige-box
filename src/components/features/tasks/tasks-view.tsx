@@ -26,6 +26,8 @@ interface TasksViewProps {
   description?: string;
   useHeaderPortal?: boolean;
   editTaskId?: string;
+  showAssigneeFilter?: boolean;
+  defaultView?: "board" | "list";
 }
 
 function defaultAssociationsFor(scope?: TaskFilter): TaskAssociation[] {
@@ -43,11 +45,13 @@ export function TasksView({
   description,
   useHeaderPortal = false,
   editTaskId,
+  showAssigneeFilter,
+  defaultView = "board",
 }: TasksViewProps) {
   const profile = useAuthStore((s) => s.profile);
   const [tasks, setTasks] = React.useState<TaskWithRelations[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [view, setView] = React.useState<"board" | "list">("board");
+  const [view, setView] = React.useState<"board" | "list">(defaultView);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<TaskWithRelations | null>(null);
   const [assigneeOptions, setAssigneeOptions] = React.useState<{ value: string; label: string }[]>([]);
@@ -232,6 +236,7 @@ export function TasksView({
         assigneeOptions={assigneeOptions}
         categoryOptions={categoryOptions}
         showClientCompanyFilters={isGlobalScope(scope)}
+        showAssigneeFilter={showAssigneeFilter ?? isGlobalScope(scope)}
         isFiltered={isFiltered}
         onClear={handleClearFilters}
         showArchiveStatus={view === "list"}

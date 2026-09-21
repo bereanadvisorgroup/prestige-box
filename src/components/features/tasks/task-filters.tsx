@@ -103,6 +103,7 @@ interface TaskFiltersProps {
   assigneeOptions: { value: string; label: string }[];
   categoryOptions?: string[];
   showClientCompanyFilters?: boolean;
+  showAssigneeFilter?: boolean;
   isFiltered?: boolean;
   onClear?: () => void;
   showArchiveStatus?: boolean;
@@ -114,6 +115,7 @@ export function TaskFilters({
   assigneeOptions,
   categoryOptions = Array.from(DEFAULT_TASK_CATEGORIES),
   showClientCompanyFilters = false,
+  showAssigneeFilter = false,
   isFiltered = false,
   onClear,
   showArchiveStatus = false,
@@ -121,7 +123,7 @@ export function TaskFilters({
   return (
     <div className="flex flex-col gap-3">
       {/* Search Bar Row */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative min-w-[150px] flex-1">
           <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
@@ -203,82 +205,85 @@ export function TaskFilters({
                 </button>
               )}
             </div>
-            <Select value={filters.status} onValueChange={(v) => onChange({ status: v })}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {TaskStatuses.filter((s) => s !== "Archived").map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-                {showArchiveStatus && (
-                  <>
-                    <SelectSeparator />
-                    <SelectItem value="Archived">Archived</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.assignee} onValueChange={(v) => onChange({ assignee: v })}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Assignee" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Assignees</SelectItem>
-                {assigneeOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.priority} onValueChange={(v) => onChange({ priority: v })}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                {TaskPriorities.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.dueIn} onValueChange={(v) => onChange({ dueIn: v as DueInFilter })}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Due In" />
-              </SelectTrigger>
-              <SelectContent>
-                {DUE_IN_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.category} onValueChange={(v) => onChange({ category: v })}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categoryOptions.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </>
         )}
+
+        <Select value={filters.status} onValueChange={(v) => onChange({ status: v })}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {TaskStatuses.filter((s) => s !== "Archived").map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+            {showArchiveStatus && (
+              <>
+                <SelectSeparator />
+                <SelectItem value="Archived">Archived</SelectItem>
+              </>
+            )}
+          </SelectContent>
+        </Select>
+
+        {showAssigneeFilter && (
+          <Select value={filters.assignee} onValueChange={(v) => onChange({ assignee: v })}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Assignee" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Assignees</SelectItem>
+              {assigneeOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <Select value={filters.priority} onValueChange={(v) => onChange({ priority: v })}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            {TaskPriorities.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.dueIn} onValueChange={(v) => onChange({ dueIn: v as DueInFilter })}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Due In" />
+          </SelectTrigger>
+          <SelectContent>
+            {DUE_IN_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.category} onValueChange={(v) => onChange({ category: v })}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categoryOptions.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {isFiltered && onClear && (
           <Button
