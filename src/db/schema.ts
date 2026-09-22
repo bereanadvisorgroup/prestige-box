@@ -567,17 +567,17 @@ export const noteVotes = pgTable("note_votes", {
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow(),
 });
 
-// 29. Note Notifications (@mentions and replies to your notes)
+// 29. Notifications (@mentions, replies, and task updates)
 export const noteNotifications = pgTable("note_notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
-  noteId: uuid("noteId")
-    .notNull()
-    .references(() => notes.id, { onDelete: "cascade" }),
+  noteId: uuid("noteId").references(() => notes.id, { onDelete: "cascade" }),
   rootId: uuid("rootId"), // thread to deep-link to
+  taskId: uuid("taskId").references(() => tasks.id, { onDelete: "cascade" }),
+  linkUrl: text("linkUrl"),
   recipientId: uuid("recipientId").notNull(), // users.uid being notified
   actorId: uuid("actorId"), // users.uid who triggered the notification
   actorName: text("actorName"), // snapshot of actor display name
-  type: text("type").notNull(), // mention | reply
+  type: text("type").notNull(), // mention | reply | task_updated
   preview: text("preview"), // short plain-text snippet
   isRead: boolean("isRead").notNull().default(false),
   createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),

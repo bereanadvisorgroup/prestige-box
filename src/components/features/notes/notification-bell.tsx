@@ -5,7 +5,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { formatDistanceToNow } from "date-fns";
-import { AtSign, Bell, MessageSquare, X } from "lucide-react";
+import { AtSign, Bell, CheckSquare, MessageSquare, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,7 +14,7 @@ import {
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/actions/notes";
+} from "@/actions/notifications";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/lib/supabase.client";
@@ -23,6 +23,26 @@ import { useAuthStore } from "@/stores/auth.store";
 import type { NoteNotification } from "@/types/notes";
 
 const POLL_MS = 60_000;
+
+function getNotificationUrl(n: Pick<NoteNotification, "linkUrl" | "taskId" | "rootId" | "noteId">): string {
+  if (n.linkUrl) return n.linkUrl;
+  if (n.taskId) return `/dashboard/crm/tasks?editTask=${n.taskId}`;
+  if (n.rootId || n.noteId) return `/dashboard/crm/notes/${n.rootId ?? n.noteId}`;
+  return "/dashboard/crm/tasks";
+}
+
+function getNotificationIcon(type: string) {
+  if (type === "mention") return <AtSign className="h-4 w-4 text-primary" />;
+  if (type === "task_updated") return <CheckSquare className="h-4 w-4 text-primary" />;
+  return <MessageSquare className="h-4 w-4 text-primary" />;
+}
+
+function getToastDescription(type: string) {
+  if (type === "mention") return "You were tagged in a note.";
+  if (type === "reply") return "Someone replied to your note thread.";
+  if (type === "task_updated") return "A task assigned to you was updated.";
+  return "You have a new notification.";
+}
 
 export function NotificationBell() {
   const profile = useAuthStore((s) => s.profile);
@@ -77,10 +97,12 @@ export function NotificationBell() {
 
             const newNotification: NoteNotification = {
               id: row.id as string,
-              noteId: (row.noteId || row.note_id) as string,
+              noteId: ((row.noteId || row.note_id) as string) || null,
               rootId: ((row.rootId || row.root_id) as string) ?? null,
+              taskId: ((row.taskId || row.task_id) as string) ?? null,
+              linkUrl: ((row.linkUrl || row.link_url) as string) ?? null,
               actorName: ((row.actorName || row.actor_name) as string) ?? null,
-              type: (row.type as "mention" | "reply") || "mention",
+              type: (row.type as string) || "task_updated",
               preview: (row.preview as string) ?? null,
               isRead: (row.isRead as boolean) ?? false,
               createdAt: (row.createdAt || row.created_at || new Date().toISOString()) as string,
@@ -94,24 +116,16 @@ export function NotificationBell() {
             setUnread((u) => u + 1);
 
             // Push live interactive in-app toast notification
-            toast(newNotification.preview || "You received a new note notification", {
-              description:
-                newNotification.type === "mention"
-                  ? "You were tagged in a note."
-                  : "Someone replied to your note thread.",
-              icon:
-                newNotification.type === "mention" ? (
-                  <AtSign className="h-4 w-4 text-primary" />
-                ) : (
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                ),
+            toast(newNotification.preview || "You received a new notification", {
+              description: getToastDescription(newNotification.type),
+              icon: getNotificationIcon(newNotification.type),
               action: {
                 label: "View",
                 onClick: async () => {
                   setItems((prev) => prev.map((i) => (i.id === newNotification.id ? { ...i, isRead: true } : i)));
                   setUnread((u) => Math.max(0, u - 1));
                   await markNotificationRead(newNotification.id);
-                  router.push(`/dashboard/crm/notes/${newNotification.rootId ?? newNotification.noteId}`);
+                  router.push(getNotificationUrl(newNotification));
                 },
               },
               duration: 7000,
@@ -162,7 +176,7 @@ export function NotificationBell() {
       setUnread((u) => Math.max(0, u - 1));
       await markNotificationRead(n.id);
     }
-    router.push(`/dashboard/crm/notes/${n.rootId ?? n.noteId}`);
+    router.push(getNotificationUrl(n));
   };
 
   const markAll = async () => {
@@ -229,7 +243,13 @@ export function NotificationBell() {
                   className="flex min-w-0 flex-1 items-start gap-2 py-2.5 pl-3 text-left"
                 >
                   <span className="mt-0.5 text-muted-foreground">
-                    {n.type === "mention" ? <AtSign className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+                    {n.type === "mention" ? (
+                      <AtSign className="h-4 w-4" />
+                    ) : n.type === "task_updated" ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <MessageSquare className="h-4 w-4" />
+                    )}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm leading-snug">{n.preview || "New activity"}</span>

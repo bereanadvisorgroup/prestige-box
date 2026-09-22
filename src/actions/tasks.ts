@@ -2,13 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 
+import { notifyTaskAssignees } from "@/actions/notifications";
 import { getCurrentActor, recordEvent } from "@/lib/history/record";
 import { supabaseServer } from "@/lib/supabase.server";
 import { formatFullName } from "@/lib/utils";
 import {
   type Task,
+  type TaskAction,
   type TaskAssigneeRef,
   type TaskAssociationRef,
+  type TaskFormInput,
   TaskFormSchema,
   type TaskFormValues,
   type TaskStatus,
@@ -235,7 +238,7 @@ function revalidateTaskAssociations(associations?: { entityType: string; entityI
   }
 }
 
-export async function createTask(values: TaskFormValues) {
+export async function createTask(values: TaskFormInput) {
   try {
     const parsed = TaskFormSchema.parse(values);
     const actor = await getCurrentActor();
@@ -248,6 +251,7 @@ export async function createTask(values: TaskFormValues) {
       priority: parsed.priority,
       description: parsed.description ?? null,
       attachments: parsed.attachments ?? [],
+      actions: parsed.actions ?? [],
       dueDate: parsed.dueDate,
       completeDate: resolveCompleteDate(undefined, parsed.status, null),
       archiveDate: resolveArchiveDate(undefined, parsed.status, null),
@@ -281,7 +285,7 @@ export async function createTask(values: TaskFormValues) {
   }
 }
 
-export async function updateTask(id: string, values: TaskFormValues) {
+export async function updateTask(id: string, values: TaskFormInput) {
   try {
     const parsed = TaskFormSchema.parse(values);
     const actor = await getCurrentActor();
@@ -296,6 +300,7 @@ export async function updateTask(id: string, values: TaskFormValues) {
       priority: parsed.priority,
       description: parsed.description ?? null,
       attachments: parsed.attachments ?? [],
+      actions: parsed.actions ?? current.actions ?? [],
       dueDate: parsed.dueDate,
       completeDate: resolveCompleteDate(current.status, parsed.status, current.completeDate ?? null),
       archiveDate: resolveArchiveDate(current.status, parsed.status, current.archiveDate ?? null),
@@ -335,6 +340,19 @@ export async function updateTask(id: string, values: TaskFormValues) {
       );
     }
 
+    // Notify assignees of the update (excluding the actor)
+    const assigneeIds = parsed.assigneeIds || [];
+    const isStatusChanged = current.status !== parsed.status;
+    await notifyTaskAssignees({
+      taskId: id,
+      taskName: parsed.name,
+      actorId: actor.actorId,
+      actorName: actor.actorName,
+      assigneeIds,
+      actionType: isStatusChanged ? "status_changed" : "updated",
+      status: parsed.status,
+    });
+
     revalidateTaskAssociations(parsed.associations);
     return { success: true };
   } catch (error) {
@@ -343,14 +361,118 @@ export async function updateTask(id: string, values: TaskFormValues) {
   }
 }
 
+export async function addTaskAction(taskId: string, text: string) {
+  try {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return { success: false, error: "Action text cannot be empty" };
+    }
+
+    const [{ data: current, error: fetchErr }, { data: assocRows }] = await Promise.all([
+      supabaseServer.from(TABLE).select("name, actions").eq("id", taskId).single(),
+      supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", taskId),
+    ]);
+
+    if (fetchErr || !current) {
+      return { success: false, error: "Task not found" };
+    }
+
+    const actor = await getCurrentActor();
+    const newAction: TaskAction = {
+      id: crypto.randomUUID(),
+      text: trimmed,
+      createdAt: new Date().toISOString(),
+      createdBy: actor.actorId,
+      createdByName: actor.actorName,
+    };
+
+    const existingActions = Array.isArray(current.actions) ? (current.actions as TaskAction[]) : [];
+    const updatedActions = [newAction, ...existingActions];
+
+    const { error: updateErr } = await supabaseServer
+      .from(TABLE)
+      .update({
+        actions: updatedActions,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", taskId);
+
+    if (updateErr) throw new Error(updateErr.message);
+
+    await recordEvent(
+      {
+        entityType: "task",
+        entityId: taskId,
+        subType: "Task",
+        action: "updated",
+        summary: `Added action to "${current.name}": ${trimmed}`,
+      },
+      actor,
+    );
+
+    revalidateTaskAssociations(assocRows || []);
+    return { success: true, action: newAction, actions: updatedActions };
+  } catch (error) {
+    console.error("[addTaskAction] Error:", error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
+export async function deleteTaskAction(taskId: string, actionId: string) {
+  try {
+    const [{ data: current, error: fetchErr }, { data: assocRows }] = await Promise.all([
+      supabaseServer.from(TABLE).select("name, actions").eq("id", taskId).single(),
+      supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", taskId),
+    ]);
+
+    if (fetchErr || !current) {
+      return { success: false, error: "Task not found" };
+    }
+
+    const actor = await getCurrentActor();
+    const existingActions = Array.isArray(current.actions) ? (current.actions as TaskAction[]) : [];
+    const updatedActions = existingActions.filter((a) => a.id !== actionId);
+
+    const { error: updateErr } = await supabaseServer
+      .from(TABLE)
+      .update({
+        actions: updatedActions,
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("id", taskId);
+
+    if (updateErr) throw new Error(updateErr.message);
+
+    await recordEvent(
+      {
+        entityType: "task",
+        entityId: taskId,
+        subType: "Task",
+        action: "updated",
+        summary: `Deleted action from "${current.name}"`,
+      },
+      actor,
+    );
+
+    revalidateTaskAssociations(assocRows || []);
+    return { success: true, actions: updatedActions };
+  } catch (error) {
+    console.error("[deleteTaskAction] Error:", error);
+    return { success: false, error: (error as { message: string }).message };
+  }
+}
+
 /** Lightweight status-only update used by the Kanban board drag interaction. */
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   try {
-    const [{ data: current }, { data: assocRows }] = await Promise.all([
+    const [{ data: current }, { data: assocRows }, { data: assigneeRows }] = await Promise.all([
       supabaseServer.from(TABLE).select("status, completeDate, archiveDate, name").eq("id", id).single(),
       supabaseServer.from(ASSOCIATIONS).select("entityType, entityId").eq("taskId", id),
+      supabaseServer.from(ASSIGNEES).select("userId").eq("taskId", id),
     ]);
     if (!current) return { success: false, error: "Task not found" };
+
+    const actor = await getCurrentActor();
 
     const { error } = await supabaseServer
       .from(TABLE)
@@ -364,16 +486,31 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
     if (error) throw new Error(error.message);
 
     if (current.status !== status) {
-      await recordEvent({
-        entityType: "task",
-        entityId: id,
-        subType: "Task",
-        action: "updated",
-        fieldName: "status",
-        fieldLabel: "Status",
-        oldValue: current.status,
-        newValue: status,
-        summary: `Status changed to ${status}`,
+      await recordEvent(
+        {
+          entityType: "task",
+          entityId: id,
+          subType: "Task",
+          action: "updated",
+          fieldName: "status",
+          fieldLabel: "Status",
+          oldValue: current.status,
+          newValue: status,
+          summary: `Status changed to ${status}`,
+        },
+        actor,
+      );
+
+      // Notify task assignees of the status update
+      const assigneeIds = (assigneeRows || []).map((a) => a.userId);
+      await notifyTaskAssignees({
+        taskId: id,
+        taskName: current.name,
+        actorId: actor.actorId,
+        actorName: actor.actorName,
+        assigneeIds,
+        actionType: "status_changed",
+        status,
       });
     }
 

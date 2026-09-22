@@ -103,13 +103,17 @@ export interface NoteSummary {
 
 export interface NoteNotification {
   id: string;
-  noteId: string;
-  rootId: string | null;
+  noteId?: string | null;
+  rootId?: string | null;
+  taskId?: string | null;
+  linkUrl?: string | null;
   actorName: string | null;
-  type: "mention" | "reply";
+  type: "mention" | "reply" | "task_updated" | string;
   preview: string | null;
   isRead: boolean;
   createdAt: string;
 }
+
+export type AppNotification = NoteNotification;
 
 export const MAX_NOTE_DEPTH = 2;

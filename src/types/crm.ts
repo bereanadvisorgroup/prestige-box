@@ -1066,6 +1066,15 @@ export const TaskAssociationSchema = z.object({
 });
 export type TaskAssociation = z.infer<typeof TaskAssociationSchema>;
 
+export const TaskActionSchema = z.object({
+  id: z.string().optional(),
+  text: z.string().min(1, "Action text is required"),
+  createdAt: z.string(), // ISO date-time
+  createdBy: z.string().optional().nullable(),
+  createdByName: z.string().optional().nullable(),
+});
+export type TaskAction = z.infer<typeof TaskActionSchema>;
+
 export const TaskSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Task name is required"),
@@ -1074,6 +1083,7 @@ export const TaskSchema = z.object({
   priority: TaskPrioritySchema.default("Low"),
   description: z.string().nullable().optional(),
   attachments: z.array(TaskAttachmentSchema).default([]),
+  actions: z.array(TaskActionSchema).default([]).optional(),
   dueDate: z.string().min(1, "Due date is required"), // ISO date-time
   completeDate: z.string().nullable().optional(), // system-managed
   archiveDate: z.string().nullable().optional(), // system-managed

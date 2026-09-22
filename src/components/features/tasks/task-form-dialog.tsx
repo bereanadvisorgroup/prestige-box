@@ -3,8 +3,19 @@
 import * as React from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { differenceInCalendarDays, format } from "date-fns";
-import { Calendar, FileText, Folder, HardDrive, Loader2, Paperclip, X } from "lucide-react";
+import { differenceInCalendarDays, format, formatDistanceToNow } from "date-fns";
+import {
+  Activity,
+  Calendar,
+  CircleUser,
+  FileText,
+  Folder,
+  HardDrive,
+  Loader2,
+  Paperclip,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -12,8 +23,9 @@ import { getClients } from "@/actions/clients";
 import { getCompanies } from "@/actions/companies";
 import { getPeople } from "@/actions/people";
 import { getTaskCategories } from "@/actions/task-categories";
-import { createTask, updateTask } from "@/actions/tasks";
+import { addTaskAction, createTask, deleteTaskAction, updateTask } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,11 +43,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase.client";
-import { formatPersonName } from "@/lib/utils";
+import { cn, formatPersonName } from "@/lib/utils";
 import {
   DEFAULT_TASK_CATEGORIES,
+  type TaskAction,
   type TaskAssociation,
   type TaskAttachment,
   type TaskFormInput,
@@ -103,6 +117,12 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
   const [categoryOptions, setCategoryOptions] = React.useState<string[]>(Array.from(DEFAULT_TASK_CATEGORIES));
   const [entityDocMap, setEntityDocMap] = React.useState<Map<string, EntityDocInfo>>(new Map());
 
+  // Task Actions state
+  const [taskActions, setTaskActions] = React.useState<TaskAction[]>([]);
+  const [actionInput, setActionInput] = React.useState("");
+  const [isSubmittingAction, setIsSubmittingAction] = React.useState(false);
+  const [deletingActionId, setDeletingActionId] = React.useState<string | null>(null);
+
   // Google Drive Picker state
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [selectedDriveEntity, setSelectedDriveEntity] = React.useState<EntityDocInfo | null>(null);
@@ -116,6 +136,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
       priority: "Low",
       description: "",
       attachments: [],
+      actions: [],
       dueDate: todayInput(),
       assigneeIds: [],
       associations: defaultAssociations,
@@ -126,7 +147,9 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset is keyed to open/task only, by design.
   React.useEffect(() => {
     if (!open) return;
+    setActionInput("");
     if (task) {
+      setTaskActions(task.actions ?? []);
       form.reset({
         id: task.id,
         name: task.name,
@@ -135,11 +158,13 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
         priority: task.priority,
         description: task.description ?? "",
         attachments: task.attachments ?? [],
+        actions: task.actions ?? [],
         dueDate: task.dueDate ? task.dueDate.slice(0, 10) : todayInput(),
         assigneeIds: task.assignees.map((a) => a.userId),
         associations: task.associations.map((a) => ({ entityType: a.entityType, entityId: a.entityId })),
       });
     } else {
+      setTaskActions([]);
       form.reset({
         name: "",
         status: "New",
@@ -147,6 +172,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
         priority: "Low",
         description: "",
         attachments: [],
+        actions: [],
         dueDate: todayInput(),
         assigneeIds: [],
         associations: defaultAssociations,
@@ -325,6 +351,61 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
     toast.success(`Linked Google Drive ${item.isFolder ? "folder" : "file"}`);
   };
 
+  async function handleAddAction() {
+    if (!task?.id) return;
+    const trimmed = actionInput.trim();
+    if (!trimmed) return;
+
+    setIsSubmittingAction(true);
+    try {
+      const res = await addTaskAction(task.id, trimmed);
+      if (res.success && res.action && res.actions) {
+        setTaskActions(res.actions);
+        form.setValue("actions", res.actions, { shouldDirty: true });
+        setActionInput("");
+        toast.success("Action added");
+        onSaved?.();
+      } else {
+        toast.error(res.error || "Failed to add action");
+      }
+    } catch (err) {
+      toast.error("Failed to add action");
+      console.error(err);
+    } finally {
+      setIsSubmittingAction(false);
+    }
+  }
+
+  async function handleDeleteAction(actionId?: string) {
+    if (!task?.id || !actionId) return;
+
+    setDeletingActionId(actionId);
+    try {
+      const res = await deleteTaskAction(task.id, actionId);
+      if (res.success && res.actions) {
+        setTaskActions(res.actions);
+        form.setValue("actions", res.actions, { shouldDirty: true });
+        toast.success("Action removed");
+        onSaved?.();
+      } else {
+        toast.error(res.error || "Failed to delete action");
+      }
+    } catch (err) {
+      toast.error("Failed to delete action");
+      console.error(err);
+    } finally {
+      setDeletingActionId(null);
+    }
+  }
+
+  const sortedActions = React.useMemo(() => {
+    return [...taskActions].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [taskActions]);
+
   async function onSubmit(values: TaskFormValues) {
     setIsSaving(true);
     try {
@@ -345,7 +426,6 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
   }
 
   const attachments = form.watch("attachments") ?? [];
-  const status = form.watch("status");
 
   return (
     <>
@@ -492,7 +572,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 </div>
               )}
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="assigneeIds"
@@ -530,7 +610,7 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className={cn("grid grid-cols-1 gap-4", isEditing ? "sm:grid-cols-2" : "")}>
                 <FormField
                   control={form.control}
                   name="description"
@@ -542,9 +622,113 @@ export function TaskFormDialog({ open, onOpenChange, task, defaultAssociations =
                     </FormItem>
                   )}
                 />
-                <div>
-                  ACTION LIST
-                </div>
+
+                {isEditing && (
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="font-semibold text-sm">Actions</FormLabel>
+                      {sortedActions.length > 0 && (
+                        <Badge variant="secondary" className="font-normal text-[11px]">
+                          {sortedActions.length} {sortedActions.length === 1 ? "action" : "actions"}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter an action taken on this task…"
+                        value={actionInput}
+                        onChange={(e) => setActionInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddAction();
+                          }
+                        }}
+                        disabled={isSubmittingAction}
+                        className="text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddAction}
+                        disabled={isSubmittingAction || !actionInput.trim()}
+                        className="shrink-0"
+                      >
+                        {isSubmittingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit"}
+                      </Button>
+                    </div>
+
+                    <ScrollArea className="h-[210px] w-full rounded-md border p-2.5">
+                      {sortedActions.length === 0 ? (
+                        <div className="flex h-full min-h-[175px] flex-col items-center justify-center text-center text-muted-foreground text-xs">
+                          <Activity className="mb-2 h-6 w-6 opacity-30" />
+                          <p className="font-medium">No actions recorded yet</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground/80">
+                            Enter an action above and press Enter or Submit.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {sortedActions.map((act) => {
+                            let formattedDate = "";
+                            let timeAgo = "";
+                            if (act.createdAt) {
+                              try {
+                                const dateObj = new Date(act.createdAt);
+                                formattedDate = format(dateObj, "M/d/yyyy h:mm a");
+                                timeAgo = formatDistanceToNow(dateObj, { addSuffix: true });
+                              } catch {
+                                formattedDate = act.createdAt;
+                              }
+                            }
+
+                            return (
+                              <div
+                                key={act.id || act.createdAt}
+                                className="group relative rounded-lg border bg-card/60 p-2.5 text-card-foreground shadow-xs transition-colors hover:bg-accent/30"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 truncate font-medium text-foreground text-xs">
+                                    <CircleUser className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                    <span className="truncate">{act.createdByName || "Team member"}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    {timeAgo && <span className="text-[11px] text-muted-foreground">{timeAgo}</span>}
+                                    {act.id && (
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-xs"
+                                        onClick={() => handleDeleteAction(act.id)}
+                                        disabled={deletingActionId === act.id}
+                                        aria-label="Delete action"
+                                        className="h-5 w-5 text-muted-foreground opacity-60 transition-opacity hover:text-destructive hover:opacity-100 group-hover:opacity-100"
+                                      >
+                                        {deletingActionId === act.id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-3 w-3" />
+                                        )}
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                                <p className="mt-1 whitespace-pre-wrap break-words text-foreground/90 text-xs">
+                                  {act.text}
+                                </p>
+                                {formattedDate && (
+                                  <div className="mt-1 text-[10px] text-muted-foreground/80">{formattedDate}</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

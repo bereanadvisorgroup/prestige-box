@@ -6,7 +6,7 @@ import { KanbanSquare, List, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { getTaskCategories } from "@/actions/task-categories";
-import { getTasks, type TaskFilter, updateTaskStatus } from "@/actions/tasks";
+import { getTaskById, getTasks, type TaskFilter, updateTaskStatus } from "@/actions/tasks";
 import { getUsers } from "@/actions/users";
 import { ClientHeaderPortal } from "@/app/(main)/dashboard/crm/clients/[id]/_components/client-header-portal";
 import { Button } from "@/components/ui/button";
@@ -84,19 +84,31 @@ export function TasksView({
   }, [load]);
 
   React.useEffect(() => {
-    if (editTaskId && tasks.length > 0) {
-      const taskToEdit = tasks.find((t) => t.id === editTaskId);
-      if (taskToEdit) {
-        setEditing(taskToEdit);
-        setDialogOpen(true);
+    if (!editTaskId) return;
 
-        const params = new URLSearchParams(window.location.search);
-        params.delete("editTask");
-        const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
-        window.history.replaceState(null, "", newRelativePathQuery);
-      }
+    const taskToEdit = tasks.find((t) => t.id === editTaskId);
+    if (taskToEdit) {
+      setEditing(taskToEdit);
+      setDialogOpen(true);
+
+      const params = new URLSearchParams(window.location.search);
+      params.delete("editTask");
+      const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState(null, "", newRelativePathQuery);
+    } else if (!loading) {
+      getTaskById(editTaskId).then((res) => {
+        if (res.success && res.task) {
+          setEditing(res.task);
+          setDialogOpen(true);
+
+          const params = new URLSearchParams(window.location.search);
+          params.delete("editTask");
+          const newRelativePathQuery = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+          window.history.replaceState(null, "", newRelativePathQuery);
+        }
+      });
     }
-  }, [editTaskId, tasks]);
+  }, [editTaskId, tasks, loading]);
 
   // Load admin/advisor users for the assignee filter.
   React.useEffect(() => {
